@@ -24,6 +24,8 @@ namespace SteamBot
 		System.Threading.Timer Timer;
 		public int logpos;
 		
+		public int TradeStatus;
+		
 		//Generic Trade info
 		public bool OtherReady = false;
 		public bool MeReady = false;
@@ -77,9 +79,32 @@ namespace SteamBot
 				HttpWebResponse response = webRequestStatus.GetResponse() as HttpWebResponse;
 				StreamReader stream = new StreamReader(response.GetResponseStream());
 			//string resp = stream.ReadToEnd();
-			}catch(Exception e){
+			}catch(Exception){
 				printConsole ("[TradeSystem][ERROR] Failed to connect to Steam!",ConsoleColor.Red);
 			}
+			
+			//Get other player's inventory
+			
+			var request = CreateSteamRequest(baseTradeURL+"foreigninventory","POST");
+			
+			//POST Variables
+			byte[] data = Encoding.ASCII.GetBytes("sessionid="+Uri.UnescapeDataString(sessionid)+"&steamid="+otherSID.ConvertToUInt64()+"&appid=440&contextid=2");
+			
+			//Headers
+			request.ContentLength = data.Length;
+			
+			//Write it
+			Stream poot = request.GetRequestStream();
+			poot.Write(data,0,data.Length);
+			
+			HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
+			Stream str = resp.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			string res = reader.ReadToEnd();
+			
+			//Console.WriteLine(res);
+			
+			
 			
 			/*
 			Console.WriteLine("[TradeSystem] First Response Cookies: "+response.Cookies.Count);
@@ -88,7 +113,7 @@ namespace SteamBot
 			}
 			*/
 			
-			//poll ();
+			sendChat ("Welcome to the Trade Bot!");
 		
 			
 			//start refresh timer
@@ -174,26 +199,28 @@ namespace SteamBot
 						EventID = NumEvents-i;
 					}
 					
+					var person = (status.events[EventID].steamid==otherSID.ConvertToUInt64().ToString()) ? ("Them") : ("Me");
+					
 					//Print Statuses to console
 					switch(status.events[EventID].action){
 						
 					case 0:
-						Console.WriteLine("[TradeSystem] Added Item: "+status.events[EventID].assetid);
+						Console.WriteLine("[TradeSystem]["+person+"] Added Item: "+status.events[EventID].assetid);
 						break;
 					case 1:
-						Console.WriteLine("[TradeSystem] Removed Item: "+status.events[EventID].assetid);
+						Console.WriteLine("[TradeSystem]["+person+"] Removed Item: "+status.events[EventID].assetid);
 						break;
 					case 2:
-						Console.WriteLine("[TradeSystem] Other User is ready.");
+						Console.WriteLine("[TradeSystem]["+person+"] Other User is ready.");
 						break;
 					case 3:
-						Console.WriteLine("[TradeSystem] Other User is not ready.");
+						Console.WriteLine("[TradeSystem]["+person+"] Other User is not ready.");
 						break;
 					case 7:
-						Console.WriteLine("[TradeSystem] Chat: "+status.events[EventID].text);
+						Console.WriteLine("[TradeSystem]["+person+"] Chat: "+status.events[EventID].text);
 						break;
 					default:
-						Console.WriteLine ("[TradeSystem] Unknown Event ID: " + status.events[EventID].action);
+						Console.WriteLine ("[TradeSystem]["+person+"] Unknown Event ID: " + status.events[EventID].action);
 						break;
 						
 					}
@@ -205,6 +232,45 @@ namespace SteamBot
 			OtherReady = status.them.ready==1 ? true : false;
 			MeReady = status.me.ready==1 ? true : false;
 			
+			Console.WriteLine("Status: "+status.trade_status);
+			
+			if(status.trade_status==3){
+				
+				//Trade Cancelled
+				Console.WriteLine("[TradeSystem] Trade Cancelled.");
+				
+				//End Timer
+				Timer.Dispose ();
+				
+			}else if(status.trade_status==1){
+				
+				//Trade Complete
+				Console.WriteLine("[TradeSystem] Trade Complete!");
+				
+				//End Timer
+				Timer.Dispose ();
+				
+			}else if(status.trade_status==5){
+				
+				//Trade Failure
+				Console.WriteLine("[TradeSystem] Trade Failed!");
+				
+				//End Timer
+				Timer.Dispose ();
+				
+			}else if(status.trade_status==4){
+				
+				//Trade Timeout
+				Console.WriteLine("[TradeSystem] Other user timed out.");
+				
+				//End Timer
+				Timer.Dispose ();
+				
+			}else if(status.trade_status==0){
+				
+				//Just continue, this is normal.
+				
+			}
 			
 			//Update version
 			if (status.newversion) {
@@ -288,7 +354,7 @@ namespace SteamBot
 		
 		public bool success { get; set; }
 		
-		public int trade_status{ get; set; }
+		public long trade_status{ get; set; }
 		
 		public int version{ get; set; }
 		

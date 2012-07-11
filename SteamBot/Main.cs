@@ -19,6 +19,8 @@ namespace SteamBot
 		static List<SteamID> clients = new List<SteamID>();
 		public static CookieCollection WebCookies;
 		
+		public static string[] AllArgs;
+		
 		static TradeSystem trade;
 		
 		//Hacking around https
@@ -28,16 +30,25 @@ namespace SteamBot
 		}
 		
 		
-		static void printConsole(String line,ConsoleColor color = ConsoleColor.White)
+		static void printConsole(String line,ConsoleColor color = ConsoleColor.White, bool isDebug = false)
         {
-            System.Console.ForegroundColor = color;
-            System.Console.WriteLine(line);
+			System.Console.ForegroundColor = color;
+			if(isDebug){
+				if(FindArg( AllArgs, "-debug" )){
+					System.Console.WriteLine(line);
+				}	
+			}else{
+				System.Console.WriteLine(line);
+			}
             System.Console.ForegroundColor = ConsoleColor.White;
         }
 		
 		
 		public static void Main (string[] args)
 		{
+			
+			AllArgs = args;
+			
 			//Hacking around https
 			ServicePointManager.CertificatePolicy = new MainClass ();
 			
@@ -59,17 +70,7 @@ namespace SteamBot
 				
 				CallbackMsg msg = steamClient.WaitForCallback (true);
 				
-				//Print all callbacks
-				if(FindArg( args, "-debug" ))
-					printConsole (msg.ToString(),ConsoleColor.Blue);
-				
-				
-				//Login key
-				msg.Handle<SteamUser.LoginKeyCallback> (callback =>
-				{
-					printConsole("Login Key: "+callback.LoginKey,ConsoleColor.Cyan);
-				});
-				
+				printConsole (msg.ToString(),ConsoleColor.Blue,true);
 				
 				//Logged off
 				msg.Handle<SteamUser.LoggedOffCallback> (callback =>
@@ -149,14 +150,6 @@ namespace SteamBot
 					}
 					
         		});
-        		
-				
-				//Trade Callbacks
-				msg.Handle<SteamTrading.TradeRequestCallback>(call =>
-				{       
-					printConsole ("[Trade] Status: "+call.Status,ConsoleColor.Cyan);
-					
-				});
 				
 				//Trade Session Started
 				msg.Handle<SteamTrading.TradeStartSessionCallback>(call =>
