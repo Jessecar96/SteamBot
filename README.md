@@ -7,9 +7,10 @@ Completed:
 - Automated chat replies
 - auto accepting trades
 - auto accepting friend requests
+- Basic Steam Trading
 
-Added but not working:
-- Basic Trading (trade refreshing)
+Working on it:
+- Steam Trading
 
 Coming Soon:
 - Trading API
@@ -19,7 +20,15 @@ Coming Soon:
 
 ## Changelog ##
 
-Tue Jul 10, 11:58
+Wed Jul 11 4:11 AM
+- Steam Trading is working!
+- Began adding Trading API
+- Fixed trading request cookies
+- Added basic trade event logging
+- cleaned up more things
+
+
+Tue Jul 10, 11:58 PM
 - Updated readme
 - removed chat commands to get redy for api
 - Tried to fix steam trading, still not working
