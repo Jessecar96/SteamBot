@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DataServicesTestDatabaseModel" Alias="Self" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+  <EntityContainer Name="DataServicesTestDatabaseEntities">
+    <EntitySet Name="File" EntityType="DataServicesTestDatabaseModel.File" />
+    <EntitySet Name="Folder" EntityType="DataServicesTestDatabaseModel.Folder" />
+    <AssociationSet Name="FK_File_Folder" Association="DataServicesTestDatabaseModel.FK_File_Folder">
+      <End Role="Folder" EntitySet="Folder" />
+      <End Role="File" EntitySet="File" />
+    </AssociationSet>
+    <AssociationSet Name="FK_Folder_Folder" Association="DataServicesTestDatabaseModel.FK_Folder_Folder">
+      <End Role="Folder" EntitySet="Folder" />
+      <End Role="Folder1" EntitySet="Folder" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="File">
+    <Key>
+      <PropertyRef Name="FileId" />
+    </Key>
+    <Property Name="FileId" Type="Guid" Nullable="false" />
+    <Property Name="Name" Type="String" Nullable="false" MaxLength="200" Unicode="true" FixedLength="false" />
+    <Property Name="Description" Type="String" Nullable="false" MaxLength="200" Unicode="true" FixedLength="false" />
+    <Property Name="CreatedDate" Type="DateTime" Nullable="false" />
+    <NavigationProperty Name="Folder" Relationship="DataServicesTestDatabaseModel.FK_File_Folder" FromRole="File" ToRole="Folder" />
+  </EntityType>
+  <EntityType Name="Folder">
+    <Key>
+      <PropertyRef Name="FolderId" />
+    </Key>
+    <Property Name="FolderId" Type="Guid" Nullable="false" />
+    <Property Name="Name" Type="String" Nullable="false" MaxLength="200" Unicode="true" FixedLength="false" />
+    <Property Name="Description" Type="String" Nullable="false" MaxLength="200" Unicode="true" FixedLength="false" />
+    <Property Name="CreatedDate" Type="DateTime" Nullable="false" />
+    <NavigationProperty Name="Files" Relationship="DataServicesTestDatabaseModel.FK_File_Folder" FromRole="Folder" ToRole="File" />
+    <NavigationProperty Name="ChildFolders" Relationship="DataServicesTestDatabaseModel.FK_Folder_Folder" FromRole="Folder" ToRole="Folder1" />
+    <NavigationProperty Name="ParentFolder" Relationship="DataServicesTestDatabaseModel.FK_Folder_Folder" FromRole="Folder1" ToRole="Folder" />
+  </EntityType>
+  <Association Name="FK_File_Folder">
+    <End Role="Folder" Type="DataServicesTestDatabaseModel.Folder" Multiplicity="1" />
+    <End Role="File" Type="DataServicesTestDatabaseModel.File" Multiplicity="*" />
+  </Association>
+  <Association Name="FK_Folder_Folder">
+    <End Role="Folder" Type="DataServicesTestDatabaseModel.Folder" Multiplicity="0..1" />
+    <End Role="Folder1" Type="DataServicesTestDatabaseModel.Folder" Multiplicity="*" />
+  </Association>
+</Schema>

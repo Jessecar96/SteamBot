@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2008/09/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="DataServicesTestDatabaseModelStoreContainer" CdmEntityContainer="DataServicesTestDatabaseEntities">
+    <EntitySetMapping Name="File">
+      <EntityTypeMapping TypeName="IsTypeOf(DataServicesTestDatabaseModel.File)">
+        <MappingFragment StoreEntitySet="File">
+          <ScalarProperty Name="FileId" ColumnName="FileId" />
+          <ScalarProperty Name="Name" ColumnName="Name" />
+          <ScalarProperty Name="Description" ColumnName="Description" />
+          <ScalarProperty Name="CreatedDate" ColumnName="CreatedDate" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Folder">
+      <EntityTypeMapping TypeName="IsTypeOf(DataServicesTestDatabaseModel.Folder)">
+        <MappingFragment StoreEntitySet="Folder">
+          <ScalarProperty Name="FolderId" ColumnName="FolderId" />
+          <ScalarProperty Name="Name" ColumnName="Name" />
+          <ScalarProperty Name="Description" ColumnName="Description" />
+          <ScalarProperty Name="CreatedDate" ColumnName="CreatedDate" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <AssociationSetMapping Name="FK_File_Folder" TypeName="DataServicesTestDatabaseModel.FK_File_Folder" StoreEntitySet="File">
+      <EndProperty Name="Folder">
+        <ScalarProperty Name="FolderId" ColumnName="FolderId" />
+      </EndProperty>
+      <EndProperty Name="File">
+        <ScalarProperty Name="FileId" ColumnName="FileId" />
+      </EndProperty>
+    </AssociationSetMapping>
+    <AssociationSetMapping Name="FK_Folder_Folder" TypeName="DataServicesTestDatabaseModel.FK_Folder_Folder" StoreEntitySet="Folder">
+      <EndProperty Name="Folder">
+        <ScalarProperty Name="FolderId" ColumnName="ParentFolderId" />
+      </EndProperty>
+      <EndProperty Name="Folder1">
+        <ScalarProperty Name="FolderId" ColumnName="FolderId" />
+      </EndProperty>
+      <Condition ColumnName="ParentFolderId" IsNull="false" />
+    </AssociationSetMapping>
+  </EntityContainerMapping>
+</Mapping>

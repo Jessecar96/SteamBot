@@ -1,0 +1,11 @@
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\SteamBot.exe
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\SteamBot.pdb
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\SteamKit2.dll
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\protobuf-net.dll
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\Classless.Hasher.dll
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\SteamKit2.pdb
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\protobuf-net.pdb
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\bin\Debug\protobuf-net.xml
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\obj\x86\Debug\SteamBot.exe
+C:\Users\Jesse\documents\visual studio 2010\Projects\SteamBot\SteamBot\obj\x86\Debug\SteamBot.pdb

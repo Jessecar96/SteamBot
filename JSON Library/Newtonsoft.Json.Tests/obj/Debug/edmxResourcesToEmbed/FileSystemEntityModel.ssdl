@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="DataServicesTestDatabaseModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2005" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
+  <EntityContainer Name="DataServicesTestDatabaseModelStoreContainer">
+    <EntitySet Name="File" EntityType="DataServicesTestDatabaseModel.Store.File" store:Type="Tables" Schema="dbo" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+    <EntitySet Name="Folder" EntityType="DataServicesTestDatabaseModel.Store.Folder" store:Type="Tables" Schema="dbo" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" />
+    <AssociationSet Name="FK_File_Folder" Association="DataServicesTestDatabaseModel.Store.FK_File_Folder">
+      <End Role="Folder" EntitySet="Folder" />
+      <End Role="File" EntitySet="File" />
+    </AssociationSet>
+    <AssociationSet Name="FK_Folder_Folder" Association="DataServicesTestDatabaseModel.Store.FK_Folder_Folder">
+      <End Role="Folder" EntitySet="Folder" />
+      <End Role="Folder1" EntitySet="Folder" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="File">
+    <Key>
+      <PropertyRef Name="FileId" />
+    </Key>
+    <Property Name="FileId" Type="uniqueidentifier" Nullable="false" />
+    <Property Name="Name" Type="nvarchar" Nullable="false" MaxLength="200" />
+    <Property Name="Description" Type="nvarchar" Nullable="false" MaxLength="200" />
+    <Property Name="CreatedDate" Type="datetime" Nullable="false" />
+    <Property Name="FolderId" Type="uniqueidentifier" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Folder">
+    <Key>
+      <PropertyRef Name="FolderId" />
+    </Key>
+    <Property Name="FolderId" Type="uniqueidentifier" Nullable="false" />
+    <Property Name="Name" Type="nvarchar" Nullable="false" MaxLength="200" />
+    <Property Name="Description" Type="nvarchar" Nullable="false" MaxLength="200" />
+    <Property Name="CreatedDate" Type="datetime" Nullable="false" />
+    <Property Name="ParentFolderId" Type="uniqueidentifier" />
+  </EntityType>
+  <Association Name="FK_File_Folder">
+    <End Role="Folder" Type="DataServicesTestDatabaseModel.Store.Folder" Multiplicity="1" />
+    <End Role="File" Type="DataServicesTestDatabaseModel.Store.File" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Folder">
+        <PropertyRef Name="FolderId" />
+      </Principal>
+      <Dependent Role="File">
+        <PropertyRef Name="FolderId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_Folder_Folder">
+    <End Role="Folder" Type="DataServicesTestDatabaseModel.Store.Folder" Multiplicity="0..1" />
+    <End Role="Folder1" Type="DataServicesTestDatabaseModel.Store.Folder" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Folder">
+        <PropertyRef Name="FolderId" />
+      </Principal>
+      <Dependent Role="Folder1">
+        <PropertyRef Name="ParentFolderId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>
