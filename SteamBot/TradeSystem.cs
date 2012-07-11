@@ -7,6 +7,9 @@ using SteamKit2;
 using System.Collections.Specialized;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Reflection;
+using System.Collections;
 
 namespace SteamBot
 {
@@ -33,6 +36,10 @@ namespace SteamBot
 		//private
 		private int NumEvents=0;
 		private int NumLoops=0;
+		
+		//Inventories
+		dynamic OtherItems;
+		dynamic MyItems;
 		
 		//Cookies
 		public CookieCollection WebCookies;
@@ -102,8 +109,25 @@ namespace SteamBot
 			StreamReader reader = new StreamReader(str);
 			string res = reader.ReadToEnd();
 			
-			//Console.WriteLine(res);
+			//OtherInv = JsonConvert.DeserializeObject<UserInventory>(res);
+			//rgItems[] = 
 			
+			var root = JsonConvert.DeserializeObject<JObject>(res);
+			//rgItems[] OtherItems = root["rgInventory"].ToObject<rgItems[]>();
+			
+			Console.WriteLine("Inventory Status: "+root["success"]);
+			//Console.WriteLine(root["rgInventory"]
+			OtherItems = JObject.Parse(root["rgInventory"].ToString());
+			
+			
+			
+			foreach(dynamic i in OtherItems){
+				
+				Console.WriteLine("ITEM: ");
+				
+			}
+			
+			//Console.WriteLine("[TradeSystem] Other User Items: "+OtherItems.Count());
 			
 			
 			/*

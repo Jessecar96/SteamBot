@@ -39,12 +39,18 @@
     <Reference Include="System.Numerics" />
     <Reference Include="System.Management" />
     <Reference Include="System.Web" />
+    <Reference Include="MonoDevelop.CSharpBinding, Version=2.6.0.0, Culture=neutral">
+      <Private>False</Private>
+      <Package>monodevelop-core-addins</Package>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="SteamWeb.cs" />
     <Compile Include="TradeSystem.cs" />
+    <Compile Include="InvBackpack.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
