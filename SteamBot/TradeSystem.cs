@@ -119,13 +119,17 @@ namespace SteamBot
 			//Console.WriteLine(root["rgInventory"]
 			OtherItems = JObject.Parse(root["rgInventory"].ToString());
 			
+			//Debug
 			
-			
+			/*
 			foreach(dynamic i in OtherItems){
 				
-				Console.WriteLine("ITEM: ");
+				Console.WriteLine("ITEM: "+i);
 				
 			}
+			*/
+			
+			//Again
 			
 			//Console.WriteLine("[TradeSystem] Other User Items: "+OtherItems.Count());
 			
@@ -256,7 +260,7 @@ namespace SteamBot
 			OtherReady = status.them.ready==1 ? true : false;
 			MeReady = status.me.ready==1 ? true : false;
 			
-			Console.WriteLine("Status: "+status.trade_status);
+			//Console.WriteLine("Status: "+status.trade_status);
 			
 			if(status.trade_status==3){
 				

@@ -146,7 +146,7 @@ namespace SteamBot
 						
 						//Set community status
 						steamFriends.SetPersonaName("TF2 TradeBOT Alpha");
-						steamFriends.SetPersonaState(EPersonaState.Online);
+						steamFriends.SetPersonaState(EPersonaState.LookingToTrade);
 					}
 					
         		});
