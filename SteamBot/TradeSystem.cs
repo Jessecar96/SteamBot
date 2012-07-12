@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Collections;
+using System.Diagnostics;
 
 namespace SteamBot
 {
@@ -113,20 +114,31 @@ namespace SteamBot
 			//rgItems[] = 
 			
 			var root = JsonConvert.DeserializeObject<JObject>(res);
-			//rgItems[] OtherItems = root["rgInventory"].ToObject<rgItems[]>();
+			dynamic OtherItems = root["rgInventory"].ToObject<JObject>();
+		
+			Debug.WriteLine(root);
+			Debug.WriteLine(OtherItems);
 			
 			Console.WriteLine("Inventory Status: "+root["success"]);
+			
+			foreach(dynamic i in OtherItems){
+				
+				Debug.WriteLine("ITEM: "+i.id);
+				
+			}
+			
+			//dumpLocals();
+			
+			/*
 			//Console.WriteLine(root["rgInventory"]
 			OtherItems = JObject.Parse(root["rgInventory"].ToString());
 			
 			//Debug
 			
-			/*
-			foreach(dynamic i in OtherItems){
-				
-				Console.WriteLine("ITEM: "+i);
-				
-			}
+			var test = JsonConvert.DeserializeObject<rgItems>(OtherItems);
+			
+			
+			
 			*/
 			
 			//Again
@@ -367,6 +379,22 @@ namespace SteamBot
 			
 
             return webRequest;
+		}
+		
+		private void dumpLocals(){
+			
+			System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
+	        System.Diagnostics.StackFrame frame = trace.GetFrame(0);
+	        MethodBase method = frame.GetMethod();
+	        MethodBody methodBody = method.GetMethodBody();
+	        if (methodBody != null)
+	        {
+	            foreach (var local in methodBody.LocalVariables)
+	            {
+	                Console.WriteLine(local);
+	            }
+	        }
+			
 		}
 	}
 	

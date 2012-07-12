@@ -14,14 +14,37 @@ namespace SteamBot
 	class MainClass : ICertificatePolicy
 	{
 		
-		static SteamFriends steamFriends;
+		//SteamRE Variables
+		public static SteamFriends steamFriends;
 		public static SteamClient steamClient;
-		static List<SteamID> clients = new List<SteamID>();
-		public static CookieCollection WebCookies;
+		public static SteamTrading steamTrade;
 		
+		//Trading Variables
+		public static CookieCollection WebCookies;
+		public static TradeSystem trade;
+		
+		//Other Variables
 		public static string[] AllArgs;
 		
-		static TradeSystem trade;
+		
+		
+		#region SteamBot Configuration
+		/**
+		 * 
+		 * SteamBot Configuration
+		 * Modify this section to your needs
+		 * 
+		 */
+		
+		//Name of the Bot
+		public static string BotPersonaName = "[Ste\namBot] Ste\namBot Test Bot";
+		
+		//Default Persona State
+		public static EPersonaState BotPersonaState = EPersonaState.LookingToTrade;
+		
+		#endregion
+		
+		
 		
 		//Hacking around https
 		public bool CheckValidationResult (ServicePoint sp, X509Certificate certificate, WebRequest request, int error)
@@ -46,7 +69,7 @@ namespace SteamBot
 		
 		public static void Main (string[] args)
 		{
-			
+			#region SteamRE Init
 			AllArgs = args;
 			
 			//Hacking around https
@@ -58,11 +81,12 @@ namespace SteamBot
 			
 			
 			steamClient = new SteamClient ();
-			SteamTrading steamTrade = steamClient.GetHandler<SteamTrading>();
+			steamTrade = steamClient.GetHandler<SteamTrading>();
 			SteamUser steamUser = steamClient.GetHandler<SteamUser> ();
 			steamFriends = steamClient.GetHandler<SteamFriends>();
 			
 			steamClient.Connect ();
+			#endregion
 			
 			
 			while (true) {
@@ -70,35 +94,43 @@ namespace SteamBot
 				
 				CallbackMsg msg = steamClient.WaitForCallback (true);
 				
+				//Console Debug
 				printConsole (msg.ToString(),ConsoleColor.Blue,true);
 				
-				//Logged off
+				
+				#region Logged Off Handler
 				msg.Handle<SteamUser.LoggedOffCallback> (callback =>
 				{
 					printConsole("Logged Off: "+callback.Result,ConsoleColor.Red);
 				});
+				#endregion
 				
 				
-				//Disconnect from steam
+				#region Steam Disconnect Handler
 				msg.Handle<SteamClient.DisconnectedCallback> (callback =>
 				{
 					printConsole("Disconnected.",ConsoleColor.Red);
 				});
+				#endregion
 				
 				
-				//Steam Connected
+				#region Steam Connect Handler
+				
+				/**
+				 * --Steam Connection Callback
+				 * 
+				 * It's not needed to modify this section
+				 */
+				
 				msg.Handle<SteamClient.ConnectedCallback> (callback =>
 				{
-					//Callback
+					//Print Callback
 					printConsole("Steam Connected Callback: "+callback.Result, ConsoleColor.Cyan);
 					
 					//Validate Result
 					if(callback.Result==EResult.OK){
 						
-						
-						
-						//Steam Details
-						
+						//Get Steam Login Details
 						printConsole("Username: ",ConsoleColor.Cyan);
 						string user = Console.ReadLine();
 						printConsole("Password: ",ConsoleColor.Cyan);
@@ -106,11 +138,9 @@ namespace SteamBot
 						string pass = Console.ReadLine();
 						Console.ForegroundColor = ConsoleColor.White;
 						
-						
-						//Console
 						printConsole("Getting Web Cookies...",ConsoleColor.Yellow);
 						
-						//Web Cookies
+						//Get Web Cookies
 						SteamWeb web = new SteamWeb();
 						WebCookies = web.DoLogin (user,pass);
 						
@@ -132,8 +162,10 @@ namespace SteamBot
 					}
 					
 				});
+				#endregion
 				
 				
+				#region Steam Login Handler
 				//Logged in (or not)
 				msg.Handle<SteamUser.LoggedOnCallback>( callback =>
         		{
@@ -145,13 +177,20 @@ namespace SteamBot
 						printConsole("Successfulyl Logged In!\nWelcome "+steamUser.SteamID,ConsoleColor.Green);
 						
 						//Set community status
-						steamFriends.SetPersonaName("TF2 TradeBOT Alpha");
-						steamFriends.SetPersonaState(EPersonaState.LookingToTrade);
+						steamFriends.SetPersonaName(BotPersonaName);
+						steamFriends.SetPersonaState(BotPersonaState);
 					}
 					
         		});
+				#endregion
 				
-				//Trade Session Started
+				
+				#region Steam Trade Start
+				/**
+				 * 
+				 * Steam Trading Handler
+				 *  
+				 */
 				msg.Handle<SteamTrading.TradeStartSessionCallback>(call =>
 				{
 					
@@ -160,8 +199,11 @@ namespace SteamBot
 					trade.initTrade();
 					
 				});
+				#endregion
 				
-				//Trade Requested
+				
+				#region Trade Requested Handler
+				//Don't modify this
 				msg.Handle<SteamTrading.TradeProposedCallback>( thing =>
 				{
 					//Trade Callback
@@ -171,10 +213,15 @@ namespace SteamBot
 					steamTrade.RequestTrade(thing.Other);
 					
 				});
+				#endregion
 				
 				
-				
-				//Chat Callback
+				#region Steam Chat Handler
+				/**
+				 * 
+				 * Steam Chat Handler
+				 * 
+				 */
 				msg.Handle<SteamFriends.FriendMsgCallback>(callback =>
                 {
 					//Type (emote or chat)
@@ -195,21 +242,17 @@ namespace SteamBot
 					}
 
                 });
+				#endregion
 				
 		
 			} //end while loop
 			
 			
-		} //end method
+		} //end Main method
 		
-		public static int getIndex(SteamID sid)
-        {
-            for(int i=0;i<clients.Count();i++)
-                if (clients[i] == sid)
-                    return i;
-            return -1;
-        }
 		
+		#region Misc Methods
+		//Don't modify this
 		static bool FindArg( string[] args, string arg )
         {
             foreach ( string potentialArg in args )
@@ -219,6 +262,8 @@ namespace SteamBot
             }
             return false;
 		}
+		
+		#endregion
 
 		
 	} //end class
