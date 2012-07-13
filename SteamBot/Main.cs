@@ -200,6 +200,14 @@ namespace SteamBot
 					
 				});
 				#endregion
+
+				msg.Handle<SteamTrading.TradeRequestCallback>(call =>
+				{
+
+					Console.WriteLine("ST: "+call.Status+"  |  RS: "+call.Response);
+
+				});
+
 				
 				
 				#region Trade Requested Handler
