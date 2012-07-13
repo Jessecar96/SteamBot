@@ -80,79 +80,40 @@ namespace SteamBot
 			
 			printConsole("[TradeSystem] Init Trade with "+otherSID,ConsoleColor.DarkGreen);
 			
-			//First Web Request
+
 			try{
 				webRequestStatus = CreateSteamRequest (baseTradeURL);
 			
 				HttpWebResponse response = webRequestStatus.GetResponse() as HttpWebResponse;
 				StreamReader stream = new StreamReader(response.GetResponseStream());
-			//string resp = stream.ReadToEnd();
+
 			}catch(Exception){
 				printConsole ("[TradeSystem][ERROR] Failed to connect to Steam!",ConsoleColor.Red);
 			}
+
 			
 			//Get other player's inventory
 			
-			var request = CreateSteamRequest(baseTradeURL+"foreigninventory","POST");
-			
-			//POST Variables
-			byte[] data = Encoding.ASCII.GetBytes("sessionid="+Uri.UnescapeDataString(sessionid)+"&steamid="+otherSID.ConvertToUInt64()+"&appid=440&contextid=2");
-			
-			//Headers
-			request.ContentLength = data.Length;
-			
-			//Write it
-			Stream poot = request.GetRequestStream();
-			poot.Write(data,0,data.Length);
-			
-			HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
-			Stream str = resp.GetResponseStream();
-			StreamReader reader = new StreamReader(str);
-			string res = reader.ReadToEnd();
-			
-			//OtherInv = JsonConvert.DeserializeObject<UserInventory>(res);
-			//rgItems[] = 
-			
-			var root = JsonConvert.DeserializeObject<JObject>(res);
-			dynamic OtherItems = root["rgInventory"].ToObject<JObject>();
-		
-			Debug.WriteLine(root);
-			Debug.WriteLine(OtherItems);
-			
-			Console.WriteLine("Inventory Status: "+root["success"]);
-			
-			foreach(dynamic i in OtherItems){
-				
-				Debug.WriteLine("ITEM: "+i.id);
-				
-			}
-			
-			//dumpLocals();
-			
+
+
+
+			OtherItems = getInventory(otherSID);
+			Console.WriteLine("Other Player's Inventory Status: " + OtherItems.success);
+
+			MyItems = getInventory(meSID);
+			Console.WriteLine("My Inventory Status: " + MyItems.success);
+
+
 			/*
-			//Console.WriteLine(root["rgInventory"]
-			OtherItems = JObject.Parse(root["rgInventory"].ToString());
-			
-			//Debug
-			
-			var test = JsonConvert.DeserializeObject<rgItems>(OtherItems);
-			
-			
-			
-			*/
-			
-			//Again
-			
-			//Console.WriteLine("[TradeSystem] Other User Items: "+OtherItems.Count());
-			
-			
-			/*
-			Console.WriteLine("[TradeSystem] First Response Cookies: "+response.Cookies.Count);
-			for(int i=0;i<response.Cookies.Count;i++){
-				Console.WriteLine("[TradeSystem][Cookies] Cookies["+i+"] = "+response.Cookies[i]);
+			 * How to Loop through the inventory:
+			foreach(var child in OtherItems.rgInventory.Children())
+			{
+			    Console.WriteLine("Item ID: {0}", child.First.id);
 			}
 			*/
-			
+
+
+			//Intro
 			sendChat ("Welcome to the Trade Bot!");
 		
 			
@@ -165,9 +126,7 @@ namespace SteamBot
 		
 		private void TimerCallback (object state)
 		{
-			//Timer.Dispose (); <-- ends loop
-			
-			
+			//Refresh the Trade
 			poll ();
 			
 		}
@@ -202,6 +161,23 @@ namespace SteamBot
 			
 			
 		}
+
+		private dynamic getInventory (SteamID steamid)
+		{
+
+			var request = CreateSteamRequest(String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",steamid.ConvertToUInt64()),"GET");
+			
+			HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
+			Stream str = resp.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			string res = reader.ReadToEnd();
+
+			dynamic json = JsonConvert.DeserializeObject(res);
+
+			return json;
+
+		}
+
 		
 		/**
 		 * 
@@ -366,16 +342,21 @@ namespace SteamBot
 			//webRequest
 			
 			//The Correct headers :D
+			webRequest.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+			webRequest.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
 			webRequest.Host = "steamcommunity.com";
+			webRequest.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
+			webRequest.Referer = "http://steamcommunity.com/trade/1";
+
 			webRequest.Headers.Add("Origin","http://steamcommunity.com");
 			webRequest.Headers.Add("X-Requested-With","XMLHttpRequest");
 			webRequest.Headers.Add("X-Prototype-Version","1.7");
-			webRequest.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
-			webRequest.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-			webRequest.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
-			webRequest.Referer = "http://steamcommunity.com/trade/1";
-            webRequest.CookieContainer = new CookieContainer();
-			webRequest.CookieContainer.Add(WebCookies);
+
+			CookieContainer cookies = new CookieContainer();
+			cookies.Add (new Cookie("sessionid",WebCookies["sessionid"].Value,String.Empty,STEAM_COMMUNITY_DOMAIN));
+			cookies.Add (new Cookie("steamLogin",WebCookies["steamLogin"].Value,String.Empty,STEAM_COMMUNITY_DOMAIN));
+
+			webRequest.CookieContainer = cookies;
 			
 
             return webRequest;

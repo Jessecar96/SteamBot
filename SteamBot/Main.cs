@@ -37,7 +37,7 @@ namespace SteamBot
 		 */
 		
 		//Name of the Bot
-		public static string BotPersonaName = "[Ste\namBot] Ste\namBot Test Bot";
+		public static string BotPersonaName = "[StǝamBot] Test Bot 1";
 		
 		//Default Persona State
 		public static EPersonaState BotPersonaState = EPersonaState.LookingToTrade;
