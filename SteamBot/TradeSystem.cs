@@ -18,14 +18,13 @@ namespace SteamBot
 	{
 		public static String STEAM_COMMUNITY_DOMAIN = "steamcommunity.com";
 		public static String STEAM_TRADE_URL = "http://steamcommunity.com/trade/{0}/";
-		WebRequest webRequestStatus;
-		string baseTradeURL;
+		string baseTradeURL=null;
 		public SteamID meSID;
 		public SteamID otherSID;
 		public string steamLogin;
 		public int version;
 		public string sessionid;
-		System.Threading.Timer Timer;
+		Timer pollTimer;
 		public int logpos;
 		
 		public int TradeStatus;
@@ -35,8 +34,9 @@ namespace SteamBot
 		public bool MeReady = false;
 		
 		//private
-		private int NumEvents=0;
-		private int NumLoops=0;
+		private int NumEvents;
+		private int NumLoops;
+		private int exc;
 		
 		//Inventories
 		dynamic OtherItems;
@@ -53,55 +53,88 @@ namespace SteamBot
             System.Console.ForegroundColor = ConsoleColor.White;
         }
 		
-		public TradeSystem (SteamID me, SteamID other, CookieCollection cookies)
+		public TradeSystem ()
 		{
-			this.meSID = me;
-			this.otherSID = other;
-			this.version = 1;
-			this.logpos = 0;
-			this.WebCookies = cookies;
-			this.sessionid = cookies[0].Value;
+
+		}
+		
+		public void initTrade (SteamID me, SteamID other, CookieCollection cookies)
+		{
+			//Cleanup again
+			cleanTrade();
+
+			//Setup
+			meSID = me;
+			otherSID = other;
+			version = 1;
+			logpos = 0;
+			WebCookies = cookies;
+			sessionid = cookies[0].Value;
 			
 			baseTradeURL = String.Format (STEAM_TRADE_URL, otherSID.ConvertToUInt64 ());
 			
-			//More Cookies
-			cookies.Add(new Cookie("bCompletedTradeTutorial","true",null,STEAM_COMMUNITY_DOMAIN));
-			cookies.Add(new Cookie("strTradeLastInventoryContext","440",null,STEAM_COMMUNITY_DOMAIN));
-			cookies.Add(new Cookie("Steam_Language","english",null,STEAM_COMMUNITY_DOMAIN));
-			cookies.Add(new Cookie("community_game_list_scroll_size","all",null,STEAM_COMMUNITY_DOMAIN));
-			cookies.Add(new Cookie("strInventoryLastContext","99900_771150",null,STEAM_COMMUNITY_DOMAIN));
-			cookies.Add(new Cookie("timezoneOffset","-14400,0",null,STEAM_COMMUNITY_DOMAIN));
-			
 			this.WebCookies = cookies;
-		}
-		
-		public void initTrade ()
-		{
+
+
 			
-			printConsole("[TradeSystem] Init Trade with "+otherSID,ConsoleColor.DarkGreen);
+			printConsole ("[TradeSystem] Init Trade with " + otherSID, ConsoleColor.DarkGreen);
 			
 
-			try{
-				webRequestStatus = CreateSteamRequest (baseTradeURL);
-			
-				HttpWebResponse response = webRequestStatus.GetResponse() as HttpWebResponse;
-				StreamReader stream = new StreamReader(response.GetResponseStream());
+			try {
 
-			}catch(Exception){
-				printConsole ("[TradeSystem][ERROR] Failed to connect to Steam!",ConsoleColor.Red);
+				//poll? poll.
+				poll ();
+
+			} catch (Exception) {
+				printConsole ("[TradeSystem][ERROR] Failed to connect to Steam!", ConsoleColor.Red);
+				//Send a message on steam
+				MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,"Sorry, There was a problem connecting to Steam Trading.  Try again in a few minutes.");
+				cleanTrade();
 			}
 
+
+
 			
-			//Get other player's inventory
-			
 
+			printConsole ("[TradeSystem] Getting Player Inventories...", ConsoleColor.Yellow);
 
+			int good = 0;
 
-			OtherItems = getInventory(otherSID);
-			Console.WriteLine("Other Player's Inventory Status: " + OtherItems.success);
+			OtherItems = getInventory (otherSID);
+			if (OtherItems.success=="true") {
+				printConsole ("[TradeSystem] Got Other player's inventory!", ConsoleColor.Green); 
+				good++;
+			} else {
 
-			MyItems = getInventory(meSID);
-			Console.WriteLine("My Inventory Status: " + MyItems.success);
+			}
+				
+
+			MyItems = getInventory (meSID);
+			if (MyItems.success=="true") {
+				printConsole ("[TradeSystem] Got the bot's inventory!", ConsoleColor.Green); 
+				good++;
+			}
+
+			if (good == 2) {
+				printConsole ("[TradeSystem] All is a go! Starting to Poll!", ConsoleColor.Green);
+
+				//Timer
+				pollTimer = new System.Threading.Timer (TimerCallback, null, 0, 1000);
+
+				//Send MOTD
+				sendChat ("Welcome to SteamBot!");
+			} else {
+				printConsole ("[TradeSystem][ERROR] status was not good! ABORT ABORT ABORT!", ConsoleColor.Red);
+
+				//Poll once to send an error message
+				poll ();
+
+				//send error
+				sendChat("SteamBot has an error!  Please try trading the bot again in a few minutes.  This is Steam's fault NOT mine.");
+
+				//Poll again so they can read it
+				poll ();
+			}
 
 
 			/*
@@ -111,17 +144,6 @@ namespace SteamBot
 			    Console.WriteLine("Item ID: {0}", child.First.id);
 			}
 			*/
-
-
-			//Intro
-			sendChat ("Welcome to the Trade Bot!");
-		
-			
-			//start refresh timer
-			Timer = new System.Threading.Timer (TimerCallback, null, 0, 1000);
-			
-			
-			
 		}
 		
 		private void TimerCallback (object state)
@@ -152,8 +174,6 @@ namespace SteamBot
 			Stream str = response.GetResponseStream();
 			StreamReader reader = new StreamReader(str);
 			res = reader.ReadToEnd();
-			
-			//Console.WriteLine(res);
 			
 			
 			StatusObj statusJSON = JsonConvert.DeserializeObject<StatusObj>(res);
@@ -193,111 +213,164 @@ namespace SteamBot
 		 * 7 = Chat (message = "text")
 		 * 
 		 */
-		
+
 		public void poll ()
 		{
 			
 			StatusObj status = getStatus ();
 			
-			//Events
-			if(NumEvents!=status.events.Length){
-				
-				NumLoops = status.events.Length-NumEvents;
-				NumEvents = status.events.Length;
-				
-				for(int i=NumLoops;i>0;i--){
+			try{
+				if(NumEvents!=status.events.Length){
 					
-					int EventID;
+					NumLoops = status.events.Length-NumEvents;
+					NumEvents = status.events.Length;
 					
-					if(NumLoops==1){
-						EventID = NumEvents-1;
-					}else{
-						EventID = NumEvents-i;
+					for(int i=NumLoops;i>0;i--){
+						
+						int EventID;
+						
+						if(NumLoops==1){
+							EventID = NumEvents-1;
+						}else{
+							EventID = NumEvents-i;
+						}
+
+						bool isBot = status.events[EventID].steamid!=otherSID.ConvertToUInt64().ToString();
+						
+						var person = (status.events[EventID].steamid==otherSID.ConvertToUInt64().ToString()) ? ("Them") : ("Me");
+						
+						//Print Statuses to console
+						switch(status.events[EventID].action){
+							
+						case 0:
+							Console.WriteLine("[TradeSystem]["+person+"] Added Item: "+status.events[EventID].assetid);
+							break;
+						case 1:
+							Console.WriteLine("[TradeSystem]["+person+"] Removed Item: "+status.events[EventID].assetid);
+							break;
+						case 2:
+							Console.WriteLine("[TradeSystem]["+person+"] set ready.");
+							if(!isBot){
+								Console.WriteLine("[TradeSystem] Accepting Trade.");
+								setReady(true);
+							}
+							break;
+						case 3:
+							Console.WriteLine("[TradeSystem]["+person+"] set not ready.");
+							if(!isBot){
+								Console.WriteLine("[TradeSystem] Refusing Trade.");
+								setReady(false);
+							}
+							break;
+						case 4:
+							Console.WriteLine("[TradeSystem]["+person+"] Accepting");
+							if(!isBot){
+								//Accept It
+								dynamic js = acceptTrade();
+								if(js.success==true){
+									printConsole("[TradeSystem] Trade was successfull! Resetting System...",ConsoleColor.Green);
+								}else{
+									printConsole("[TradeSystem] Poo! Trade might of Failed :C Well, resetting anyway...",ConsoleColor.Red);
+								}
+								cleanTrade();
+							}
+							break;
+						case 7:
+							Console.WriteLine("[TradeSystem]["+person+"] Chat: "+status.events[EventID].text);
+							if(!isBot){
+								if(status.events[EventID].text=="/dump"){
+									doAdump();
+
+								}
+							}
+							break;
+						default:
+							Console.WriteLine ("[TradeSystem]["+person+"] Unknown Event ID: " + status.events[EventID].action);
+							break;
+
+
+							
+						}
 					}
 					
-					var person = (status.events[EventID].steamid==otherSID.ConvertToUInt64().ToString()) ? ("Them") : ("Me");
-					
-					//Print Statuses to console
-					switch(status.events[EventID].action){
-						
-					case 0:
-						Console.WriteLine("[TradeSystem]["+person+"] Added Item: "+status.events[EventID].assetid);
-						break;
-					case 1:
-						Console.WriteLine("[TradeSystem]["+person+"] Removed Item: "+status.events[EventID].assetid);
-						break;
-					case 2:
-						Console.WriteLine("[TradeSystem]["+person+"] Other User is ready.");
-						break;
-					case 3:
-						Console.WriteLine("[TradeSystem]["+person+"] Other User is not ready.");
-						break;
-					case 7:
-						Console.WriteLine("[TradeSystem]["+person+"] Chat: "+status.events[EventID].text);
-						break;
-					default:
-						Console.WriteLine ("[TradeSystem]["+person+"] Unknown Event ID: " + status.events[EventID].action);
-						break;
-						
-					}
 				}
-				
+			}catch(Exception){
+
+				exc++;
+				printConsole("Exception while getting status.  Count: "+exc,ConsoleColor.DarkYellow);
+				if(exc==5){
+					printConsole("[TradeSystem] 5th Exception, Disconnecting.",ConsoleColor.Red);
+					cleanTrade();
+					exc=0;
+				}
+				return;
+
 			}
 			
 			//Update Local Variables
 			OtherReady = status.them.ready==1 ? true : false;
 			MeReady = status.me.ready==1 ? true : false;
-			
-			//Console.WriteLine("Status: "+status.trade_status);
-			
-			if(status.trade_status==3){
-				
-				//Trade Cancelled
-				Console.WriteLine("[TradeSystem] Trade Cancelled.");
-				
-				//End Timer
-				Timer.Dispose ();
-				
-			}else if(status.trade_status==1){
-				
-				//Trade Complete
-				Console.WriteLine("[TradeSystem] Trade Complete!");
-				
-				//End Timer
-				Timer.Dispose ();
-				
-			}else if(status.trade_status==5){
-				
-				//Trade Failure
-				Console.WriteLine("[TradeSystem] Trade Failed!");
-				
-				//End Timer
-				Timer.Dispose ();
-				
-			}else if(status.trade_status==4){
-				
-				//Trade Timeout
-				Console.WriteLine("[TradeSystem] Other user timed out.");
-				
-				//End Timer
-				Timer.Dispose ();
-				
-			}else if(status.trade_status==0){
-				
-				//Just continue, this is normal.
-				
-			}
+
 			
 			//Update version
 			if (status.newversion) {
-				//Console.WriteLine ("[TradeSystem] Updated Version: " + status.version);
-				//sendChat("Version Updated to "+version);
 				this.version = status.version;
 				this.logpos = status.logpos;
 			}
 			
 		}
-		
+
+		public void doAdump()
+		{
+
+			int slot = 0;
+
+			foreach(var child in MyItems.rgInventory.Children())
+			{
+				printConsole ("[TradeSystem][DUMP] Adding Item ID "+child.First.id+" to slot "+slot,ConsoleColor.Cyan);
+				addItem(child.First.id.ToString(),slot);
+				poll ();
+				Thread.Sleep (200);
+				slot++;
+			}
+
+			printConsole ("[TradeSystem][DUMP] Item Dump Finished.",ConsoleColor.Cyan);
+			sendChat("Done Dumping.");
+
+
+		}
+
+		public void cleanTrade ()
+		{
+			//Cleanup!
+			try {
+				//End Polling
+				pollTimer.Dispose ();
+			} catch (Exception) {
+			}
+
+			//Clean ALL THE VARIABLES
+			this.baseTradeURL = null;
+			this.exc = 0;
+			this.logpos = 0;
+			this.MeReady = false;
+			this.meSID = null;
+			this.MyItems = null;
+			this.NumEvents = 0;
+			this.NumLoops = 0;
+			this.OtherItems = null;
+			this.OtherReady = false;
+			this.otherSID = null;
+			this.pollTimer = null;
+			this.sessionid = null;
+			this.steamLogin = null;
+			this.TradeStatus = 0;
+			this.version = 0;
+			this.WebCookies = null;
+
+
+
+		}
 		
 		public string sendChat(string msg){
 			/*
@@ -328,6 +401,79 @@ namespace SteamBot
 			
 			return res;
 			
+		}
+
+
+		public dynamic acceptTrade ()
+		{
+
+			//toggleready
+			string res=null;
+
+			byte[] data = Encoding.ASCII.GetBytes("sessionid="+Uri.UnescapeDataString(sessionid)+"&version="+Uri.EscapeDataString(""+version));
+
+			var req = CreateSteamRequest(baseTradeURL+"confirm","POST");
+			
+			req.ContentLength = data.Length;
+
+			Stream poot = req.GetRequestStream();
+			poot.Write(data,0,data.Length);
+			
+			HttpWebResponse response = req.GetResponse() as HttpWebResponse;
+			Stream str = response.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			res = reader.ReadToEnd();
+
+			dynamic json = JsonConvert.DeserializeObject(res);
+			return json;
+
+		}
+
+
+		public void addItem (string itemid, int slot)
+		{
+			//toggleready
+			string res=null;
+
+			byte[] data = Encoding.ASCII.GetBytes(String.Format("sessionid={0}&appid=440&contextid=2&itemid={1}&slot={2}",Uri.UnescapeDataString(sessionid),itemid,slot));
+
+			var req = CreateSteamRequest(baseTradeURL+"additem","POST");
+			
+			req.ContentLength = data.Length;
+			
+			Stream poot = req.GetRequestStream();
+			poot.Write(data,0,data.Length);
+			
+			HttpWebResponse response = req.GetResponse() as HttpWebResponse;
+			Stream str = response.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			res = reader.ReadToEnd();
+
+
+		}
+
+
+		public void setReady (bool ready)
+		{
+			//toggleready
+			string res=null;
+
+			string red = ready ? "true" : "false";
+
+			byte[] data = Encoding.ASCII.GetBytes("sessionid="+Uri.UnescapeDataString(sessionid)+"&ready="+Uri.EscapeDataString(red)+"&version="+Uri.EscapeDataString(""+version));
+
+			var req = CreateSteamRequest(baseTradeURL+"toggleready","POST");
+			
+			req.ContentLength = data.Length;
+			
+			Stream poot = req.GetRequestStream();
+			poot.Write(data,0,data.Length);
+			
+			HttpWebResponse response = req.GetResponse() as HttpWebResponse;
+			Stream str = response.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			res = reader.ReadToEnd();
+
 		}
 		
 		
@@ -360,22 +506,6 @@ namespace SteamBot
 			
 
             return webRequest;
-		}
-		
-		private void dumpLocals(){
-			
-			System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
-	        System.Diagnostics.StackFrame frame = trace.GetFrame(0);
-	        MethodBase method = frame.GetMethod();
-	        MethodBody methodBody = method.GetMethodBody();
-	        if (methodBody != null)
-	        {
-	            foreach (var local in methodBody.LocalVariables)
-	            {
-	                Console.WriteLine(local);
-	            }
-	        }
-			
 		}
 	}
 	
@@ -441,6 +571,7 @@ namespace SteamBot
 		RemoveItem = 1,
 		ToggleReady = 2,
 		ToggeNotReady = 3,
+		OtherUserAccept = 4,
 		ChatMessage = 7
 		
 	}

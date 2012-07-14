@@ -195,20 +195,12 @@ namespace SteamBot
 				{
 					
 					//Trading
-					trade = new TradeSystem(steamUser.SteamID,call.Other,WebCookies);
-					trade.initTrade();
+					trade = null;
+					trade = new TradeSystem();
+					trade.initTrade(steamUser.SteamID,call.Other,WebCookies);
 					
 				});
 				#endregion
-
-				msg.Handle<SteamTrading.TradeRequestCallback>(call =>
-				{
-
-					Console.WriteLine("ST: "+call.Status+"  |  RS: "+call.Response);
-
-				});
-
-				
 				
 				#region Trade Requested Handler
 				//Don't modify this
@@ -222,6 +214,22 @@ namespace SteamBot
 					
 				});
 				#endregion
+
+				msg.Handle<SteamFriends.PersonaStateCallback>(callback =>
+                {
+                    if (callback.FriendID == steamUser.SteamID)
+                        return;
+
+                    EFriendRelationship relationship = steamFriends.GetFriendRelationship(callback.FriendID);
+                    if (!(relationship == EFriendRelationship.RequestRecipient))
+                        return;
+
+
+					if(steamFriends.GetFriendRelationship(callback.FriendID)==EFriendRelationship.PendingInvitee){
+						printConsole("[Friend] Friend Request Pending: " + callback.FriendID + "(" + steamFriends.GetFriendPersonaName(callback.FriendID) + ") - Accepted", ConsoleColor.Yellow);
+						steamFriends.AddFriend(callback.FriendID);
+					}
+                });
 				
 				
 				#region Steam Chat Handler
