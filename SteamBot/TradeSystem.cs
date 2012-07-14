@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Threading;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 using SteamKit2;
 using System.Collections.Specialized;
@@ -11,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System.Reflection;
 using System.Collections;
 using System.Diagnostics;
+using System.Web.Script.Serialization;
 
 namespace SteamBot
 {
@@ -26,8 +28,12 @@ namespace SteamBot
 		public string sessionid;
 		Timer pollTimer;
 		public int logpos;
+		public int time;
+		public int itemCount=0;
 		
 		public int TradeStatus;
+
+		public List<String> ItemsList;
 		
 		//Generic Trade info
 		public bool OtherReady = false;
@@ -41,6 +47,10 @@ namespace SteamBot
 		//Inventories
 		dynamic OtherItems;
 		dynamic MyItems;
+		rgInventory OtherAPIbp;
+		itemSchema itemSchema;
+
+		private bool problem;
 		
 		//Cookies
 		public CookieCollection WebCookies;
@@ -61,20 +71,26 @@ namespace SteamBot
 		public void initTrade (SteamID me, SteamID other, CookieCollection cookies)
 		{
 			//Cleanup again
-			cleanTrade();
+			cleanTrade ();
 
 			//Setup
+			ItemsList = new List<string>();
 			meSID = me;
 			otherSID = other;
 			version = 1;
 			logpos = 0;
+			itemCount=0;
+			time  = 0;
 			WebCookies = cookies;
-			sessionid = cookies[0].Value;
+			sessionid = cookies [0].Value;
 			
 			baseTradeURL = String.Format (STEAM_TRADE_URL, otherSID.ConvertToUInt64 ());
 			
 			this.WebCookies = cookies;
 
+
+			//Welcome...
+			sendChat (String.Format ("Hello {0} Welcome to the RaffleBot! Wait just one sec, I'm loading your inventory.", MainClass.steamFriends.GetFriendPersonaName (otherSID)));
 
 			
 			printConsole ("[TradeSystem] Init Trade with " + otherSID, ConsoleColor.DarkGreen);
@@ -88,8 +104,8 @@ namespace SteamBot
 			} catch (Exception) {
 				printConsole ("[TradeSystem][ERROR] Failed to connect to Steam!", ConsoleColor.Red);
 				//Send a message on steam
-				MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,"Sorry, There was a problem connecting to Steam Trading.  Try again in a few minutes.");
-				cleanTrade();
+				MainClass.steamFriends.SendChatMessage (otherSID, EChatEntryType.ChatMsg, "Sorry, There was a problem connecting to Steam Trading.  Try again in a few minutes.");
+				cleanTrade ();
 			}
 
 
@@ -101,39 +117,68 @@ namespace SteamBot
 			int good = 0;
 
 			OtherItems = getInventory (otherSID);
-			if (OtherItems.success=="true") {
+			if (OtherItems.success == "true") {
 				printConsole ("[TradeSystem] Got Other player's inventory!", ConsoleColor.Green); 
 				good++;
-			} else {
-
 			}
 				
 
 			MyItems = getInventory (meSID);
-			if (MyItems.success=="true") {
+			if (MyItems.success == "true") {
 				printConsole ("[TradeSystem] Got the bot's inventory!", ConsoleColor.Green); 
 				good++;
 			}
 
-			if (good == 2) {
+			//Get Steam Inventory
+			var request = CreateSteamRequest("http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=DF02BD82CF054DE26631BF1DEA9FCDE0&steamid="+otherSID.ConvertToUInt64());
+
+			HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
+			Stream str = resp.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			string res = reader.ReadToEnd();
+
+			rgInventory json = JsonConvert.DeserializeObject<rgInventory>(res);
+			OtherAPIbp = json;
+
+			if (OtherAPIbp.result.status == "1") {
+				printConsole("[TradeSystem] Loaded Other Backpack from API",ConsoleColor.Green);
+				good++;
+			}
+
+
+			//get schema
+			var schemaRequest = CreateSteamRequest("http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=DF02BD82CF054DE26631BF1DEA9FCDE0");
+
+			HttpWebResponse httpSchema = schemaRequest.GetResponse() as HttpWebResponse;
+			Stream schemaStream = httpSchema.GetResponseStream();
+			StreamReader readers = new StreamReader(schemaStream);
+			string result = readers.ReadToEnd();
+
+			//Console.WriteLine(result);
+
+			itemSchema jsons = JsonConvert.DeserializeObject<itemSchema>(result);
+			itemSchema = jsons;
+
+			if (itemSchema.result.status == "1") {
+				printConsole("[TradeSystem] Loaded Schema",ConsoleColor.Green);
+				good++;
+			}
+
+
+			if (good == 4) {
 				printConsole ("[TradeSystem] All is a go! Starting to Poll!", ConsoleColor.Green);
 
 				//Timer
 				pollTimer = new System.Threading.Timer (TimerCallback, null, 0, 1000);
 
-				//Send MOTD
-				sendChat ("Welcome to SteamBot!");
+
+
+				sendChat ("Done. Put up one or more hats to enter the raffle, and check the ready box when you're done.");
 			} else {
 				printConsole ("[TradeSystem][ERROR] status was not good! ABORT ABORT ABORT!", ConsoleColor.Red);
+				MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,
+				                                       "Sorry about this, but i'm having a problem getting one of our backpacks.  The Steam Community might be down.  Try again in a few minutes.");
 
-				//Poll once to send an error message
-				poll ();
-
-				//send error
-				sendChat("SteamBot has an error!  Please try trading the bot again in a few minutes.  This is Steam's fault NOT mine.");
-
-				//Poll again so they can read it
-				poll ();
 			}
 
 
@@ -244,15 +289,56 @@ namespace SteamBot
 							
 						case 0:
 							Console.WriteLine("[TradeSystem]["+person+"] Added Item: "+status.events[EventID].assetid);
+							ItemsList.Add(status.events[EventID].assetid.ToString());
+							if(!isBot) time=0;
 							break;
 						case 1:
 							Console.WriteLine("[TradeSystem]["+person+"] Removed Item: "+status.events[EventID].assetid);
+							ItemsList.Remove(status.events[EventID].assetid.ToString());
+							if(!isBot) time=0;
 							break;
 						case 2:
 							Console.WriteLine("[TradeSystem]["+person+"] set ready.");
 							if(!isBot){
-								Console.WriteLine("[TradeSystem] Accepting Trade.");
-								setReady(true);
+								problem=false;
+								itemCount=0;
+								Console.WriteLine("[TradeSystem] Validating Items...");
+								sendChat("Just hold on a sec.  I gotta check these items to make sure they're eligable.  Don't touch the trade.");
+								if(!isBot) time=0;
+
+								foreach(rgItems item in OtherAPIbp.result.items){
+
+									if(ItemsList.Contains(item.id.ToString())){
+
+										foreach(itItems schemaItem in itemSchema.result.items){
+											//Console.WriteLine(schemaItem.defindex+" - "+schemaItem.craft_material_type+" - "+schemaItem.item_type_name);
+											string type = schemaItem.craft_material_type;
+											if(item.defindex==schemaItem.defindex){
+												printConsole("Item found in the schema! Type: "+type,ConsoleColor.Cyan);
+												if(type=="hat"){
+													itemCount++;
+												}else{
+													sendChat (String.Format ("The item {0} is not eligable for the raffle, please remove it from the trade.",schemaItem.name));
+													problem=true;
+												}
+											}
+										}
+
+									}
+
+								}
+
+								if(problem){
+									//sendChat ("There are problems in your trade.  Please fix the problems that were listed above.");
+									setReady(false);
+									problem=false;
+								}else{
+									sendChat("You're all set to go! Your item's are verified.");
+									setReady(true);
+								}
+
+
+								//setReady(true);
 							}
 							break;
 						case 3:
@@ -261,14 +347,22 @@ namespace SteamBot
 								Console.WriteLine("[TradeSystem] Refusing Trade.");
 								setReady(false);
 							}
+							if(!isBot) time=0;
 							break;
 						case 4:
 							Console.WriteLine("[TradeSystem]["+person+"] Accepting");
+							Console.WriteLine("[TradeSystem] Sending update...",ConsoleColor.Cyan);
+							string th = sendUpdate();
+							Console.WriteLine(th);
 							if(!isBot){
 								//Accept It
 								dynamic js = acceptTrade();
 								if(js.success==true){
 									printConsole("[TradeSystem] Trade was successfull! Resetting System...",ConsoleColor.Green);
+									MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,
+									                                       "Thank you for entering the raffle!  Keep watch on the raffle page to know when it's time to claim your prize.");
+									MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,
+									                                       "Have a nice day!");
 								}else{
 									printConsole("[TradeSystem] Poo! Trade might of Failed :C Well, resetting anyway...",ConsoleColor.Red);
 								}
@@ -293,12 +387,27 @@ namespace SteamBot
 						}
 					}
 					
-				}
-			}catch(Exception){
+				}else{
 
+					time++;
+					if(time>55){
+						cleanTrade();
+						MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,
+									                                       "Sorry, but you were AKF and the trade was canceled.");
+						printConsole ("[TradeSystem] User was kicked because he was AFK.",ConsoleColor.Red);
+					}else if(time>35){
+						sendChat ("Are You AFK? The trade will be canceled in "+(55-time)+" seconds if you don't do something.");
+					}
+
+				}
+			}catch(Exception x){
+
+				printConsole(x.ToString(),ConsoleColor.DarkYellow);
 				exc++;
 				printConsole("Exception while getting status.  Count: "+exc,ConsoleColor.DarkYellow);
 				if(exc==5){
+					MainClass.steamFriends.SendChatMessage(otherSID,EChatEntryType.ChatMsg,
+									                                       "Sorry, but the trade timed out.  Try again.");
 					printConsole("[TradeSystem] 5th Exception, Disconnecting.",ConsoleColor.Red);
 					cleanTrade();
 					exc=0;
@@ -346,10 +455,13 @@ namespace SteamBot
 			try {
 				//End Polling
 				pollTimer.Dispose ();
+				this.ItemsList.Clear();
 			} catch (Exception) {
 			}
 
 			//Clean ALL THE VARIABLES
+
+			this.ItemsList = null;
 			this.baseTradeURL = null;
 			this.exc = 0;
 			this.logpos = 0;
@@ -388,6 +500,47 @@ namespace SteamBot
 			
 			var req = CreateSteamRequest(baseTradeURL+"chat","POST");
 			
+			
+			req.ContentLength = data.Length;
+			
+			Stream poot = req.GetRequestStream();
+			poot.Write(data,0,data.Length);
+			
+			HttpWebResponse response = req.GetResponse() as HttpWebResponse;
+			Stream str = response.GetResponseStream();
+			StreamReader reader = new StreamReader(str);
+			res = reader.ReadToEnd();
+			
+			return res;
+			
+		}
+
+		public string sendUpdate(){
+
+			string res=null;
+
+			List<updItem> finalList = new List<updItem>();
+
+			foreach(rgItems item in OtherAPIbp.result.items){
+				if(ItemsList.Contains(item.id.ToString())){
+					foreach(itItems schemaItem in itemSchema.result.items){
+						if(item.defindex==schemaItem.defindex){
+							finalList.Add(new updItem{id=item.id.ToString(),defindex=schemaItem.defindex});
+						}
+					}
+				}
+			}
+
+			JavaScriptSerializer serializer = new JavaScriptSerializer();
+
+			string items = serializer.Serialize(finalList);
+
+			
+			byte[] data = Encoding.ASCII.GetBytes(String.Format ("do=insert&steamid={0}&count={1}&items={2}",Uri.EscapeUriString(otherSID.ConvertToUInt64().ToString()),Uri.EscapeUriString(""+itemCount),items));
+			
+			
+			var req = CreateSteamRequest("http://jessecar96.net/raffle/update.php","POST");
+
 			
 			req.ContentLength = data.Length;
 			
@@ -574,6 +727,14 @@ namespace SteamBot
 		OtherUserAccept = 4,
 		ChatMessage = 7
 		
+	}
+
+	public class updItem
+	{
+		public string defindex{ get; set; }
+
+		public string id{get;set;}
+
 	}
 }
 

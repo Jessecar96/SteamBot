@@ -41,9 +41,9 @@
     <Reference Include="System.Web" />
     <Reference Include="MonoDevelop.CSharpBinding, Version=2.6.0.0, Culture=neutral">
       <Private>False</Private>
-      <Package>monodevelop-core-addins</Package>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Web.Extensions" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />

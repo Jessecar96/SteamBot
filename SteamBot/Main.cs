@@ -37,7 +37,7 @@ namespace SteamBot
 		 */
 		
 		//Name of the Bot
-		public static string BotPersonaName = "[StǝamBot] Test Bot 1";
+		public static string BotPersonaName = "[StǝamBot] GGC RaffleBot";
 		
 		//Default Persona State
 		public static EPersonaState BotPersonaState = EPersonaState.LookingToTrade;
@@ -217,14 +217,7 @@ namespace SteamBot
 
 				msg.Handle<SteamFriends.PersonaStateCallback>(callback =>
                 {
-                    if (callback.FriendID == steamUser.SteamID)
-                        return;
-
-                    EFriendRelationship relationship = steamFriends.GetFriendRelationship(callback.FriendID);
-                    if (!(relationship == EFriendRelationship.RequestRecipient))
-                        return;
-
-
+                    
 					if(steamFriends.GetFriendRelationship(callback.FriendID)==EFriendRelationship.PendingInvitee){
 						printConsole("[Friend] Friend Request Pending: " + callback.FriendID + "(" + steamFriends.GetFriendPersonaName(callback.FriendID) + ") - Accepted", ConsoleColor.Yellow);
 						steamFriends.AddFriend(callback.FriendID);
