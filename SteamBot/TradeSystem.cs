@@ -279,7 +279,7 @@ namespace SteamBot
 							Console.WriteLine("[TradeSystem]["+person+"] Chat: "+status.events[EventID].text);
 							if(!isBot){
 								if(status.events[EventID].text=="/dump"){
-									doAdump();
+									//doAdump();
 
 								}
 							}
