@@ -1,16 +1,14 @@
 SteamBot is a bot for interacting with Steam Chat and Trading.
 
-This is not done at all, and a lot still needs to be done.
-
 Completed:
 - Chat Bot
 - Automated chat replies
 - auto accepting trades
 - auto accepting friend requests
-- Basic Steam Trading
+- Full Steam Trading
 
 Working on it:
-- Steam Trading
+-Documentation
 
 Coming Soon:
 - Trading API
