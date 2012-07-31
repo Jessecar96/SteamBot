@@ -25,6 +25,8 @@ namespace SteamBot
 		
 		//Other Variables
 		public static string[] AllArgs;
+
+	    public static string sessionId;
 		
 		
 		
@@ -37,7 +39,7 @@ namespace SteamBot
 		 */
 		
 		//Name of the Bot
-		public static string BotPersonaName = "[StǝamBot] GGC RaffleBot";
+		public static string BotPersonaName = "Let Me At 'Em PurchaseBot";
 		
 		//Default Persona State
 		public static EPersonaState BotPersonaState = EPersonaState.LookingToTrade;
@@ -193,9 +195,7 @@ namespace SteamBot
 				 */
 				msg.Handle<SteamTrading.TradeStartSessionCallback>(call =>
 				{
-					
-					//Trading
-					trade = null;
+        			//Trading
 					trade = new TradeSystem();
 					trade.initTrade(steamUser.SteamID,call.Other,WebCookies);
 					
@@ -217,10 +217,11 @@ namespace SteamBot
 
 				msg.Handle<SteamFriends.PersonaStateCallback>(callback =>
                 {
-                    
+                    printConsole(callback.FriendID.ConvertToUInt64().ToString());
 					if(steamFriends.GetFriendRelationship(callback.FriendID)==EFriendRelationship.PendingInvitee){
 						printConsole("[Friend] Friend Request Pending: " + callback.FriendID + "(" + steamFriends.GetFriendPersonaName(callback.FriendID) + ") - Accepted", ConsoleColor.Yellow);
 						steamFriends.AddFriend(callback.FriendID);
+                        steamFriends.SendChatMessage(callback.FriendID, EChatEntryType.ChatMsg, "Welcome! The current price is 1 key. Please trade me to start.");
 					}
                 });
 				
@@ -238,7 +239,7 @@ namespace SteamBot
 					
 					if(type == EChatEntryType.ChatMsg){
 						//Message is a chat message
-						
+						printConsole("[FriendChat] " + callback.Sender);
 						//Reply with the same message
 						steamFriends.SendChatMessage(callback.Sender,EChatEntryType.ChatMsg,callback.Message);
 						
@@ -271,6 +272,12 @@ namespace SteamBot
             }
             return false;
 		}
+
+        public static string GetSessionId()
+        {
+            return SteamWeb.getSession(new CookieContainer());
+
+        }
 		
 		#endregion
 

@@ -90,7 +90,7 @@ namespace SteamBot
 
 
 			//Welcome...
-			sendChat (String.Format ("Hello {0} Welcome to the RaffleBot! Wait just one sec, I'm loading your inventory.", MainClass.steamFriends.GetFriendPersonaName (otherSID)));
+			sendChat (String.Format ("Hello {0}. Welcome to the RaffleBot! Wait just one sec, I'm loading your inventory.", MainClass.steamFriends.GetFriendPersonaName (otherSID)));
 
 			
 			printConsole ("[TradeSystem] Init Trade with " + otherSID, ConsoleColor.DarkGreen);
@@ -107,11 +107,7 @@ namespace SteamBot
 				MainClass.steamFriends.SendChatMessage (otherSID, EChatEntryType.ChatMsg, "Sorry, There was a problem connecting to Steam Trading.  Try again in a few minutes.");
 				cleanTrade ();
 			}
-
-
-
 			
-
 			printConsole ("[TradeSystem] Getting Player Inventories...", ConsoleColor.Yellow);
 
 			int good = 0;
@@ -229,7 +225,6 @@ namespace SteamBot
 
 		private dynamic getInventory (SteamID steamid)
 		{
-
 			var request = CreateSteamRequest(String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",steamid.ConvertToUInt64()),"GET");
 			
 			HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
@@ -652,7 +647,7 @@ namespace SteamBot
 			webRequest.Headers.Add("X-Prototype-Version","1.7");
 
 			CookieContainer cookies = new CookieContainer();
-			cookies.Add (new Cookie("sessionid",WebCookies["sessionid"].Value,String.Empty,STEAM_COMMUNITY_DOMAIN));
+			cookies.Add (new Cookie("sessionid",SteamWeb.SessionID,String.Empty,STEAM_COMMUNITY_DOMAIN));
 			cookies.Add (new Cookie("steamLogin",WebCookies["steamLogin"].Value,String.Empty,STEAM_COMMUNITY_DOMAIN));
 
 			webRequest.CookieContainer = cookies;

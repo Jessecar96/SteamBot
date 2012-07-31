@@ -1,0 +1,5 @@
+<Modules>
+  <Module PersistentId="E81DED36-EDF5-41A5-8666-A3A0C581762F" ModuleId="SteamBot" />
+  <Module PersistentId="BEB5BF07-BB56-402A-97A3-A41C6444C6A5" ModuleId="SteamKit2" />
+  <Module PersistentId="A9AE40FF-1A21-414A-9FE7-3BE13644CC6D" ModuleId="Newtonsoft.Json" />
+</Modules>

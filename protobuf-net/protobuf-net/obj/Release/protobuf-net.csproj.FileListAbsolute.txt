@@ -1,0 +1,6 @@
+D:\Projects\C#\SteamBot\protobuf-net\protobuf-net\bin\Release\Licence.txt
+D:\Projects\C#\SteamBot\protobuf-net\protobuf-net\bin\Release\protobuf-net.xml
+D:\Projects\C#\SteamBot\protobuf-net\protobuf-net\bin\Release\protobuf-net.dll
+D:\Projects\C#\SteamBot\protobuf-net\protobuf-net\bin\Release\protobuf-net.pdb
+D:\Projects\C#\SteamBot\protobuf-net\protobuf-net\obj\Release\protobuf-net.dll
+D:\Projects\C#\SteamBot\protobuf-net\protobuf-net\obj\Release\protobuf-net.pdb

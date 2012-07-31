@@ -1,0 +1,18 @@
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\Licence.txt
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\3rd party.txt
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\gpl.txt
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\lgpl.txt
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\license.txt
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\SteamKit2.xml
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\SteamKit2.dll
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\SteamKit2.pdb
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\Classless.Hasher.dll
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\Newtonsoft.Json.dll
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\protobuf-net.dll
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\protobuf-net.pdb
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\protobuf-net.xml
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\Newtonsoft.Json.pdb
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\bin\Release\Newtonsoft.Json.xml
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\obj\Release\SteamKit2.csprojResolveAssemblyReference.cache
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\obj\Release\SteamKit2.dll
+D:\Projects\C#\SteamBot\SteamKit2\SteamKit2\obj\Release\SteamKit2.pdb

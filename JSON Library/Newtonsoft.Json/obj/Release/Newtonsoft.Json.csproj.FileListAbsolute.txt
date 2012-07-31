@@ -1,0 +1,5 @@
+D:\Projects\C#\SteamBot\JSON Library\Newtonsoft.Json\bin\Release\Net40\Newtonsoft.Json.xml
+D:\Projects\C#\SteamBot\JSON Library\Newtonsoft.Json\bin\Release\Net40\Newtonsoft.Json.dll
+D:\Projects\C#\SteamBot\JSON Library\Newtonsoft.Json\bin\Release\Net40\Newtonsoft.Json.pdb
+D:\Projects\C#\SteamBot\JSON Library\Newtonsoft.Json\obj\Release\Newtonsoft.Json.dll
+D:\Projects\C#\SteamBot\JSON Library\Newtonsoft.Json\obj\Release\Newtonsoft.Json.pdb
