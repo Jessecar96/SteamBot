@@ -201,13 +201,13 @@ namespace SteamBot
 		
 		/**
 		 * 
-		 * Trade Action ID's
+		 * Trade Events
 		 * 
 		 * 0 = Add item (itemid = "assetid")
 		 * 1 = remove item (itemid = "assetid")
 		 * 2 = Toggle ready
 		 * 3 = Toggle not ready
-		 * 4
+		 * 4 = User accepting
 		 * 5
 		 * 6
 		 * 7 = Chat (message = "text")
@@ -276,8 +276,13 @@ namespace SteamBot
 							}
 							break;
 						case 7:
-							Console.WriteLine("[TradeSystem]["+person+"] Chat: "+status.events[EventID].text);
+                            //Handle trade chat events here
+							Console.WriteLine("[TradeSystem]["+person+"] Chat: "+status.events[EventID].text); //Log the event
+
 							if(!isBot){
+                                //Do chat commands here
+
+                                //This command will dump all items from the bot into the trade
 								if(status.events[EventID].text=="/dump"){
 									doAdump();
 
@@ -407,7 +412,6 @@ namespace SteamBot
 		public dynamic acceptTrade ()
 		{
 
-			//toggleready
 			string res=null;
 
 			byte[] data = Encoding.ASCII.GetBytes("sessionid="+Uri.UnescapeDataString(sessionid)+"&version="+Uri.EscapeDataString(""+version));
@@ -432,7 +436,6 @@ namespace SteamBot
 
 		public void addItem (string itemid, int slot)
 		{
-			//toggleready
 			string res=null;
 
 			byte[] data = Encoding.ASCII.GetBytes(String.Format("sessionid={0}&appid=440&contextid=2&itemid={1}&slot={2}",Uri.UnescapeDataString(sessionid),itemid,slot));
@@ -455,7 +458,6 @@ namespace SteamBot
 
 		public void setReady (bool ready)
 		{
-			//toggleready
 			string res=null;
 
 			string red = ready ? "true" : "false";
@@ -476,16 +478,11 @@ namespace SteamBot
 
 		}
 		
-		
-		
-		//Usefull
 		private WebRequest CreateSteamRequest (string requestURL, string method = "GET")
 		{
 			HttpWebRequest webRequest = WebRequest.Create(requestURL) as HttpWebRequest;
             
             webRequest.Method = method;
-			
-			//webRequest
 			
 			//The Correct headers :D
 			webRequest.Accept = "text/javascript, text/html, application/xml, text/xml, */*";

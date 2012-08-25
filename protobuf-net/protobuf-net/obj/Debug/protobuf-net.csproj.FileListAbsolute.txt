@@ -1,0 +1,6 @@
+C:\Users\Jesse\Documents\GitHub\SteamBot\protobuf-net\protobuf-net\bin\Debug\Licence.txt
+C:\Users\Jesse\Documents\GitHub\SteamBot\protobuf-net\protobuf-net\bin\Debug\protobuf-net.xml
+C:\Users\Jesse\Documents\GitHub\SteamBot\protobuf-net\protobuf-net\bin\Debug\protobuf-net.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\protobuf-net\protobuf-net\bin\Debug\protobuf-net.pdb
+C:\Users\Jesse\Documents\GitHub\SteamBot\protobuf-net\protobuf-net\obj\Debug\protobuf-net.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\protobuf-net\protobuf-net\obj\Debug\protobuf-net.pdb

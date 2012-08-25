@@ -1,0 +1,18 @@
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\Licence.txt
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\3rd party.txt
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\gpl.txt
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\lgpl.txt
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\license.txt
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\SteamKit2.XML
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\SteamKit2.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\SteamKit2.pdb
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\Classless.Hasher.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\Newtonsoft.Json.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\protobuf-net.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\protobuf-net.pdb
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\Newtonsoft.Json.pdb
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\Newtonsoft.Json.xml
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\obj\Debug\SteamKit2.csprojResolveAssemblyReference.cache
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\obj\Debug\SteamKit2.dll
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\obj\Debug\SteamKit2.pdb
+C:\Users\Jesse\Documents\GitHub\SteamBot\SteamKit2\SteamKit2\bin\Debug\protobuf-net.xml
