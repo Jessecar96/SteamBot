@@ -81,7 +81,7 @@ namespace SteamBot
         {
             if (itemSchema != null) return;
             //get schema
-            var schemaRequest = CreateSteamRequest("http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=DF02BD82CF054DE26631BF1DEA9FCDE0");
+            var schemaRequest = CreateSteamRequest("http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=WHOOPS");
 
             HttpWebResponse httpSchema = schemaRequest.GetResponse() as HttpWebResponse;
             Stream schemaStream = httpSchema.GetResponseStream();
