@@ -272,8 +272,17 @@ namespace SteamKit2
         }
     }
 
-    static class WebHelpers
+    public static class WebHelpers
     {
+        public static string EncodeBase64(string toString)
+        {
+            byte[] toEncodeAsBytes
+                  = System.Text.ASCIIEncoding.ASCII.GetBytes(toString);
+            string returnValue
+                  = System.Convert.ToBase64String(toEncodeAsBytes);
+            return returnValue;
+        }
+
         static bool IsUrlSafeChar( char ch )
         {
             if ( ( ( ( ch >= 'a' ) && ( ch <= 'z' ) ) || ( ( ch >= 'A' ) && ( ch <= 'Z' ) ) ) || ( ( ch >= '0' ) && ( ch <= '9' ) ) )

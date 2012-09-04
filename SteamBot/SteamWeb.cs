@@ -18,7 +18,6 @@ namespace SteamBot
 {
     public class SteamWeb
     {
-        public static string SessionID;
         public CookieCollection DoLogin(string user, string pass)
         {
             //Get RSA Key
@@ -132,16 +131,14 @@ namespace SteamBot
 
                 if (resJSON.success == true)
                 {
-                    CookieContainer coo = new CookieContainer();
-                    foreach (Cookie cook in end.Cookies)
+                    CookieContainer c = new CookieContainer();
+                    foreach(Cookie cookie in end.Cookies)
                     {
-                        coo.Add(cook);
+                        c.Add(cookie);
                     }
-                    CookieCollection c = new CookieCollection();
-                    c.Add(new Cookie("sessionid", getSession(coo), "/", TradeSystem.STEAM_COMMUNITY_DOMAIN));
-                    c.Add(new Cookie("steamLogin", end.Cookies["steamLogin"].Value, "/", TradeSystem.STEAM_COMMUNITY_DOMAIN));
+                    getSession(c);
                     //Return the cookies.
-                    return c;
+                    return end.Cookies;
                 }
                 else
                 {
@@ -153,7 +150,7 @@ namespace SteamBot
 
         public static string getSession(CookieContainer co)
         {
-
+            //NOW DO THE REQUEST!
             var w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 
             w.Method = "POST";
@@ -170,9 +167,7 @@ namespace SteamBot
             string fnl = new StreamReader(end.GetResponseStream()).ReadToEnd();
             end.Close();
 
-            CookieCollection cookies = co.GetCookies(new Uri("http://steamcommunity.com"));
-            SessionID = cookies["sessionid"].Value;
-            return SessionID;
+            return "";
         }
 
 

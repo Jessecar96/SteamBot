@@ -1,0 +1,20 @@
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\Licence.txt
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\3rd party.txt
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\gpl.txt
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\lgpl.txt
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\license.txt
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\SteamBot.exe
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\SteamBot.pdb
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\Newtonsoft.Json.dll
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\protobuf-net.dll
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\SteamKit2.dll
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\Classless.Hasher.dll
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\Newtonsoft.Json.pdb
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\Newtonsoft.Json.xml
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\protobuf-net.pdb
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\protobuf-net.xml
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\SteamKit2.pdb
+D:\Projects\C#\Customer_RaffleBot\SteamBot\bin\Debug\SteamKit2.xml
+D:\Projects\C#\Customer_RaffleBot\SteamBot\obj\x86\Debug\RaffleBot.csprojResolveAssemblyReference.cache
+D:\Projects\C#\Customer_RaffleBot\SteamBot\obj\x86\Debug\SteamBot.exe
+D:\Projects\C#\Customer_RaffleBot\SteamBot\obj\x86\Debug\SteamBot.pdb

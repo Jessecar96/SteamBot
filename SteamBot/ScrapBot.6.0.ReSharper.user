@@ -1,0 +1,374 @@
+<Configuration>
+  <RecentFiles>
+    <RecentFiles>
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Util/f:KeyDictionary.cs" caret="0" fromTop="0" />
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Util/f:CryptoHelper.cs" caret="0" fromTop="0" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:MsgCraft.cs" caret="1156" fromTop="40" />
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Util/f:Utils.cs" caret="10485" fromTop="31" />
+      <File id="A9AE40FF-1A21-414A-9FE7-3BE13644CC6D/d:Serialization/f:JsonSerializerInternalReader.cs" caret="51353" fromTop="20" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotInfo.cs" caret="370" fromTop="16" />
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Types/f:SteamID.cs" caret="9208" fromTop="22" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:APImanager.cs" caret="2279" fromTop="28" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:SteamWeb.cs" caret="6123" fromTop="38" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:InvBackpack.cs" caret="1562" fromTop="71" />
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Networking/d:Steam3/f:TcpConnection.cs" caret="6337" fromTop="27" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:WebsiteManager.cs" caret="450" fromTop="19" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeReverseBank.cs" caret="3513" fromTop="32" />
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Steam3/d:SteamClient/d:CallbackMgr/f:CallbackMsg.cs" caret="2365" fromTop="29" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeDonate.cs" caret="1698" fromTop="32" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeScrapBank.cs" caret="2509" fromTop="22" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeKeys.cs" caret="2235" fromTop="18" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradePurchase.cs" caret="2403" fromTop="23" />
+      <File id="BEB5BF07-BB56-402A-97A3-A41C6444C6A5/d:Steam3/d:SteamClient/f:SteamClient.cs" caret="5162" fromTop="20" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="4357" fromTop="27" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeSystem.cs" caret="2270" fromTop="22" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotMain.cs" caret="1253" fromTop="28" />
+    </RecentFiles>
+    <RecentEdits>
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeDonate.cs" caret="1758" fromTop="33" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="1035" fromTop="21" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="3195" fromTop="25" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="3580" fromTop="33" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="25300" fromTop="19" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="25301" fromTop="24" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="853" fromTop="27" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="9856" fromTop="18" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="9459" fromTop="16" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="2471" fromTop="30" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeSystem.cs" caret="16978" fromTop="19" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="7301" fromTop="33" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="7493" fromTop="39" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="17627" fromTop="19" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="18017" fromTop="17" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="7068" fromTop="38" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="25109" fromTop="23" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="25232" fromTop="28" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="25454" fromTop="33" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeSystem.cs" caret="11056" fromTop="22" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeSystem.cs" caret="10420" fromTop="24" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:TradeSystem.cs" caret="11187" fromTop="23" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="17584" fromTop="20" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="5087" fromTop="22" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotMain.cs" caret="1388" fromTop="19" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotMain.cs" caret="889" fromTop="24" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:Bot.cs" caret="4598" fromTop="32" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotMain.cs" caret="1372" fromTop="31" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotMain.cs" caret="769" fromTop="13" />
+      <File id="E81DED36-EDF5-41A5-8666-A3A0C581762F/f:BotMain.cs" caret="1272" fromTop="28" />
+    </RecentEdits>
+  </RecentFiles>
+  <CompletionStatisticsManager>
+    <ItemStatistics item="CSharpCodeCompletionContext">
+      <Item value="SteamGameCoordinator`0" priority="63" />
+      <Item value="public" priority="863" />
+      <Item value="string" priority="287" />
+      <Item value="TradeSystem`0" priority="95" />
+      <Item value="addItem`0" priority="31" />
+      <Item value="itemid" priority="31" />
+      <Item value="index" priority="63" />
+      <Item value="continue" priority="159" />
+      <Item value="errors" priority="63" />
+      <Item value="addItemDefIndex`0" priority="31" />
+      <Item value="num" priority="319" />
+      <Item value="DonationCount" priority="31" />
+      <Item value="APImanager`0" priority="63" />
+      <Item value="MainClass`0" priority="447" />
+      <Item value="static" priority="383" />
+      <Item value="int" priority="703" />
+      <Item value="TradePurchase" priority="28" />
+      <Item value="thing" priority="31" />
+      <Item value="null" priority="927" />
+      <Item value="AlreadyConfirmed" priority="32" />
+      <Item value="bool" priority="127" />
+      <Item value="if" priority="1311" />
+      <Item value="cookies" priority="31" />
+      <Item value="case" priority="63" />
+      <Item value="inst" priority="63" />
+      <Item value="Donate" priority="16" />
+      <Item value="TradeDonate" priority="28" />
+      <Item value="break" priority="159" />
+      <Item value="catch" priority="159" />
+      <Item value="Exception`0" priority="159" />
+      <Item value="while" priority="95" />
+      <Item value="true" priority="191" />
+      <Item value="try" priority="127" />
+      <Item value="Console`0" priority="223" />
+      <Item value="e" priority="31" />
+      <Item value="ThreadStaticAttribute`0" priority="31" />
+      <Item value="OnTradeEnd`0" priority="31" />
+      <Item value="private" priority="95" />
+      <Item value="void" priority="287" />
+      <Item value="for" priority="127" />
+      <Item value="i" priority="639" />
+      <Item value="List" priority="127" />
+      <Item value="ulong" priority="477" />
+      <Item value="classesItems" priority="31" />
+      <Item value="classIndex" priority="31" />
+      <Item value="itemsCraftedAlready" priority="256" />
+      <Item value="id1" priority="63" />
+      <Item value="id2" priority="63" />
+      <Item value="message" priority="95" />
+      <Item value="j" priority="31" />
+      <Item value="steamCoordinator" priority="31" />
+      <Item value="steamClient" priority="95" />
+      <Item value="InTrade" priority="16" />
+      <Item value="rgInventory`0" priority="127" />
+      <Item value="return" priority="575" />
+      <Item value="newInventory" priority="95" />
+      <Item value="GetInventory`0" priority="287" />
+      <Item value="scrap" priority="352" />
+      <Item value="numToCraft" priority="127" />
+      <Item value="false" priority="159" />
+      <Item value="scrapped" priority="63" />
+      <Item value="inventory" priority="63" />
+      <Item value="foreach" priority="95" />
+      <Item value="rgItems`0" priority="63" />
+      <Item value="in" priority="95" />
+      <Item value="item" priority="95" />
+      <Item value="ret" priority="63" />
+      <Item value="inv" priority="95" />
+      <Item value="CMsgFSGetIsFollowingResponse`0" priority="95" />
+      <Item value="Convert`0" priority="127" />
+      <Item value="short" priority="63" />
+      <Item value="recipe" priority="31" />
+      <Item value="numItems" priority="31" />
+      <Item value="myMsg" priority="31" />
+      <Item value="id" priority="63" />
+      <Item value="printConsole`0" priority="31" />
+      <Item value="ConsoleColor`0" priority="31" />
+      <Item value="ScrapSent" priority="63" />
+      <Item value="ItemsPutUp" priority="31" />
+      <Item value="SetScrap`0" priority="31" />
+      <Item value="currentScrap" priority="63" />
+      <Item value="MaxItems" priority="96" />
+      <Item value="json" priority="64" />
+      <Item value="scrapToSend" priority="31" />
+      <Item value="trade" priority="511" />
+      <Item value="steamFriends" priority="255" />
+      <Item value="new" priority="255" />
+      <Item value="SteamID" priority="28" />
+      <Item value="CurrentInstruction" priority="447" />
+      <Item value="String`0" priority="31" />
+      <Item value="steamid" priority="63" />
+      <Item value="IFormatProvider`0" priority="95" />
+      <Item value="CraftAllMyItems`0" priority="31" />
+      <Item value="craftItems" priority="31" />
+      <Item value="List&lt;ulong&gt;" priority="57" />
+      <Item value="it" priority="31" />
+      <Item value="SmeltMetal`0" priority="31" />
+      <Item value="one" priority="31" />
+      <Item value="two" priority="31" />
+      <Item value="SetGamePlayed`0" priority="63" />
+      <Item value="AddRef`0" priority="31" />
+      <Item value="else" priority="63" />
+      <Item value="FindArg`0" priority="31" />
+      <Item value="AllArgs" priority="95" />
+      <Item value="user" priority="63" />
+      <Item value="pass" priority="63" />
+      <Item value="Contains`1" priority="80" />
+      <Item value="Admins" priority="63" />
+      <Item value="callback" priority="63" />
+      <Item value="SteamID`0" priority="63" />
+      <Item value="curFriend" priority="63" />
+      <Item value="class" priority="30" />
+      <Item value="BotInfo`0" priority="127" />
+      <Item value="BotFile`0" priority="63" />
+      <Item value="#endregion" priority="95" />
+      <Item value="theBots" priority="95" />
+      <Item value="jsonText" priority="31" />
+      <Item value="Count`1" priority="26" />
+      <Item value="Length" priority="53" />
+      <Item value="theBot" priority="735" />
+      <Item value="isAdmin" priority="31" />
+      <Item value="sessionid" priority="31" />
+      <Item value="totalTime" priority="63" />
+      <Item value="MyAPIbp" priority="31" />
+      <Item value="TradeEvents`0" priority="31" />
+      <Item value="instruction" priority="31" />
+      <Item value="Keys" priority="33" />
+      <Item value="TradeKeys`0" priority="31" />
+      <Item value="GetNumKeys`0" priority="31" />
+      <Item value="KeysPutUp" priority="63" />
+      <Item value="numKeys" priority="31" />
+      <Item value="TradeKeys" priority="28" />
+      <Item value="ThreadExceptionEventArgs`0" priority="31" />
+      <Item value="SteamUser`0" priority="31" />
+      <Item value="this" priority="31" />
+      <Item value="Update`0" priority="31" />
+      <Item value="myBotInfo" priority="31" />
+      <Item value="Bot`0" priority="95" />
+      <Item value="bot" priority="63" />
+      <Item value="TimeSpan" priority="28" />
+      <Item value="CallbackMsg`0" priority="31" />
+      <Item value="msg" priority="31" />
+      <Item value="HandleSteamMessage`0" priority="31" />
+      <Item value="BotFile" priority="28" />
+      <Item value="tr" priority="63" />
+      <Item value="text" priority="31" />
+      <Item value="Bot" priority="28" />
+      <Item value="Main`0" priority="31" />
+      <Item value="Thread`0" priority="31" />
+      <Item value="DoNextInstruction`0" priority="31" />
+      <Item value="isLoggedIn" priority="95" />
+      <Item value="Wait" priority="16" />
+      <Item value="currentInventory" priority="31" />
+      <Item value="TextReader`0" priority="31" />
+      <Item value="CleanInstruction`0" priority="95" />
+      <Item value="finally" priority="31" />
+      <Item value="args" priority="63" />
+      <Item value="JsonConvert`0" priority="31" />
+      <Item value="theTrade" priority="63" />
+      <Item value="numCrashes" priority="63" />
+      <Item value="ThreadStaticAttribute" priority="29" />
+      <Item value="sid" priority="31" />
+      <Item value="EChatEntryType`0" priority="31" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Int64">
+      <Item value="ToString`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Collections.Generic.List`1">
+      <Item value="ToArray`0" priority="26" />
+      <Item value="Contains`0" priority="80" />
+      <Item value="Add`0" priority="137" />
+      <Item value="Clear`0" priority="54" />
+      <Item value="Count" priority="135" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Int32">
+      <Item value="ToString`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SteamBot.APImanager">
+      <Item value="grantSub`0" priority="26" />
+      <Item value="grantKeys`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SteamBot.MainClass">
+      <Item value="CurrentInstruction" priority="107" />
+      <Item value="CraftAllMyItems`0" priority="80" />
+      <Item value="CraftRef`0" priority="26" />
+      <Item value="Admins" priority="26" />
+      <Item value="theBot" priority="53" />
+      <Item value="sessionId" priority="53" />
+      <Item value="token" priority="26" />
+      <Item value="completeAtrade`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.BotInstruction">
+      <Item value="InstructionID" priority="26" />
+      <Item value="InstructionType" priority="80" />
+      <Item value="MaxItems" priority="26" />
+      <Item value="TargetSteamID" priority="80" />
+      <Item value="AlreadyConfirmed" priority="53" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamKit2.SteamTrading+TradeRequestCallback">
+      <Item value="Other" priority="80" />
+      <Item value="Status" priority="26" />
+      <Item value="TradeRequestId" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Console">
+      <Item value="Write`0" priority="53" />
+      <Item value="WriteLine`0" priority="161" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SteamBot.InstructionType">
+      <Item value="Donate" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Threading.Thread">
+      <Item value="Sleep`0" priority="81" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.String">
+      <Item value="Contains`0" priority="81" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamKit2.SteamClient">
+      <Item value="GetHandler`1" priority="26" />
+      <Item value="SteamID" priority="53" />
+      <Item value="GetCallback`0" priority="53" />
+      <Item value="WaitForCallback`0" priority="53" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.rgInventory">
+      <Item value="result" priority="81" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.rgResult">
+      <Item value="items" priority="80" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.rgItems">
+      <Item value="defindex" priority="134" />
+      <Item value="id" priority="80" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.Convert">
+      <Item value="ToInt64`0" priority="53" />
+      <Item value="ToInt32`0" priority="80" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamKit2.GC.ClientGCMsg`1">
+      <Item value="Body" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.MsgCraft">
+      <Item value="numItems" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@System.ConsoleColor">
+      <Item value="Magenta" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.BotInstructionRes">
+      <Item value="maxItems" priority="27" />
+      <Item value="iType" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.TradeSystem">
+      <Item value="cleanTrade`0" priority="161" />
+      <Item value="otherSID" priority="107" />
+      <Item value="poll`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamKit2.SteamFriends">
+      <Item value="RemoveFriend`0" priority="53" />
+      <Item value="AddFriend`0" priority="26" />
+      <Item value="GetFriendCount`0" priority="26" />
+      <Item value="GetFriendByIndex`0" priority="26" />
+      <Item value="SendChatMessage`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamKit2.SteamID">
+      <Item value="ConvertToUInt64`0" priority="107" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamKit2.SteamFriends+PersonaStateCallback">
+      <Item value="FriendID" priority="54" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@Newtonsoft.Json.JsonConvert">
+      <Item value="DeserializeObject`1" priority="54" />
+      <Item value="DeserializeObject`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.BotFile">
+      <Item value="Bots" priority="53" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:SteamBot.BotInfo">
+      <Item value="Username" priority="26" />
+      <Item value="Password" priority="26" />
+      <Item value="ScrapThreshhold" priority="26" />
+      <Item value="ScrapGoal" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.IO.TextReader">
+      <Item value="ReadToEnd`0" priority="26" />
+      <Item value="Close`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SteamBot.WebsiteManager">
+      <Item value="SetInstructionFinished`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:System.Threading.Thread">
+      <Item value="Start`0" priority="26" />
+    </ItemStatistics>
+    <ItemStatistics item="Qualified:@SteamKit2.EChatEntryType">
+      <Item value="ChatMsg" priority="26" />
+    </ItemStatistics>
+  </CompletionStatisticsManager>
+  <NAntValidationSettings>
+    <NAntPath value="" />
+  </NAntValidationSettings>
+  <UnitTestRunner>
+    <Providers />
+  </UnitTestRunner>
+  <UnitTestRunnerNUnit>
+    <NUnitInstallDir IsNull="False">
+    </NUnitInstallDir>
+    <UseAddins>Never</UseAddins>
+  </UnitTestRunnerNUnit>
+  <SettingsComponent>
+    <string />
+    <integer />
+    <boolean>
+      <setting name="SolutionAnalysisEnabled">False</setting>
+    </boolean>
+  </SettingsComponent>
+</Configuration>

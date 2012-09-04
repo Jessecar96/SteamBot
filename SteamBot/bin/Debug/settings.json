@@ -1,0 +1,11 @@
+{ 
+"Admins":["76561198011423111", "76561197996869097"],
+"Bots": [
+		{
+			"Username":"[USERNAME]",
+			"Password":"[PASSWORD]",
+			"DisplayName":"GEEL9 ROCKS",
+			"ChatResponse":"Hi there bro"
+		}
+	]
+}
