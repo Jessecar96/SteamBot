@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace SteamBot
+﻿namespace SteamBot
 {
     public class BotFile
     {
         public ulong[] Admins { get; set; }
         public BotInfo[] Bots { get; set; }
+		public string ApiKey { get; set; }
     }
 
     public class BotInfo
