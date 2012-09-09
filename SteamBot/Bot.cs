@@ -1,442 +1,261 @@
-
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
-using Newtonsoft.Json;
 using SteamKit2;
-using System.Security.Cryptography.X509Certificates;
-using System.Reflection;
-using System.Collections;
-using SteamKit2.GC;
-using SteamKit2.Internal;
 
 namespace SteamBot
 {
-    public class Bot : ICertificatePolicy
+    public class Bot
     {
+		public bool IsLoggedIn = false;
+		
+		public string DisplayName { get; private set; }
+		public string ChatResponse;
+		public ulong[] Admins;
+		
+        public SteamFriends SteamFriends;
+        public SteamClient SteamClient;
+        public SteamTrading SteamTrade;
+        public SteamUser SteamUser;
+		
+		public Trade CurrentTrade;
+		public Trade.TradeListener TradeListener;
 
-        //SteamRE Variables
-        public SteamFriends steamFriends;
-        public SteamClient steamClient;
-        public SteamTrading steamTrade;
-        public SteamGameCoordinator steamCoordinator;
-        public SteamUser steamUser;
+		public bool IsDebugMode = false;
 
-        //Trading Variables
-        public CookieCollection WebCookies;
-        public TradeSystem trade;
+		string Username;
+		string Password;
+		string apiKey;
+        string sessionId;
+        string token;
 
-        public bool isLoggedIn = false;
-
-        //Other Variables
-        public string[] AllArgs;
-
-        public string sessionId;
-        public string token;
-
-        public ulong[] Admins
+		public Bot(Configuration.BotInfo config, string apiKey, bool debug = false)
         {
-            get { return theBot.Admins; }
-        }
+			Username = config.Username;
+			Password = config.Password;
+			DisplayName = config.DisplayName;
+			ChatResponse = config.ChatResponse;
+			Admins = config.Admins;
+			this.apiKey = apiKey;
 
-        public BotInfo theBot = null;
+			TradeListener = new TradeEnterTradeListener(this);
 
-        public PlayerInventory inv;
+            // Hacking around https
+			ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate; 
 
-        #region SteamBot Configuration
-        /**
-		 * 
-		 * SteamBot Configuration
-		 * Modify this section to your needs
-		 * 
-		 */
+            SteamClient = new SteamClient();
+            SteamTrade = SteamClient.GetHandler<SteamTrading>();
+            SteamUser = SteamClient.GetHandler<SteamUser>();
+            SteamFriends = SteamClient.GetHandler<SteamFriends>();
 
-        //Name of the Bot
-        public string BotPersonaName = "TF2Scrap.com Bot 1";
-
-        //Default Persona State
-        public EPersonaState BotPersonaState = EPersonaState.LookingToTrade;
-
-        #endregion
-
-
-        //Hacking around https
-        public bool CheckValidationResult(ServicePoint sp, X509Certificate certificate, WebRequest request, int error)
-        {
-            return true;
-        }
-
-        public void OnTradeFinished(bool success)
-        {
-        }
-
-        public void PrintConsole(String line, ConsoleColor color = ConsoleColor.White, bool isDebug = false)
-        {
-            System.Console.ForegroundColor = color;
-            if (isDebug)
-            {
-                if (FindArg(AllArgs, "-debug"))
-                {
-                    System.Console.WriteLine(line);
-                }
-            }
-            else
-            {
-                System.Console.WriteLine(line);
-            }
-            System.Console.ForegroundColor = ConsoleColor.White;
-        }
-
-        public Bot(BotInfo myBotInfo)
-        {
-            #region SteamRE Init
-
-            theBot = myBotInfo;
-
-            //Hacking around https
-            ServicePointManager.CertificatePolicy = this;
-            Console.ForegroundColor = ConsoleColor.White;
-
-            steamClient = new SteamClient();
-            steamTrade = steamClient.GetHandler<SteamTrading>();
-            steamUser = steamClient.GetHandler<SteamUser>();
-            steamFriends = steamClient.GetHandler<SteamFriends>();
-            steamCoordinator = steamClient.GetHandler<SteamGameCoordinator>();
-
-            steamClient.Connect();
-            #endregion
+            SteamClient.Connect();
 
             while (true)
             {
                 Update();
             }
-
-
-        } //end Main method
-
-        #region Misc Methods
-
-        public void HandleSteamMessage(CallbackMsg msg)
-        {
-            #region Logged Off Handler
-            msg.Handle<SteamUser.LoggedOffCallback>(callback => PrintConsole("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta));
-            #endregion
-
-            #region Steam Disconnect Handler
-            msg.Handle<SteamClient.DisconnectedCallback>(callback =>
-            {
-                isLoggedIn = false;
-                if (trade != null)
-                {
-                    trade.cleanTrade();
-                    trade = null;
-                }
-                PrintConsole("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
-                steamClient.Connect();
-            });
-            #endregion
-
-            #region Steam Connect Handler
-
-            /**
-				 * --Steam Connection Callback
-				 * 
-				 * It's not needed to modify this section
-				 */
-
-            msg.Handle<SteamUser.LoginKeyCallback>(callback =>
-            {
-
-                while (true)
-                {
-                    if (Authenticate(callback))
-                    {
-                        PrintConsole("Authenticated.");
-                        break;
-                    }
-                    else
-                    {
-                        PrintConsole("Retrying auth...", ConsoleColor.Red);
-                        Thread.Sleep(2000);
-                    }
-                }
-
-                PrintConsole("Downloading schema and inventory...", ConsoleColor.Magenta);
-
-                inv = GetInventory();
-                TradeSystem.GetSchema();
-
-                PrintConsole("All Done!", ConsoleColor.Magenta);
-
-                //Get Name
-                string name = theBot.DisplayName;
-
-                //Set community status
-                Console.Title = "Raffle Bot - " + name;
-                steamFriends.SetPersonaName(name);
-                steamFriends.SetPersonaState(BotPersonaState);
-
-                //Done!
-                PrintConsole("Successfully Logged In!\nWelcome " + steamUser.SteamID + "\n\n", ConsoleColor.Magenta);
-
-                isLoggedIn = true;
-            });
-
-            msg.Handle<SteamClient.ConnectedCallback>(callback =>
-            {
-                //Print Callback
-                PrintConsole("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
-
-                //Validate Result
-                if (callback.Result == EResult.OK)
-                {
-                    string user = "";
-                    string pass = "";
-
-                    user = theBot.Username;
-                    pass = theBot.Password;
-
-                    if (user == "")
-                    {
-                        Console.WriteLine("Username: ");
-                        user = Console.ReadLine();
-                        Console.WriteLine("Password: ");
-                        Console.BackgroundColor = ConsoleColor.Black;
-                        pass = Console.ReadLine();
-                    }
-
-                    steamUser.LogOn(new SteamUser.LogOnDetails
-                    {
-                        Username = user,
-                        Password = pass
-                    });
-                }
-                else
-                {
-
-                    //Failure
-                    PrintConsole("Failed to Connect to the steam community!\n", ConsoleColor.Red);
-                    steamClient.Connect();
-                    //return;
-                }
-
-            });
-            #endregion
-
-            #region Steam Login Handler
-            //Logged in (or not)
-            msg.Handle<SteamUser.LoggedOnCallback>(callback =>
-            {
-                PrintConsole("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
-
-                if (callback.Result != EResult.OK)
-                {
-                    PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
-                }
-                else
-                {
-                    //Download Inventory
-                }
-            });
-            #endregion
-
-            #region Steam Trade Start
-            /**
-				 * 
-				 * Steam Trading Handler
-				 *  
-				 */
-            msg.Handle<SteamTrading.TradeStartSessionCallback>(call =>
-            {
-                if (trade == null)
-                {
-                    OnTradeFinished(false);
-                    return;
-                }
-                trade.initTrade(this, steamUser.SteamID, call.Other, WebCookies);
-            });
-            #endregion
-
-            #region Trade Requested Handler
-            //Don't modify this
-            msg.Handle<SteamTrading.TradeProposedCallback>(thing =>
-            {
-                steamTrade.RequestTrade(thing.Other);
-                trade = new TradeEnterRaffle();
-            });
-
-            msg.Handle<SteamTrading.TradeRequestCallback>(thing =>
-            {
-                PrintConsole("Trade Status: " + thing.Status, ConsoleColor.Magenta);
-
-                if (thing.Status == ETradeStatus.Accepted)
-                {
-                    PrintConsole("Trade accepted!", ConsoleColor.Magenta);
-
-                    /*if (trade != null && trade.otherSID != null)
-                        trade.cleanTrade();
-
-                    trade = new TradeReverseBank();*/
-                }
-            });
-            #endregion
-
-            #region Friend state
-            msg.Handle<SteamFriends.PersonaStateCallback>(callback =>
-            {
-                steamFriends.AddFriend(callback.FriendID);
-            });
-            #endregion
-
-            #region Steam Chat Handler
-            /**
-				 * 
-				 * Steam Chat Handler
-				 * 
-				 */
-            msg.Handle<SteamFriends.FriendMsgCallback>(callback =>
-            {
-                //Type (emote or chat)
-                EChatEntryType type = callback.EntryType;
-
-                if (type == EChatEntryType.ChatMsg)
-                {
-                    //Message is a chat message
-                    PrintConsole("[Chat] " + steamFriends.GetFriendPersonaName(callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
-
-                    string message = callback.Message;
-
-                    string response = theBot.ChatResponse;
-                    steamFriends.SendChatMessage(callback.Sender, EChatEntryType.ChatMsg, response);
-
-                    //Chat API coming soon
-
-                }
-
-            });
-            #endregion
         }
 
-        public void Update()
-        {
-            while (true)
-            {
-                CallbackMsg msg = steamClient.GetCallback(true);
+		public void Update ()
+		{
+			while (true) {
+				CallbackMsg msg = SteamClient.GetCallback (true);
+				
+				if (msg == null)
+					break;
+				
+				HandleSteamMessage (msg);
+			}
+			
+			
+			if (CurrentTrade != null) {
+				Thread.Sleep (800);
+				try {
+				CurrentTrade.Poll ();
+				} catch (Exception e) {
+					Console.Write ("Error polling the trade: ");
+					Console.WriteLine (e);
+				}
+			}
+		}
 
-                if (msg == null)
-                    break;
+        void HandleSteamMessage (CallbackMsg msg)
+		{
+			#region Login
+			msg.Handle<SteamClient.ConnectedCallback> (callback =>
+			{
+				PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
 
-                HandleSteamMessage(msg);
-            }
+				if (callback.Result == EResult.OK) {
+					SteamUser.LogOn (new SteamUser.LogOnDetails
+					     {
+						Username = Username,
+						Password = Password
+					});
+				} else {
+					PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
+					SteamClient.Connect ();
+				}
+				
+			});
 
+			msg.Handle<SteamUser.LoggedOnCallback> (callback =>
+			{
+				PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
+				
+				if (callback.Result != EResult.OK) {
+					PrintConsole ("Login Failure: " + callback.Result, ConsoleColor.Red);
+				}
+			});
 
+			msg.Handle<SteamUser.LoginKeyCallback> (callback =>
+			{
+				while (true) {
+					if (Authenticate (callback)) {
+						PrintConsole ("Authenticated.");
+						break;
+					} else {
+						PrintConsole ("Retrying auth...", ConsoleColor.Red);
+						Thread.Sleep (2000);
+					}
+				}
 
-            #region Actual updating
-            if (trade != null)
-            {
-                Thread.Sleep(1000);
-                trade.poll();
-            }
-            #endregion
+				PrintConsole ("Downloading schema...", ConsoleColor.Magenta);
 
-        }
+				Trade.CurrentSchema = Schema.FetchSchema (apiKey);
 
-        public bool Authenticate(SteamUser.LoginKeyCallback callback)
-        {
-            sessionId = WebHelpers.EncodeBase64(callback.UniqueID.ToString());
+				PrintConsole ("All Done!", ConsoleColor.Magenta);
 
-            PrintConsole("Got login key, performing web auth...");
+				SteamFriends.SetPersonaName (DisplayName);
+				SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
-            using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth"))
-            {
-                // generate an AES session key
-                var sessionKey = CryptoHelper.GenerateRandomBlock(32);
+				PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
 
-                // rsa encrypt it with the public key for the universe we're on
-                byte[] cryptedSessionKey = null;
-                using (var rsa = new RSACrypto(KeyDictionary.GetPublicKey(steamClient.ConnectedUniverse)))
-                {
-                    cryptedSessionKey = rsa.Encrypt(sessionKey);
-                }
+				IsLoggedIn = true;
+			});
+			#endregion
 
-                byte[] loginKey = new byte[20];
-                Array.Copy(Encoding.ASCII.GetBytes(callback.LoginKey), loginKey, callback.LoginKey.Length);
+			#region Friends
+			msg.Handle<SteamFriends.PersonaStateCallback> (callback =>
+			{
+				SteamFriends.AddFriend (callback.FriendID);
+			});
 
-                // aes encrypt the loginkey with our session key
-                byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt(loginKey, sessionKey);
+			msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
+			{
+				//Type (emote or chat)
+				EChatEntryType type = callback.EntryType;
+				
+				if (type == EChatEntryType.ChatMsg) {
+					PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
+					
+					string message = callback.Message;
+					
+					string response = ChatResponse;
+					SteamFriends.SendChatMessage (callback.Sender, EChatEntryType.ChatMsg, response);
+				}
+				
+			});
+			#endregion
 
-                KeyValue authResult;
+			#region Trading
+			msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
+			{
+				CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
+			});
 
-                try
-                {
-                    authResult = userAuth.AuthenticateUser(
-                        steamid: steamClient.SteamID.ConvertToUInt64(),
-                        sessionkey: WebHelpers.UrlEncode(cryptedSessionKey),
-                        encrypted_loginkey: WebHelpers.UrlEncode(cryptedLoginKey),
+			msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
+			{
+				SteamTrade.RequestTrade (thing.Other);
+			});
+
+			msg.Handle<SteamTrading.TradeRequestCallback> (thing =>
+			{
+				PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
+
+				if (thing.Status == ETradeStatus.Accepted) {
+					PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
+				}
+			});
+			#endregion
+
+			#region Disconnect
+			msg.Handle<SteamUser.LoggedOffCallback> (callback => 
+			{ 
+				PrintConsole ("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta);
+			});
+
+			msg.Handle<SteamClient.DisconnectedCallback> (callback =>
+			{
+				IsLoggedIn = false;
+				if (CurrentTrade != null) {
+					CurrentTrade = null;
+				}
+				PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
+				SteamClient.Connect ();
+			});
+			#endregion
+		}
+		
+		// Authenticate. This does the same as SteamWeb.DoLogin(),
+		// but without contacting the Steam Website.
+		// Should this one doesnt work anymore, use SteamWeb.DoLogin().
+        bool Authenticate (SteamUser.LoginKeyCallback callback)
+		{
+			sessionId = WebHelpers.EncodeBase64 (callback.UniqueID.ToString ());
+
+			PrintConsole ("Got login key, performing web auth...");
+
+			using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth")) {
+				// generate an AES session key
+				var sessionKey = CryptoHelper.GenerateRandomBlock (32);
+
+				// rsa encrypt it with the public key for the universe we're on
+				byte[] cryptedSessionKey = null;
+				using (var rsa = new RSACrypto(KeyDictionary.GetPublicKey(SteamClient.ConnectedUniverse))) {
+					cryptedSessionKey = rsa.Encrypt (sessionKey);
+				}
+
+				var loginKey = new byte[20];
+				Array.Copy (Encoding.ASCII.GetBytes (callback.LoginKey), loginKey, callback.LoginKey.Length);
+
+				// aes encrypt the loginkey with our session key
+				byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt (loginKey, sessionKey);
+
+				KeyValue authResult;
+
+				try {
+					authResult = userAuth.AuthenticateUser (
+                        steamid: SteamClient.SteamID.ConvertToUInt64 (),
+                        sessionkey: WebHelpers.UrlEncode (cryptedSessionKey),
+                        encrypted_loginkey: WebHelpers.UrlEncode (cryptedLoginKey),
                         method: "POST"
-                    );
-                }
-                catch (Exception ex)
-                {
-                    return false;
-                }
+					);
+				} catch (Exception) {
+					return false;
+				}
 
-                token = authResult["token"].AsString();
+				token = authResult ["token"].AsString ();
 
-                return true;
-            }
-        }
+				return true;
+			}
+		}
 
-        //Don't modify this
-        static bool FindArg(string[] args, string arg)
-        {
-            foreach (string potentialArg in args)
-            {
-                if (potentialArg.IndexOf(arg, StringComparison.OrdinalIgnoreCase) != -1)
-                    return true;
-            }
-            return false;
-        }
-
-        private PlayerInventory GetInventory()
-        {
-            try
-            {
-                var request = TradeSystem.CreateSteamRequest("http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=DF02BD82CF054DE26631BF1DEA9FCDE0&steamid=" + steamClient.SteamID.ConvertToUInt64(), this, "GET", false);
-                HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
-                Stream str = resp.GetResponseStream();
-                StreamReader reader = new StreamReader(str);
-                string res = reader.ReadToEnd();
-
-                return JsonConvert.DeserializeObject<PlayerInventory>(res);
-            }
-            catch (NullReferenceException c)
-            {
-                PrintConsole("Problem! Null Reference Exception", ConsoleColor.Red);
-                return new PlayerInventory();
-            }
-            catch (WebException x)
-            {
-                PrintConsole("Problem! Steam API returned: " + x.Status, ConsoleColor.Red);
-                return new PlayerInventory();
-            }
-        }
-
-        public string GetSessionId()
-        {
-            return SteamWeb.getSession(new CookieContainer());
-
-        }
-
-        #endregion
+		protected void PrintConsole(String line, ConsoleColor color = ConsoleColor.White, bool isDebug = false)
+		{
+			Console.ForegroundColor = color;
+			if (isDebug && IsDebugMode)
+			{
+				Console.WriteLine(line);
+			}
+			else
+			{
+				Console.WriteLine(line);
+			}
+			Console.ForegroundColor = ConsoleColor.White;
+		}
 
 
-    } //end class
-
-
-} //end namespace
+    }
+}
