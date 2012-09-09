@@ -162,8 +162,7 @@ namespace SteamBot
 			#region Trading
 			msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
 			{
-				CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey);
-				CurrentTrade.AddListener (TradeListener);
+				CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
 			});
 
 			msg.Handle<SteamTrading.TradeProposedCallback> (thing =>

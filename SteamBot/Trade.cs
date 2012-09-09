@@ -84,7 +84,7 @@ namespace SteamBot
 		public event UserAcceptHandler OnUserAccept;
 		#endregion
 
-		public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey)
+		public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, TradeListener listener = null)
 		{
 			MeSID = me;
 			OtherSID = other;
@@ -92,6 +92,8 @@ namespace SteamBot
 			this.sessionId = sessionId;
 			steamLogin = token;
 			this.apiKey = apiKey;
+
+			AddListener (listener);
 
 			baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
 
@@ -135,10 +137,13 @@ namespace SteamBot
 					throw new Exception ("It seems the item schema was not fetched correctly!");
 				}
 
-				OnAfterInit();
+				if (OnAfterInit != null)
+					OnAfterInit();
 
-			} catch (Exception) {
-				OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
+			} catch (Exception e) {
+				if (OnError != null)
+					OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
+				Console.WriteLine (e);
 			}
 
 		}
