@@ -1,10 +1,11 @@
 { 
-"Admins":["76561198011423111", "76561197996869097"],
+"Admins":["234567"], 
+"ApiKey":"Steam API Key goes here!",
 "Bots": [
 		{
-			"Username":"[USERNAME]",
-			"Password":"[PASSWORD]",
-			"DisplayName":"GEEL9 ROCKS",
+			"Username":"BOT USERNAME",
+			"Password":"BOT PASSWORD",
+			"DisplayName":"TestBot",
 			"ChatResponse":"Hi there bro"
 		}
 	]

@@ -127,7 +127,7 @@ namespace SteamBot
 
 				PrintConsole ("All Done!", ConsoleColor.Magenta);
 
-				SteamFriends.SetPersonaName (DisplayName);
+				SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
 				SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
 				PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);

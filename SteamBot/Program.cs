@@ -12,7 +12,7 @@ namespace SteamBot
 			byte counter = 0;
             foreach (Configuration.BotInfo info in config.Bots)
             {
-                Console.WriteLine("Launching bot " + counter++);
+                Console.WriteLine("--Launching bot " + counter++ +"--");
                 new Thread(() =>
                 {
                     int crashes = 0;

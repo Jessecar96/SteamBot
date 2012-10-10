@@ -1,0 +1,19 @@
+[Oo]bj
+[Rr]elease
+*.exe
+*.dll
+*.user
+*.suo
+*.[Cc]ache
+*.bak
+*.ncb
+*.log 
+*.DS_Store
+[Tt]humbs.db 
+_ReSharper.*
+*.resharper
+Ankh.NoLoad
+
+#OS junk files
+[Tt]humbs.db
+*.DS_Store

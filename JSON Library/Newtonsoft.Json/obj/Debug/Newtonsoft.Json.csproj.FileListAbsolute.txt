@@ -7,7 +7,5 @@ C:\Users\Jesse\Projects\Src\Newtonsoft.Json\obj\Debug\Newtonsoft.Json.pdb
 C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\bin\Debug\Net40\Newtonsoft.Json.xml
 C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\bin\Debug\Net40\Newtonsoft.Json.dll
 C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\bin\Debug\Net40\Newtonsoft.Json.pdb
-C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\bin\Debug\Net40\Newtonsoft.Json.dll.CodeAnalysisLog.xml
-C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\bin\Debug\Net40\Newtonsoft.Json.dll.lastcodeanalysissucceeded
 C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\obj\Debug\Newtonsoft.Json.dll
 C:\Users\Jesse\Documents\GitHub\SteamBot\JSON Library\Newtonsoft.Json\obj\Debug\Newtonsoft.Json.pdb
