@@ -260,8 +260,10 @@ namespace SteamBot
 				int untilTradeTimeout = (int) Math.Round ((tradeTimeout - now).TotalSeconds);
 
 				if (untilActionTimeout <= 0 || untilTradeTimeout <= 0) {
-					if (OnTimeout != null)
+					if (OnTimeout != null) {
 						OnTimeout();
+					}
+					CancelTrade();
 				} else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0) {
 					SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
 				}
@@ -344,6 +346,13 @@ namespace SteamBot
 			string response = Fetch (baseTradeURL + "confirm", "POST", data);
 
 			return JsonConvert.DeserializeObject (response);
+		}
+
+		public void CancelTrade ()
+		{
+				var data = new NameValueCollection ();
+				data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+				Fetch (baseTradeURL + "cancel", "POST", data);
 		}
 		#endregion
 
