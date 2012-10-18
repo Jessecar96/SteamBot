@@ -1,0 +1,3 @@
+[submodule "lib/SteamKit2"]
+	path = lib/SteamKit2
+	url = git://github.com/redjazz96/SteamKit2.git
