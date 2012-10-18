@@ -1,11 +1,12 @@
 ## Info ##
 
-**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 6 contributors have all added to the bot.  The bot is publicly available, and is available under the LGPL license (we plan on moving towards the MIT license later on).
+**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 6 contributors have all added to the bot.  The bot is publicly available, and is available under the MIT License.
 
 ## Configuration Instructions ##
 
 ### Step 0 ###
 If you've recently just cloned this repository, there are a few things you need to do.
+
 1. Run `git submodule init` in order to initalize the submodule configuration file.
 2. Run `git submodule update` to pull the latest version of the submodules that are included (namely, SteamKit2).
 3. Build the program.  Since SteamKit2 is licensed under the LGPL, and SteamBot should be released under the MIT license, SteamKit2's code cannot be included in SteamBot.  This includes executables.  We'll probably make downloads available on github.
@@ -24,7 +25,7 @@ If you've recently just cloned this repository, there are a few things you need 
 4. Look at Usage below to see some usefull functions.
 
 ## Usage ##
-**Here some useful functions you can use in TradeEnterTradeListener:**
+Here some useful functions you can use in TradeEnterTradeListener:
 ### `trade` ###
 The master class referring back to the current trade.
 ### `trade.AddItem(ulong itemid, int slot)` ###
@@ -42,3 +43,5 @@ ends a message to the other user over trade chat.
 
 ## More help? ##
 If it's a bug, open an Issue; if you have a fix, open a Pull Request.  If you have questions or comments, contact <http://steamcommunity.com/jessecar>.
+
+SteamBot is licensed under the MIT license.  Check out LICENSE for more details.
