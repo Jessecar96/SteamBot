@@ -1,6 +1,6 @@
 ## Info ##
 
-**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 6 contributors have all added to the bot.  The bot is publicly available, and is available under the LGPL license (we plan on moving towards the MIT license later on).
+**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 6 contributors have all added to the bot.  The bot is publicly available, and is available under the MIT License.
 
 ## Configuration Instructions ##
 
@@ -43,3 +43,5 @@ ends a message to the other user over trade chat.
 
 ## More help? ##
 If it's a bug, open an Issue; if you have a fix, open a Pull Request.  If you have questions or comments, contact <http://steamcommunity.com/jessecar>.
+
+SteamBot is licensed under the MIT license.  Check out LICENSE for more details.
