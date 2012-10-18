@@ -153,9 +153,12 @@ namespace SteamBot
 			w.ContentType = "application/x-www-form-urlencoded";
 			w.CookieContainer = cookies;
 
-			HttpWebResponse response = w.GetResponse () as HttpWebResponse;
-			string result = new StreamReader (response.GetResponseStream ()).ReadToEnd ();
-			response.Close ();
+			w.GetResponse ().Close ();
+			// Why would you need to do this?  Reading the response isn't nessicary, since
+			// you submitted the request already.
+			//string result = new StreamReader (response.GetResponseStream ()).ReadToEnd ();
+			//response.Close ();
+			return;
 		}
 		
 		static byte[] HexToByte (string hex)

@@ -50,15 +50,15 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\JSON Library\Newtonsoft.Json\Newtonsoft.Json.csproj">
+    <ProjectReference Include="..\lib\JSON Library\Newtonsoft.Json\Newtonsoft.Json.csproj">
       <Project>{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}</Project>
       <Name>Newtonsoft.Json</Name>
     </ProjectReference>
-    <ProjectReference Include="..\protobuf-net\protobuf-net\protobuf-net.csproj">
+    <ProjectReference Include="..\lib\protobuf-net\protobuf-net\protobuf-net.csproj">
       <Project>{8374E4D7-2A91-48F1-9360-09B09CF27C3F}</Project>
       <Name>protobuf-net</Name>
     </ProjectReference>
-    <ProjectReference Include="..\SteamKit2\SteamKit2\SteamKit2.csproj">
+    <ProjectReference Include="..\lib\SteamKit2\SteamKit2\SteamKit2.csproj">
       <Project>{BEB5BF07-BB56-402A-97A3-A41C6444C6A5}</Project>
       <Name>SteamKit2</Name>
     </ProjectReference>
