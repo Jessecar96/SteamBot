@@ -6,6 +6,7 @@
 
 ### Step 0 ###
 If you've recently just cloned this repository, there are a few things you need to do.
+
 1. Run `git submodule init` in order to initalize the submodule configuration file.
 2. Run `git submodule update` to pull the latest version of the submodules that are included (namely, SteamKit2).
 3. Build the program.  Since SteamKit2 is licensed under the LGPL, and SteamBot should be released under the MIT license, SteamKit2's code cannot be included in SteamBot.  This includes executables.  We'll probably make downloads available on github.
@@ -24,7 +25,7 @@ If you've recently just cloned this repository, there are a few things you need 
 4. Look at Usage below to see some usefull functions.
 
 ## Usage ##
-**Here some useful functions you can use in TradeEnterTradeListener:**
+Here some useful functions you can use in TradeEnterTradeListener:
 ### `trade` ###
 The master class referring back to the current trade.
 ### `trade.AddItem(ulong itemid, int slot)` ###
