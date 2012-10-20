@@ -60,17 +60,19 @@ namespace SteamBot
             }).Start();
 
             new Thread(() => // Trade Polling if needed
-            {
-			Thread.Sleep (800);
-			if (CurrentTrade != null) {
-				try {
-				CurrentTrade.Poll ();
-				} catch (Exception e) {
-					Console.Write ("Error polling the trade: ");
-					Console.WriteLine (e);
-				}
+                       {
+                while (true) {
+                    Thread.Sleep (800);
+                    if (CurrentTrade != null) {
+                        try {
+                            CurrentTrade.Poll ();
+                        } catch (Exception e) {
+                            Console.Write ("Error polling the trade: ");
+                            Console.WriteLine (e);
                         }
-             }).Start();
+                    }
+                }
+            }).Start();
         }
 
         void HandleSteamMessage (CallbackMsg msg)
