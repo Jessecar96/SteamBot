@@ -53,6 +53,7 @@ namespace SteamBot
 
             while (true)
             {
+                Thread.Sleep(1);
                 Update();
             }
         }
