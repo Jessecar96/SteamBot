@@ -62,9 +62,6 @@ namespace SteamBot
 			while (true) {
 				CallbackMsg msg = SteamClient.WaitForCallback (true);
 				
-				if (msg == null)
-					break;
-				
 				HandleSteamMessage (msg);
 			}
 			
