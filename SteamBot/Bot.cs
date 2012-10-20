@@ -53,7 +53,6 @@ namespace SteamBot
 
             while (true)
             {
-                Thread.Sleep(1);
                 Update();
             }
         }
@@ -61,7 +60,7 @@ namespace SteamBot
 		public void Update ()
 		{
 			while (true) {
-				CallbackMsg msg = SteamClient.GetCallback (true);
+				CallbackMsg msg = SteamClient.WaitForCallback (true);
 				
 				if (msg == null)
 					break;
