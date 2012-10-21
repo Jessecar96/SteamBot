@@ -51,14 +51,14 @@ namespace SteamBot
 
             SteamClient.Connect();
 
-            new Thread(() => // Callback Handling
-            {
-			while (true) {
-				CallbackMsg msg = SteamClient.WaitForCallback (true);
-				HandleSteamMessage (msg);
-			}
-            }).Start();
-
+            Thread CallbackThread = new Thread(() => // Callback Handling
+                       {
+                while (true) {
+                    CallbackMsg msg = SteamClient.WaitForCallback (true);
+                    HandleSteamMessage (msg);
+                }
+            });
+            
             new Thread(() => // Trade Polling if needed
                        {
                 while (true) {
@@ -72,7 +72,10 @@ namespace SteamBot
                         }
                     }
                 }
-            }).Start();
+            }).Start ();
+
+            CallbackThread.Start();
+            CallbackThread.Join();
         }
 
         void HandleSteamMessage (CallbackMsg msg)
