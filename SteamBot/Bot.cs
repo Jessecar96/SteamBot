@@ -59,20 +59,19 @@ namespace SteamBot
 
 		public void Update ()
 		{
-			while (true) {
-				CallbackMsg msg = SteamClient.GetCallback (true);
-				
-				if (msg == null)
-					break;
-				
-				HandleSteamMessage (msg);
-			}
-			
-			
-			if (CurrentTrade != null) {
-				Thread.Sleep (800);
-				try {
-				CurrentTrade.Poll ();
+            var before = DateTime.Now;
+            var msg = SteamClient.WaitForCallback(true, new TimeSpan(0, 0, 0, 0, 600));
+            while(msg != null) {
+                HandleSteamMessage (msg);
+                msg = SteamClient.GetCallback (true);
+            }
+
+            TimeSpan span = DateTime.Now - before;
+            if (span.TotalMilliseconds < 800)
+                Thread.Sleep (span.TotalMilliseconds);
+            if (CurrentTrade != null) {
+			    try {
+				    CurrentTrade.Poll ();
 				} catch (Exception e) {
 					Console.Write ("Error polling the trade: ");
 					Console.WriteLine (e);
