@@ -81,129 +81,129 @@ namespace SteamBot
         }
 
         void HandleSteamMessage (CallbackMsg msg)
-		{
-			#region Login
-			msg.Handle<SteamClient.ConnectedCallback> (callback =>
-			{
-				PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
+        {
+            #region Login
+            msg.Handle<SteamClient.ConnectedCallback> (callback =>
+            {
+                PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
 
-				if (callback.Result == EResult.OK) {
-					SteamUser.LogOn (new SteamUser.LogOnDetails
-					     {
-						Username = Username,
-						Password = Password
-					});
-				} else {
-					PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
-					SteamClient.Connect ();
-				}
+                if (callback.Result == EResult.OK) {
+                    SteamUser.LogOn (new SteamUser.LogOnDetails
+                    {
+                        Username = Username,
+                        Password = Password
+                    });
+                } else {
+                    PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
+                    SteamClient.Connect ();
+                }
 
-			});
+            });
 
-			msg.Handle<SteamUser.LoggedOnCallback> (callback =>
-			{
-				PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
+            msg.Handle<SteamUser.LoggedOnCallback> (callback =>
+            {
+                PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
 
-				if (callback.Result != EResult.OK) {
-					PrintConsole ("Login Failure: " + callback.Result, ConsoleColor.Red);
-				}
-			});
+                if (callback.Result != EResult.OK) {
+                    PrintConsole ("Login Failure: " + callback.Result, ConsoleColor.Red);
+                }
+            });
 
-			msg.Handle<SteamUser.LoginKeyCallback> (callback =>
-			{
-				while (true) {
-					if (Authenticate (callback)) {
-						PrintConsole ("Authenticated.");
-						break;
-					} else {
-						PrintConsole ("Retrying auth...", ConsoleColor.Red);
-						Thread.Sleep (2000);
-					}
-				}
+            msg.Handle<SteamUser.LoginKeyCallback> (callback =>
+            {
+                while (true) {
+                    if (Authenticate (callback)) {
+                        PrintConsole ("Authenticated.");
+                        break;
+                    } else {
+                        PrintConsole ("Retrying auth...", ConsoleColor.Red);
+                        Thread.Sleep (2000);
+                    }
+                }
 
-				PrintConsole ("Downloading schema...", ConsoleColor.Magenta);
+                PrintConsole ("Downloading schema...", ConsoleColor.Magenta);
 
-				Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                Trade.CurrentSchema = Schema.FetchSchema (apiKey);
 
-				PrintConsole ("All Done!", ConsoleColor.Magenta);
+                PrintConsole ("All Done!", ConsoleColor.Magenta);
 
-				SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
-				SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
+                SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
+                SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
-				PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
+                PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
 
-				IsLoggedIn = true;
-			});
-			#endregion
+                IsLoggedIn = true;
+            });
+            #endregion
 
-			#region Friends
-			msg.Handle<SteamFriends.PersonaStateCallback> (callback =>
-			{
-				SteamFriends.AddFriend (callback.FriendID);
-			});
+            #region Friends
+            msg.Handle<SteamFriends.PersonaStateCallback> (callback =>
+            {
+                SteamFriends.AddFriend (callback.FriendID);
+            });
 
-			msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
-			{
-				//Type (emote or chat)
-				EChatEntryType type = callback.EntryType;
+            msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
+            {
+                //Type (emote or chat)
+                EChatEntryType type = callback.EntryType;
 
-				if (type == EChatEntryType.ChatMsg) {
-					PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
+                if (type == EChatEntryType.ChatMsg) {
+                    PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
 
-					string message = callback.Message;
+                    string message = callback.Message;
 
-					string response = ChatResponse;
-					SteamFriends.SendChatMessage (callback.Sender, EChatEntryType.ChatMsg, response);
-				}
+                    string response = ChatResponse;
+                    SteamFriends.SendChatMessage (callback.Sender, EChatEntryType.ChatMsg, response);
+                }
 
-			});
-			#endregion
+            });
+            #endregion
 
-			#region Trading
-			msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
-			{
-				CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
+            #region Trading
+            msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
+            {
+                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
                 CurrentTrade.OnTimeout += () => {
                     CurrentTrade = null;
                 };
-			});
+            });
 
-			msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
-			{
-				SteamTrade.RequestTrade (thing.Other);
-			});
+            msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
+            {
+                SteamTrade.RequestTrade (thing.Other);
+            });
 
-			msg.Handle<SteamTrading.TradeRequestCallback> (thing =>
-			{
-				PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
+            msg.Handle<SteamTrading.TradeRequestCallback> (thing =>
+            {
+                PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
 
-				if (thing.Status == ETradeStatus.Accepted) {
-					PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
-				}
-			});
-			#endregion
+                if (thing.Status == ETradeStatus.Accepted) {
+                    PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
+                }
+            });
+            #endregion
 
-			#region Disconnect
-			msg.Handle<SteamUser.LoggedOffCallback> (callback =>
-			{
-				PrintConsole ("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta);
-			});
+            #region Disconnect
+            msg.Handle<SteamUser.LoggedOffCallback> (callback =>
+            {
+                PrintConsole ("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta);
+            });
 
-			msg.Handle<SteamClient.DisconnectedCallback> (callback =>
-			{
-				IsLoggedIn = false;
-				if (CurrentTrade != null) {
-					CurrentTrade = null;
-				}
-				PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
-				SteamClient.Connect ();
-			});
-			#endregion
-		}
+            msg.Handle<SteamClient.DisconnectedCallback> (callback =>
+            {
+                IsLoggedIn = false;
+                if (CurrentTrade != null) {
+                    CurrentTrade = null;
+                }
+                PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
+                SteamClient.Connect ();
+            });
+            #endregion
+        }
 
-		// Authenticate. This does the same as SteamWeb.DoLogin(),
-		// but without contacting the Steam Website.
-		// Should this one doesnt work anymore, use SteamWeb.DoLogin().
+        // Authenticate. This does the same as SteamWeb.DoLogin(),
+        // but without contacting the Steam Website.
+        // Should this one doesnt work anymore, use SteamWeb.DoLogin().
         bool Authenticate (SteamUser.LoginKeyCallback callback)
         {
             sessionId = WebHelpers.EncodeBase64 (callback.UniqueID.ToString ());
