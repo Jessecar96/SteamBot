@@ -42,11 +42,17 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Main.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Bot.cs" />
+    <Compile Include="BotInfo.cs" />
+    <Compile Include="Configuration.cs" />
+    <Compile Include="Inventory.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Schema.cs" />
     <Compile Include="SteamWeb.cs" />
-    <Compile Include="TradeSystem.cs" />
-    <Compile Include="InvBackpack.cs" />
+    <Compile Include="Trade.cs" />
+    <Compile Include="TradeEnterTradeListener.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
