@@ -81,7 +81,6 @@ namespace SteamBot
         }
 
         void HandleSteamMessage (CallbackMsg msg)
-<<<<<<< Updated upstream
 		{
 			#region Login
 			msg.Handle<SteamClient.ConnectedCallback> (callback =>
