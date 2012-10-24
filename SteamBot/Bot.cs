@@ -26,6 +26,7 @@ namespace SteamBot
 
 		string Username;
 		string Password;
+        string AuthCode;
 		string apiKey;
         string sessionId;
         string token;
@@ -38,6 +39,7 @@ namespace SteamBot
 			ChatResponse = config.ChatResponse;
 			Admins = config.Admins;
 			this.apiKey = apiKey;
+            AuthCode = null;
 
 			TradeListener = new TradeEnterTradeListener(this);
 
@@ -91,7 +93,8 @@ namespace SteamBot
 					SteamUser.LogOn (new SteamUser.LogOnDetails
 					     {
 						Username = Username,
-						Password = Password
+						Password = Password,
+                        AuthCode = AuthCode
 					});
 				} else {
 					PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
@@ -103,10 +106,16 @@ namespace SteamBot
 			msg.Handle<SteamUser.LoggedOnCallback> (callback =>
 			{
 				PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
-				
-				if (callback.Result != EResult.OK) {
-					PrintConsole ("Login Failure: " + callback.Result, ConsoleColor.Red);
-				}
+
+                if (callback.Result != EResult.OK)
+                {
+                    PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
+                }
+
+                if (callback.Result == EResult.AccountLogonDenied) {
+                    PrintConsole("This account is protected by Steam Guard. Enter the authentication code sent to the associated email address", ConsoleColor.DarkYellow);
+                    AuthCode = Console.ReadLine();
+                }
 			});
 
 			msg.Handle<SteamUser.LoginKeyCallback> (callback =>
