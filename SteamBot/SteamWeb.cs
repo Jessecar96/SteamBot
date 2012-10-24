@@ -91,10 +91,13 @@ namespace SteamBot
 
             SteamResult loginJson = null;
             CookieCollection cookies;
+            string steamGuardText = "";
+            string steamGuardId   = "";
             do {
                 Console.WriteLine ("SteamWeb: Logging In...");
 
                 bool captcha = loginJson != null && loginJson.captcha_needed == true;
+                bool steamGuard = loginJson != null && loginJson.emailauth_needed == true;
 
                 string time = Uri.EscapeDataString (rsaJSON.timestamp);
                 string capGID = loginJson == null ? null : Uri.EscapeDataString (loginJson.captcha_gid);
@@ -102,7 +105,6 @@ namespace SteamBot
                 data = new NameValueCollection ();
                 data.Add ("password", encryptedBase64Password);
                 data.Add ("username", username);
-                data.Add ("emailauth", "");
 
                 // Captcha
                 string capText = "";
@@ -116,8 +118,19 @@ namespace SteamBot
                 data.Add ("captcha_gid", captcha ? capGID : "");
                 data.Add ("captcha_text", captcha ? capText : "");
                 // Captcha end
-
-                data.Add ("emailsteamid", "");
+                
+                // SteamGuard
+                if (steamGuard) {
+                    Console.WriteLine ("SteamWeb: SteamGuard is needed.");
+                    Console.WriteLine ("SteamWeb: Type the code:");
+                    steamGuardText = Uri.EscapeDataString (Console.ReadLine ());
+                    steamGuardId   = loginJson.emailsteamid;
+                }
+    
+                data.Add ("emailauth", steamGuardText);
+                data.Add ("emailsteamid", steamGuardId);
+                // SteamGuard end
+                
                 data.Add ("rsatimestamp", time);
 
                 HttpWebResponse webResponse = Request ("https://steamcommunity.com/login/dologin/", "POST", data, null, false);
@@ -211,6 +224,17 @@ namespace SteamBot
         public bool captcha_needed { get; set; }
 
         public string captcha_gid { get; set; }
+        
+        public bool emailauth_needed { get; set; }
+        
+        public string emailsteamid { get; set; }
+        
+        /*
+         emailauth_needed: true
+emaildomain: "gmail.com"
+emailsteamid: "76561198025418738"
+message: "SteamGuard"
+        */
 
     }
 

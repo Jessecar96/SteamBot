@@ -159,7 +159,7 @@ namespace SteamBot
                 if (type == EChatEntryType.ChatMsg) {
                     PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
 
-                    string message = callback.Message;
+                    //string message = callback.Message;
 
                     string response = ChatResponse;
                     SteamFriends.SendChatMessage (callback.Sender, EChatEntryType.ChatMsg, response);
