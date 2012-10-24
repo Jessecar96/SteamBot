@@ -172,6 +172,9 @@ namespace SteamBot
 			msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
 			{
 				CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
+                CurrentTrade.OnTimeout += () => {
+                    CurrentTrade = null;
+                };
 			});
 
 			msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
