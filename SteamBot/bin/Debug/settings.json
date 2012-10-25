@@ -7,8 +7,8 @@
             "Password":"BOT PASSWORD",
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
-			"MaximumTradeTime":180,
-			"MaximumActionGap":30
+            "MaximumTradeTime":180,
+            "MaximumActionGap":30
         }
     ]
 }
