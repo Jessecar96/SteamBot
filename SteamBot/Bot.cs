@@ -30,6 +30,7 @@ namespace SteamBot
         string apiKey;
         int MaximumTradeTime;
         int MaximumActionGap;
+        string DisplayNamePrefix;
         string sessionId;
         string token;
 
@@ -39,6 +40,9 @@ namespace SteamBot
             Password     = config.Password;
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
+            MaximumTradeTime  = config.MaximumTradeTime;
+            MaximumActionGap  = config.MaximumActionGap;
+            DisplayNamePrefix = config.DisplayNamePrefix;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
@@ -138,7 +142,7 @@ namespace SteamBot
 
                 PrintConsole ("All Done!", ConsoleColor.Magenta);
 
-                SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
+                SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
                 PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);

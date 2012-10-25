@@ -27,8 +27,9 @@ If you've recently just cloned this repository, there are a few things you need 
         DisplayName: The name the bot will present on Steam. It should be a string enclosed by quotes.
         ChatResponse: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes.
         Admins: (optional) Additional admins, specific to this bot.
-        MaximumTradeTime: Maximium length of time for a trade session (in seconds). It should be a numeric value.
-        MaximumActionGap: Length of time the bot will allow the user to remain inactive. It should be a numeric value.
+        MaximumTradeTime: (optional) Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds.
+        MaximumActionGap: (optional) Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds.
+        DisplayNamePrefix: (optional) A prefix to display in front of the DisplayName. It should be a string encloded by quotes. Defaults to an empty string.
 
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.

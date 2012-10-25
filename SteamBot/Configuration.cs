@@ -43,6 +43,7 @@ namespace SteamBot
             public string ChatResponse { get; set; }
             public int MaximumTradeTime { get; set; }
             public int MaximumActionGap { get; set; }
+            public string DisplayNamePrefix { get; set; }
             public ulong[] Admins;
         }
     }

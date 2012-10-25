@@ -8,7 +8,8 @@
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
             "MaximumTradeTime":180,
-            "MaximumActionGap":30
+            "MaximumActionGap":30,
+            "DisplayNamePrefix":"[AutomatedBot]"
         }
     ]
 }
