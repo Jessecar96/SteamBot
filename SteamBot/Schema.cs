@@ -33,7 +33,8 @@ namespace SteamBot
         /// </summary>
         public Item GetItem (int defindex)
         {
-            foreach (Item item in Items) {
+            foreach (Item item in Items)
+            {
                 if (item.Defindex == defindex)
                     return item;
             }

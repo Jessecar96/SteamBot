@@ -55,7 +55,8 @@ namespace SteamBot
 
             Thread CallbackThread = new Thread(() => // Callback Handling
                        {
-                while (true) {
+                while (true)
+                {
                     CallbackMsg msg = SteamClient.WaitForCallback (true);
                     HandleSteamMessage (msg);
                 }
@@ -63,12 +64,17 @@ namespace SteamBot
 
             new Thread(() => // Trade Polling if needed
                        {
-                while (true) {
+                while (true)
+                {
                     Thread.Sleep (800);
-                    if (CurrentTrade != null) {
-                        try {
+                    if (CurrentTrade != null)
+                    {
+                        try
+                        {
                             CurrentTrade.Poll ();
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e)
+                        {
                             Console.Write ("Error polling the trade: ");
                             Console.WriteLine (e);
                         }
@@ -87,14 +93,17 @@ namespace SteamBot
             {
                 PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
 
-                if (callback.Result == EResult.OK) {
+                if (callback.Result == EResult.OK)
+                {
                     SteamUser.LogOn (new SteamUser.LogOnDetails
                          {
                         Username = Username,
                         Password = Password,
                         AuthCode = AuthCode
                     });
-                } else {
+                }
+                else
+                {
                     PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
                     SteamClient.Connect ();
                 }
@@ -110,7 +119,8 @@ namespace SteamBot
                     PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
                 }
 
-                if (callback.Result == EResult.AccountLogonDenied) {
+                if (callback.Result == EResult.AccountLogonDenied)
+                {
                     PrintConsole("This account is protected by Steam Guard. Enter the authentication code sent to the associated email address", ConsoleColor.DarkYellow);
                     AuthCode = Console.ReadLine();
                 }
@@ -118,7 +128,8 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
             {
-                while (true) {
+                while (true)
+                {
                     if (Authenticate (callback))
                     {
                         PrintConsole ("Authenticated.");
@@ -185,7 +196,8 @@ namespace SteamBot
             {
                 PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
 
-                if (thing.Status == ETradeStatus.Accepted) {
+                if (thing.Status == ETradeStatus.Accepted)
+                {
                     PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
                 }
             });
@@ -226,7 +238,8 @@ namespace SteamBot
 
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey = null;
-                using (var rsa = new RSACrypto(KeyDictionary.GetPublicKey(SteamClient.ConnectedUniverse))) {
+                using (var rsa = new RSACrypto(KeyDictionary.GetPublicKey(SteamClient.ConnectedUniverse)))
+                {
                     cryptedSessionKey = rsa.Encrypt (sessionKey);
                 }
 

@@ -192,7 +192,8 @@ namespace SteamBot
             byte[] arr = new byte[hex.Length >> 1];
             int l = hex.Length;
 
-            for (int i = 0; i < (l >> 1); ++i) {
+            for (int i = 0; i < (l >> 1); ++i)
+            {
                 arr [i] = (byte)((GetHexVal (hex [i << 1]) << 4) + (GetHexVal (hex [(i << 1) + 1])));
             }
 
