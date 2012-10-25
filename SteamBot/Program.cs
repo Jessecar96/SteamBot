@@ -9,10 +9,10 @@ namespace SteamBot
         {
             Configuration config = Configuration.LoadConfiguration("settings.json");
 
-            byte counter = 0;
+            //byte counter = 0;
             foreach (Configuration.BotInfo info in config.Bots)
             {
-                Console.WriteLine("--Launching bot " + counter++ +"--");
+                Console.WriteLine("--Launching bot " + info.DisplayName +"--");
                 new Thread(() =>
                 {
                     int crashes = 0;

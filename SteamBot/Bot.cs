@@ -26,18 +26,20 @@ namespace SteamBot
 
         string Username;
         string Password;
+        string AuthCode;
         string apiKey;
         string sessionId;
         string token;
 
         public Bot(Configuration.BotInfo config, string apiKey, bool debug = false)
         {
-            Username = config.Username;
-            Password = config.Password;
-            DisplayName = config.DisplayName;
+            Username     = config.Username;
+            Password     = config.Password;
+            DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
-            Admins = config.Admins;
-            this.apiKey = apiKey;
+            Admins       = config.Admins;
+            this.apiKey  = apiKey;
+            AuthCode     = null;
 
             TradeListener = new TradeEnterTradeListener(this);
 
@@ -89,9 +91,10 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK) {
                     SteamUser.LogOn (new SteamUser.LogOnDetails
-                    {
+                         {
                         Username = Username,
-                        Password = Password
+                        Password = Password,
+                        AuthCode = AuthCode
                     });
                 } else {
                     PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
@@ -104,8 +107,14 @@ namespace SteamBot
             {
                 PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
 
-                if (callback.Result != EResult.OK) {
-                    PrintConsole ("Login Failure: " + callback.Result, ConsoleColor.Red);
+                if (callback.Result != EResult.OK)
+                {
+                    PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
+                }
+
+                if (callback.Result == EResult.AccountLogonDenied) {
+                    PrintConsole("This account is protected by Steam Guard. Enter the authentication code sent to the associated email address", ConsoleColor.DarkYellow);
+                    AuthCode = Console.ReadLine();
                 }
             });
 
@@ -150,7 +159,7 @@ namespace SteamBot
                 if (type == EChatEntryType.ChatMsg) {
                     PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
 
-                    string message = callback.Message;
+                    //string message = callback.Message;
 
                     string response = ChatResponse;
                     SteamFriends.SendChatMessage (callback.Sender, EChatEntryType.ChatMsg, response);
@@ -163,9 +172,6 @@ namespace SteamBot
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
                 CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
-                CurrentTrade.OnTimeout += () => {
-                    CurrentTrade = null;
-                };
             });
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
