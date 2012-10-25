@@ -28,6 +28,8 @@ namespace SteamBot
         string Password;
         string AuthCode;
         string apiKey;
+        int MaximumTradeTime;
+        int MaximumActionGap;
         string sessionId;
         string token;
 
@@ -171,7 +173,7 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
+                CurrentTrade = new Trade(SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener, MaximumTradeTime, MaximumActionGap);
             });
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
