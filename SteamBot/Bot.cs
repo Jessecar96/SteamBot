@@ -53,33 +53,31 @@ namespace SteamBot
 
             SteamClient.Connect();
 
-            while (true)
-            {
-                Update();
-            }
-        }
-
-        public void Update ()
-        {
-            while (true) {
-                CallbackMsg msg = SteamClient.GetCallback (true);
-
-                if (msg == null)
-                    break;
-
-                HandleSteamMessage (msg);
-            }
-
-
-            if (CurrentTrade != null) {
-                Thread.Sleep (800);
-                try {
-                CurrentTrade.Poll ();
-                } catch (Exception e) {
-                    Console.Write ("Error polling the trade: ");
-                    Console.WriteLine (e);
+            Thread CallbackThread = new Thread(() => // Callback Handling
+                       {
+                while (true) {
+                    CallbackMsg msg = SteamClient.WaitForCallback (true);
+                    HandleSteamMessage (msg);
                 }
-            }
+            });
+
+            new Thread(() => // Trade Polling if needed
+                       {
+                while (true) {
+                    Thread.Sleep (800);
+                    if (CurrentTrade != null) {
+                        try {
+                            CurrentTrade.Poll ();
+                        } catch (Exception e) {
+                            Console.Write ("Error polling the trade: ");
+                            Console.WriteLine (e);
+                        }
+                    }
+                }
+            }).Start ();
+
+            CallbackThread.Start();
+            CallbackThread.Join();
         }
 
         void HandleSteamMessage (CallbackMsg msg)
