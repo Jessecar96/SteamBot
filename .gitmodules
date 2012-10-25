@@ -1,3 +1,6 @@
 [submodule "lib/SteamKit2"]
 	path = lib/SteamKit2
 	url = git://github.com/redjazz96/SteamKit2.git
+[submodule "lib/Newtonsoft.Json"]
+	path = lib/Newtonsoft.Json
+	url = git://github.com/JamesNK/Newtonsoft.Json.git
