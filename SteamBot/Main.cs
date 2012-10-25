@@ -37,7 +37,7 @@ namespace SteamBot
          */
 
         //Name of the Bot
-        public static string BotPersonaName = "[StǝamBot] Test Bot 1";
+        public static string BotPersonaName = "[StǝamBot] Unnamed";
 
         //Default Persona State
         public static EPersonaState BotPersonaState = EPersonaState.LookingToTrade;
@@ -56,12 +56,16 @@ namespace SteamBot
         static void printConsole(String line,ConsoleColor color = ConsoleColor.White, bool isDebug = false)
         {
             System.Console.ForegroundColor = color;
-            if(isDebug){
-                if(FindArg( AllArgs, "-debug" )){
-                    System.Console.WriteLine(line);
+            if (isDebug)
+            {
+                if (FindArg ( AllArgs, "-debug" ))
+                {
+                    System.Console.WriteLine (line);
                 }
-            }else{
-                System.Console.WriteLine(line);
+            }
+            else
+            {
+                System.Console.WriteLine (line);
             }
             System.Console.ForegroundColor = ConsoleColor.White;
         }
@@ -81,27 +85,28 @@ namespace SteamBot
 
 
             steamClient = new SteamClient ();
-            steamTrade = steamClient.GetHandler<SteamTrading>();
+            steamTrade = steamClient.GetHandler<SteamTrading> ();
             SteamUser steamUser = steamClient.GetHandler<SteamUser> ();
-            steamFriends = steamClient.GetHandler<SteamFriends>();
+            steamFriends = steamClient.GetHandler<SteamFriends> ();
 
             steamClient.Connect ();
             #endregion
 
 
-            while (true) {
+            while (true)
+            {
 
 
                 CallbackMsg msg = steamClient.WaitForCallback (true);
 
                 //Console Debug
-                printConsole (msg.ToString(),ConsoleColor.Blue,true);
+                printConsole (msg.ToString (),ConsoleColor.Blue,true);
 
 
                 #region Logged Off Handler
                 msg.Handle<SteamUser.LoggedOffCallback> (callback =>
                 {
-                    printConsole("Logged Off: "+callback.Result,ConsoleColor.Red);
+                    printConsole ("Logged Off: "+callback.Result,ConsoleColor.Red);
                 });
                 #endregion
 
@@ -109,7 +114,7 @@ namespace SteamBot
                 #region Steam Disconnect Handler
                 msg.Handle<SteamClient.DisconnectedCallback> (callback =>
                 {
-                    printConsole("Disconnected.",ConsoleColor.Red);
+                    printConsole ("Disconnected.",ConsoleColor.Red);
                 });
                 #endregion
 
@@ -125,37 +130,43 @@ namespace SteamBot
                 msg.Handle<SteamClient.ConnectedCallback> (callback =>
                 {
                     //Print Callback
-                    printConsole("Steam Connected Callback: "+callback.Result, ConsoleColor.Cyan);
+                    printConsole ("Steam Connected Callback: "+callback.Result, ConsoleColor.Cyan);
 
                     //Validate Result
-                    if(callback.Result==EResult.OK){
+                    if (callback.Result==EResult.OK)
+                    {
 
                         //Get Steam Login Details
-                        printConsole("Username: ",ConsoleColor.Cyan);
-                        string user = Console.ReadLine();
-                        printConsole("Password: ",ConsoleColor.Cyan);
+                        printConsole ("Username: ",ConsoleColor.Cyan);
+                        string user = Console.ReadLine ();
+                        printConsole ("Password: ",ConsoleColor.Cyan);
                         Console.ForegroundColor = ConsoleColor.Black;
-                        string pass = Console.ReadLine();
+                        string pass = Console.ReadLine ();
                         Console.ForegroundColor = ConsoleColor.White;
 
-                        printConsole("Getting Web Cookies...",ConsoleColor.Yellow);
+                        printConsole ("Getting Web Cookies...",ConsoleColor.Yellow);
 
                         //Get Web Cookies
-                        SteamWeb web = new SteamWeb();
+                        SteamWeb web = new SteamWeb ();
                         WebCookies = web.DoLogin (user,pass);
 
-                        if(WebCookies!=null){
+                        if (WebCookies!=null)
+                        {
                             printConsole ("SteamWeb Cookies retrived.",ConsoleColor.Green);
                             //Do Login
                             steamUser.LogOn (new SteamUser.LogOnDetails{
                                 Username = user,
                                 Password = pass
                             });
-                        }else{
+                        }
+                        else
+                        {
                             printConsole ("Error while getting SteamWeb Cookies.",ConsoleColor.Red);
                         }
 
-                    }else{
+                    }
+                    else
+                    {
 
                         //Failure
                         printConsole ("Failed to Connect to steam.",ConsoleColor.Red);
@@ -169,16 +180,19 @@ namespace SteamBot
                 //Logged in (or not)
                 msg.Handle<SteamUser.LoggedOnCallback>( callback =>
                 {
-                    printConsole("Logged on callback: "+callback.Result, ConsoleColor.Cyan);
+                    printConsole ("Logged on callback: "+callback.Result, ConsoleColor.Cyan);
 
-                    if(callback.Result != EResult.OK){
-                        printConsole("Login Failed!",ConsoleColor.Red);
-                    }else{
-                        printConsole("Successfulyl Logged In!\nWelcome "+steamUser.SteamID,ConsoleColor.Green);
+                    if (callback.Result != EResult.OK)
+                    {
+                        printConsole ("Login Failed!",ConsoleColor.Red);
+                    }
+                    else
+                    {
+                        printConsole ("Successfulyl Logged In!\nWelcome "+steamUser.SteamID,ConsoleColor.Green);
 
                         //Set community status
-                        steamFriends.SetPersonaName(BotPersonaName);
-                        steamFriends.SetPersonaState(BotPersonaState);
+                        steamFriends.SetPersonaName (BotPersonaName);
+                        steamFriends.SetPersonaState (BotPersonaState);
                     }
 
                 });
@@ -196,8 +210,8 @@ namespace SteamBot
 
                     //Trading
                     trade = null;
-                    trade = new TradeSystem();
-                    trade.initTrade(steamUser.SteamID,call.Other,WebCookies);
+                    trade = new TradeSystem ();
+                    trade.initTrade (steamUser.SteamID,call.Other,WebCookies);
 
                 });
                 #endregion
@@ -210,7 +224,7 @@ namespace SteamBot
                     printConsole ("Trade Proposed Callback. Other: "+thing.Other+"\n");
 
                     //Accept It
-                    steamTrade.RequestTrade(thing.Other);
+                    steamTrade.RequestTrade (thing.Other);
 
                 });
                 #endregion
@@ -220,14 +234,15 @@ namespace SteamBot
                     if (callback.FriendID == steamUser.SteamID)
                         return;
 
-                    EFriendRelationship relationship = steamFriends.GetFriendRelationship(callback.FriendID);
+                    EFriendRelationship relationship = steamFriends.GetFriendRelationship (callback.FriendID);
                     if (!(relationship == EFriendRelationship.RequestRecipient))
                         return;
 
 
-                    if(steamFriends.GetFriendRelationship(callback.FriendID)==EFriendRelationship.PendingInvitee){
-                        printConsole("[Friend] Friend Request Pending: " + callback.FriendID + "(" + steamFriends.GetFriendPersonaName(callback.FriendID) + ") - Accepted", ConsoleColor.Yellow);
-                        steamFriends.AddFriend(callback.FriendID);
+                    if (steamFriends.GetFriendRelationship (callback.FriendID) == EFriendRelationship.PendingInvitee)
+                    {
+                        printConsole ("[Friend] Friend Request Pending: " + callback.FriendID + "(" + steamFriends.GetFriendPersonaName (callback.FriendID) + ") - Accepted", ConsoleColor.Yellow);
+                        steamFriends.AddFriend (callback.FriendID);
                     }
                 });
 
@@ -243,15 +258,18 @@ namespace SteamBot
                     //Type (emote or chat)
                     EChatEntryType type = callback.EntryType;
 
-                    if(type == EChatEntryType.ChatMsg){
+                    if (type == EChatEntryType.ChatMsg)
+                    {
                         //Message is a chat message
 
                         //Reply with the same message
-                        steamFriends.SendChatMessage(callback.Sender,EChatEntryType.ChatMsg,callback.Message);
+                        steamFriends.SendChatMessage (callback.Sender,EChatEntryType.ChatMsg,callback.Message);
 
                         //Chat API coming soon
 
-                    }else if(type == EChatEntryType.Emote){
+                    }
+                    else if (type == EChatEntryType.Emote)
+                    {
                         //Message is emote
 
                         //Do nothing yet
@@ -287,4 +305,4 @@ namespace SteamBot
 
 } //end namespace
 
-//Applejack is best Pony ;)
+// Get Serious.

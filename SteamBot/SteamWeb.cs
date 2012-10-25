@@ -33,7 +33,8 @@ namespace SteamBot
             request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
             request.Referer = "http://steamcommunity.com/trade/1";
 
-            if (ajax) {
+            if (ajax)
+            {
                 request.Headers.Add ("X-Requested-With", "XMLHttpRequest");
                 request.Headers.Add ("X-Prototype-Version", "1.7");
             }
@@ -42,7 +43,8 @@ namespace SteamBot
             request.CookieContainer = cookies ?? new CookieContainer ();
 
             // Request data
-            if (data != null) {
+            if (data != null)
+            {
                 string dataString = String.Join ("&", Array.ConvertAll (data.AllKeys, key =>
                     String.Format ("{0}={1}", HttpUtility.UrlEncode (key), HttpUtility.UrlEncode (data [key]))
                 )
@@ -71,7 +73,8 @@ namespace SteamBot
 
 
             // Validate
-            if (rsaJSON.success != true) {
+            if (rsaJSON.success != true)
+            {
                 return null;
             }
 
@@ -93,7 +96,8 @@ namespace SteamBot
             CookieCollection cookies;
             string steamGuardText = "";
             string steamGuardId   = "";
-            do {
+            do
+            {
                 Console.WriteLine ("SteamWeb: Logging In...");
 
                 bool captcha = loginJson != null && loginJson.captcha_needed == true;
@@ -108,7 +112,8 @@ namespace SteamBot
 
                 // Captcha
                 string capText = "";
-                if (captcha) {
+                if (captcha)
+                {
                     Console.WriteLine ("SteamWeb: Captcha is needed.");
                     System.Diagnostics.Process.Start ("https://steamcommunity.com/public/captcha.php?gid=" + loginJson.captcha_gid);
                     Console.WriteLine ("SteamWeb: Type the captcha:");
@@ -118,19 +123,20 @@ namespace SteamBot
                 data.Add ("captcha_gid", captcha ? capGID : "");
                 data.Add ("captcha_text", captcha ? capText : "");
                 // Captcha end
-                
+
                 // SteamGuard
-                if (steamGuard) {
+                if (steamGuard)
+                {
                     Console.WriteLine ("SteamWeb: SteamGuard is needed.");
                     Console.WriteLine ("SteamWeb: Type the code:");
                     steamGuardText = Uri.EscapeDataString (Console.ReadLine ());
                     steamGuardId   = loginJson.emailsteamid;
                 }
-    
+
                 data.Add ("emailauth", steamGuardText);
                 data.Add ("emailsteamid", steamGuardId);
                 // SteamGuard end
-                
+
                 data.Add ("rsatimestamp", time);
 
                 HttpWebResponse webResponse = Request ("https://steamcommunity.com/login/dologin/", "POST", data, null, false);
@@ -144,14 +150,18 @@ namespace SteamBot
             } while (loginJson.captcha_needed == true);
 
 
-            if (loginJson.success == true) {
+            if (loginJson.success == true)
+            {
                 CookieContainer c = new CookieContainer ();
-                foreach (Cookie cookie in cookies) {
+                foreach (Cookie cookie in cookies)
+                {
                     c.Add (cookie);
                 }
                 SubmitCookies (c);
                 return cookies;
-            } else {
+            }
+            else
+            {
                 Console.WriteLine ("SteamWeb Error: " + loginJson.message);
                 return null;
             }
@@ -224,17 +234,10 @@ namespace SteamBot
         public bool captcha_needed { get; set; }
 
         public string captcha_gid { get; set; }
-        
+
         public bool emailauth_needed { get; set; }
-        
+
         public string emailsteamid { get; set; }
-        
-        /*
-         emailauth_needed: true
-emaildomain: "gmail.com"
-emailsteamid: "76561198025418738"
-message: "SteamGuard"
-        */
 
     }
 

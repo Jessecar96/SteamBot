@@ -42,6 +42,12 @@ Accepts the trade.
 ends a message to the other user over trade chat.
 
 ## More help? ##
-If it's a bug, open an Issue; if you have a fix, open a Pull Request.  If you have questions or comments, contact <http://steamcommunity.com/id/jessecar>.
+If it's a bug, open an Issue; if you have a fix, open a Pull Request.  A list of contributors (add yourself if you want to):
+	- [Jessecar96](http://steamcommunity.com/id/jessecar) (project lead)
+	- [geel9](http://steamcommunity.com/id/geel9)
+	- [Dr. Cat, MD or redjazz96](http://steamcommunity.com/id/redjazz96)
 
 SteamBot is licensed under the MIT license.  Check out LICENSE for more details.
+
+## Wanna Contribute? ##
+Check out CONTRIBUTING.md.

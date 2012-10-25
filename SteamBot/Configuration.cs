@@ -20,10 +20,13 @@ namespace SteamBot
             // merge bot-specific admins with global admins
             foreach (BotInfo bot in config.Bots)
             {
-                if (bot.Admins == null) {
+                if (bot.Admins == null)
+                {
                     bot.Admins = new ulong[config.Admins.Length];
                     Array.Copy(config.Admins, bot.Admins, config.Admins.Length);
-                } else {
+                }
+                else
+                {
                     bot.Admins = bot.Admins.Concat(config.Admins).ToArray();
                 }
             }

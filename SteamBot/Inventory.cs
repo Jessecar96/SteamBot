@@ -25,8 +25,10 @@ namespace SteamBot
 
         public Item GetItem (ulong id)
         {
-            foreach (Item item in Items) {
-                if (item.Id == id) {
+            foreach (Item item in Items)
+            {
+                if (item.Id == id)
+                {
                     return item;
                 }
             }
@@ -36,8 +38,10 @@ namespace SteamBot
         public List<Item> GetItemsByDefindex (int defindex)
         {
             var items = new List<Item> ();
-            foreach (Item item in Items) {
-                if (item.Defindex == defindex) {
+            foreach (Item item in Items)
+            {
+                if (item.Defindex == defindex)
+                {
                     items.Add (item);
                 }
             }

@@ -41,7 +41,7 @@ namespace SteamBot
         public override void OnError (string message)
         {
             // This is called when there was a Steam Trading error
-            Bot.SteamFriends.SendChatMessage(trade.OtherSID, EChatEntryType.ChatMsg,
+            Bot.SteamFriends.SendChatMessage (trade.OtherSID, EChatEntryType.ChatMsg,
                 "Oh, there was an error: " + message + ". Maybe try again in a few minutes.");
             Console.WriteLine (message);
         }
@@ -74,14 +74,18 @@ namespace SteamBot
 
         public override void OnUserSetReadyState (bool ready)
         {
-            if (!ready) {
+            if (!ready)
+            {
                 // This is called when the other user is set not ready.
                 // Currently, it makes the bot go not ready also.
                 trade.SetReady (false);
-            } else {
+            }
+            else
+            {
                 // This is called when the other user is set ready.
                 // You can remove the if Validate() to make the bot accept any items.  the method Valiate() is down below.
-                if(Validate ()) {
+                if(Validate ())
+                {
                     trade.SetReady(true);
                 }
             }
@@ -116,7 +120,8 @@ namespace SteamBot
 
             List<string> errors = new List<string> ();
 
-            foreach (ulong id in trade.OtherOfferedItems) {
+            foreach (ulong id in trade.OtherOfferedItems)
+            {
                 var item = trade.OtherInventory.GetItem (id);
                 if (item.Defindex == 5000)
                     ScrapPutUp++;
@@ -124,20 +129,23 @@ namespace SteamBot
                     ScrapPutUp += 3;
                 else if (item.Defindex == 5002)
                     ScrapPutUp += 9;
-                else {
+                else
+                {
                     var schemaItem = Trade.CurrentSchema.GetItem (item.Defindex);
                     errors.Add ("Item " + schemaItem.Name + " is not a metal.");
                 }
             }
 
-            if (ScrapPutUp < 1) {
+            if (ScrapPutUp < 1)
+            {
                 errors.Add ("You must put up at least 1 scrap.");
             }
 
             // send the errors
             if (errors.Count != 0)
                 trade.SendMessage("There were errors in your trade: ");
-            foreach (string error in errors) {
+            foreach (string error in errors)
+            {
                 trade.SendMessage(error);
             }
 

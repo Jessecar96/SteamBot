@@ -119,10 +119,13 @@ namespace SteamBot
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
             {
                 while (true) {
-                    if (Authenticate (callback)) {
+                    if (Authenticate (callback))
+                    {
                         PrintConsole ("Authenticated.");
                         break;
-                    } else {
+                    }
+                    else
+                    {
                         PrintConsole ("Retrying auth...", ConsoleColor.Red);
                         Thread.Sleep (2000);
                     }
@@ -154,7 +157,8 @@ namespace SteamBot
                 //Type (emote or chat)
                 EChatEntryType type = callback.EntryType;
 
-                if (type == EChatEntryType.ChatMsg) {
+                if (type == EChatEntryType.ChatMsg)
+                {
                     PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
 
                     //string message = callback.Message;
@@ -196,7 +200,8 @@ namespace SteamBot
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
             {
                 IsLoggedIn = false;
-                if (CurrentTrade != null) {
+                if (CurrentTrade != null)
+                {
                     CurrentTrade = null;
                 }
                 PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
@@ -214,7 +219,8 @@ namespace SteamBot
 
             PrintConsole ("Got login key, performing web auth...");
 
-            using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth")) {
+            using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth"))
+            {
                 // generate an AES session key
                 var sessionKey = CryptoHelper.GenerateRandomBlock (32);
 
@@ -232,14 +238,17 @@ namespace SteamBot
 
                 KeyValue authResult;
 
-                try {
+                try
+                {
                     authResult = userAuth.AuthenticateUser (
                         steamid: SteamClient.SteamID.ConvertToUInt64 (),
                         sessionkey: WebHelpers.UrlEncode (cryptedSessionKey),
                         encrypted_loginkey: WebHelpers.UrlEncode (cryptedLoginKey),
                         method: "POST"
                     );
-                } catch (Exception) {
+                }
+                catch (Exception)
+                {
                     return false;
                 }
 
