@@ -147,7 +147,7 @@ namespace SteamBot
                 loginJson = JsonConvert.DeserializeObject<SteamResult> (json);
 
                 cookies = webResponse.Cookies;
-            } while (loginJson.captcha_needed == true);
+            } while (loginJson.captcha_needed == true || loginJson.emailauth_needed == true);
 
 
             if (loginJson.success == true)
