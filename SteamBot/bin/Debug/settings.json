@@ -1,12 +1,14 @@
 {
 "Admins":["234567"],
 "ApiKey":"Steam API Key goes here!",
+"mainLog": "syslog.log",
 "Bots": [
         {
             "Username":"BOT USERNAME",
             "Password":"BOT PASSWORD",
             "DisplayName":"TestBot",
-            "ChatResponse":"Hi there bro"
+            "ChatResponse":"Hi there bro",
+            "logFile": "TestBot.log"
         }
     ]
 }
