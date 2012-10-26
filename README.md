@@ -14,22 +14,19 @@ If you've recently just cloned this repository, there are a few things you need 
 
 ### Step 1 ###
 1. First, you need to configure your bots.
-2. Edit the file `settings.json` in `\SteamBot\bin\Debug`.
+2. Edit the file `settings.json` in `\SteamBot\bin\Debug`.  Some configuration options:
 
-   _Admins_: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string enclosed in quotes and seperated by a comma. These admins are global to all bots listed in the _Bots_ array.
-   
-   _ApiKey_: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&cad=rja&ved=0CCYQjBAwAQ&url=http%3A%2F%2Fsteamcommunity.com%2Fdev%2Fapikey&ei=rCqIUK72LuO-yQHLyIHYDA&usg=AFQjCNH7JoiJsp9zK7z48SgSkEh6dYzVFQ&sig2=D_Jy_0DDaaVAyDTIG4Y3IA) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
-   
-  _Bots_: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values.
-
-        Username: The Steam user name for this bot. It should be a string enclosed by quotes.
-        Password: The password for the Steam user associated with this bot. It should be a string enclosed by quotes.
-        DisplayName: The name the bot will present on Steam. It should be a string enclosed by quotes.
-        ChatResponse: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes.
-        Admins: (optional) Additional admins, specific to this bot.
-        MaximumTradeTime: (optional) Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds.
-        MaximumActionGap: (optional) Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds.
-        DisplayNamePrefix: (optional) A prefix to display in front of the DisplayName. It should be a string encloded by quotes. Defaults to an empty string.
+   - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string enclosed in quotes and seperated by a comma. These admins are global to all bots listed in the _Bots_ array.
+   - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](hhttp://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
+   - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values.
+    - `Username`: The Steam user name for this bot. It should be a string enclosed by quotes.
+    - `Password`: The password for the Steam user associated with this bot. It should be a string enclosed by quotes.
+    - `DisplayName`: The name the bot will present on Steam. It should be a string enclosed by quotes.
+    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes.
+    - `Admins`: Additional admins, specific to this bot. _(optional)_
+    - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
+    - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
+    - `DisplayNamePrefix`: A prefix to display in front of the DisplayName. It should be a string encloded by quotes. Defaults to an empty string. _(optional)_
 
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
