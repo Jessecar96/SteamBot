@@ -8,12 +8,12 @@ namespace SteamBot
         public static void Main(string[] args)
         {
             Configuration config = Configuration.LoadConfiguration("settings.json");
-			Log mainLog = new Log (config.MainLog, null);
+            Log mainLog = new Log (config.MainLog, null);
             //byte counter = 0;
             foreach (Configuration.BotInfo info in config.Bots)
             {
                 //Console.WriteLine("--Launching bot " + info.DisplayName +"--");
-				mainLog.Info ("Launching Bot " + info.DisplayName + "...");
+                mainLog.Info ("Launching Bot " + info.DisplayName + "...");
                 new Thread(() =>
                 {
                     int crashes = 0;
@@ -25,7 +25,7 @@ namespace SteamBot
                         }
                         catch (Exception e)
                         {
-							mainLog.Error ("Error With Bot: "+e);
+                            mainLog.Error ("Error With Bot: "+e);
                             crashes++;
                         }
                     }

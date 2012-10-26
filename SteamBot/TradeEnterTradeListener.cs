@@ -7,7 +7,7 @@ namespace SteamBot
 {
     public class TradeEnterTradeListener : Trade.TradeListener
     {
-		// Try Bot.log instead
+        // Try Bot.log instead
         /*protected static void PrintConsole (String line, ConsoleColor color = ConsoleColor.White)
         {
             Console.ForegroundColor = color;
@@ -37,7 +37,7 @@ namespace SteamBot
             Bot.SteamFriends.SendChatMessage (trade.OtherSID, EChatEntryType.ChatMsg,
                                      "Sorry, but you were AFK and the trade was canceled.");
             //PrintConsole ("User was kicked because he was AFK.", ConsoleColor.Cyan);
-			Bot.log.Info ("User was kicked because he was AFK.");
+            Bot.log.Info ("User was kicked because he was AFK.");
         }
 
         public override void OnError (string message)
@@ -46,7 +46,7 @@ namespace SteamBot
             Bot.SteamFriends.SendChatMessage (trade.OtherSID, EChatEntryType.ChatMsg,
                 "Oh, there was an error: " + message + ". Maybe try again in a few minutes.");
             //Console.WriteLine (message);
-			Bot.log.Warn (message);
+            Bot.log.Warn (message);
         }
 
         public override void OnAfterInit()
@@ -64,7 +64,7 @@ namespace SteamBot
                 if (js.success == true)
                 {
                     //PrintConsole("[TradeSystem] Trade was successful!", ConsoleColor.Green);
-					Bot.log.Success ("Trade was Successful!");
+                    Bot.log.Success ("Trade was Successful!");
 
                     // The trade has finished, You could log the trade to a file or database here.
 
@@ -72,7 +72,7 @@ namespace SteamBot
                 else
                 {
                     //PrintConsole("[TradeSystem] Trade might have failed.", ConsoleColor.Red);
-					Bot.log.Warn ("Trade might have failed.");
+                    Bot.log.Warn ("Trade might have failed.");
                 }
             }
         }

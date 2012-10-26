@@ -4,14 +4,13 @@
     <Files>
       <File FileName="Bot.cs" Line="45" Column="50" />
       <File FileName="Configuration.cs" Line="47" Column="39" />
-      <File FileName="Program.cs" Line="12" Column="40" />
+      <File FileName="Program.cs" Line="12" Column="32" />
       <File FileName="Trade.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State expanded="True">
+        <State expanded="True" selected="True">
           <Node name="ExampleBot" expanded="True" />
-          <Node name="Newtonsoft.Json" selected="True" />
           <Node name="SteamKit2" expanded="True" />
         </State>
       </Pad>
