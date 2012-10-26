@@ -24,6 +24,8 @@ namespace SteamBot
 
         public bool IsDebugMode = false;
 
+		public Log log;
+
         string Username;
         string Password;
         string AuthCode;
@@ -40,17 +42,19 @@ namespace SteamBot
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
+			log          = new Log (config.LogFile, this);
 
             TradeListener = new TradeEnterTradeListener(this);
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
 
+			log.Debug ("Initializing Steam Bot...");
             SteamClient = new SteamClient();
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
-
+			log.Info ("Connecting...");
             SteamClient.Connect();
 
             Thread CallbackThread = new Thread(() => // Callback Handling
@@ -75,14 +79,16 @@ namespace SteamBot
                         }
                         catch (Exception e)
                         {
-                            Console.Write ("Error polling the trade: ");
-                            Console.WriteLine (e);
+							log.Error ("Error Polling Trade: " + e);
+                            //Console.Write ("Error polling the trade: ");
+                            //Console.WriteLine (e);
                         }
                     }
                 }
             }).Start ();
 
             CallbackThread.Start();
+			log.Success ("Done Loading Bot!");
             CallbackThread.Join();
         }
 
@@ -91,7 +97,8 @@ namespace SteamBot
             #region Login
             msg.Handle<SteamClient.ConnectedCallback> (callback =>
             {
-                PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
+                //PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
+				log.Debug ("Connection Callback: " + callback.Result);
 
                 if (callback.Result == EResult.OK)
                 {
@@ -104,7 +111,8 @@ namespace SteamBot
                 }
                 else
                 {
-                    PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
+					log.Error ("Failed to connect to Steam Community, trying again...");
+                    //PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
                     SteamClient.Connect ();
                 }
 
@@ -112,16 +120,19 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoggedOnCallback> (callback =>
             {
-                PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
+				log.Debug ("Logged On Callback: " + callback.Result);
+                //PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
 
                 if (callback.Result != EResult.OK)
                 {
-                    PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
+					log.Error ("Login Error: " + callback.Result);
+                    //PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
                 }
 
                 if (callback.Result == EResult.AccountLogonDenied)
                 {
-                    PrintConsole("This account is protected by Steam Guard. Enter the authentication code sent to the associated email address", ConsoleColor.DarkYellow);
+                    //PrintConsole("This account is protected by Steam Guard. Enter the authentication code sent to the associated email address", ConsoleColor.DarkYellow);
+					log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
                     AuthCode = Console.ReadLine();
                 }
             });
@@ -132,26 +143,31 @@ namespace SteamBot
                 {
                     if (Authenticate (callback))
                     {
-                        PrintConsole ("Authenticated.");
+						log.Success ("User Authenticated!");
+                        //PrintConsole ("Authenticated.");
                         break;
                     }
                     else
                     {
-                        PrintConsole ("Retrying auth...", ConsoleColor.Red);
+						log.Warn ("Authentication failed, retrying in 2s...");
+                        //PrintConsole ("Retrying auth...", ConsoleColor.Red);
                         Thread.Sleep (2000);
                     }
                 }
 
-                PrintConsole ("Downloading schema...", ConsoleColor.Magenta);
+                //PrintConsole ("Downloading schema...", ConsoleColor.Magenta);
+				log.Info ("Downloading Schema...");
 
                 Trade.CurrentSchema = Schema.FetchSchema (apiKey);
 
-                PrintConsole ("All Done!", ConsoleColor.Magenta);
+                //PrintConsole ("All Done!", ConsoleColor.Magenta);
+				log.Success ("Schema Downloaded!");
 
                 SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
-                PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
+				log.Success ("Steam Bot Logged In Completely!");
+                //PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
 
                 IsLoggedIn = true;
             });
@@ -170,7 +186,11 @@ namespace SteamBot
 
                 if (type == EChatEntryType.ChatMsg)
                 {
-                    PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
+					log.Info (String.Format ("Chat Message from {0}: {1}",
+					                         SteamFriends.GetFriendPersonaName (callback.Sender),
+					                         callback.Message
+					                         ));
+                    //PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
 
                     //string message = callback.Message;
 
@@ -184,7 +204,7 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, TradeListener);
+                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener);
             });
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
@@ -194,11 +214,13 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeRequestCallback> (thing =>
             {
-                PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
+				log.Debug ("Trade Status: "+ thing.Status);
+                //PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
 
                 if (thing.Status == ETradeStatus.Accepted)
                 {
-                    PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
+					log.Info ("Trade Accepted!");
+                    //PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
                 }
             });
             #endregion
@@ -206,7 +228,9 @@ namespace SteamBot
             #region Disconnect
             msg.Handle<SteamUser.LoggedOffCallback> (callback =>
             {
-                PrintConsole ("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta);
+				IsLoggedIn = false;
+				log.Warn ("Logged Off: " + callback.Result);
+                //PrintConsole ("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta);
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
@@ -216,7 +240,8 @@ namespace SteamBot
                 {
                     CurrentTrade = null;
                 }
-                PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
+				log.Warn ("Disconnected from Steam Network!");
+                //PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
                 SteamClient.Connect ();
             });
             #endregion
@@ -229,21 +254,21 @@ namespace SteamBot
         {
             sessionId = WebHelpers.EncodeBase64 (callback.UniqueID.ToString ());
 
-            PrintConsole ("Got login key, performing web auth...");
+            //PrintConsole ("Got login key, performing web auth...");
 
-            using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth"))
+            using (dynamic userAuth = WebAPI.GetInterface ("ISteamUserAuth"))
             {
                 // generate an AES session key
                 var sessionKey = CryptoHelper.GenerateRandomBlock (32);
 
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey = null;
-                using (var rsa = new RSACrypto(KeyDictionary.GetPublicKey(SteamClient.ConnectedUniverse)))
+                using (RSACrypto rsa = new RSACrypto (KeyDictionary.GetPublicKey (SteamClient.ConnectedUniverse)))
                 {
                     cryptedSessionKey = rsa.Encrypt (sessionKey);
                 }
 
-                var loginKey = new byte[20];
+                byte[] loginKey = new byte[20];
                 Array.Copy (Encoding.ASCII.GetBytes (callback.LoginKey), loginKey, callback.LoginKey.Length);
 
                 // aes encrypt the loginkey with our session key
@@ -271,7 +296,9 @@ namespace SteamBot
             }
         }
 
-        protected void PrintConsole(String line, ConsoleColor color = ConsoleColor.White, bool isDebug = false)
+		// This has been replaced in favor of the class Log, as 1) Log writes to files,
+		// and 2) Log has varying levels.
+        /*protected void PrintConsole(String line, ConsoleColor color = ConsoleColor.White, bool isDebug = false)
         {
             Console.ForegroundColor = color;
             if (isDebug && IsDebugMode)
@@ -283,7 +310,7 @@ namespace SteamBot
                 Console.WriteLine(line);
             }
             Console.ForegroundColor = ConsoleColor.White;
-        }
+        }*/
 
 
     }

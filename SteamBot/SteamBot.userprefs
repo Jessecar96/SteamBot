@@ -1,17 +1,19 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="../lib/SteamKit2/SteamKit2/Base/Generated/SteamMsgBase.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Program.cs">
     <Files>
-      <File FileName="Bot.cs" Line="41" Column="20" />
-      <File FileName="Configuration.cs" Line="1" Column="1" />
-      <File FileName="Program.cs" Line="8" Column="1" />
-      <File FileName="TradeEnterTradeListener.cs" Line="72" Column="14" />
+      <File FileName="Bot.cs" Line="45" Column="50" />
+      <File FileName="Configuration.cs" Line="47" Column="39" />
+      <File FileName="Program.cs" Line="12" Column="40" />
       <File FileName="Trade.cs" Line="1" Column="1" />
-      <File FileName="../lib/SteamKit2/SteamKit2/Base/Generated/SteamMsgBase.cs" Line="50" Column="23" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
-        <State expanded="True" />
+        <State expanded="True">
+          <Node name="ExampleBot" expanded="True" />
+          <Node name="Newtonsoft.Json" selected="True" />
+          <Node name="SteamKit2" expanded="True" />
+        </State>
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

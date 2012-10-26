@@ -37,6 +37,7 @@ namespace SteamBot
         public ulong[] Admins { get; set; }
         public BotInfo[] Bots { get; set; }
         public string ApiKey { get; set; }
+		public string MainLog { get; set; }
 
         public class BotInfo
         {
@@ -44,7 +45,8 @@ namespace SteamBot
             public string Password { get; set; }
             public string DisplayName { get; set; }
             public string ChatResponse { get; set; }
-            public ulong[] Admins;
+			public string LogFile { get; set; }
+			public ulong[] Admins;
         }
     }
 }

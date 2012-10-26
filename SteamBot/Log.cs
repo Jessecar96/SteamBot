@@ -6,9 +6,10 @@ namespace SteamBot
 	public class Log
 	{
 
-		enum LogLevel {
-			Info,
+		public enum LogLevel 
+		{
 			Debug,
+			Info,
 			Success,
 			Warn,
 			Error,
@@ -18,8 +19,7 @@ namespace SteamBot
 
 		protected StreamWriter _FileStream;
 		protected Bot _Bot;
-
-		public bool OutputToConsole;
+		public LogLevel OutputToConsole;
 
 		public Log (string logFile, Bot bot=null, LogLevel output=LogLevel.Success)
 		{
@@ -46,7 +46,7 @@ namespace SteamBot
 
 		public void Success (string data)
 		{
-			_OutputLine (LogLevel.Succes, data);
+			_OutputLine (LogLevel.Success, data);
 		}
 
 		public void Warn (string data)
@@ -69,7 +69,7 @@ namespace SteamBot
 			string formattedString = String.Format (
 				"[{0} {1}] {2}: {3}",
 				(_Bot == null ? "(System)" : _Bot.DisplayName),
-				DateTime.Now.ToString ("dd/MM/yyyy hh:mm:ss"),
+				DateTime.Now.ToString ("dd/MM/yyyy HH:mm:ss"),
 				_LogLevel (level).ToUpper (), line
 				);
 			_FileStream.WriteLine (formattedString);

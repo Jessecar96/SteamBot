@@ -7,12 +7,13 @@ namespace SteamBot
 {
     public class TradeEnterTradeListener : Trade.TradeListener
     {
-        protected static void PrintConsole (String line, ConsoleColor color = ConsoleColor.White)
+		// Try Bot.log instead
+        /*protected static void PrintConsole (String line, ConsoleColor color = ConsoleColor.White)
         {
             Console.ForegroundColor = color;
             Console.WriteLine (line);
             Console.ForegroundColor = ConsoleColor.White;
-        }
+        }*/
 
         public int ScrapPutUp;
 
@@ -35,7 +36,8 @@ namespace SteamBot
 
             Bot.SteamFriends.SendChatMessage (trade.OtherSID, EChatEntryType.ChatMsg,
                                      "Sorry, but you were AFK and the trade was canceled.");
-            PrintConsole ("User was kicked because he was AFK.", ConsoleColor.Cyan);
+            //PrintConsole ("User was kicked because he was AFK.", ConsoleColor.Cyan);
+			Bot.log.Info ("User was kicked because he was AFK.");
         }
 
         public override void OnError (string message)
@@ -43,7 +45,8 @@ namespace SteamBot
             // This is called when there was a Steam Trading error
             Bot.SteamFriends.SendChatMessage (trade.OtherSID, EChatEntryType.ChatMsg,
                 "Oh, there was an error: " + message + ". Maybe try again in a few minutes.");
-            Console.WriteLine (message);
+            //Console.WriteLine (message);
+			Bot.log.Warn (message);
         }
 
         public override void OnAfterInit()
@@ -60,14 +63,16 @@ namespace SteamBot
                 dynamic js = trade.AcceptTrade();
                 if (js.success == true)
                 {
-                    PrintConsole("[TradeSystem] Trade was successful!", ConsoleColor.Green);
+                    //PrintConsole("[TradeSystem] Trade was successful!", ConsoleColor.Green);
+					Bot.log.Success ("Trade was Successful!");
 
                     // The trade has finished, You could log the trade to a file or database here.
 
                 }
                 else
                 {
-                    PrintConsole("[TradeSystem] Trade might have failed.", ConsoleColor.Red);
+                    //PrintConsole("[TradeSystem] Trade might have failed.", ConsoleColor.Red);
+					Bot.log.Warn ("Trade might have failed.");
                 }
             }
         }
