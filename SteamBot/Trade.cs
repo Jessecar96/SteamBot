@@ -15,17 +15,20 @@ namespace SteamBot
         public static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
         public static Schema CurrentSchema = null;
 
-        protected static void PrintConsole (String line, ConsoleColor color = ConsoleColor.White)
+        // This has been replaced in favor of the class Log, as 1) Log writes to files,
+        // and 2) Log has varying levels.
+        /*protected static void PrintConsole (String line, ConsoleColor color = ConsoleColor.White)
         {
             Console.ForegroundColor = color;
             Console.WriteLine (line);
             Console.ForegroundColor = ConsoleColor.White;
-        }
+        }*/
         #endregion
 
         #region Properties
         public SteamID MeSID;
         public SteamID OtherSID;
+        public Bot bot;
 
         // Generic Trade info
         public bool MeReady = false;
@@ -84,7 +87,7 @@ namespace SteamBot
         public event UserAcceptHandler OnUserAccept;
         #endregion
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, TradeListener listener = null)
+        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Bot bot, TradeListener listener = null)
         {
             MeSID = me;
             OtherSID = other;
@@ -104,7 +107,8 @@ namespace SteamBot
             }
             catch (Exception)
             {
-                PrintConsole ("Failed to connect to Steam!", ConsoleColor.Red);
+                bot.log.Error ("[TRADE] Failed To Connect to Steam!");
+                //PrintConsole ("Failed to connect to Steam!", ConsoleColor.Red);
 
                 if (OnError != null)
                     OnError("There was a problem connecting to Steam Trading.");
@@ -265,7 +269,8 @@ namespace SteamBot
                         }
                         break;
                     default:
-                        PrintConsole ("Unknown Event ID: " + status.events [EventID].action, ConsoleColor.Red);
+                        bot.log.Warn ("Unkown Event ID: " + status.events [EventID].action);
+                        //PrintConsole ("Unknown Event ID: " + status.events [EventID].action, ConsoleColor.Red);
                         break;
                     }
 
