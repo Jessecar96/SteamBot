@@ -30,6 +30,9 @@ namespace SteamBot
         string Password;
         string AuthCode;
         string apiKey;
+        int MaximumTradeTime;
+        int MaximiumActionGap;
+        string DisplayNamePrefix;
         string sessionId;
         string token;
 
@@ -39,6 +42,9 @@ namespace SteamBot
             Password     = config.Password;
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
+            MaximumTradeTime = config.MaximumTradeTime;
+            MaximiumActionGap = config.MaximumActionGap;
+            DisplayNamePrefix = config.DisplayNamePrefix;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
@@ -163,7 +169,7 @@ namespace SteamBot
                 //PrintConsole ("All Done!", ConsoleColor.Magenta);
                 log.Success ("Schema Downloaded!");
 
-                SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
+                SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
                 log.Success ("Steam Bot Logged In Completely!");
@@ -204,7 +210,7 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener);
+                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener, MaximumTradeTime, MaximiumActionGap);
                 CurrentTrade.OnTimeout += () => {
                     CurrentTrade = null;
                 };

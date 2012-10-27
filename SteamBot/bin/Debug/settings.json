@@ -8,7 +8,10 @@
             "Password":"BOT PASSWORD",
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
-            "logFile": "TestBot.log"
+            "logFile": "TestBot.log",
+            "MaximumTradeTime":180,
+            "MaximumActionGap":30,
+            "DisplayNamePrefix":"[AutomatedBot] "
         }
     ]
 }
