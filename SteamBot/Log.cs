@@ -20,9 +20,11 @@ public class Log
                        // input, it won't be shown in the console.
         }
 
+
         protected StreamWriter _FileStream;
         protected Bot _Bot;
         public LogLevel OutputToConsole;
+        public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
 
         public Log (string logFile, Bot bot=null, LogLevel output=LogLevel.Success)
         {
@@ -30,6 +32,7 @@ public class Log
             _FileStream.AutoFlush = true;
             _Bot = bot;
             OutputToConsole = output;
+            Console.ForegroundColor = DefaultConsoleColor;
         }
 
         ~Log ()
@@ -37,36 +40,46 @@ public class Log
             _FileStream.Close ();
         }
 
+        // This outputs a log entry of the level info.
         public void Info (string data)
         {
             _OutputLine (LogLevel.Info, data);
         }
 
+        // This outputs a log entry of the level debug.
         public void Debug (string data)
         {
             _OutputLine (LogLevel.Debug, data);
         }
 
+        // This outputs a log entry of the level success.
         public void Success (string data)
         {
             _OutputLine (LogLevel.Success, data);
         }
 
+        // This outputs a log entry of the level warn.
         public void Warn (string data)
         {
             _OutputLine (LogLevel.Warn, data);
         }
 
+        // This outputs a log entry of the level error.
         public void Error (string data)
         {
             _OutputLine (LogLevel.Error, data);
         }
 
+        // This outputs a log entry of the level interface;
+        // normally, this means that some sort of user interaction
+        // is required.
         public void Interface (string data)
         {
             _OutputLine (LogLevel.Interface, data);
         }
 
+        // Outputs a line to both the log and the console, if 
+        // applicable.
         protected void _OutputLine (LogLevel level, string line)
         {
             string formattedString = String.Format (
@@ -77,9 +90,19 @@ public class Log
                 );
             _FileStream.WriteLine (formattedString);
             if (level >= OutputToConsole)
-                Console.WriteLine (formattedString);
+                _OutputLineToConsole (level, formattedString);
         }
 
+        // Outputs a line to the console, with the correct color 
+        // formatting.
+        protected void _OutputLineToConsole (LogLevel level, string line)
+        {
+            Console.ForegroundColor = _LogColor (level);
+            Console.WriteLine (line);
+            Console.ForegroundColor = DefaultConsoleColor;
+        }
+
+        // Determine the string equivalent of the LogLevel.
         protected string _LogLevel (LogLevel level)
         {
             switch (level)
@@ -96,6 +119,28 @@ public class Log
                 return "error";
             default:
                 return "undef";
+            }
+        }
+
+        // Determine the color to be used when outputting to the
+        // console.
+        protected ConsoleColor _LogColor (LogLevel level)
+        {
+            switch (level)
+            {
+            case LogLevel.Info:
+            case LogLevel.Debug:
+                return ConsoleColor.White;
+            case LogLevel.Success:
+                return ConsoleColor.Green;
+            case LogLevel.Warn:
+                return ConsoleColor.Yellow;
+            case LogLevel.Error:
+                return ConsoleColor.Red;
+            case LogLevel.Interface:
+                return ConsoleColor.Magenta;
+            default:
+                return DefaultConsoleColor;
             }
         }
     }
