@@ -11,7 +11,8 @@
             "logFile": "TestBot.log",
             "MaximumTradeTime":180,
             "MaximumActionGap":30,
-            "DisplayNamePrefix":"[AutomatedBot] "
+            "DisplayNamePrefix":"[AutomatedBot] ",
+			"TradePollingInterval":800
         }
     ]
 }

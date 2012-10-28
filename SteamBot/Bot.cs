@@ -33,6 +33,7 @@ namespace SteamBot
         int MaximumTradeTime;
         int MaximiumActionGap;
         string DisplayNamePrefix;
+        int TradePollingInterval;
         string sessionId;
         string token;
 
@@ -45,6 +46,7 @@ namespace SteamBot
             MaximumTradeTime = config.MaximumTradeTime;
             MaximiumActionGap = config.MaximumActionGap;
             DisplayNamePrefix = config.DisplayNamePrefix;
+            TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
@@ -76,7 +78,7 @@ namespace SteamBot
                        {
                 while (true)
                 {
-                    Thread.Sleep (800);
+                    Thread.Sleep (TradePollingInterval);
                     if (CurrentTrade != null)
                     {
                         try
