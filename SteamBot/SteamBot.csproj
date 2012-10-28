@@ -47,6 +47,7 @@
     <Compile Include="BotInfo.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Inventory.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Schema.cs" />
     <Compile Include="SteamWeb.cs" />
