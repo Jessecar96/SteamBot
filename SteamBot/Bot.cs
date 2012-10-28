@@ -212,7 +212,7 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
             {
-                log.Info("Cancel Callback Request detected");
+                log.Info ("Cancel Callback Request detected");
                 CurrentTrade = null;
             });
 
@@ -234,7 +234,7 @@ namespace SteamBot
 
                 if (thing.Status == ETradeStatus.Cancelled)
                 {
-                    log.Info("Trade was cancelled");
+                    log.Info ("Trade was cancelled");
                     CurrentTrade = null;
                 }
             });
