@@ -210,7 +210,9 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener, MaximumTradeTime, MaximiumActionGap);
+                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener);
+                CurrentTrade.MaximumTradeTime = MaximumTradeTime;
+                CurrentTrade.MaximumActionGap = MaximiumActionGap;
                 CurrentTrade.OnTimeout += () => {
                     CurrentTrade = null;
                 };
