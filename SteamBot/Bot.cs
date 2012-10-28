@@ -97,6 +97,33 @@ namespace SteamBot
             CallbackThread.Join();
         }
 
+        /// <summary>
+        /// Creates a new trade with the given partner.
+        /// </summary>
+        /// <returns>
+        /// <c>true</c>, if trade was opened, 
+        /// <c>false</c> if there is another trade that must be closed first.
+        /// </returns>
+        public bool OpenTrade (SteamID other)
+        {
+            if (CurrentTrade != null)
+                return false;
+            CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this);
+            CurrentTrade.OnTimeout += CloseTrade;
+            getHandler(call.Other).SubscribeTrade(CurrentTrade);
+            return true;
+        }
+
+        /// <summary>
+        /// Closes the current active trade.
+        /// </summary>
+        public void CloseTrade() {
+            if (CurrentTrade == null)
+                return;
+            getHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
+            CurrentTrade = null;
+        }
+
         void HandleSteamMessage (CallbackMsg msg)
         {
             log.Debug(msg.ToString());
@@ -214,18 +241,13 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this);
-                CurrentTrade.OnTimeout += () => {
-                    CurrentTrade = null;
-                };
-                getHandler(call.Other).SubscribeTrade(CurrentTrade);
+                OpenTrade(call.Other);
             });
 
             msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
             {
                 log.Info ("Cancel Callback Request detected");
-                getHandler(call.Other).UnsubscribeTrade(CurrentTrade);
-                CurrentTrade = null;
+                CloseTrade ();
             });
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
@@ -248,7 +270,7 @@ namespace SteamBot
                 if (thing.Status == ETradeStatus.Cancelled)
                 {
                     log.Info ("Trade was cancelled");
-                    CurrentTrade = null;
+                    CloseTrade ();
                 }
             });
             #endregion
@@ -264,10 +286,7 @@ namespace SteamBot
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
             {
                 IsLoggedIn = false;
-                if (CurrentTrade != null)
-                {
-                    CurrentTrade = null;
-                }
+                CloseTrade ();
                 log.Warn ("Disconnected from Steam Network!");
                 //PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
                 SteamClient.Connect ();
