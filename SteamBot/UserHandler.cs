@@ -59,18 +59,18 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Unsubscribes all listeners of this from the trade.
+        /// Unsubscribes all listeners of this from the current trade.
         /// </summary>
-        public void UnsubscribeTrade (Trade trade)
+        public void UnsubscribeTrade ()
         {
-            trade.OnError -= OnTradeError;
-            trade.OnTimeout -= OnTradeTimeout;
-            trade.OnAfterInit -= OnTradeInit;
-            trade.OnUserAddItem -= OnTradeAddItem;
-            trade.OnUserRemoveItem -= OnTradeRemoveItem;
-            trade.OnMessage -= OnTradeMessage;
-            trade.OnUserSetReady -= OnTradeReady;
-            trade.OnUserAccept -= OnTradeAccept;
+            Trade.OnError -= OnTradeError;
+            Trade.OnTimeout -= OnTradeTimeout;
+            Trade.OnAfterInit -= OnTradeInit;
+            Trade.OnUserAddItem -= OnTradeAddItem;
+            Trade.OnUserRemoveItem -= OnTradeRemoveItem;
+            Trade.OnMessage -= OnTradeMessage;
+            Trade.OnUserSetReady -= OnTradeReady;
+            Trade.OnUserAccept -= OnTradeAccept;
             Trade = null;
         }
 
