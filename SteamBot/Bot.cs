@@ -30,6 +30,10 @@ namespace SteamBot
         string Password;
         string AuthCode;
         string apiKey;
+        int MaximumTradeTime;
+        int MaximiumActionGap;
+        string DisplayNamePrefix;
+        int TradePollingInterval;
         string sessionId;
         string token;
 
@@ -39,6 +43,10 @@ namespace SteamBot
             Password     = config.Password;
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
+            MaximumTradeTime = config.MaximumTradeTime;
+            MaximiumActionGap = config.MaximumActionGap;
+            DisplayNamePrefix = config.DisplayNamePrefix;
+            TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
@@ -70,7 +78,7 @@ namespace SteamBot
                        {
                 while (true)
                 {
-                    Thread.Sleep (800);
+                    Thread.Sleep (TradePollingInterval);
                     if (CurrentTrade != null)
                     {
                         try
@@ -163,7 +171,7 @@ namespace SteamBot
                 //PrintConsole ("All Done!", ConsoleColor.Magenta);
                 log.Success ("Schema Downloaded!");
 
-                SteamFriends.SetPersonaName ("[SteamBot] "+DisplayName);
+                SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
 
                 log.Success ("Steam Bot Logged In Completely!");
@@ -205,6 +213,8 @@ namespace SteamBot
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
                 CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener);
+                CurrentTrade.MaximumTradeTime = MaximumTradeTime;
+                CurrentTrade.MaximumActionGap = MaximiumActionGap;
                 CurrentTrade.OnTimeout += () => {
                     CurrentTrade = null;
                 };

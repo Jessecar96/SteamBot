@@ -37,9 +37,33 @@ namespace SteamBot
         bool tradeStarted = false;
         public DateTime TradeStart;
         public DateTime LastAction;
+        private int _MaxTradeTime;
+        private int _MaxActionGap;
 
-        public int MaximumTradeTime = 180;
-        public int MaximumActionGap = 30;
+        public int MaximumTradeTime
+        {
+            get 
+            {
+                return _MaxTradeTime;
+            }
+            set
+            {
+                _MaxTradeTime = value <= 15 ? 15 : value;
+            }
+        }
+
+        public int MaximumActionGap
+        {
+            get
+            {
+                return _MaxActionGap;
+            }
+            set
+            {
+                _MaxActionGap = value <= 15 ? 15 : value;
+            }
+        }
+
 
         // Items
         public List<ulong> MyOfferedItems = new List<ulong> ();
@@ -87,7 +111,7 @@ namespace SteamBot
         public event UserAcceptHandler OnUserAccept;
         #endregion
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Bot bot, TradeListener listener = null)
+        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Bot bot, TradeListener listener = null/*, int maxtradetime = 180, int maxactiongap = 30*/)
         {
             MeSID = me;
             OtherSID = other;
@@ -95,7 +119,8 @@ namespace SteamBot
             this.sessionId = sessionId;
             steamLogin = token;
             this.apiKey = apiKey;
-
+            //this.MaximumTradeTime = maxtradetime <= 15 ? 15 : maxtradetime;             // Set a minimium time of 15 seconds
+            //this.MaximumActionGap = maxactiongap <= 15 ? 15 : maxactiongap;             // Again, minimium time of 15 seconds
             AddListener (listener);
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
