@@ -210,6 +210,12 @@ namespace SteamBot
                 };
             });
 
+            msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
+            {
+                log.Info ("Cancel Callback Request detected");
+                CurrentTrade = null;
+            });
+
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
             {
                 SteamTrade.RequestTrade (thing.Other);
@@ -224,6 +230,12 @@ namespace SteamBot
                 {
                     log.Info ("Trade Accepted!");
                     //PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
+                }
+
+                if (thing.Status == ETradeStatus.Cancelled)
+                {
+                    log.Info ("Trade was cancelled");
+                    CurrentTrade = null;
                 }
             });
             #endregion
