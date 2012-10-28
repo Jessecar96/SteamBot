@@ -37,25 +37,18 @@ namespace SteamBot
         bool tradeStarted = false;
         public DateTime TradeStart;
         public DateTime LastAction;
-        private int maxtradetime;
-        private int maxactiongap;
+        private int _MaxTradeTime;
+        private int _MaxActionGap;
 
         public int MaximumTradeTime
         {
             get 
             {
-                return maxtradetime;
+                return _MaxTradeTime;
             }
-            set 
+            set
             {
-                if (value <= 15)
-                {
-                    maxtradetime = 15;
-                }
-                else
-                {
-                    maxtradetime = value;
-                }
+                _MaxTradeTime = value <= 15 ? 15 : value;
             }
         }
 
@@ -63,18 +56,11 @@ namespace SteamBot
         {
             get
             {
-                return maxactiongap;
+                return _MaxActionGap;
             }
             set
             {
-                if (value <= 15)
-                {
-                    maxactiongap = 15;
-                }
-                else
-                {
-                    maxactiongap = value;
-                }
+                _MaxActionGap = value <= 15 ? 15 : value;
             }
         }
 
