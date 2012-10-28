@@ -183,13 +183,17 @@ namespace SteamBot
             {
                 if (OnError != null)
                     OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                Console.WriteLine (e);
+                //Console.WriteLine (e);
+                bot.log.Error (e.ToString ());
             }
 
         }
 
         public void Poll ()
         {
+
+            bot.log.Info ("Polling Trade...");
+
             if (!tradeStarted)
             {
                 tradeStarted = true;
@@ -345,6 +349,8 @@ namespace SteamBot
             {
                 logpos = status.logpos;
             }
+
+            bot.log.Info ("Poll Successful.");
         }
 
         #region Trade interaction
