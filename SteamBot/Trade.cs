@@ -44,6 +44,7 @@ namespace SteamBot
         {
             get 
             {
+                Console.WriteLine ("MaxTradeTime: {0}", _MaxTradeTime);
                 return _MaxTradeTime;
             }
             set
@@ -56,6 +57,7 @@ namespace SteamBot
         {
             get
             {
+                Console.WriteLine ("MaxActionGap: {0}", _MaxActionGap);
                 return _MaxActionGap;
             }
             set
@@ -86,6 +88,9 @@ namespace SteamBot
         #endregion
 
         #region Events
+        public delegate void CloseHandler ();
+        public event CloseHandler OnClose;
+
         public delegate void ErrorHandler (string error);
         public event ErrorHandler OnError;
 
@@ -119,6 +124,12 @@ namespace SteamBot
             this.sessionId = sessionId;
             steamLogin = token;
             this.apiKey = apiKey;
+            this.bot = bot;
+
+            // Moved here because when Poll is called below, these are
+            // set to zero, which closes the trade immediately.
+            MaximumTradeTime = bot.MaximumTradeTime;
+            MaximumActionGap = bot.MaximiumActionGap;
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
 
@@ -200,6 +211,15 @@ namespace SteamBot
 
 
             StatusObj status = GetStatus ();
+
+            // I've noticed this when the trade is cancelled.
+            if (status.trade_status == 3)
+            {
+                if (OnError != null)
+                    OnError ("Trade was cancelled");
+                CancelTrade ();
+                return;
+            }
 
             if (status.events != null && numEvents != status.events.Length)
             {
@@ -314,13 +334,14 @@ namespace SteamBot
                 DateTime tradeTimeout = TradeStart.AddSeconds (MaximumTradeTime);
                 int untilTradeTimeout = (int) Math.Round ((tradeTimeout - now).TotalSeconds);
 
+                Console.WriteLine ("{0},{1}", untilActionTimeout, untilTradeTimeout);
                 if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
                 {
                     if (OnTimeout != null)
                     {
-                        OnTimeout();
+                        OnTimeout ();
                     }
-                    CancelTrade();
+                    CancelTrade ();
                 }
                 else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
                 {
@@ -415,9 +436,11 @@ namespace SteamBot
 
         public void CancelTrade ()
         {
-                var data = new NameValueCollection ();
-                data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-                Fetch (baseTradeURL + "cancel", "POST", data);
+            bot.log.Error ("CANCELED TRADE");
+            var data = new NameValueCollection ();
+            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+            Fetch (baseTradeURL + "cancel", "POST", data);
+            OnClose ();
         }
         #endregion
 
@@ -429,7 +452,7 @@ namespace SteamBot
             data.Add ("version", "" + version);
 
             string response = Fetch (baseTradeURL + "tradestatus", "POST", data);
-
+            //bot.log.Interface (response);
             return JsonConvert.DeserializeObject<StatusObj> (response);
         }
 

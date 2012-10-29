@@ -34,12 +34,12 @@ namespace SteamBot
 
         List<SteamID> friends = new List<SteamID>();
 
+        public int MaximumTradeTime;
+        public int MaximiumActionGap;
         string Username;
         string Password;
         string AuthCode;
         string apiKey;
-        int MaximumTradeTime;
-        int MaximiumActionGap;
         string DisplayNamePrefix;
         int TradePollingInterval;
         string sessionId;
@@ -119,8 +119,6 @@ namespace SteamBot
             if (CurrentTrade != null)
                 return false;
             CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, this);
-            CurrentTrade.MaximumTradeTime = MaximumTradeTime;
-            CurrentTrade.MaximumActionGap = MaximiumActionGap;
             CurrentTrade.OnTimeout += CloseTrade;
             getHandler(other).SubscribeTrade(CurrentTrade);
             return true;
@@ -253,19 +251,19 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.SessionStartCallback> (call =>
             {
-                OpenTrade(call.Other);
+                OpenTrade(call.OtherClient);
             });
 
-            msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
+            /*msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
             {
                 log.Info ("Cancel Callback Request detected");
                 CloseTrade ();
-            });
+            });*/
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
             {
-                if (getHandler(thing.Other).OnTradeRequest())
-                    SteamTrade.RequestTrade (thing.Other);
+                if (getHandler(thing.OtherClient).OnTradeRequest())
+                    SteamTrade.RespondToTrade (thing.TradeID, true);
             });
 
             msg.Handle<SteamTrading.TradeResultCallback> (thing =>
@@ -357,11 +355,13 @@ namespace SteamBot
             }
         }
 
-        UserHandler getHandler(SteamID sid) {
-            if (!userHandlers.ContainsKey(sid)) {
-                userHandlers[sid.ConvertToUInt64()] = CreateHandler(this, sid);
+        UserHandler getHandler (SteamID sid) 
+        {
+            if (!userHandlers.ContainsKey (sid)) 
+            {
+                userHandlers [sid.ConvertToUInt64 ()] = CreateHandler (this, sid);
             }
-            return userHandlers[sid.ConvertToUInt64()];;
+            return userHandlers [sid.ConvertToUInt64 ()];
         }
 
     }

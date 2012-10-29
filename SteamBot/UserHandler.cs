@@ -7,10 +7,12 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
-        protected Log Log {
+        protected Log Log 
+        {
             get { return Bot.log; }
         }
-        protected bool IsAdmin {
+        protected bool IsAdmin 
+        {
             get { return Bot.Admins.Contains (OtherSID); }
         }
         protected Trade Trade;
@@ -47,6 +49,7 @@ namespace SteamBot
         /// </summary>
         public void SubscribeTrade (Trade trade)
         {
+            trade.OnClose += OnTradeClose;
             trade.OnError += OnTradeError;
             trade.OnTimeout += OnTradeTimeout;
             trade.OnAfterInit += OnTradeInit;
@@ -63,6 +66,7 @@ namespace SteamBot
         /// </summary>
         public void UnsubscribeTrade ()
         {
+            Trade.OnClose -= OnTradeClose;
             Trade.OnError -= OnTradeError;
             Trade.OnTimeout -= OnTradeTimeout;
             Trade.OnAfterInit -= OnTradeInit;
@@ -74,21 +78,37 @@ namespace SteamBot
             Trade = null;
         }
 
-        public abstract void OnTradeError (string error);
+        //public abstract void OnTradeError (string error);
 
-        public abstract void OnTradeTimeout ();
+        public virtual void OnTradeError (string error)
+        {
+            //UnsubscribeTrade ();
+        }
 
-        public abstract void OnTradeInit();
+        //public abstract void OnTradeTimeout ();
 
-        public abstract void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public virtual void OnTradeTimeout ()
+        {
+            //UnsubscribeTrade ();
+        }
 
-        public abstract void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public virtual void OnTradeClose ()
+        {
+            Bot.log.Warn ("[USERHANDLER] TRADE CLOSED");
+            Bot.CloseTrade ();
+        }
 
-        public abstract void OnTradeMessage(string message);
+        public abstract void OnTradeInit ();
 
-        public abstract void OnTradeReady(bool ready);
+        public abstract void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public abstract void OnTradeAccept();
+        public abstract void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
+
+        public abstract void OnTradeMessage (string message);
+
+        public abstract void OnTradeReady (bool ready);
+
+        public abstract void OnTradeAccept ();
         #endregion
 
     }
