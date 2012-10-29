@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using SteamKit2;
 
 namespace SteamBot
 {
@@ -21,7 +22,10 @@ namespace SteamBot
                     {
                         try
                         {
-                            new Bot(info, config.ApiKey);
+                            new Bot(info, config.ApiKey, (Bot bot, SteamID sid) => 
+                            {
+                                return new SimpleUserHandler(bot, sid);
+                            }, true);
                         }
                         catch (Exception e)
                         {
