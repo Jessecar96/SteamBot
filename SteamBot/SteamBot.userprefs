@@ -1,0 +1,16 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Trade.cs">
+    <Files>
+      <File FileName="Bot.cs" Line="222" Column="26" />
+      <File FileName="Log.cs" Line="22" Column="9" />
+      <File FileName="TradeEnterTradeListener.cs" Line="102" Column="13" />
+      <File FileName="Trade.cs" Line="307" Column="14" />
+      <File FileName="Inventory.cs" Line="47" Column="14" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

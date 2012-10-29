@@ -1,7 +1,9 @@
 using System;
-using System.Text;
+using System.Web;
 using System.Net;
+using System.Text;
 using System.Threading;
+using System.Security.Cryptography;
 using SteamKit2;
 
 namespace SteamBot
@@ -172,7 +174,7 @@ namespace SteamBot
                 log.Success ("Schema Downloaded!");
 
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
-                SteamFriends.SetPersonaState (EPersonaState.LookingToTrade);
+                SteamFriends.SetPersonaState (EPersonaState.Online);
 
                 log.Success ("Steam Bot Logged In Completely!");
                 //PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
@@ -210,9 +212,9 @@ namespace SteamBot
             #endregion
 
             #region Trading
-            msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
+            msg.Handle<SteamTrading.SessionStartCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener);
+                CurrentTrade = new Trade (SteamUser.SteamID, call.OtherClient, sessionId, token, apiKey, this, TradeListener);
                 CurrentTrade.MaximumTradeTime = MaximumTradeTime;
                 CurrentTrade.MaximumActionGap = MaximiumActionGap;
                 CurrentTrade.OnTimeout += () => {
@@ -220,29 +222,29 @@ namespace SteamBot
                 };
             });
 
-            msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
+            /*msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
             {
                 log.Info ("Cancel Callback Request detected");
                 CurrentTrade = null;
-            });
+            });*/
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
             {
-                SteamTrade.RequestTrade (thing.Other);
+                SteamTrade.Trade(thing.OtherClient);
+                //SteamTrade.RequestTrade (thing.Other);
             });
 
-            msg.Handle<SteamTrading.TradeRequestCallback> (thing =>
+            msg.Handle<SteamTrading.TradeResultCallback> (thing =>
             {
-                log.Debug ("Trade Status: "+ thing.Status);
+                log.Debug ("Trade Status: "+ thing.Response);
                 //PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
 
-                if (thing.Status == ETradeStatus.Accepted)
+                if (thing.Response == EEconTradeResponse.Accepted)
                 {
                     log.Info ("Trade Accepted!");
                     //PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
                 }
-
-                if (thing.Status == ETradeStatus.Cancelled)
+                if (thing.Response == EEconTradeResponse.Cancel)
                 {
                     log.Info ("Trade was cancelled");
                     CurrentTrade = null;
@@ -277,7 +279,8 @@ namespace SteamBot
         // Should this one doesnt work anymore, use SteamWeb.DoLogin().
         bool Authenticate (SteamUser.LoginKeyCallback callback)
         {
-            sessionId = WebHelpers.EncodeBase64 (callback.UniqueID.ToString ());
+            sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (callback.UniqueID.ToString ()));
+            //sessionId = WebHelpers.EncodeBase64 (callback.UniqueID.ToString ());
 
             //PrintConsole ("Got login key, performing web auth...");
 
@@ -288,10 +291,12 @@ namespace SteamBot
 
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey = null;
+                // Woa, this doesn't seem to work
                 using (RSACrypto rsa = new RSACrypto (KeyDictionary.GetPublicKey (SteamClient.ConnectedUniverse)))
                 {
                     cryptedSessionKey = rsa.Encrypt (sessionKey);
                 }
+
 
                 byte[] loginKey = new byte[20];
                 Array.Copy (Encoding.ASCII.GetBytes (callback.LoginKey), loginKey, callback.LoginKey.Length);
@@ -305,8 +310,8 @@ namespace SteamBot
                 {
                     authResult = userAuth.AuthenticateUser (
                         steamid: SteamClient.SteamID.ConvertToUInt64 (),
-                        sessionkey: WebHelpers.UrlEncode (cryptedSessionKey),
-                        encrypted_loginkey: WebHelpers.UrlEncode (cryptedLoginKey),
+                        sessionkey: HttpUtility.UrlEncode (cryptedSessionKey),
+                        encrypted_loginkey: HttpUtility.UrlEncode (cryptedLoginKey),
                         method: "POST"
                     );
                 }
