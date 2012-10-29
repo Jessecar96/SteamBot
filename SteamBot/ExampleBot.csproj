@@ -8,7 +8,7 @@
     <ProjectGuid>{E81DED36-EDF5-41A5-8666-A3A0C581762F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>SteamBot</RootNamespace>
-    <AssemblyName>SteamBot</AssemblyName>
+    <AssemblyName>ExampleBot</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>

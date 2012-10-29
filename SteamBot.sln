@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamBot", "Src\SteamBot.csproj", "{E81DED36-EDF5-41A5-8666-A3A0C581762F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleBot", "SteamBot\ExampleBot.csproj", "{E81DED36-EDF5-41A5-8666-A3A0C581762F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Json", "Lib\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.csproj", "{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}"
 EndProject
@@ -199,7 +199,7 @@ Global
 		$5.inheritsSet = null
 		$5.scope = application/octet-stream
 		$0.StandardHeader = $6
-		$6.Text = 
+		$6.Text =
 		$6.IncludeInNewFiles = True
 		$0.NameConventionPolicy = $7
 		$7.Rules = $8
