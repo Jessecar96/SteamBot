@@ -14,7 +14,7 @@ If you've recently just cloned this repository, there are a few things you need 
 
 ### Step 1 ###
 1. First, you need to configure your bots.
-2. Edit the file `settings.json` in `\SteamBot\bin\Debug`.  Some configuration options:
+2. Edit the file `settings-template.json` in `\SteamBot\bin\Debug`.  Some configuration options:
 
    - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string enclosed in quotes and seperated by a comma. These admins are global to all bots listed in the _Bots_ array.
    - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](hhttp://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
@@ -30,6 +30,8 @@ If you've recently just cloned this repository, there are a few things you need 
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
     - `DisplayNamePrefix`: A prefix to display in front of the DisplayName. It should be a string encloded by quotes. Defaults to an empty string. _(optional)_
     - `TradePollingInterval`: Length of time, in milliseconds, between polling events. Higher values reduce CPU usage at the cost of a slower trading session. It should be a numeric value. Default is 800 ms. Lowest value is 100 ms. _(optional)_
+
+3. Rename `settings-template.json` to `settings.json`
  
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
