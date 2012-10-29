@@ -19,4 +19,5 @@ Ankh.NoLoad
 [Tt]humbs.db
 *.DS_Store
 
+*.userprefs
 *.pidb
