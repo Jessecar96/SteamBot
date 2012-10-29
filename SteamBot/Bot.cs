@@ -284,7 +284,7 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
             {
-                if (getHandler (callback.OtherClient).OnTradeRequest () && CurrentTrade == null)
+                if (CurrentTrade == null && getHandler (callback.OtherClient).OnTradeRequest ())
                     SteamTrade.RespondToTrade (callback.TradeID, true);
                 else
                     SteamTrade.RespondToTrade (callback.TradeID, false);
