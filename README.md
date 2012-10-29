@@ -35,25 +35,50 @@ If you've recently just cloned this repository, there are a few things you need 
  
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
-2. You mainly only need to edit the file `TradeEnterTradeListener.cs`, as it contains events for everything you need.
+2. You mainly only need to edit the file `SimpleUserHandler.cs`, as it contains events for everything you need.  You can create your own user handler (as long as it is a subclass of `UserHandler`), just as long as you remember to edit the `Program.cs` file to handle it correctly.
 3. Just add your code to each of the events.  It explains what each of them do in the code comments.
 4. Look at Usage below to see some usefull functions.
 
 ## Usage ##
-Here some useful functions you can use in TradeEnterTradeListener:
-### `trade` ###
+
+These are a few things you can use when writing your user handler:
+
+### Basic Steam Community ###
+#### `IsAdmin` ####
+Returns true if the user handler instance is for an administrator.
+
+#### `Bot` ####
+The `Bot` instance for the bot the user handler is running for.
+
+#### `Bot.log` ####
+The `Log` class for the Bot.
+
+#### `Bot.SteamFriends.SendChatMessage(SteamID target, EChatEntryType type, string message)` ####
+Send a chat message to the specified user (by steam id).
+
+#### `Bot.SteamFriends.AddFriend(SteamID steamId)` ####
+Add a friend by steam id.
+
+### `OnTrade*` Callbacks ###
+#### `Trade` ####
 The master class referring back to the current trade.
-### `trade.AddItem(ulong itemid, int slot)` ###
+
+#### `Trade.AddItem(ulong itemid, int slot)` ####
 Add an item by its `id` property into the specified slot in the trade.
-### `trade.AddItemByDefindex(int defindex, int slot)` ###
+
+#### `Trade.AddItemByDefindex(int defindex, int slot)` ####
 Same as AddItem, but you specify the defindex of the item instead of the id.
-### `trade.RemoveItem(ulong itemid, int slot)` ###
+
+#### `Trade.RemoveItem(ulong itemid, int slot)` ####
 Removes the specified item from the trade.
-### `trade.SetReady(bool ready)` ###
+
+#### `Trade.SetReady(bool ready)` ####
 Sets the trade ready or not ready according to the boolean.
-### `trade.AcceptTrade()` ###
+
+#### `Trade.AcceptTrade()` ####
 Accepts the trade.
-### `trade.SendMessage(string msg)` ###
+
+#### `Trade.SendMessage(string msg)` ####
 ends a message to the other user over trade chat.
 
 ## More help? ##
