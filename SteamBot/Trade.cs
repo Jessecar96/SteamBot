@@ -111,7 +111,7 @@ namespace SteamBot
         public event UserAcceptHandler OnUserAccept;
         #endregion
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Bot bot, TradeListener listener = null/*, int maxtradetime = 180, int maxactiongap = 30*/)
+        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Bot bot)
         {
             MeSID = me;
             OtherSID = other;
@@ -119,9 +119,6 @@ namespace SteamBot
             this.sessionId = sessionId;
             steamLogin = token;
             this.apiKey = apiKey;
-            //this.MaximumTradeTime = maxtradetime <= 15 ? 15 : maxtradetime;             // Set a minimium time of 15 seconds
-            //this.MaximumActionGap = maxactiongap <= 15 ? 15 : maxactiongap;             // Again, minimium time of 15 seconds
-            AddListener (listener);
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
 
@@ -183,13 +180,17 @@ namespace SteamBot
             {
                 if (OnError != null)
                     OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                Console.WriteLine (e);
+                //Console.WriteLine (e);
+                bot.log.Error (e.ToString ());
             }
 
         }
 
         public void Poll ()
         {
+
+            bot.log.Info ("Polling Trade...");
+
             if (!tradeStarted)
             {
                 tradeStarted = true;
@@ -345,6 +346,8 @@ namespace SteamBot
             {
                 logpos = status.logpos;
             }
+
+            bot.log.Info ("Poll Successful.");
         }
 
         #region Trade interaction
@@ -418,19 +421,6 @@ namespace SteamBot
         }
         #endregion
 
-        public void AddListener (TradeListener listener)
-        {
-            OnError += listener.OnError;
-            OnTimeout += listener.OnTimeout;
-            OnAfterInit += listener.OnAfterInit;
-            OnUserAddItem += listener.OnUserAddItem;
-            OnUserRemoveItem += listener.OnUserRemoveItem;
-            OnMessage += listener.OnMessage;
-            OnUserSetReady += listener.OnUserSetReadyState;
-            OnUserAccept += listener.OnUserAccept;
-            listener.trade = this;
-        }
-
         protected StatusObj GetStatus ()
         {
             var data = new NameValueCollection ();
@@ -471,27 +461,6 @@ namespace SteamBot
             }
 
             return SteamWeb.Fetch (url, method, data, cookies);
-        }
-
-        public abstract class TradeListener
-        {
-            public Trade trade;
-
-            public abstract void OnError (string error);
-
-            public abstract void OnTimeout ();
-
-            public abstract void OnAfterInit ();
-
-            public abstract void OnUserAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
-
-            public abstract void OnUserRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
-
-            public abstract void OnMessage (string msg);
-
-            public abstract void OnUserSetReadyState (bool ready);
-
-            public abstract void OnUserAccept ();
         }
 
         #region JSON classes
