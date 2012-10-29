@@ -44,7 +44,7 @@ namespace SteamBot
         
         public override void OnTradeInit() 
         {
-            Trade.SendMessage("Success. Please put up your items.");
+            Trade.SendMessage ("Success. Please put up your items.");
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
@@ -63,9 +63,9 @@ namespace SteamBot
             {
                 if(Validate ())
                 {
-                    Trade.SetReady(true);
+                    Trade.SetReady (true);
                 }
-                Trade.SendMessage("Scrap: " + ScrapPutUp);
+                Trade.SendMessage ("Scrap: " + ScrapPutUp);
             }
         }
         

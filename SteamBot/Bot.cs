@@ -147,6 +147,7 @@ namespace SteamBot
             CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, this);
             CurrentTrade.OnTimeout += CloseTrade;
             getHandler (other).SubscribeTrade (CurrentTrade);
+            getHandler (other).OnTradeInit ();
             return true;
         }
 

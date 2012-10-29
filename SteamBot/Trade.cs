@@ -119,47 +119,66 @@ namespace SteamBot
         #endregion
 
         #region Events
-        // When the trade closes, this is called.  It doesn't matter
-        // whether or not it was a timeout or an error, this is called
-        // to close the trade.
+
+        /// <summary>
+        /// When the trade closes, this is called.  It doesn't matter
+        /// whether or not it was a timeout or an error, this is called
+        /// to close the trade.
+        /// </summary>
         public delegate void CloseHandler ();
         public event CloseHandler OnClose;
 
-        // This is for handling errors that may occur, like inventories
-        // not loading.
+        /// <summary>
+        /// This is for handling errors that may occur, like inventories
+        /// not loading.
+        /// </summary>
         public delegate void ErrorHandler (string error);
         public event ErrorHandler OnError;
 
-        // This is for a timeout (either the user didn't complete an
-        // action in a set amount of time, or they took too long with
-        // the whole trade).
+        /// <summary>
+        /// This is for a timeout (either the user didn't complete an
+        /// action in a set amount of time, or they took too long with
+        /// the whole trade).
+        /// </summary>
         public delegate void TimeoutHandler ();
         public event TimeoutHandler OnTimeout;
 
-        // This occurs after Inventories have been loaded.
+        /// <summary>
+        /// This occurs after Inventories have been loaded.
+        /// </summary>
         public delegate void SuccessfulInit ();
         public event SuccessfulInit OnAfterInit;
 
-        // This occurs when the other user adds an item to the trade.
+        /// <summary>
+        /// This occurs when the other user adds an item to the trade.
+        /// </summary>
         public delegate void UserAddItemHandler (Schema.Item schemaItem, Inventory.Item inventoryItem);
         public event UserAddItemHandler OnUserAddItem;
 
-        // This occurs when the other user removes an item from the 
-        // trade.
+        /// <summary>
+        /// This occurs when the other user removes an item from the 
+        /// trade.
+        /// </summary>
         public delegate void UserRemoveItemHandler (Schema.Item schemaItem, Inventory.Item inventoryItem);
         public event UserAddItemHandler OnUserRemoveItem;
-
-        // This occurs when the user sends a message to the bot over
-        // trade.
+        
+        /// <summary>
+        /// This occurs when the user sends a message to the bot over
+        /// trade.
+        /// </summary>
         public delegate void MessageHandler (string msg);
         public event MessageHandler OnMessage;
 
-        // This occurs when the user sets their ready state to either
-        // true or false.
+        /// <summary>
+        /// This occurs when the user sets their ready state to either
+        /// true or false.
+        /// </summary>
         public delegate void UserSetReadyStateHandler (bool ready);
         public event UserSetReadyStateHandler OnUserSetReady;
 
-        // This occurs when the user accepts the trade.
+        /// <summary>
+        /// This occurs when the user accepts the trade.
+        /// </summary>
         public delegate void UserAcceptHandler ();
         public event UserAcceptHandler OnUserAccept;
         #endregion
@@ -196,10 +215,12 @@ namespace SteamBot
 
             FetchInventories ();
         }
-
-        // This updates the trade.  This is called at an interval of a
-        // default of 800ms, not including the execution time of the
-        // method itself.
+        
+        /// <summary>
+        /// This updates the trade.  This is called at an interval of a
+        /// default of 800ms, not including the execution time of the
+        /// method itself.
+        /// </summary>
         public void Poll ()
         {
 
@@ -381,9 +402,9 @@ namespace SteamBot
         }
 
         #region Trade interaction
-        // <summary>
-        // Sends a message to the user over the trade chat.
-        // </summary>
+        /// <summary>
+        /// Sends a message to the user over the trade chat.
+        /// </summary>
         public string SendMessage (string msg)
         {
             var data = new NameValueCollection ();
@@ -394,18 +415,22 @@ namespace SteamBot
             return Fetch (baseTradeURL + "chat", "POST", data);
         }
 
-        // <summary>
-        // Adds an item by its Defindex.  Adds only one item at a
-        // time, but can be called multiple times during a poll due
-        // to the fact that AddItem keeps track of the items it
-        // adds in MyOfferedItems.
-        // </summary>
+        /// <summary>
+        /// Adds an item by its Defindex.  Adds only one item at a
+        /// time, but can be called multiple times during a poll due
+        /// to the fact that AddItem keeps track of the items it
+        /// adds in MyOfferedItems.
+        /// </summary>
+        /// <returns>
+        /// Returns true if an item was found with the corresponding
+        /// defindex, false otherwise.
+        /// </returns>
         public bool AddItemByDefindex (int defindex, int slot)
         {
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
             foreach(Inventory.Item item in items)
             {
-                if (item != null && MyOfferedItems.Contains (item.Id))
+                if (!(item == null || MyOfferedItems.Contains (item.Id)))
                 {
                     AddItem (item.Id, slot);
                     return true;
@@ -414,14 +439,16 @@ namespace SteamBot
             return false;
         }
 
-        // <summary>
-        // Adds a specified itom by its itemid.  Since each itemid is
-        // unique to each item, you'd first have to find the item, or
-        // use AddItemByDefindex instead.  It stores the item it added
-        // in MyOfferedItems.  Returns false if the item doesn't exist
-        // in the bot's inventory, or true if it appears it succeeded
-        // in adding the item.
-        // </summary>
+        /// <summary>
+        /// Adds a specified itom by its itemid.  Since each itemid is
+        /// unique to each item, you'd first have to find the item, or
+        /// use AddItemByDefindex instead.  It stores the item it added
+        /// in MyOfferedItems.
+        /// </summary>
+        /// <returns>
+        /// Returns false if the item doesn't exist in the Bot's inventory,
+        /// and returns true if it appears the item was added.
+        /// </returns>
         public bool AddItem (ulong itemid, int slot)
         {
             if (MyInventory.GetItem (itemid) == null)
@@ -437,16 +464,19 @@ namespace SteamBot
             return true;
         }
 
-        // <summary>
-        // Finds the last item in the trade that has the defindex
-        // passed to it.  It removes the last item, and can determine
-        // the slot number of the item if you don't give it.  REMEMBER:
-        // the slot number of the item should be the the slot number
-        // of the last instance of the item in the offered items.
-        // The limit on determining the slot number is the assumption
-        // that the items were put in order, i.e. slot 1, slot 2,
-        // slot 3, ..., slot n.
-        // </summary>
+        /// <summary>
+        /// Finds the last item in the trade that has the defindex
+        /// passed to it.  It removes the last item, and can determine
+        /// the slot number of the item if you don't give it.  REMEMBER:
+        /// the slot number of the item should be the the slot number
+        /// of the last instance of the item in the offered items.
+        /// The limit on determining the slot number is the assumption
+        /// that the items were put in order, i.e. slot 1, slot 2,
+        /// slot 3, ..., slot n.
+        /// </summary>
+        /// <returns>
+        /// Returns true if it found a corresponding item; false otherwise.
+        /// </returns>
         public bool RemoveItemByDefindex (int defindex, int slot=-1)
         {
             ulong lastItem = 0;
@@ -470,12 +500,12 @@ namespace SteamBot
             return false;
         }
 
-        // <summary>
-        // Removes an item by its itemid.  Read AddItem about itemids.
-        // Returns false if the item isn't in the offered items, or
-        // true if it appears it succeeded.  Removes the item from
-        // MyOfferedItems.
-        // </summary>
+        /// <summary>
+        /// Removes an item by its itemid.  Read AddItem about itemids.
+        /// Returns false if the item isn't in the offered items, or
+        /// true if it appears it succeeded.  Removes the item from
+        /// MyOfferedItems.
+        /// </summary>
         public bool RemoveItem (ulong itemid, int slot)
         {
             if (!MyOfferedItems.Contains (itemid))
@@ -491,9 +521,9 @@ namespace SteamBot
             return true;
         }
 
-        // <summary>
-        // Sets the bot to a ready status.
-        // </summary>
+        /// <summary>
+        /// Sets the bot to a ready status.
+        /// </summary>
         public void SetReady (bool ready)
         {
             var data = new NameValueCollection ();
@@ -503,10 +533,10 @@ namespace SteamBot
             Fetch (baseTradeURL + "toggleready", "POST", data);
         }
 
-        // <summary>
-        // Accepts the trade from the user.  Returns a deserialized
-        // JSON object.
-        // </summary>
+        /// <summary>
+        /// Accepts the trade from the user.  Returns a deserialized
+        /// JSON object.
+        /// </summary>
         public dynamic AcceptTrade ()
         {
             var data = new NameValueCollection ();
@@ -517,16 +547,17 @@ namespace SteamBot
             return JsonConvert.DeserializeObject (response);
         }
 
-        // <summary>
-        // Cancel the trade.  This calls the OnClose handler, as well.
-        // </summary>
+        /// <summary>
+        /// Cancel the trade.  This calls the OnClose handler, as well.
+        /// </summary>
         public void CancelTrade ()
         {
             bot.log.Error ("CANCELED TRADE");
             var data = new NameValueCollection ();
             data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
             Fetch (baseTradeURL + "cancel", "POST", data);
-            OnClose ();
+            if (OnClose != null)
+                OnClose ();
         }
         #endregion
 
@@ -571,10 +602,10 @@ namespace SteamBot
             return SteamWeb.Fetch (url, method, data, cookies);
         }
 
-        // <summary>
-        // Grabs the inventories of both users over both Trading and
-        // SteamAPI.
-        // </summary>
+        /// <summary>
+        /// Grabs the inventories of both users over both Trading and
+        /// SteamAPI.
+        /// </summary>
         protected void FetchInventories ()
         {
             try
