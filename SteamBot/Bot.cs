@@ -11,10 +11,18 @@ namespace SteamBot
 {
     public class Bot
     {
+        // If the bot is logged in fully or not.  This is only set
+        // when it is.
         public bool IsLoggedIn = false;
 
+        // The bot's display name.  Changing this does not mean that
+        // the bot's name will change.
         public string DisplayName { get; private set; }
+
+        // The response to all chat messages sent to it.
         public string ChatResponse;
+
+        // A list of SteamIDs that this bot recognizes as admins.
         public ulong[] Admins;
 
         public SteamFriends SteamFriends;
@@ -22,10 +30,13 @@ namespace SteamBot
         public SteamTrading SteamTrade;
         public SteamUser SteamUser;
 
+        // The current trade; if the bot is not in a trade, this is
+        // null.
         public Trade CurrentTrade;
 
         public bool IsDebugMode = false;
-
+    
+        // The log for the bot.  This logs with the bot's display name.
         public Log log;
 
         public delegate UserHandler UserHandlerCreator(Bot bot, SteamID id);
@@ -34,14 +45,31 @@ namespace SteamBot
 
         List<SteamID> friends = new List<SteamID>();
 
-        public int MaximumTradeTime;
-        public int MaximiumActionGap;
+        // The maximum amount of time the bot will trade for.
+        public int MaximumTradeTime { get; private set; }
+
+        // The maximum amount of time the bot will wait in between
+        // trade actions.
+        public int MaximiumActionGap { get; private set; }
+
+        // The bot's username (for the steam account).
         string Username;
+
+        // The bot's password (for the steam account).
         string Password;
+
+        // The SteamGuard authcode, if needed.
         string AuthCode;
+
+        // The Steam Web API key.
         string apiKey;
+
+        // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
+
+        // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
+
         string sessionId;
         string token;
 
@@ -73,7 +101,7 @@ namespace SteamBot
             SteamClient.Connect();
 
             Thread CallbackThread = new Thread(() => // Callback Handling
-                       {
+            {
                 while (true)
                 {
                     CallbackMsg msg = SteamClient.WaitForCallback (true);
@@ -82,7 +110,7 @@ namespace SteamBot
             });
 
             new Thread(() => // Trade Polling if needed
-                       {
+            {
                 while (true)
                 {
                     Thread.Sleep (TradePollingInterval);
@@ -120,7 +148,7 @@ namespace SteamBot
                 return false;
             CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, this);
             CurrentTrade.OnTimeout += CloseTrade;
-            getHandler(other).SubscribeTrade(CurrentTrade);
+            getHandler (other).SubscribeTrade (CurrentTrade);
             return true;
         }
 
@@ -249,38 +277,44 @@ namespace SteamBot
             #endregion
 
             #region Trading
-            msg.Handle<SteamTrading.SessionStartCallback> (call =>
+            msg.Handle<SteamTrading.SessionStartCallback> (callback =>
             {
-                OpenTrade(call.OtherClient);
+                OpenTrade (callback.OtherClient);
             });
 
-            /*msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
+            msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
             {
-                log.Info ("Cancel Callback Request detected");
-                CloseTrade ();
-            });*/
-
-            msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
-            {
-                if (getHandler(thing.OtherClient).OnTradeRequest())
-                    SteamTrade.RespondToTrade (thing.TradeID, true);
+                if (getHandler (callback.OtherClient).OnTradeRequest () && CurrentTrade == null)
+                    SteamTrade.RespondToTrade (callback.TradeID, true);
+                else
+                    SteamTrade.RespondToTrade (callback.TradeID, false);
             });
 
-            msg.Handle<SteamTrading.TradeResultCallback> (thing =>
+            msg.Handle<SteamTrading.TradeResultCallback> (callback =>
             {
-                log.Debug ("Trade Status: "+ thing.Response);
-                //PrintConsole ("Trade Status: " + thing.Status, ConsoleColor.Magenta);
+                log.Debug ("Trade Status: "+ callback.Response);
+                //PrintConsole ("Trade Status: " + callback.Status, ConsoleColor.Magenta);
 
-                if (thing.Response == EEconTradeResponse.Accepted)
+                if (callback.Response == EEconTradeResponse.Accepted)
                 {
                     log.Info ("Trade Accepted!");
                     //PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
                 }
-                if (thing.Response == EEconTradeResponse.Cancel)
+                if (callback.Response == EEconTradeResponse.Cancel ||
+                    callback.Response == EEconTradeResponse.ConnectionFailed ||
+                    callback.Response == EEconTradeResponse.Declined ||
+                    callback.Response == EEconTradeResponse.Error ||
+                    callback.Response == EEconTradeResponse.InitiatorAlreadyTrading ||
+                    callback.Response == EEconTradeResponse.TargetAlreadyTrading ||
+                    callback.Response == EEconTradeResponse.Timeout ||
+                    callback.Response == EEconTradeResponse.TooSoon ||
+                    callback.Response == EEconTradeResponse.VacBannedInitiator ||
+                    callback.Response == EEconTradeResponse.VacBannedTarget ||
+                    callback.Response == EEconTradeResponse.NotLoggedIn) // uh...
                 {
-                    log.Info ("Trade was cancelled");
                     CloseTrade ();
                 }
+
             });
             #endregion
 

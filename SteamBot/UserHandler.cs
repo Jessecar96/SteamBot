@@ -80,17 +80,11 @@ namespace SteamBot
 
         //public abstract void OnTradeError (string error);
 
-        public virtual void OnTradeError (string error)
-        {
-            //UnsubscribeTrade ();
-        }
+        public abstract void OnTradeError (string error);
 
         //public abstract void OnTradeTimeout ();
 
-        public virtual void OnTradeTimeout ()
-        {
-            //UnsubscribeTrade ();
-        }
+        public abstract void OnTradeTimeout ();
 
         public virtual void OnTradeClose ()
         {
