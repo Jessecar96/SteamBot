@@ -12,7 +12,7 @@
             "MaximumTradeTime":180,
             "MaximumActionGap":30,
             "DisplayNamePrefix":"[AutomatedBot] ",
-			"TradePollingInterval":800
+            "TradePollingInterval":800
         }
     ]
 }
