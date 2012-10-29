@@ -17,7 +17,7 @@ If you've recently just cloned this repository, there are a few things you need 
 2. Edit the file `settings-template.json` in `\SteamBot\bin\Debug`.  Some configuration options:
 
    - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string enclosed in quotes and seperated by a comma. These admins are global to all bots listed in the _Bots_ array.
-   - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](hhttp://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
+   - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
    - `mainLog`: The log containing runtime information for all bots.
    - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values.
     - `Username`: The Steam user name for this bot. It should be a string enclosed by quotes.
