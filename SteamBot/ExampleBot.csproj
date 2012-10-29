@@ -11,24 +11,24 @@
     <AssemblyName>SteamBot</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <Externalconsole>true</Externalconsole>
+    <Externalconsole>True</Externalconsole>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>none</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>False</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <Externalconsole>true</Externalconsole>
+    <Externalconsole>True</Externalconsole>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,7 +41,6 @@
     <Reference Include="System.Web" />
     <Reference Include="MonoDevelop.CSharpBinding, Version=2.6.0.0, Culture=neutral">
       <Private>False</Private>
-      <Package>monodevelop-core-addins</Package>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Web.Extensions" />
@@ -53,10 +52,11 @@
     <Compile Include="Trade.cs" />
     <Compile Include="Inventory.cs" />
     <Compile Include="Schema.cs" />
-    <Compile Include="TradeEnterTradeListener.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="UserHandler.cs" />
+    <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

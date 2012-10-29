@@ -3,6 +3,7 @@ using System.Text;
 using System.Net;
 using System.Threading;
 using SteamKit2;
+using System.Collections.Generic;
 
 namespace SteamBot
 {
@@ -20,11 +21,16 @@ namespace SteamBot
         public SteamUser SteamUser;
 
         public Trade CurrentTrade;
-        public Trade.TradeListener TradeListener;
 
         public bool IsDebugMode = false;
 
         public Log log;
+
+        public delegate UserHandler UserHandlerCreator(Bot bot, SteamID id);
+        public UserHandlerCreator CreateHandler;
+        Dictionary<ulong, UserHandler> userHandlers = new Dictionary<ulong, UserHandler>();
+
+        List<SteamID> friends = new List<SteamID>();
 
         string Username;
         string Password;
@@ -37,7 +43,7 @@ namespace SteamBot
         string sessionId;
         string token;
 
-        public Bot(Configuration.BotInfo config, string apiKey, bool debug = false)
+        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
             Username     = config.Username;
             Password     = config.Password;
@@ -51,8 +57,7 @@ namespace SteamBot
             this.apiKey  = apiKey;
             AuthCode     = null;
             log          = new Log (config.LogFile, this);
-
-            TradeListener = new TradeEnterTradeListener(this);
+            CreateHandler = handlerCreator;
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
@@ -100,8 +105,39 @@ namespace SteamBot
             CallbackThread.Join();
         }
 
+        /// <summary>
+        /// Creates a new trade with the given partner.
+        /// </summary>
+        /// <returns>
+        /// <c>true</c>, if trade was opened, 
+        /// <c>false</c> if there is another trade that must be closed first.
+        /// </returns>
+        public bool OpenTrade (SteamID other)
+        {
+            if (CurrentTrade != null)
+                return false;
+            CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, this);
+            CurrentTrade.MaximumTradeTime = MaximumTradeTime;
+            CurrentTrade.MaximumActionGap = MaximiumActionGap;
+            CurrentTrade.OnTimeout += CloseTrade;
+            getHandler(other).SubscribeTrade(CurrentTrade);
+            return true;
+        }
+
+        /// <summary>
+        /// Closes the current active trade.
+        /// </summary>
+        public void CloseTrade() {
+            if (CurrentTrade == null)
+                return;
+            getHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
+            CurrentTrade = null;
+        }
+
         void HandleSteamMessage (CallbackMsg msg)
         {
+            log.Debug(msg.ToString());
+
             #region Login
             msg.Handle<SteamClient.ConnectedCallback> (callback =>
             {
@@ -182,29 +218,32 @@ namespace SteamBot
             #endregion
 
             #region Friends
-            msg.Handle<SteamFriends.PersonaStateCallback> (callback =>
+            msg.Handle<SteamFriends.FriendsListCallback> (callback => 
             {
-                SteamFriends.AddFriend (callback.FriendID);
+                foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList) 
+                {
+                    if (!friends.Contains(friend.SteamID)) 
+                    {
+                        friends.Add(friend.SteamID);
+                        if (friend.Relationship == EFriendRelationship.PendingInvitee &&
+                            getHandler(friend.SteamID).OnFriendAdd()) 
+                        {
+                            SteamFriends.AddFriend (friend.SteamID);
+                        }
+                    }
+                }
             });
 
             msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
             {
-                //Type (emote or chat)
                 EChatEntryType type = callback.EntryType;
 
-                if (type == EChatEntryType.ChatMsg)
-                {
-                    log.Info (String.Format ("Chat Message from {0}: {1}",
-                                             SteamFriends.GetFriendPersonaName (callback.Sender),
-                                             callback.Message
-                                             ));
-                    //PrintConsole ("[Chat] " + SteamFriends.GetFriendPersonaName (callback.Sender) + ": " + callback.Message, ConsoleColor.Magenta);
+                log.Info (String.Format ("Chat Message from {0}: {1}",
+                                         SteamFriends.GetFriendPersonaName (callback.Sender),
+                                         callback.Message
+                                         ));
 
-                    //string message = callback.Message;
-
-                    string response = ChatResponse;
-                    SteamFriends.SendChatMessage (callback.Sender, EChatEntryType.ChatMsg, response);
-                }
+                getHandler(callback.Sender).OnMessage(callback.Message, type);
 
             });
             #endregion
@@ -212,23 +251,19 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.TradeStartSessionCallback> (call =>
             {
-                CurrentTrade = new Trade (SteamUser.SteamID, call.Other, sessionId, token, apiKey, this, TradeListener);
-                CurrentTrade.MaximumTradeTime = MaximumTradeTime;
-                CurrentTrade.MaximumActionGap = MaximiumActionGap;
-                CurrentTrade.OnTimeout += () => {
-                    CurrentTrade = null;
-                };
+                OpenTrade(call.Other);
             });
 
             msg.Handle<SteamTrading.TradeCancelRequestCallback> (call =>
             {
                 log.Info ("Cancel Callback Request detected");
-                CurrentTrade = null;
+                CloseTrade ();
             });
 
             msg.Handle<SteamTrading.TradeProposedCallback> (thing =>
             {
-                SteamTrade.RequestTrade (thing.Other);
+                if (getHandler(thing.Other).OnTradeRequest())
+                    SteamTrade.RequestTrade (thing.Other);
             });
 
             msg.Handle<SteamTrading.TradeRequestCallback> (thing =>
@@ -245,7 +280,7 @@ namespace SteamBot
                 if (thing.Status == ETradeStatus.Cancelled)
                 {
                     log.Info ("Trade was cancelled");
-                    CurrentTrade = null;
+                    CloseTrade ();
                 }
             });
             #endregion
@@ -261,10 +296,7 @@ namespace SteamBot
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
             {
                 IsLoggedIn = false;
-                if (CurrentTrade != null)
-                {
-                    CurrentTrade = null;
-                }
+                CloseTrade ();
                 log.Warn ("Disconnected from Steam Network!");
                 //PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
                 SteamClient.Connect ();
@@ -321,22 +353,12 @@ namespace SteamBot
             }
         }
 
-        // This has been replaced in favor of the class Log, as 1) Log writes to files,
-        // and 2) Log has varying levels.
-        /*protected void PrintConsole(String line, ConsoleColor color = ConsoleColor.White, bool isDebug = false)
-        {
-            Console.ForegroundColor = color;
-            if (isDebug && IsDebugMode)
-            {
-                Console.WriteLine(line);
+        UserHandler getHandler(SteamID sid) {
+            if (!userHandlers.ContainsKey(sid)) {
+                userHandlers[sid.ConvertToUInt64()] = CreateHandler(this, sid);
             }
-            else
-            {
-                Console.WriteLine(line);
-            }
-            Console.ForegroundColor = ConsoleColor.White;
-        }*/
-
+            return userHandlers[sid.ConvertToUInt64()];;
+        }
 
     }
 }
