@@ -13,10 +13,8 @@ namespace SteamBot
             Log mainLog = new Log (config.MainLog, null);
             mainLog.Success ("Configuration File For SteamBot Version "+Version+
                              " Loaded Successfully.");
-            //byte counter = 0;
             foreach (Configuration.BotInfo info in config.Bots)
             {
-                //Console.WriteLine("--Launching bot " + info.DisplayName +"--");
                 mainLog.Info ("Launching Bot " + info.DisplayName + "...");
                 new Thread(() =>
                 {

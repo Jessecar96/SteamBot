@@ -123,8 +123,6 @@ namespace SteamBot
                         catch (Exception e)
                         {
                             log.Error ("Error Polling Trade: " + e);
-                            //Console.Write ("Error polling the trade: ");
-                            //Console.WriteLine (e);
                         }
                     }
                 }
@@ -169,7 +167,6 @@ namespace SteamBot
             #region Login
             msg.Handle<SteamClient.ConnectedCallback> (callback =>
             {
-                //PrintConsole ("Connection Callback: " + callback.Result, ConsoleColor.Magenta);
                 log.Debug ("Connection Callback: " + callback.Result);
 
                 if (callback.Result == EResult.OK)
@@ -184,7 +181,6 @@ namespace SteamBot
                 else
                 {
                     log.Error ("Failed to connect to Steam Community, trying again...");
-                    //PrintConsole ("Failed to Connect to the steam community!\n", ConsoleColor.Red);
                     SteamClient.Connect ();
                 }
 
@@ -193,17 +189,14 @@ namespace SteamBot
             msg.Handle<SteamUser.LoggedOnCallback> (callback =>
             {
                 log.Debug ("Logged On Callback: " + callback.Result);
-                //PrintConsole ("Logged on callback: " + callback.Result, ConsoleColor.Magenta);
 
                 if (callback.Result != EResult.OK)
                 {
                     log.Error ("Login Error: " + callback.Result);
-                    //PrintConsole("Login Failure: " + callback.Result, ConsoleColor.Red);
                 }
 
                 if (callback.Result == EResult.AccountLogonDenied)
                 {
-                    //PrintConsole("This account is protected by Steam Guard. Enter the authentication code sent to the associated email address", ConsoleColor.DarkYellow);
                     log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
                     AuthCode = Console.ReadLine();
                 }
@@ -216,30 +209,25 @@ namespace SteamBot
                     if (Authenticate (callback))
                     {
                         log.Success ("User Authenticated!");
-                        //PrintConsole ("Authenticated.");
                         break;
                     }
                     else
                     {
                         log.Warn ("Authentication failed, retrying in 2s...");
-                        //PrintConsole ("Retrying auth...", ConsoleColor.Red);
                         Thread.Sleep (2000);
                     }
                 }
 
-                //PrintConsole ("Downloading schema...", ConsoleColor.Magenta);
                 log.Info ("Downloading Schema...");
 
                 Trade.CurrentSchema = Schema.FetchSchema (apiKey);
 
-                //PrintConsole ("All Done!", ConsoleColor.Magenta);
                 log.Success ("Schema Downloaded!");
 
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.Online);
 
                 log.Success ("Steam Bot Logged In Completely!");
-                //PrintConsole ("Successfully Logged In!\nWelcome " + SteamUser.SteamID + "\n\n", ConsoleColor.Magenta);
 
                 IsLoggedIn = true;
             });
@@ -293,12 +281,10 @@ namespace SteamBot
             msg.Handle<SteamTrading.TradeResultCallback> (callback =>
             {
                 log.Debug ("Trade Status: "+ callback.Response);
-                //PrintConsole ("Trade Status: " + callback.Status, ConsoleColor.Magenta);
 
                 if (callback.Response == EEconTradeResponse.Accepted)
                 {
                     log.Info ("Trade Accepted!");
-                    //PrintConsole ("Trade accepted!", ConsoleColor.Magenta);
                 }
                 if (callback.Response == EEconTradeResponse.Cancel ||
                     callback.Response == EEconTradeResponse.ConnectionFailed ||
@@ -323,7 +309,6 @@ namespace SteamBot
             {
                 IsLoggedIn = false;
                 log.Warn ("Logged Off: " + callback.Result);
-                //PrintConsole ("[SteamRE] Logged Off: " + callback.Result, ConsoleColor.Magenta);
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
@@ -331,7 +316,6 @@ namespace SteamBot
                 IsLoggedIn = false;
                 CloseTrade ();
                 log.Warn ("Disconnected from Steam Network!");
-                //PrintConsole ("[SteamRE] Disconnected from Steam Network!", ConsoleColor.Magenta);
                 SteamClient.Connect ();
             });
             #endregion
@@ -343,9 +327,6 @@ namespace SteamBot
         bool Authenticate (SteamUser.LoginKeyCallback callback)
         {
             sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (callback.UniqueID.ToString ()));
-            //sessionId = WebHelpers.EncodeBase64 (callback.UniqueID.ToString ());
-
-            //PrintConsole ("Got login key, performing web auth...");
 
             using (dynamic userAuth = WebAPI.GetInterface ("ISteamUserAuth"))
             {
@@ -354,7 +335,6 @@ namespace SteamBot
 
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey = null;
-                // Woa, this doesn't seem to work
                 using (RSACrypto rsa = new RSACrypto (KeyDictionary.GetPublicKey (SteamClient.ConnectedUniverse)))
                 {
                     cryptedSessionKey = rsa.Encrypt (sessionKey);

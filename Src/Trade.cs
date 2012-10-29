@@ -189,7 +189,6 @@ namespace SteamBot
             catch (Exception)
             {
                 bot.log.Error ("[TRADE] Failed To Connect to Steam!");
-                //PrintConsole ("Failed to connect to Steam!", ConsoleColor.Red);
 
                 if (OnError != null)
                     OnError("There was a problem connecting to Steam Trading.");
@@ -326,7 +325,6 @@ namespace SteamBot
                         break;
                     default:
                         bot.log.Warn ("Unkown Event ID: " + status.events [EventID].action);
-                        //PrintConsole ("Unknown Event ID: " + status.events [EventID].action, ConsoleColor.Red);
                         break;
                     }
 
@@ -346,7 +344,6 @@ namespace SteamBot
                 DateTime tradeTimeout = TradeStart.AddSeconds (MaximumTradeTime);
                 int untilTradeTimeout = (int) Math.Round ((tradeTimeout - now).TotalSeconds);
 
-                Console.WriteLine ("{0},{1}", untilActionTimeout, untilTradeTimeout);
                 if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
                 {
                     if (OnTimeout != null)
@@ -541,7 +538,6 @@ namespace SteamBot
             data.Add ("version", "" + version);
 
             string response = Fetch (baseTradeURL + "tradestatus", "POST", data);
-            //bot.log.Interface (response);
             return JsonConvert.DeserializeObject<StatusObj> (response);
         }
 
@@ -625,7 +621,6 @@ namespace SteamBot
             {
                 if (OnError != null)
                     OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                //Console.WriteLine (e);
                 bot.log.Error (e.ToString ());
             }
         }

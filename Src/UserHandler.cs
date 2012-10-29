@@ -78,11 +78,7 @@ namespace SteamBot
             Trade = null;
         }
 
-        //public abstract void OnTradeError (string error);
-
         public abstract void OnTradeError (string error);
-
-        //public abstract void OnTradeTimeout ();
 
         public abstract void OnTradeTimeout ();
 

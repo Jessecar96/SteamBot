@@ -177,10 +177,6 @@ namespace SteamBot
             w.CookieContainer = cookies;
 
             w.GetResponse ().Close ();
-            // Why would you need to do this?  Reading the response isn't nessicary, since
-            // you submitted the request already.
-            //string result = new StreamReader (response.GetResponseStream ()).ReadToEnd ();
-            //response.Close ();
             return;
         }
 
