@@ -31,6 +31,10 @@ namespace SteamBot
 
         public abstract void OnFriendRemove();
 
+        /// <summary>
+        /// Called whenever a message is sent to the bot.
+        /// This is limited to regular and emote messages.
+        /// </summary>
         public abstract void OnMessage(string message, EChatEntryType type);
 
         /// <summary>

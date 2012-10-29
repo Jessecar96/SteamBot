@@ -232,9 +232,11 @@ namespace SteamBot
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
                                          callback.Message
                                          ));
-
-                getHandler(callback.Sender).OnMessage(callback.Message, type);
-
+                if (callback.EntryType == EChatEntryType.ChatMsg ||
+                    callback.EntryType == EChatEntryType.Emote)
+                {
+                    getHandler(callback.Sender).OnMessage(callback.Message, type);
+                }
             });
             #endregion
 
