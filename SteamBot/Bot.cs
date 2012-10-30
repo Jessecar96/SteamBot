@@ -3,7 +3,6 @@ using System.Web;
 using System.Net;
 using System.Text;
 using System.Threading;
-using System.Security.Cryptography;
 using SteamKit2;
 using System.Collections.Generic;
 
