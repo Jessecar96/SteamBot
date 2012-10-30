@@ -39,6 +39,10 @@ namespace SteamBot
         // The log for the bot.  This logs with the bot's display name.
         public Log log;
 
+        // The controlling class for this bot. The code that handles how the
+        // bot behaves goes in this class. 
+        public string BotControlClass;
+
         public delegate UserHandler UserHandlerCreator(Bot bot, SteamID id);
         public UserHandlerCreator CreateHandler;
         Dictionary<ulong, UserHandler> userHandlers = new Dictionary<ulong, UserHandler>();
@@ -87,6 +91,7 @@ namespace SteamBot
             this.apiKey  = apiKey;
             AuthCode     = null;
             log          = new Log (config.LogFile, this);
+            BotControlClass = config.BotControlClass;
             CreateHandler = handlerCreator;
 
             // Hacking around https

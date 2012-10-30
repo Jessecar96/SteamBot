@@ -24,7 +24,7 @@ namespace SteamBot
                             {
                                 new Bot(info, config.ApiKey, (Bot bot, SteamID sid) => 
                                 {
-                                    return new SimpleUserHandler(bot, sid);
+                                    return (SteamBot.UserHandler)System.Activator.CreateInstance(Type.GetType("SteamBot."+info.BotControlClass), new object[] { bot, sid });
                                 }, true);
                             }
                             catch (Exception e)
