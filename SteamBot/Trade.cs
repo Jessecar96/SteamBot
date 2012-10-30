@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net;
+using System.Web;
 using Newtonsoft.Json;
 using SteamKit2;
 

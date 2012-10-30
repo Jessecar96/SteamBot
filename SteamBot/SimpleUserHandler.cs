@@ -84,8 +84,7 @@ namespace SteamBot
                 }
             }
 
-            if (OnClose != null)
-                OnClose ();
+            OnTradeClose ();
         }
 
         public bool Validate ()
