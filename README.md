@@ -1,15 +1,15 @@
 ## Info ##
 
-**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 6 contributors have all added to the bot.  The bot is publicly available, and is available under the MIT License.
+**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 6 contributors have all added to the bot.  The bot is publicly available under the MIT License.
 
 ## Configuration Instructions ##
 
 ### Step 0 ###
-If you've recently just cloned this repository, there are a few things you need to do.
+If you've just recently  cloned this repository, there are a few things you need to do.
 
-1. Run `git submodule init` in order to initalize the submodule configuration file.
+1. Run `git submodule init` to initalize the submodule configuration file.
 2. Run `git submodule update` to pull the latest version of the submodules that are included (namely, SteamKit2).
-3. Build the program.  Since SteamKit2 is licensed under the LGPL, and SteamBot should be released under the MIT license, SteamKit2's code cannot be included in SteamBot.  This includes executables.  We'll probably make downloads available on github.
+3. Build the program.  Since SteamKit2 is licensed under the LGPL, and SteamBot should be released under the MIT license, SteamKit2's code cannot be included in SteamBot.  This includes executables.  We'll probably make downloads available on GitHub.
 4. Continue on like normal.
 
 ### Step 1 ###
@@ -24,7 +24,7 @@ If you've recently just cloned this repository, there are a few things you need 
     - `Password`: The password for the Steam user associated with this bot. It should be a string enclosed by quotes.
     - `DisplayName`: The name the bot will present on Steam. It should be a string enclosed by quotes.
     - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes.
-    - `logFile`: The log file for this specific bot. It should be a string encluded by quotes.
+    - `logFile`: The log file for this specific bot. It should be a string enclosed by quotes.
     - `Admins`: Additional admins, specific to this bot. _(optional)_
     - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
@@ -33,9 +33,9 @@ If you've recently just cloned this repository, there are a few things you need 
  
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
-2. You mainly only need to edit the file `TradeEnterTradeListener.cs`, as it contains events for everything you need.
+2. You mainly only need to edit the file `TradeEnterTradeListener.cs` as it contains events for everything you need.
 3. Just add your code to each of the events.  It explains what each of them do in the code comments.
-4. Look at Usage below to see some usefull functions.
+4. Look at Usage below to see some useful functions.
 
 ## Usage ##
 Here some useful functions you can use in TradeEnterTradeListener:
@@ -52,7 +52,7 @@ Sets the trade ready or not ready according to the boolean.
 ### `trade.AcceptTrade()` ###
 Accepts the trade.
 ### `trade.SendMessage(string msg)` ###
-ends a message to the other user over trade chat.
+Sends a message to the other user over trade chat.
 
 ## More help? ##
 If it's a bug, open an Issue; if you have a fix, open a Pull Request.  A list of contributors (add yourself if you want to):
@@ -60,7 +60,7 @@ If it's a bug, open an Issue; if you have a fix, open a Pull Request.  A list of
 - [geel9](http://steamcommunity.com/id/geel9)
 - [Dr. Cat, MD or redjazz96](http://steamcommunity.com/id/redjazz96)
 
-SteamBot is licensed under the MIT license.  Check out LICENSE for more details.
+SteamBot is licensed under the MIT License.  Check out LICENSE for more details.
 
 ## Wanna Contribute? ##
 Check out CONTRIBUTING.md.
