@@ -7,48 +7,54 @@ namespace SteamBot
     {
         public int ScrapPutUp;
 
-        public SimpleUserHandler(Bot bot, SteamID sid) : base(bot, sid) {}
+        public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
-        public override bool OnFriendAdd() {
+        public override bool OnFriendAdd () 
+        {
             return true;
         }
         
-        public override void OnFriendRemove() {}
+        public override void OnFriendRemove () {}
         
-        public override void OnMessage(string message, EChatEntryType type) {
+        public override void OnMessage (string message, EChatEntryType type) 
+        {
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
 
-        public override bool OnTradeRequest() {
+        public override bool OnTradeRequest() 
+        {
             return true;
         }
         
-        public override void OnTradeError (string error) {
-            Bot.SteamFriends.SendChatMessage (Trade.OtherSID, 
+        public override void OnTradeError (string error) 
+        {
+            Bot.SteamFriends.SendChatMessage (OtherSID, 
                                               EChatEntryType.ChatMsg,
-                                              "Oh, there was an error: " + error +
-                                              ". Maybe try again in a few minutes."
+                                              "Oh, there was an error: " + error + "."
                                               );
             Bot.log.Warn (error);
         }
         
-        public override void OnTradeTimeout () {
-            Bot.SteamFriends.SendChatMessage (Trade.OtherSID, EChatEntryType.ChatMsg,
+        public override void OnTradeTimeout () 
+        {
+            Bot.SteamFriends.SendChatMessage (OtherSID, EChatEntryType.ChatMsg,
                                               "Sorry, but you were AFK and the trade was canceled.");
             Bot.log.Info ("User was kicked because he was AFK.");
         }
         
-        public override void OnTradeInit() {
-            Trade.SendMessage("Success. Please put up your items.");
+        public override void OnTradeInit() 
+        {
+            Trade.SendMessage ("Success. Please put up your items.");
         }
         
-        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem) {}
+        public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
-        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) {}
+        public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
-        public override void OnTradeMessage(string message) {}
+        public override void OnTradeMessage (string message) {}
         
-        public override void OnTradeReady(bool ready) {
+        public override void OnTradeReady (bool ready) 
+        {
             if (!ready)
             {
                 Trade.SetReady (false);
@@ -57,13 +63,14 @@ namespace SteamBot
             {
                 if(Validate ())
                 {
-                    Trade.SetReady(true);
+                    Trade.SetReady (true);
                 }
-                Trade.SendMessage("Scrap: " + ScrapPutUp);
+                Trade.SendMessage ("Scrap: " + ScrapPutUp);
             }
         }
         
-        public override void OnTradeAccept() {
+        public override void OnTradeAccept() 
+        {
             if (Validate() || IsAdmin)
             {
                 dynamic js = Trade.AcceptTrade();
