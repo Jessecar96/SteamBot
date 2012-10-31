@@ -16,15 +16,15 @@ If you've just recently  cloned this repository, there are a few things you need
 1. First, you need to configure your bots.
 2. Edit the file `settings.json` in `\SteamBot\bin\Debug`.  Some configuration options:
 
-   - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string enclosed in quotes and seperated by a comma. These admins are global to all bots listed in the _Bots_ array.
-   - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](hhttp://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
+   - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string in quotes and seperated by a comma. These admins are global to all bots listed in the _Bots_ array.
+   - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](hhttp://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string in quotes.
    - `mainLog`: The log containing runtime information for all bots.
    - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values.
-    - `Username`: The Steam user name for this bot. It should be a string enclosed by quotes.
-    - `Password`: The password for the Steam user associated with this bot. It should be a string enclosed by quotes.
-    - `DisplayName`: The name the bot will present on Steam. It should be a string enclosed by quotes.
-    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes.
-    - `logFile`: The log file for this specific bot. It should be a string enclosed by quotes.
+    - `Username`: The Steam user name for this bot. It should be a string in quotes.
+    - `Password`: The password for the Steam user associated with this bot. It should be a string in quotes.
+    - `DisplayName`: The name the bot will present on Steam. It should be a string in quotes.
+    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string in quotes.
+    - `logFile`: The log file for this specific bot. It should be a string in quotes.
     - `Admins`: Additional admins, specific to this bot. _(optional)_
     - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
