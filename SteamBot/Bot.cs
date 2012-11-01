@@ -67,6 +67,9 @@ namespace SteamBot
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
 
+        // Log level to use for this bot
+        Log.LogLevel LogLevel;
+
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
 
@@ -86,7 +89,16 @@ namespace SteamBot
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
-            log          = new Log (config.LogFile, this.DisplayName);
+            try
+            {
+                LogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+            }
+            catch (ArgumentException)
+            {
+                Console.WriteLine("Invalid LogLevel provided in configuration. Defaulting to 'INFO'");
+                LogLevel = Log.LogLevel.Info;
+            }
+            log          = new Log (config.LogFile, this.DisplayName, LogLevel);
             CreateHandler = handlerCreator;
 
             // Hacking around https

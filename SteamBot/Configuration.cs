@@ -50,6 +50,7 @@ namespace SteamBot
             public int MaximumActionGap { get; set; }
             public string DisplayNamePrefix { get; set; }
             public int TradePollingInterval { get; set; }
+            public string LogLevel { get; set; }
             public ulong[] Admins;
         }
     }
