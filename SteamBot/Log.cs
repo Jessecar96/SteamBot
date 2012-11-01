@@ -153,7 +153,7 @@ public class Log
             case LogLevel.Error:
                 return ConsoleColor.Red;
             case LogLevel.Interface:
-                return ConsoleColor.Magenta;
+                return ConsoleColor.DarkCyan;
             default:
                 return DefaultConsoleColor;
             }
