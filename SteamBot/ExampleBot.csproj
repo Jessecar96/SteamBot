@@ -48,7 +48,6 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="SteamWeb.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="UserHandler.cs" />
