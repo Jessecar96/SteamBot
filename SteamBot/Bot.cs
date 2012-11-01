@@ -146,8 +146,8 @@ namespace SteamBot
                 return false;
             CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, MaximumTradeTime, MaximiumActionGap, log);
             CurrentTrade.OnTimeout += CloseTrade;
-            getHandler (other).SubscribeTrade (CurrentTrade);
-            getHandler (other).OnTradeInit ();
+            GetUserHandler (other).SubscribeTrade (CurrentTrade);
+            GetUserHandler (other).OnTradeInit ();
             return true;
         }
 
@@ -157,7 +157,7 @@ namespace SteamBot
         public void CloseTrade() {
             if (CurrentTrade == null)
                 return;
-            getHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
+            GetUserHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
             CurrentTrade = null;
         }
 
@@ -207,7 +207,8 @@ namespace SteamBot
             {
                 while (true)
                 {
-                    if (Authenticate (callback))
+                    bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token);
+                    if (authd)
                     {
                         log.Success ("User Authenticated!");
                         break;
@@ -243,7 +244,7 @@ namespace SteamBot
                     {
                         friends.Add(friend.SteamID);
                         if (friend.Relationship == EFriendRelationship.PendingInvitee &&
-                            getHandler(friend.SteamID).OnFriendAdd()) 
+                            GetUserHandler(friend.SteamID).OnFriendAdd()) 
                         {
                             SteamFriends.AddFriend (friend.SteamID);
                         }
@@ -262,7 +263,7 @@ namespace SteamBot
                 if (callback.EntryType == EChatEntryType.ChatMsg ||
                     callback.EntryType == EChatEntryType.Emote)
                 {
-                    getHandler(callback.Sender).OnMessage(callback.Message, type);
+                    GetUserHandler(callback.Sender).OnMessage(callback.Message, type);
                 }
             });
             #endregion
@@ -275,7 +276,7 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
             {
-                if (CurrentTrade == null && getHandler (callback.OtherClient).OnTradeRequest ())
+                if (CurrentTrade == null && GetUserHandler (callback.OtherClient).OnTradeRequest ())
                     SteamTrade.RespondToTrade (callback.TradeID, true);
                 else
                     SteamTrade.RespondToTrade (callback.TradeID, false);
@@ -324,55 +325,7 @@ namespace SteamBot
             #endregion
         }
 
-        // Authenticate. This does the same as SteamWeb.DoLogin(),
-        // but without contacting the Steam Website.
-        // Should this one doesnt work anymore, use SteamWeb.DoLogin().
-        bool Authenticate (SteamUser.LoginKeyCallback callback)
-        {
-            sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (callback.UniqueID.ToString ()));
-
-            using (dynamic userAuth = WebAPI.GetInterface ("ISteamUserAuth"))
-            {
-                // generate an AES session key
-                var sessionKey = CryptoHelper.GenerateRandomBlock (32);
-
-                // rsa encrypt it with the public key for the universe we're on
-                byte[] cryptedSessionKey = null;
-                using (RSACrypto rsa = new RSACrypto (KeyDictionary.GetPublicKey (SteamClient.ConnectedUniverse)))
-                {
-                    cryptedSessionKey = rsa.Encrypt (sessionKey);
-                }
-
-
-                byte[] loginKey = new byte[20];
-                Array.Copy (Encoding.ASCII.GetBytes (callback.LoginKey), loginKey, callback.LoginKey.Length);
-
-                // aes encrypt the loginkey with our session key
-                byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt (loginKey, sessionKey);
-
-                KeyValue authResult;
-
-                try
-                {
-                    authResult = userAuth.AuthenticateUser (
-                        steamid: SteamClient.SteamID.ConvertToUInt64 (),
-                        sessionkey: HttpUtility.UrlEncode (cryptedSessionKey),
-                        encrypted_loginkey: HttpUtility.UrlEncode (cryptedLoginKey),
-                        method: "POST"
-                    );
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-
-                token = authResult ["token"].AsString ();
-
-                return true;
-            }
-        }
-
-        UserHandler getHandler (SteamID sid) 
+        private UserHandler GetUserHandler (SteamID sid) 
         {
             if (!userHandlers.ContainsKey (sid)) 
             {
@@ -380,6 +333,5 @@ namespace SteamBot
             }
             return userHandlers [sid.ConvertToUInt64 ()];
         }
-
     }
 }
