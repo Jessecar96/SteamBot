@@ -25,7 +25,7 @@ namespace SteamBot
         public SteamID OtherSID;
 
         // The bot itself.
-        public Bot bot;
+        //public Bot bot;
 
         // Generic Trade info
 
@@ -184,7 +184,7 @@ namespace SteamBot
         public event UserAcceptHandler OnUserAccept;
         #endregion
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Bot bot)
+        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime)
         {
             MeSID = me;
             OtherSID = other;
@@ -192,12 +192,12 @@ namespace SteamBot
             this.sessionId = sessionId;
             steamLogin = token;
             this.apiKey = apiKey;
-            this.bot = bot;
+            //this.bot = bot;
 
             // Moved here because when Poll is called below, these are
             // set to zero, which closes the trade immediately.
-            MaximumTradeTime = bot.MaximumTradeTime;
-            MaximumActionGap = bot.MaximiumActionGap;
+            MaximumTradeTime = maxTradeTime;
+            MaximumActionGap = maxGapTime;
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
 
@@ -208,7 +208,7 @@ namespace SteamBot
             }
             catch (Exception)
             {
-                bot.log.Error ("[TRADE] Failed To Connect to Steam!");
+                //bot.log.Error ("[TRADE] Failed To Connect to Steam!");
 
                 if (OnError != null)
                     OnError("There was a problem connecting to Steam Trading.");
@@ -225,7 +225,7 @@ namespace SteamBot
         public void Poll ()
         {
 
-            bot.log.Info ("Polling Trade...");
+            //bot.log.Info ("Polling Trade...");
 
             if (!tradeStarted)
             {
@@ -346,7 +346,7 @@ namespace SteamBot
                         }
                         break;
                     default:
-                        bot.log.Warn ("Unkown Event ID: " + status.events [EventID].action);
+                        //bot.log.Warn ("Unkown Event ID: " + status.events [EventID].action);
                         break;
                     }
 
@@ -399,7 +399,7 @@ namespace SteamBot
                 logpos = status.logpos;
             }
 
-            bot.log.Info ("Poll Successful.");
+            //bot.log.Info ("Poll Successful.");
         }
 
         #region Trade interaction
@@ -553,7 +553,7 @@ namespace SteamBot
         /// </summary>
         public void CancelTrade ()
         {
-            bot.log.Error ("CANCELED TRADE");
+            //bot.log.Error ("CANCELED TRADE");
             var data = new NameValueCollection ();
             data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
             Fetch (baseTradeURL + "cancel", "POST", data);
@@ -653,7 +653,7 @@ namespace SteamBot
             {
                 if (OnError != null)
                     OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                bot.log.Error (e.ToString ());
+                //bot.log.Error (e.ToString ());
             }
         }
 
