@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 
-namespace SteamBot
+namespace SteamTrade
 {
     public class SteamWeb
     {

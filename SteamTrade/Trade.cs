@@ -6,7 +6,7 @@ using System.Web;
 using Newtonsoft.Json;
 using SteamKit2;
 
-namespace SteamBot
+namespace SteamTrade
 {
     public class Trade
     {

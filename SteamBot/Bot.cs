@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using SteamKit2;
 using System.Collections.Generic;
+using SteamTrade;
 
 namespace SteamBot
 {

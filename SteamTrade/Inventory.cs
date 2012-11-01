@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace SteamBot
+namespace SteamTrade
 {
     public class Inventory
     {

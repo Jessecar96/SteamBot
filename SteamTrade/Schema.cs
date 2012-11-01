@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace SteamBot
+namespace SteamTrade
 {
     public class Schema
     {

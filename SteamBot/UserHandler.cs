@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using SteamKit2;
+using SteamTrade;
 
 namespace SteamBot
 {

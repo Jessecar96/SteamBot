@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 
-namespace SteamBot
+namespace SteamTrade
 {
-public class Log
+    public class Log
     {
 
         public enum LogLevel 
