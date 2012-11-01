@@ -85,7 +85,7 @@ namespace SteamBot
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             AuthCode     = null;
-            log          = new Log (config.LogFile, this);
+            log          = new Log (config.LogFile, this.DisplayName);
             CreateHandler = handlerCreator;
 
             // Hacking around https
@@ -143,7 +143,7 @@ namespace SteamBot
         {
             if (CurrentTrade != null)
                 return false;
-            CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, MaximumTradeTime, MaximiumActionGap);
+            CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, MaximumTradeTime, MaximiumActionGap, log);
             CurrentTrade.OnTimeout += CloseTrade;
             getHandler (other).SubscribeTrade (CurrentTrade);
             getHandler (other).OnTradeInit ();
