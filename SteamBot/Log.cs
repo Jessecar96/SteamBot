@@ -128,6 +128,10 @@ public class Log
                 return "warn";
             case LogLevel.Error:
                 return "error";
+            case LogLevel.Interface:
+                return "interface";
+            case LogLevel.Nothing:
+                return "nothing";
             default:
                 return "undef";
             }
