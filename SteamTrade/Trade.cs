@@ -119,6 +119,8 @@ namespace SteamTrade
         protected dynamic MyItems;
         #endregion
 
+        private TradeSession tradeSession;
+
         #region Events
 
         /// <summary>
@@ -191,6 +193,9 @@ namespace SteamTrade
 
             this.sessionId = sessionId;
             steamLogin = token;
+
+            tradeSession = new TradeSession(sessionId, token);
+
             this.apiKey = apiKey;
             this.log = log;
 
@@ -216,6 +221,44 @@ namespace SteamTrade
 
             FetchInventories ();
         }
+
+        /// <summary>
+        /// Cancel the trade.  This calls the OnClose handler, as well.
+        /// </summary>
+        public void CancelTrade ()
+        {
+            log.Error ("CANCELED TRADE");
+            
+            tradeSession.CancelTrade();
+            
+            if (OnClose != null)
+                OnClose ();
+        }
+
+        /// <summary>
+        /// Sends a message to the user over the trade chat.
+        /// </summary>
+        public string SendMessage (string msg)
+        {
+            return tradeSession.SendMessage(msg);
+        }
+
+        /// <summary>
+        /// Sets the bot to a ready status.
+        /// </summary>
+        public void SetReady (bool ready)
+        {
+            tradeSession.SetReady(ready);
+        }
+
+        /// <summary>
+        /// Accepts the trade from the user.  Returns a deserialized
+        /// JSON object.
+        /// </summary>
+        public dynamic AcceptTrade ()
+        {
+            return tradeSession.AcceptTrade();
+        }
         
         /// <summary>
         /// This updates the trade.  This is called at an interval of a
@@ -224,7 +267,6 @@ namespace SteamTrade
         /// </summary>
         public void Poll ()
         {
-
             log.Info ("Polling Trade...");
 
             if (!tradeStarted)
@@ -235,13 +277,14 @@ namespace SteamTrade
             }
 
 
-            StatusObj status = GetStatus ();
+            TradeSession.StatusObj status = tradeSession.GetStatus ();
 
             // I've noticed this when the trade is cancelled.
             if (status.trade_status == 3)
             {
                 if (OnError != null)
                     OnError ("Trade was cancelled");
+
                 CancelTrade ();
                 return;
             }
@@ -376,7 +419,7 @@ namespace SteamTrade
                 }
                 else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
                 {
-                    SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                    tradeSession.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
                 }
             }
 
@@ -400,177 +443,6 @@ namespace SteamTrade
             }
 
             log.Info ("Poll Successful.");
-        }
-
-        #region Trade interaction
-        /// <summary>
-        /// Sends a message to the user over the trade chat.
-        /// </summary>
-        public string SendMessage (string msg)
-        {
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("message", msg);
-            data.Add ("logpos", "" + logpos);
-            data.Add ("version", "" + version);
-            return Fetch (baseTradeURL + "chat", "POST", data);
-        }
-
-        /// <summary>
-        /// Adds an item by its Defindex.  Adds only one item at a
-        /// time, but can be called multiple times during a poll due
-        /// to the fact that AddItem keeps track of the items it
-        /// adds in MyOfferedItems.
-        /// </summary>
-        /// <returns>
-        /// Returns true if an item was found with the corresponding
-        /// defindex, false otherwise.
-        /// </returns>
-        public bool AddItemByDefindex (int defindex, int slot)
-        {
-            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
-            foreach(Inventory.Item item in items)
-            {
-                if (!(item == null || MyOfferedItems.Contains (item.Id)))
-                {
-                    AddItem (item.Id, slot);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Adds a specified itom by its itemid.  Since each itemid is
-        /// unique to each item, you'd first have to find the item, or
-        /// use AddItemByDefindex instead.  It stores the item it added
-        /// in MyOfferedItems.
-        /// </summary>
-        /// <returns>
-        /// Returns false if the item doesn't exist in the Bot's inventory,
-        /// and returns true if it appears the item was added.
-        /// </returns>
-        public bool AddItem (ulong itemid, int slot)
-        {
-            if (MyInventory.GetItem (itemid) == null)
-                return false;
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("appid", "440");
-            data.Add ("contextid", "2");
-            data.Add ("itemid", "" + itemid);
-            data.Add ("slot", "" + slot);
-            Fetch (baseTradeURL + "additem", "POST", data);
-            MyOfferedItems.Add (itemid);
-            return true;
-        }
-
-        /// <summary>
-        /// Finds the last item in the trade that has the defindex
-        /// passed to it.  It removes the last item, and can determine
-        /// the slot number of the item if you don't give it.  REMEMBER:
-        /// the slot number of the item should be the the slot number
-        /// of the last instance of the item in the offered items.
-        /// The limit on determining the slot number is the assumption
-        /// that the items were put in order, i.e. slot 1, slot 2,
-        /// slot 3, ..., slot n.
-        /// </summary>
-        /// <returns>
-        /// Returns true if it found a corresponding item; false otherwise.
-        /// </returns>
-        public bool RemoveItemByDefindex (int defindex, int slot=-1)
-        {
-            ulong lastItem = 0;
-            bool slotGiven = slot == -1 ? true : false;
-            if (!slotGiven)
-                slot = 0;
-            foreach(ulong item in MyOfferedItems)
-            {
-                if (defindex == MyInventory.GetItem (item).Defindex)
-                {
-                    lastItem = item;
-                    if (!slotGiven)
-                        slot++;
-                }
-            }
-            if (lastItem != 0)
-            {
-                RemoveItem (lastItem, slot);
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Removes an item by its itemid.  Read AddItem about itemids.
-        /// Returns false if the item isn't in the offered items, or
-        /// true if it appears it succeeded.  Removes the item from
-        /// MyOfferedItems.
-        /// </summary>
-        public bool RemoveItem (ulong itemid, int slot)
-        {
-            if (!MyOfferedItems.Contains (itemid))
-                return false;
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("appid", "440");
-            data.Add ("contextid", "2");
-            data.Add ("itemid", "" + itemid);
-            data.Add ("slot", "" + slot);
-            Fetch (baseTradeURL + "removeitem", "POST", data);
-            MyOfferedItems.Remove (itemid);
-            return true;
-        }
-
-        /// <summary>
-        /// Sets the bot to a ready status.
-        /// </summary>
-        public void SetReady (bool ready)
-        {
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("ready", ready ? "true" : "false");
-            data.Add ("version", "" + version);
-            Fetch (baseTradeURL + "toggleready", "POST", data);
-        }
-
-        /// <summary>
-        /// Accepts the trade from the user.  Returns a deserialized
-        /// JSON object.
-        /// </summary>
-        public dynamic AcceptTrade ()
-        {
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("version", "" + version);
-            string response = Fetch (baseTradeURL + "confirm", "POST", data);
-
-            return JsonConvert.DeserializeObject (response);
-        }
-
-        /// <summary>
-        /// Cancel the trade.  This calls the OnClose handler, as well.
-        /// </summary>
-        public void CancelTrade ()
-        {
-            log.Error ("CANCELED TRADE");
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            Fetch (baseTradeURL + "cancel", "POST", data);
-            if (OnClose != null)
-                OnClose ();
-        }
-        #endregion
-
-        protected StatusObj GetStatus ()
-        {
-            var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("logpos", "" + logpos);
-            data.Add ("version", "" + version);
-
-            string response = Fetch (baseTradeURL + "tradestatus", "POST", data);
-            return JsonConvert.DeserializeObject<StatusObj> (response);
         }
 
         protected dynamic GetInventory (SteamID steamid)
@@ -656,56 +528,6 @@ namespace SteamTrade
                 log.Error (e.ToString ());
             }
         }
-
-        #region JSON classes
-        protected class StatusObj
-        {
-            public string error { get; set; }
-
-            public bool newversion { get; set; }
-
-            public bool success { get; set; }
-
-            public long trade_status { get; set; }
-
-            public int version { get; set; }
-
-            public int logpos { get; set; }
-
-            public TradeUserObj me { get; set; }
-
-            public TradeUserObj them { get; set; }
-
-            public TradeEvent[] events { get; set; }
-        }
-
-        protected class TradeEvent
-        {
-            public string steamid { get; set; }
-
-            public int action { get; set; }
-
-            public ulong timestamp { get; set; }
-
-            public int appid { get; set; }
-
-            public string text { get; set; }
-
-            public int contextid { get; set; }
-
-            public ulong assetid { get; set; }
-        }
-
-        protected class TradeUserObj
-        {
-            public int ready { get; set; }
-
-            public int confirmed { get; set; }
-
-            public int sec_since_touch { get; set; }
-        }
-        #endregion
-
     }
 }
 
