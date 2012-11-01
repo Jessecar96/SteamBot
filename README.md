@@ -30,6 +30,14 @@ If you've recently just cloned this repository, there are a few things you need 
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
     - `DisplayNamePrefix`: A prefix to display in front of the DisplayName. It should be a string encloded by quotes. Defaults to an empty string. _(optional)_
     - `TradePollingInterval`: Length of time, in milliseconds, between polling events. Higher values reduce CPU usage at the cost of a slower trading session. It should be a numeric value. Default is 800 ms. Lowest value is 100 ms. _(optional)_
+    - `LogLevel`: Detail level of bot's log. In order from most verbose to least verbose, valid options are:
+	 - `Debug`: Information that is helpful in performing diagnostics
+	 - `Info`: Generally useful information such as start/stop, polling events, etc. **Default**
+	 - `Success`: Events that have completed in an expected manner
+	 - `Warn`: Potential application problems, but which have been automatically handled
+	 - `Error`: Event that prevents the bot from continuing to function without corrective action. 
+	 - `Interface`: Events that require user interaction, such as entering a Steam Guard code to complete a login
+	 - `Nothing`: A log level that surpresses all previous levels. **Not recommended**
 
 3. Rename `settings-template.json` to `settings.json`
  
