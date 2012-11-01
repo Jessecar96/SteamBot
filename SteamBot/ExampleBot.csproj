@@ -51,7 +51,6 @@
     <Compile Include="SteamWeb.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Log.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>

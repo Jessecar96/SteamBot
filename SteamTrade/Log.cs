@@ -22,16 +22,16 @@ public class Log
 
 
         protected StreamWriter _FileStream;
-        protected Bot _Bot;
+        protected string _Bot;
         public LogLevel OutputToConsole;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
 
 #if DEBUG
-        public Log (string logFile, Bot bot = null, LogLevel output = LogLevel.Info)
+        public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
         {
             _FileStream = File.AppendText (logFile);
             _FileStream.AutoFlush = true;
-            _Bot = bot;
+            _Bot = botName;
             OutputToConsole = output;
             Console.ForegroundColor = DefaultConsoleColor;
         }
@@ -95,7 +95,7 @@ public class Log
         {
             string formattedString = String.Format (
                 "[{0} {1}] {2}: {3}",
-                (_Bot == null ? "(System)" : _Bot.DisplayName),
+                (_Bot == null ? "(System)" : _Bot),
                 DateTime.Now.ToString ("dd/MM/yyyy HH:mm:ss"),
                 _LogLevel (level).ToUpper (), line
                 );
