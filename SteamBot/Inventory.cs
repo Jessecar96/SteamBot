@@ -6,24 +6,24 @@ namespace SteamBot
 {
     public class Inventory
     {
-        public static Inventory FetchInventory (ulong steamId, string apiKey)
+        public static Inventory FetchInventory(ulong steamId, string apiKey)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-            string response = SteamWeb.Fetch (url, "GET", null, null, false);
-            InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse> (response);
+            string response = SteamWeb.Fetch(url, "GET", null, null, false);
+            InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
         }
 
         public uint NumSlots { get; set; }
         public Item[] Items { get; set; }
 
-        protected Inventory (InventoryResult apiInventory)
+        protected Inventory(InventoryResult apiInventory)
         {
             NumSlots = apiInventory.num_backpack_slots;
             Items = apiInventory.items;
         }
 
-        public Item GetItem (ulong id)
+        public Item GetItem(ulong id)
         {
             foreach (Item item in Items)
             {
@@ -35,14 +35,14 @@ namespace SteamBot
             return null;
         }
 
-        public List<Item> GetItemsByDefindex (int defindex)
+        public List<Item> GetItemsByDefindex(int defindex)
         {
-            var items = new List<Item> ();
+            var items = new List<Item>();
             foreach (Item item in Items)
             {
                 if (item.Defindex == defindex)
                 {
-                    items.Add (item);
+                    items.Add(item);
                 }
             }
             return items;
@@ -68,8 +68,23 @@ namespace SteamBot
             [JsonProperty("pos")]
             public int Position { get; set; }
 
+            [JsonProperty("quantity")]
+            public int RemainingUses { get; set; }
+
+            [JsonProperty("origin")]
+            public int Origin { get; set; }
+
+            [JsonProperty("custom_name")]
+            public string CustomName { get; set; }
+
+            [JsonProperty("custom_desc")]
+            public string CustomDescription { get; set; }
+
             [JsonProperty("flag_cannot_craft")]
             public bool IsNotCraftable { get; set; }
+
+            [JsonProperty("flag_cannot_trade")]
+            public bool IsNotTradeable { get; set; }
 
             [JsonProperty("attributes")]
             public ItemAttribute[] Attributes { get; set; }
@@ -93,7 +108,8 @@ namespace SteamBot
             public Item[] items { get; set; }
         }
 
-        protected class InventoryResponse {
+        protected class InventoryResponse
+        {
             public InventoryResult result;
         }
 
