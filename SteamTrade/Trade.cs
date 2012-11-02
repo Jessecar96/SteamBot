@@ -15,24 +15,24 @@ namespace SteamTrade
         #endregion
 
         // current bot's sid
-        private SteamID MeSID;
+        private SteamID mySteamId;
 
         private Log log;
 
         // If the bot is ready.
-        private bool MeReady = false;
+        private bool meIsReady = false;
 
         // If the other user is ready.
-        private bool OtherReady = false;
+        private bool otherIsReady = false;
 
         // Whether or not the trade actually started.
         private bool tradeStarted = false;
 
         // When the trade started.
-        private DateTime TradeStart;
+        private DateTime tradeStartTime;
 
         // When the last action taken by the user was.
-        private DateTime LastAction;
+        private DateTime lastOtherActionTime;
 
         private int _MaxTradeTime;
         private int _MaxActionGap;
@@ -41,20 +41,20 @@ namespace SteamTrade
         //private List<ulong> _OfferedItemsFromSteam = new List<ulong> ();
 
         // The inventory of the bot.
-        private Inventory MyInventory;
+        private Inventory myInventory;
 
         // Internal properties needed for Steam API.
         private string apiKey;
         private int numEvents;
 
-        private dynamic OtherItems;
-        private dynamic MyItems;
+        private dynamic othersItems;
+        private dynamic myItems;
 
         private TradeSession tradeSession;
 
         public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime, Log log)
         {
-            MeSID = me;
+            mySteamId = me;
             OtherSID = other;
 
             tradeSession = new TradeSession(sessionId, token, OtherSID);
@@ -268,8 +268,8 @@ namespace SteamTrade
             if (!tradeStarted)
             {
                 tradeStarted = true;
-                TradeStart = DateTime.Now;
-                LastAction = DateTime.Now;
+                tradeStartTime = DateTime.Now;
+                lastOtherActionTime = DateTime.Now;
             }
 
 
@@ -304,7 +304,7 @@ namespace SteamTrade
                         EventID = numEvents - i;
                     }
 
-                    bool isBot = status.events [EventID].steamid == MeSID.ConvertToUInt64 ().ToString ();
+                    bool isBot = status.events [EventID].steamid == mySteamId.ConvertToUInt64 ().ToString ();
 
                     /*
                      *
@@ -363,14 +363,14 @@ namespace SteamTrade
                     case 2:
                         if (!isBot)
                         {
-                            OtherReady = true;
+                            otherIsReady = true;
                             OnUserSetReady (true);
                         }
                         break;
                     case 3:
                         if (!isBot)
                         {
-                            OtherReady = false;
+                            otherIsReady = false;
                             OnUserSetReady (false);
                         }
                         break;
@@ -392,7 +392,7 @@ namespace SteamTrade
                     }
 
                     if (!isBot)
-                        LastAction = DateTime.Now;
+                        lastOtherActionTime = DateTime.Now;
                 }
 
             } 
@@ -401,10 +401,10 @@ namespace SteamTrade
                 // check if the user is AFK
                 var now = DateTime.Now;
 
-                DateTime actionTimeout = LastAction.AddSeconds (MaximumActionGap);
+                DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaximumActionGap);
                 int untilActionTimeout = (int) Math.Round ((actionTimeout - now).TotalSeconds);
 
-                DateTime tradeTimeout = TradeStart.AddSeconds (MaximumTradeTime);
+                DateTime tradeTimeout = tradeStartTime.AddSeconds (MaximumTradeTime);
                 int untilTradeTimeout = (int) Math.Round ((tradeTimeout - now).TotalSeconds);
 
                 if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
@@ -424,8 +424,8 @@ namespace SteamTrade
             // Update Local Variables
             if (status.them != null)
             {
-                OtherReady = status.them.ready == 1 ? true : false;
-                MeReady = status.me.ready == 1 ? true : false;
+                otherIsReady = status.them.ready == 1 ? true : false;
+                meIsReady = status.me.ready == 1 ? true : false;
             }
 
             // Update version
@@ -453,15 +453,15 @@ namespace SteamTrade
             {
                 // [cmw] OtherItems and MyItems don't appear to be used... the should be removed.
                 // fetch the other player's inventory
-                OtherItems = Inventory.GetInventory (OtherSID);
-                if (OtherItems == null || OtherItems.success != "true")
+                othersItems = Inventory.GetInventory (OtherSID);
+                if (othersItems == null || othersItems.success != "true")
                 {
                     throw new Exception ("Could not fetch other player's inventory via Trading!");
                 }
 
                 // fetch our inventory
-                MyItems = Inventory.GetInventory (MeSID);
-                if (MyItems == null || MyItems.success != "true")
+                myItems = Inventory.GetInventory (mySteamId);
+                if (myItems == null || myItems.success != "true")
                 {
                     throw new Exception ("Could not fetch own inventory via Trading!");
                 }
@@ -474,8 +474,8 @@ namespace SteamTrade
                 }
 
                 // fetch our inventory from the Steam API.
-                MyInventory = Inventory.FetchInventory(MeSID.ConvertToUInt64(), apiKey);
-                if (MyInventory == null)
+                myInventory = Inventory.FetchInventory(mySteamId.ConvertToUInt64(), apiKey);
+                if (myInventory == null)
                 {
                     throw new Exception ("Could not fetch own inventory via Steam API!");
                 }
