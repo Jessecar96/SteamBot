@@ -53,71 +53,6 @@ namespace SteamTrade
 
         private TradeSession tradeSession;
 
-        #region Events
-
-        /// <summary>
-        /// When the trade closes, this is called.  It doesn't matter
-        /// whether or not it was a timeout or an error, this is called
-        /// to close the trade.
-        /// </summary>
-        public delegate void CloseHandler ();
-        public event CloseHandler OnClose;
-
-        /// <summary>
-        /// This is for handling errors that may occur, like inventories
-        /// not loading.
-        /// </summary>
-        public delegate void ErrorHandler (string error);
-        public event ErrorHandler OnError;
-
-        /// <summary>
-        /// This is for a timeout (either the user didn't complete an
-        /// action in a set amount of time, or they took too long with
-        /// the whole trade).
-        /// </summary>
-        public delegate void TimeoutHandler ();
-        public event TimeoutHandler OnTimeout;
-
-        /// <summary>
-        /// This occurs after Inventories have been loaded.
-        /// </summary>
-        public delegate void SuccessfulInit ();
-        public event SuccessfulInit OnAfterInit;
-
-        /// <summary>
-        /// This occurs when the other user adds an item to the trade.
-        /// </summary>
-        public delegate void UserAddItemHandler (Schema.Item schemaItem, Inventory.Item inventoryItem);
-        public event UserAddItemHandler OnUserAddItem;
-
-        /// <summary>
-        /// This occurs when the other user removes an item from the 
-        /// trade.
-        /// </summary>
-        public delegate void UserRemoveItemHandler (Schema.Item schemaItem, Inventory.Item inventoryItem);
-        public event UserAddItemHandler OnUserRemoveItem;
-        
-        /// <summary>
-        /// This occurs when the user sends a message to the bot over
-        /// trade.
-        /// </summary>
-        public delegate void MessageHandler (string msg);
-        public event MessageHandler OnMessage;
-
-        /// <summary>
-        /// This occurs when the user sets their ready state to either
-        /// true or false.
-        /// </summary>
-        public delegate void UserSetReadyStateHandler (bool ready);
-        public event UserSetReadyStateHandler OnUserSetReady;
-
-        /// <summary>
-        /// This occurs when the user accepts the trade.
-        /// </summary>
-        public delegate void UserAcceptHandler ();
-        public event UserAcceptHandler OnUserAccept;
-        #endregion
-
         public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime, Log log)
         {
             MeSID = me;
@@ -225,8 +160,73 @@ namespace SteamTrade
         /// </value>
         public List<ulong> OtherOfferedItems { get; private set; }
 
+        #endregion
+                
+        #region Public Events
 
+        public delegate void CloseHandler ();
+        public delegate void ErrorHandler (string error);
+        public delegate void TimeoutHandler ();
+        public delegate void SuccessfulInit ();
+        public delegate void UserAddItemHandler (Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public delegate void UserRemoveItemHandler (Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public delegate void MessageHandler (string msg);
+        public delegate void UserSetReadyStateHandler (bool ready);
+        public delegate void UserAcceptHandler ();
 
+        /// <summary>
+        /// When the trade closes, this is called.  It doesn't matter
+        /// whether or not it was a timeout or an error, this is called
+        /// to close the trade.
+        /// </summary>
+        public event CloseHandler OnClose;
+        
+        /// <summary>
+        /// This is for handling errors that may occur, like inventories
+        /// not loading.
+        /// </summary>
+        public event ErrorHandler OnError;
+
+        /// <summary>
+        /// This is for a timeout (either the user didn't complete an
+        /// action in a set amount of time, or they took too long with
+        /// the whole trade).
+        /// </summary>
+        public event TimeoutHandler OnTimeout;
+
+        /// <summary>
+        /// This occurs after Inventories have been loaded.
+        /// </summary>
+        public event SuccessfulInit OnAfterInit;
+
+        /// <summary>
+        /// This occurs when the other user adds an item to the trade.
+        /// </summary>
+        public event UserAddItemHandler OnUserAddItem;
+        
+        /// <summary>
+        /// This occurs when the other user removes an item from the 
+        /// trade.
+        /// </summary>
+        public event UserAddItemHandler OnUserRemoveItem;
+
+        /// <summary>
+        /// This occurs when the user sends a message to the bot over
+        /// trade.
+        /// </summary>
+        public event MessageHandler OnMessage;
+
+        /// <summary>
+        /// This occurs when the user sets their ready state to either
+        /// true or false.
+        /// </summary>
+        public event UserSetReadyStateHandler OnUserSetReady;
+
+        /// <summary>
+        /// This occurs when the user accepts the trade.
+        /// </summary>
+        public event UserAcceptHandler OnUserAccept;
+        
         #endregion
 
         /// <summary>
