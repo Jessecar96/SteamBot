@@ -6,7 +6,7 @@ namespace SteamBot
 {
     public class Inventory
     {
-        public static Inventory FetchInventory(ulong steamId, string apiKey)
+        public static Inventory FetchInventory (ulong steamId, string apiKey)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
             string response = SteamWeb.Fetch(url, "GET", null, null, false);
@@ -17,13 +17,13 @@ namespace SteamBot
         public uint NumSlots { get; set; }
         public Item[] Items { get; set; }
 
-        protected Inventory(InventoryResult apiInventory)
+        protected Inventory (InventoryResult apiInventory)
         {
             NumSlots = apiInventory.num_backpack_slots;
             Items = apiInventory.items;
         }
 
-        public Item GetItem(ulong id)
+        public Item GetItem (ulong id)
         {
             foreach (Item item in Items)
             {
@@ -35,9 +35,9 @@ namespace SteamBot
             return null;
         }
 
-        public List<Item> GetItemsByDefindex(int defindex)
+        public List<Item> GetItemsByDefindex (int defindex)
         {
-            var items = new List<Item>();
+            var items = new List<Item> ();
             foreach (Item item in Items)
             {
                 if (item.Defindex == defindex)
