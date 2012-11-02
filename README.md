@@ -20,11 +20,12 @@ If you've recently just cloned this repository, there are a few things you need 
    - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string enclosed by quotes.
    - `mainLog`: The log containing runtime information for all bots.
    - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values.
-    - `Username`: The Steam user name for this bot. It should be a string enclosed by quotes.
-    - `Password`: The password for the Steam user associated with this bot. It should be a string enclosed by quotes.
-    - `DisplayName`: The name the bot will present on Steam. It should be a string enclosed by quotes.
-    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes.
-    - `logFile`: The log file for this specific bot. It should be a string encluded by quotes.
+    - `Username`: The Steam user name for this bot. It should be a string enclosed by quotes. **required**
+    - `Password`: The password for the Steam user associated with this bot. It should be a string enclosed by quotes. **required**
+    - `DisplayName`: The name the bot will present on Steam. It should be a string enclosed by quotes. **required**
+    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes. **required**
+    - `logFile`: The log file for this specific bot. It should be a string encluded by quotes. **required**
+    - `BotControlClass`: The fully qualified class that controls how this specific bot will behave. Generally, this is a seperate file (ie. `SimpleUserHandler.cs`) and has the same name as your class (without the trailing `.cs` extension). It must be the fully qualified class (ie. `SteamBot.SimpleUserHandler`). It should be a string enclosed by quotes. **required**
     - `Admins`: Additional admins, specific to this bot. _(optional)_
     - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
@@ -43,9 +44,8 @@ If you've recently just cloned this repository, there are a few things you need 
  
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
-2. You mainly only need to edit the file `SimpleUserHandler.cs`, as it contains events for everything you need.  You can create your own user handler (as long as it is a subclass of `UserHandler`), just as long as you remember to edit the `Program.cs` file to handle it correctly.
-3. Just add your code to each of the events.  It explains what each of them do in the code comments.
-4. Look at Usage below to see some usefull functions.
+2. You can now edit the file `SimpleUserHandler.cs`, as it contains events for everything you need. Alternatively, you can subclass `UserHandler` and create your own class to control bot behavior. If you do this, remember to modify the `BotControlClass` setting in your configuration. Just add your code to each of the events. It explains what each of them do in the code comments.
+3. Look at Usage below to see some useful functions.
 
 ## Usage ##
 
