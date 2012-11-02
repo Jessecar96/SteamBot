@@ -10,109 +10,46 @@ namespace SteamTrade
 {
     public class Trade
     {
-        #region Static
-        // Static properties
-        //public static string SteamCommunityDomain = "steamcommunity.com";
+        #region Static Public data
         public static Schema CurrentSchema = null;
         #endregion
 
-        #region Properties
-        // The bot's steam ID.
-        public SteamID MeSID;
+        // current bot's sid
+        private SteamID MeSID;
 
-        // The other user's steam ID.
-        public SteamID OtherSID;
-
-        /// The log object.
-        public Log log;
-
-        // Generic Trade info
+        private Log log;
 
         // If the bot is ready.
-        public bool MeReady = false;
+        private bool MeReady = false;
 
         // If the other user is ready.
-        public bool OtherReady = false;
+        private bool OtherReady = false;
 
         // Whether or not the trade actually started.
-        bool tradeStarted = false;
+        private bool tradeStarted = false;
 
         // When the trade started.
-        public DateTime TradeStart;
+        private DateTime TradeStart;
 
         // When the last action taken by the user was.
-        public DateTime LastAction;
+        private DateTime LastAction;
 
-        // The maximum trading time the bot will take.
         private int _MaxTradeTime;
-
-        // The maximum amount of time the bot will wait
-        // between actions.
         private int _MaxActionGap;
 
-        // The maximum trading time the bot will take.  Will not
-        // take any value lower than 15.
-        public int MaximumTradeTime
-        {
-            get 
-            {
-                return _MaxTradeTime;
-            }
-            set
-            {
-                _MaxTradeTime = value <= 15 ? 15 : value;
-            }
-        }
-
-        // The maxmium amount of time the bot will wait between
-        // actions.  Will not take any value lower than 15.
-        public int MaximumActionGap
-        {
-            get
-            {
-                return _MaxActionGap;
-            }
-            set
-            {
-                _MaxActionGap = value <= 15 ? 15 : value;
-            }
-        }
-
-
-        // Items
-        // Items the bot has offered, by itemid.
-        public List<ulong> MyOfferedItems
-        {
-            get
-            {
-                return _OfferedItemsBuffer;
-            }
-            set
-            {
-                _OfferedItemsBuffer = value;
-            }
-        }
-
-        List<ulong> _OfferedItemsBuffer = new List<ulong> ();
-        List<ulong> _OfferedItemsFromSteam = new List<ulong> ();
-
-        // Items the user has offered, by itemid.
-        public List<ulong> OtherOfferedItems = new List<ulong> ();
+        private List<ulong> _OfferedItemsBuffer = new List<ulong> ();
+        private List<ulong> _OfferedItemsFromSteam = new List<ulong> ();
 
         // The inventory of the bot.
-        public Inventory MyInventory;
-
-        // The inventory of the user.
-        public Inventory OtherInventory;
+        private Inventory MyInventory;
 
         // Internal properties needed for Steam API.
-        protected string apiKey;
-        protected int version = 1;
-        protected int numEvents;
+        private string apiKey;
+        private int version = 1;
+        private int numEvents;
 
-        protected dynamic OtherItems;
-        protected dynamic MyItems;
-        #endregion
+        private dynamic OtherItems;
+        private dynamic MyItems;
 
         private TradeSession tradeSession;
 
@@ -196,7 +133,7 @@ namespace SteamTrade
             MaximumTradeTime = maxTradeTime;
             MaximumActionGap = maxGapTime;
 
-            //baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
+            OtherOfferedItems = new List<ulong> ();
 
             // try to poll for the first time
             try
@@ -213,6 +150,84 @@ namespace SteamTrade
 
             FetchInventories ();
         }
+
+        #region Public Properties
+
+        /// <summary>Gets or sets the other user's steam ID.</summary> 
+        public SteamID OtherSID { get; private set; }
+
+        /// <summary>
+        /// Gets or sets The maximum trading time the bot will take.  Will not take any value lower than 15.
+        /// </summary>
+        /// <value>
+        /// The maximum trade time.
+        /// </value>
+        public int MaximumTradeTime
+        {
+            get 
+            {
+                return _MaxTradeTime;
+            }
+            set
+            {
+                _MaxTradeTime = value <= 15 ? 15 : value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets The maxmium amount of time the bot will wait between actions. 
+        /// Will not take any value lower than 15.
+        /// </summary>
+        /// <value>
+        /// The maximum action gap.
+        /// </value>
+        public int MaximumActionGap
+        {
+            get
+            {
+                return _MaxActionGap;
+            }
+            set
+            {
+                _MaxActionGap = value <= 15 ? 15 : value;
+            }
+        }
+        
+        /// <summary>
+        /// Gets or sets the list of items (itemids) the bot has offered.
+        /// </summary>
+        /// <value>
+        /// My offered items.
+        /// </value>
+        public List<ulong> MyOfferedItems
+        {
+            get
+            {
+                return _OfferedItemsBuffer;
+            }
+            set
+            {
+                _OfferedItemsBuffer = value;
+            }
+        }
+
+        /// <summary> 
+        /// Gets the inventory of the other user. 
+        /// </summary>
+        public Inventory OtherInventory { get; private set; }
+
+        
+        /// <summary>
+        /// Gets the items the user has offered, by itemid.
+        /// </summary>
+        /// <value>
+        /// The other offered items.
+        /// </value>
+        public List<ulong> OtherOfferedItems { get; private set; }
+
+
+
+        #endregion
 
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
@@ -436,6 +451,7 @@ namespace SteamTrade
 
             log.Info ("Poll Successful.");
         }
+
 
         /// <summary>
         /// Grabs the inventories of both users over both Trading and

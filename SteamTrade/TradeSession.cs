@@ -70,8 +70,7 @@ namespace SteamTrade
         /// <summary>
         /// Adds a specified itom by its itemid.  Since each itemid is
         /// unique to each item, you'd first have to find the item, or
-        /// use AddItemByDefindex instead.  It stores the item it added
-        /// in MyOfferedItems.
+        /// use AddItemByDefindex instead.
         /// </summary>
         /// <returns>
         /// Returns false if the item doesn't exist in the Bot's inventory,
@@ -94,8 +93,7 @@ namespace SteamTrade
         /// <summary>
         /// Removes an item by its itemid.  Read AddItem about itemids.
         /// Returns false if the item isn't in the offered items, or
-        /// true if it appears it succeeded.  Removes the item from
-        /// MyOfferedItems.
+        /// true if it appears it succeeded.
         /// </summary>
         public bool RemoveItem (ulong itemid, int slot)
         {
