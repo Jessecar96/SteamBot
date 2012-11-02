@@ -9,6 +9,7 @@
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
             "logFile": "TestBot.log",
+            "BotControlClass": "SteamBot.SimpleUserHandler",
             "MaximumTradeTime":180,
             "MaximumActionGap":30,
             "DisplayNamePrefix":"[AutomatedBot] ",
