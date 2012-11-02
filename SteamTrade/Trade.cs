@@ -37,9 +37,6 @@ namespace SteamTrade
         private int _MaxTradeTime;
         private int _MaxActionGap;
 
-        //private List<ulong> _OfferedItemsBuffer = new List<ulong> ();
-        //private List<ulong> _OfferedItemsFromSteam = new List<ulong> ();
-
         // The inventory of the bot.
         private Inventory myInventory;
 
@@ -88,7 +85,7 @@ namespace SteamTrade
 
         #region Public Properties
 
-        /// <summary>Gets or sets the other user's steam ID.</summary> 
+        /// <summary>Gets the other user's steam ID.</summary> 
         public SteamID OtherSID { get; private set; }
 
         /// <summary>
@@ -129,7 +126,7 @@ namespace SteamTrade
         }
         
         /// <summary>
-        /// Gets or sets the list of items (itemids) the bot has offered.
+        /// Gets the list of items (itemids) the bot has offered.
         /// </summary>
         /// <value>
         /// My offered items.
