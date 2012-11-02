@@ -25,7 +25,7 @@ If you've recently just cloned this repository, there are a few things you need 
     - `DisplayName`: The name the bot will present on Steam. It should be a string enclosed by quotes. **required**
     - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string enclosed by quotes. **required**
     - `logFile`: The log file for this specific bot. It should be a string encluded by quotes. **required**
-    - `BotControlClass`: The class that controls how this specific bot will behave. Generally, this is a seperate file (ie. `SimpleUserHandler.cs`) and has the same name as your class (without the trailing `.cs` extension). It should be a string enclosed by quotes. **required**
+    - `BotControlClass`: The fully qualified class that controls how this specific bot will behave. Generally, this is a seperate file (ie. `SimpleUserHandler.cs`) and has the same name as your class (without the trailing `.cs` extension). It must be the fully qualified class (ie. `SteamBot.SimpleUserHandler`). It should be a string enclosed by quotes. **required**
     - `Admins`: Additional admins, specific to this bot. _(optional)_
     - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
