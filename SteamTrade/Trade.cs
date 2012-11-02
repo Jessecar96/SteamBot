@@ -37,15 +37,14 @@ namespace SteamTrade
         private int _MaxTradeTime;
         private int _MaxActionGap;
 
-        private List<ulong> _OfferedItemsBuffer = new List<ulong> ();
-        private List<ulong> _OfferedItemsFromSteam = new List<ulong> ();
+        //private List<ulong> _OfferedItemsBuffer = new List<ulong> ();
+        //private List<ulong> _OfferedItemsFromSteam = new List<ulong> ();
 
         // The inventory of the bot.
         private Inventory MyInventory;
 
         // Internal properties needed for Steam API.
         private string apiKey;
-        private int version = 1;
         private int numEvents;
 
         private dynamic OtherItems;
@@ -69,6 +68,7 @@ namespace SteamTrade
             MaximumActionGap = maxGapTime;
 
             OtherOfferedItems = new List<ulong> ();
+            MyOfferedItems = new List<ulong> ();
 
             // try to poll for the first time
             try
@@ -134,23 +134,12 @@ namespace SteamTrade
         /// <value>
         /// My offered items.
         /// </value>
-        public List<ulong> MyOfferedItems
-        {
-            get
-            {
-                return _OfferedItemsBuffer;
-            }
-            set
-            {
-                _OfferedItemsBuffer = value;
-            }
-        }
+        public List<ulong> MyOfferedItems { get; private set; }
 
         /// <summary> 
         /// Gets the inventory of the other user. 
         /// </summary>
         public Inventory OtherInventory { get; private set; }
-
         
         /// <summary>
         /// Gets the items the user has offered, by itemid.
@@ -340,8 +329,9 @@ namespace SteamTrade
 
                         if (isBot)
                         {
-                            _OfferedItemsFromSteam.Add (itemID);
-                            MyOfferedItems = _OfferedItemsFromSteam;
+                            //_OfferedItemsFromSteam.Add (itemID);
+                            //MyOfferedItems = _OfferedItemsFromSteam;
+                            MyOfferedItems.Add (itemID);
                         }   
                         else
                         {
@@ -357,8 +347,9 @@ namespace SteamTrade
 
                         if (isBot)
                         {
-                            _OfferedItemsFromSteam.Remove (itemID);
-                            MyOfferedItems = _OfferedItemsFromSteam;
+                            //_OfferedItemsFromSteam.Remove (itemID);
+                            //MyOfferedItems = _OfferedItemsFromSteam;
+                            MyOfferedItems.Remove (itemID);
                         }
                         else
                         {
@@ -437,11 +428,10 @@ namespace SteamTrade
                 MeReady = status.me.ready == 1 ? true : false;
             }
 
-
             // Update version
             if (status.newversion)
             {
-                version = status.version;
+                tradeSession.Version = status.version;
             }
 
             if (status.logpos != 0)

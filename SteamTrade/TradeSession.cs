@@ -41,6 +41,8 @@ namespace SteamTrade
 
         internal int LogPos { get; set; }
 
+        internal int Version { get; set; }
+
         public StatusObj GetStatus ()
         {
             var data = new NameValueCollection ();
