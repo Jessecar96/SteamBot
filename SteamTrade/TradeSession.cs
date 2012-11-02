@@ -17,22 +17,29 @@ namespace SteamTrade
         private static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
         private string sessionId;
+        private SteamID otherTradingPartner;
         private string sessionIdEsc;
         private string baseTradeURL;
         private string steamLogin;
         private int version = 1;
-
-        private int numEvents;
+        private CookieContainer cookies;
             
-        public TradeSession (string sessionId, string token)
+        public TradeSession (string sessionId, string token, SteamID otherTrader)
         {
             this.sessionId = sessionId;
+            this.steamLogin = token;
+            this.otherTradingPartner = otherTrader;
+
             this.sessionIdEsc = Uri.UnescapeDataString(sessionId);
 
-            this.steamLogin = token;
+            cookies = new CookieContainer();
+            cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
+            cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
+
+            baseTradeURL = String.Format (SteamTradeUrl, otherTradingPartner.ConvertToUInt64 ());
         }
 
-        internal int LogPos { get; set;}
+        internal int LogPos { get; set; }
 
         public StatusObj GetStatus ()
         {
@@ -143,16 +150,8 @@ namespace SteamTrade
 
         #endregion // Trade Interaction
         
-        public string Fetch (string url, string method, NameValueCollection data = null, bool sendLoginData = true)
+        public string Fetch (string url, string method, NameValueCollection data = null)
         {
-            var cookies = new CookieContainer();
-
-            if (sendLoginData)
-            {
-                cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
-                cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
-            }
-            
             return SteamWeb.Fetch (url, method, data, cookies);
         }
 

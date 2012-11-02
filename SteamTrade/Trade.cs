@@ -12,8 +12,7 @@ namespace SteamTrade
     {
         #region Static
         // Static properties
-        public static string SteamCommunityDomain = "steamcommunity.com";
-        public static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
+        //public static string SteamCommunityDomain = "steamcommunity.com";
         public static Schema CurrentSchema = null;
         #endregion
 
@@ -107,12 +106,8 @@ namespace SteamTrade
         public Inventory OtherInventory;
 
         // Internal properties needed for Steam API.
-        protected string baseTradeURL;
-        protected string steamLogin;
-        protected string sessionId;
         protected string apiKey;
         protected int version = 1;
-        protected int logpos;
         protected int numEvents;
 
         protected dynamic OtherItems;
@@ -191,10 +186,7 @@ namespace SteamTrade
             MeSID = me;
             OtherSID = other;
 
-            this.sessionId = sessionId;
-            steamLogin = token;
-
-            tradeSession = new TradeSession(sessionId, token);
+            tradeSession = new TradeSession(sessionId, token, OtherSID);
 
             this.apiKey = apiKey;
             this.log = log;
@@ -204,7 +196,7 @@ namespace SteamTrade
             MaximumTradeTime = maxTradeTime;
             MaximumActionGap = maxGapTime;
 
-            baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
+            //baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
 
             // try to poll for the first time
             try
@@ -439,40 +431,10 @@ namespace SteamTrade
 
             if (status.logpos != 0)
             {
-                logpos = status.logpos;
+                tradeSession.LogPos = status.logpos;
             }
 
             log.Info ("Poll Successful.");
-        }
-
-        protected dynamic GetInventory (SteamID steamid)
-        {
-            string url = String.Format (
-                "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
-                steamid.ConvertToUInt64 ()
-            );
-
-            try
-            {
-                string response = Fetch (url, "GET", null, false);
-                return JsonConvert.DeserializeObject (response);
-            }
-            catch (Exception)
-            {
-                return JsonConvert.DeserializeObject ("{\"success\":\"false\"}");
-            }
-        }
-
-        protected string Fetch (string url, string method, NameValueCollection data = null, bool sendLoginData = true)
-        {
-            var cookies = new CookieContainer();
-            if (sendLoginData)
-            {
-                cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
-                cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
-            }
-
-            return SteamWeb.Fetch (url, method, data, cookies);
         }
 
         /// <summary>
@@ -483,15 +445,16 @@ namespace SteamTrade
         {
             try
             {
+                // [cmw] OtherItems and MyItems don't appear to be used... the should be removed.
                 // fetch the other player's inventory
-                OtherItems = GetInventory (OtherSID);
+                OtherItems = Inventory.GetInventory (OtherSID);
                 if (OtherItems == null || OtherItems.success != "true")
                 {
                     throw new Exception ("Could not fetch other player's inventory via Trading!");
                 }
 
                 // fetch our inventory
-                MyItems = GetInventory (MeSID);
+                MyItems = Inventory.GetInventory (MeSID);
                 if (MyItems == null || MyItems.success != "true")
                 {
                     throw new Exception ("Could not fetch own inventory via Trading!");
