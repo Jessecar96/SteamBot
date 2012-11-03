@@ -21,7 +21,6 @@ namespace SteamTrade
         private string sessionIdEsc;
         private string baseTradeURL;
         private string steamLogin;
-        private int version = 1;
         private CookieContainer cookies;
             
         public TradeSession (string sessionId, string token, SteamID otherTrader)
@@ -31,6 +30,8 @@ namespace SteamTrade
             this.otherTradingPartner = otherTrader;
 
             this.sessionIdEsc = Uri.UnescapeDataString(sessionId);
+
+            Version = 1;
 
             cookies = new CookieContainer();
             cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
@@ -48,7 +49,7 @@ namespace SteamTrade
             var data = new NameValueCollection ();
             data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
             data.Add ("logpos", "" + LogPos);
-            data.Add ("version", "" + version);
+            data.Add ("version", "" + Version);
             
             string response = Fetch (baseTradeURL + "tradestatus", "POST", data);
             return JsonConvert.DeserializeObject<StatusObj> (response);
@@ -65,7 +66,7 @@ namespace SteamTrade
             data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
             data.Add ("message", msg);
             data.Add ("logpos", "" + LogPos);
-            data.Add ("version", "" + version);
+            data.Add ("version", "" + Version);
             return Fetch (baseTradeURL + "chat", "POST", data);
         }
         
@@ -88,7 +89,9 @@ namespace SteamTrade
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
+            // TODO: add error checking for Fetch results
             Fetch (baseTradeURL + "additem", "POST", data);
+
             return true;
         }
         
@@ -107,6 +110,7 @@ namespace SteamTrade
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
+            // TODO: add error checking for Fetch results
             Fetch (baseTradeURL + "removeitem", "POST", data);
 
             return true;
@@ -120,7 +124,9 @@ namespace SteamTrade
             var data = new NameValueCollection ();
             data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
             data.Add ("ready", ready ? "true" : "false");
-            data.Add ("version", "" + version);
+            data.Add ("version", "" + Version);
+
+            // TODO: add error checking for Fetch results
             Fetch (baseTradeURL + "toggleready", "POST", data);
         }
         
@@ -132,7 +138,7 @@ namespace SteamTrade
         {
             var data = new NameValueCollection ();
             data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            data.Add ("version", "" + version);
+            data.Add ("version", "" + Version);
             string response = Fetch (baseTradeURL + "confirm", "POST", data);
             
             return JsonConvert.DeserializeObject (response);
