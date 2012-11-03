@@ -65,9 +65,6 @@ namespace SteamBot
             [JsonProperty("quality")]
             public string Quality { get; set; }
 
-            [JsonProperty("pos")]
-            public int Position { get; set; }
-
             [JsonProperty("quantity")]
             public int RemainingUses { get; set; }
 
