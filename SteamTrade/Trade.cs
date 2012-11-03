@@ -229,6 +229,73 @@ namespace SteamTrade
         }
 
         /// <summary>
+        /// Adds an item by its Defindex. Adds only one item at a
+        /// time, but can be called multiple times.
+        /// </summary>
+        /// <param name="defindex">The item defindex (item type really).</param>
+        /// <param name="slot">The trade slot index to place the item in.</param>
+        /// <returns>
+        /// true if an item was found with the corresponding
+        /// defindex, false otherwise.
+        /// </returns>
+        public bool AddItemByDefindex(int defindex, int slot)
+        {
+            List<Inventory.Item> items = myInventory.GetItemsByDefindex(defindex);
+
+            foreach (Inventory.Item item in items)
+            {
+                if (!(item == null || MyOfferedItems.Contains(item.Id)))
+                {
+                    tradeSession.AddItem(item.Id, slot);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Finds the last item in the trade that has the defindex
+        /// passed to it. It removes the last item, and can determine
+        /// the slot number of the item if you don't give it. REMEMBER:
+        /// the slot number of the item should be the the slot number
+        /// of the last instance of the item in the offered items.
+        /// The limit on determining the slot number is the assumption
+        /// that the items were put in order, i.e. slot 1, slot 2,
+        /// slot 3, ..., slot n.
+        /// </summary>
+        /// <returns>
+        /// Returns true if it found a corresponding item; false otherwise.
+        /// </returns>
+        public bool RemoveItemByDefindex(int defindex, int slot = -1)
+        {
+            ulong lastItem = 0;
+
+            bool slotGiven = slot == -1 ? true : false;
+
+            if (!slotGiven)
+                slot = 0;
+
+            foreach (ulong item in MyOfferedItems)
+            {
+                if (defindex == myInventory.GetItem(item).Defindex)
+                {
+                    lastItem = item;
+                    if (!slotGiven)
+                        slot++;
+                }
+            }
+
+            if (lastItem != 0)
+            {
+                tradeSession.RemoveItem(lastItem, slot);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
         public string SendMessage (string msg)
