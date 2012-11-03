@@ -8,7 +8,7 @@ namespace SteamTrade
     public class Inventory
     {
         /// <summary>
-        /// Fetchs the inventory for the given Steam ID using the Steam API.
+        /// Fetches the inventory for the given Steam ID using the Steam API.
         /// </summary>
         /// <returns>The give users inventory.</returns>
         /// <param name='steamId'>Steam identifier.</param>

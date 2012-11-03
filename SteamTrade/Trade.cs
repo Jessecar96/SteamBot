@@ -89,6 +89,14 @@ namespace SteamTrade
         public SteamID OtherSID { get; private set; }
 
         /// <summary>
+        /// Gets the bot's Steam ID.
+        /// </summary>
+        public SteamID MySteamId
+        {
+            get { return mySteamId; }
+        }
+
+        /// <summary>
         /// Gets or sets The maximum trading time the bot will take.  Will not take any value lower than 15.
         /// </summary>
         /// <value>
@@ -145,6 +153,39 @@ namespace SteamTrade
         /// The other offered items.
         /// </value>
         public List<ulong> OtherOfferedItems { get; private set; }
+
+
+        /// <summary>
+        /// Gets a value indicating if the other user is ready to trade.
+        /// </summary>
+        public bool OtherIsReady
+        {
+            get { return otherIsReady; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating if the bot is ready to trade.
+        /// </summary>
+        public bool MeIsReady
+        {
+            get { return meIsReady; }
+        }
+
+        /// <summary>
+        /// Gets the time the trade started.
+        /// </summary>
+        public DateTime TradeStartTime
+        {
+            get { return tradeStartTime; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating if a trade has started.
+        /// </summary>
+        public bool TradeStarted
+        {
+            get { return tradeStarted; }
+        }
 
         #endregion
                 
@@ -329,7 +370,7 @@ namespace SteamTrade
         {
             log.Info ("Polling Trade...");
 
-            if (!tradeStarted)
+            if (!TradeStarted)
             {
                 tradeStarted = true;
                 tradeStartTime = DateTime.Now;
@@ -368,7 +409,7 @@ namespace SteamTrade
                         EventID = numEvents - i;
                     }
 
-                    bool isBot = status.events [EventID].steamid == mySteamId.ConvertToUInt64 ().ToString ();
+                    bool isBot = status.events [EventID].steamid == MySteamId.ConvertToUInt64 ().ToString ();
 
                     /*
                      *
@@ -468,7 +509,7 @@ namespace SteamTrade
                 DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaximumActionGap);
                 int untilActionTimeout = (int) Math.Round ((actionTimeout - now).TotalSeconds);
 
-                DateTime tradeTimeout = tradeStartTime.AddSeconds (MaximumTradeTime);
+                DateTime tradeTimeout = TradeStartTime.AddSeconds (MaximumTradeTime);
                 int untilTradeTimeout = (int) Math.Round ((tradeTimeout - now).TotalSeconds);
 
                 if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
@@ -524,7 +565,7 @@ namespace SteamTrade
                 }
 
                 // fetch our inventory
-                myItems = Inventory.GetInventory (mySteamId);
+                myItems = Inventory.GetInventory (MySteamId);
                 if (myItems == null || myItems.success != "true")
                 {
                     throw new Exception ("Could not fetch own inventory via Trading!");
@@ -538,7 +579,7 @@ namespace SteamTrade
                 }
 
                 // fetch our inventory from the Steam API.
-                myInventory = Inventory.FetchInventory(mySteamId.ConvertToUInt64(), apiKey);
+                myInventory = Inventory.FetchInventory(MySteamId.ConvertToUInt64(), apiKey);
                 if (myInventory == null)
                 {
                     throw new Exception ("Could not fetch own inventory via Steam API!");
