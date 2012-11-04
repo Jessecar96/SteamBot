@@ -5,10 +5,11 @@ using System.Net;
 using System.Web;
 using Newtonsoft.Json;
 using SteamKit2;
+using SteamTrade.Exceptions;
 
 namespace SteamTrade
 {
-    public class Trade
+    public partial class Trade
     {
         #region Static Public data
         public static Schema CurrentSchema = null;
@@ -16,8 +17,6 @@ namespace SteamTrade
 
         // current bot's sid
         private SteamID mySteamId;
-
-        private Log log;
 
         // If the bot is ready.
         private bool meIsReady = false;
@@ -37,6 +36,9 @@ namespace SteamTrade
         private int _MaxTradeTime;
         private int _MaxActionGap;
 
+        // Tracks the items that the Steam network thinks the bot has offered.
+        private List<ulong> webCopyOfferedItems;
+
         // The inventory of the bot.
         private Inventory myInventory;
 
@@ -47,40 +49,42 @@ namespace SteamTrade
         private dynamic othersItems;
         private dynamic myItems;
 
-        private TradeSession tradeSession;
+        //private TradeSession tradeSession;
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime, Log log)
+        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime)
         {
             mySteamId = me;
             OtherSID = other;
-
-            tradeSession = new TradeSession(sessionId, token, OtherSID);
-
+            this.sessionId = sessionId;
+            this.steamLogin = token;
             this.apiKey = apiKey;
-            this.log = log;
-
+            
             // Moved here because when Poll is called below, these are
             // set to zero, which closes the trade immediately.
             MaximumTradeTime = maxTradeTime;
             MaximumActionGap = maxGapTime;
 
-            OtherOfferedItems = new List<ulong> ();
-            MyOfferedItems = new List<ulong> ();
+            OtherOfferedItems = new List<ulong>();
+            MyOfferedItems = new List<ulong>();
+            webCopyOfferedItems = new List<ulong>();
+
+            Init();
 
             // try to poll for the first time
             try
             {
                 Poll ();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                log.Error ("[TRADE] Failed To Connect to Steam!");
-
                 if (OnError != null)
                     OnError("There was a problem connecting to Steam Trading.");
+                else 
+                    throw new TradeException("Unhandled exception when Polling the trade.", e);
             }
 
             FetchInventories ();
+            sessionIdEsc = Uri.UnescapeDataString (this.sessionId);
         }
 
         #region Public Properties
@@ -259,14 +263,44 @@ namespace SteamTrade
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
         /// </summary>
-        public void CancelTrade ()
+        public bool CancelTrade ()
         {
-            log.Error ("CANCELED TRADE");
-            
-            tradeSession.CancelTrade();
+            bool ok = CancelTradeWebCmd();
+
+            if (!ok)
+                throw new TradeException("The Web command to cancel the trade failed");
             
             if (OnClose != null)
                 OnClose ();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Adds a specified item by its itemid.
+        /// </summary>
+        /// <param name="itemid">The items unique ID.</param>
+        /// <param name="slot">The trade slot to add the item to.</param>
+        /// <returns>
+        /// <c>false</c> if the item doesn't exist in the Bot's inventory.
+        /// </returns>
+        /// <remarks>
+        /// Since each itemid is unique to each item, you'd first have to 
+        /// find the item, or use AddItemByDefindex instead. 
+        /// </remarks>
+        public bool AddItem(ulong itemid, int slot)
+        {
+            if (myInventory.GetItem(itemid) == null)
+                return false;
+
+            bool ok = AddItemWebCmd(itemid, slot);
+
+            if (!ok)
+                throw new TradeException("The Web command to add the Item failed");
+
+            MyOfferedItems.Add(itemid);
+
+            return true;
         }
 
         /// <summary>
@@ -287,12 +321,38 @@ namespace SteamTrade
             {
                 if (!(item == null || MyOfferedItems.Contains(item.Id)))
                 {
-                    tradeSession.AddItem(item.Id, slot);
+                    bool ok = AddItemWebCmd(item.Id, slot);
+
+                    if (!ok)
+                        throw new TradeException("The Web command to add the Item failed");
+
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Removes an item by its itemid. Read AddItem about itemids.
+        /// Returns false if the item isn't in the offered items, or
+        /// true if it appears it succeeded. Removes the item from
+        /// MyOfferedItems.
+        /// </summary>
+        /// <returns><c>false</c> if the item has not been added.</returns>
+        public bool RemoveItem(ulong itemid, int slot)
+        {
+            if (!MyOfferedItems.Contains(itemid))
+                return false;
+
+            bool ok = RemoveItemWebCmd(itemid, slot);
+
+            if (!ok)
+                throw new TradeException("The web command to remove the item failed.");
+
+            MyOfferedItems.Remove(itemid);
+
+            return true;
         }
 
         /// <summary>
@@ -329,7 +389,11 @@ namespace SteamTrade
 
             if (lastItem != 0)
             {
-                tradeSession.RemoveItem(lastItem, slot);
+                bool ok = RemoveItemWebCmd(lastItem, slot);
+
+                if (!ok)
+                    throw new TradeException("The web command to remove the item failed.");
+
                 return true;
             }
 
@@ -339,26 +403,41 @@ namespace SteamTrade
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
-        public string SendMessage (string msg)
+        public bool SendMessage (string msg)
         {
-            return tradeSession.SendMessage(msg);
+            bool ok = SendMessageWebCmd(msg);
+
+            if (!ok)
+                throw new TradeException("The web command to send the trade message failed.");
+
+            return true;
         }
 
         /// <summary>
         /// Sets the bot to a ready status.
         /// </summary>
-        public void SetReady (bool ready)
+        public bool SetReady (bool ready)
         {
-            tradeSession.SetReady(ready);
+            bool ok = SetReadyWebCmd(ready);
+
+            if (!ok)
+                throw new TradeException("The web command to set trade ready state failed.");
+
+            return true;
         }
 
         /// <summary>
         /// Accepts the trade from the user.  Returns a deserialized
         /// JSON object.
         /// </summary>
-        public dynamic AcceptTrade ()
+        public bool AcceptTrade ()
         {
-            return tradeSession.AcceptTrade();
+            bool ok = AcceptTradeWebCmd();
+
+            if (!ok)
+                throw new TradeException("The web command to accept the trade failed.");
+
+            return true;
         }
         
         /// <summary>
@@ -368,8 +447,6 @@ namespace SteamTrade
         /// </summary>
         public void Poll ()
         {
-            log.Info ("Polling Trade...");
-
             if (!TradeStarted)
             {
                 tradeStarted = true;
@@ -377,8 +454,10 @@ namespace SteamTrade
                 lastOtherActionTime = DateTime.Now;
             }
 
+            StatusObj status = GetStatus ();
 
-            TradeSession.StatusObj status = tradeSession.GetStatus ();
+            if (status == null)
+                throw new TradeException("The web command to get the trade status failed.");
 
             // I've noticed this when the trade is cancelled.
             if (status.trade_status == 3)
@@ -434,9 +513,8 @@ namespace SteamTrade
 
                         if (isBot)
                         {
-                            //_OfferedItemsFromSteam.Add (itemID);
-                            //MyOfferedItems = _OfferedItemsFromSteam;
-                            MyOfferedItems.Add (itemID);
+                            webCopyOfferedItems.Add(itemID);
+                            MyOfferedItems = webCopyOfferedItems;
                         }   
                         else
                         {
@@ -452,9 +530,8 @@ namespace SteamTrade
 
                         if (isBot)
                         {
-                            //_OfferedItemsFromSteam.Remove (itemID);
-                            //MyOfferedItems = _OfferedItemsFromSteam;
-                            MyOfferedItems.Remove (itemID);
+                            webCopyOfferedItems.Remove (itemID);
+                            MyOfferedItems = webCopyOfferedItems;
                         }
                         else
                         {
@@ -492,7 +569,9 @@ namespace SteamTrade
                         }
                         break;
                     default:
-                        log.Warn ("Unkown Event ID: " + status.events [EventID].action);
+                        // Todo: add an OnWarning or similar event
+                        if (OnError != null)
+                            OnError("Unkown Event ID: " + status.events[EventID].action);
                         break;
                     }
 
@@ -522,7 +601,7 @@ namespace SteamTrade
                 }
                 else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
                 {
-                    tradeSession.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                    SendMessageWebCmd ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
                 }
             }
 
@@ -536,17 +615,14 @@ namespace SteamTrade
             // Update version
             if (status.newversion)
             {
-                tradeSession.Version = status.version;
+                Version = status.version;
             }
 
             if (status.logpos != 0)
             {
-                tradeSession.LogPos = status.logpos;
+                LogPos = status.logpos;
             }
-
-            log.Info ("Poll Successful.");
         }
-
 
         /// <summary>
         /// Grabs the inventories of both users over both Trading and
@@ -599,7 +675,8 @@ namespace SteamTrade
             {
                 if (OnError != null)
                     OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                log.Error (e.ToString ());
+                else
+                    throw new TradeException("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.", e);
             }
         }
     }

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace SteamTrade
+namespace SteamBot
 {
     public class Log
     {

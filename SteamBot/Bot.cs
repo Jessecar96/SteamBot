@@ -156,7 +156,7 @@ namespace SteamBot
         {
             if (CurrentTrade != null)
                 return false;
-            CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, MaximumTradeTime, MaximiumActionGap, log);
+            CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, MaximumTradeTime, MaximiumActionGap);
             CurrentTrade.OnTimeout += CloseTrade;
             GetUserHandler (other).SubscribeTrade (CurrentTrade);
             GetUserHandler (other).OnTradeInit ();

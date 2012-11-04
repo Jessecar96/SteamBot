@@ -11,43 +11,27 @@ namespace SteamTrade
     /// <summary>
     /// This class handles the web-based interaction for Steam trades.
     /// </summary>
-    public class TradeSession
+    public partial class Trade
     {
         private static string SteamCommunityDomain = "steamcommunity.com";
         private static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
         private string sessionId;
-        private SteamID otherTradingPartner;
         private string sessionIdEsc;
         private string baseTradeURL;
         private string steamLogin;
         private CookieContainer cookies;
-            
-        public TradeSession (string sessionId, string token, SteamID otherTrader)
-        {
-            this.sessionId = sessionId;
-            this.steamLogin = token;
-            this.otherTradingPartner = otherTrader;
-
-            this.sessionIdEsc = Uri.UnescapeDataString(sessionId);
-
-            Version = 1;
-
-            cookies = new CookieContainer();
-            cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
-            cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
-
-            baseTradeURL = String.Format (SteamTradeUrl, otherTradingPartner.ConvertToUInt64 ());
-        }
+        
 
         internal int LogPos { get; set; }
 
         internal int Version { get; set; }
 
-        public StatusObj GetStatus ()
+        private StatusObj GetStatus ()
         {
             var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+
+            data.Add ("sessionid", sessionIdEsc);
             data.Add ("logpos", "" + LogPos);
             data.Add ("version", "" + Version);
             
@@ -55,19 +39,29 @@ namespace SteamTrade
             return JsonConvert.DeserializeObject<StatusObj> (response);
         }
 
-        #region Trade interaction
+        #region Trade Web command methods
 
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
-        public string SendMessage (string msg)
+        private bool SendMessageWebCmd (string msg)
         {
             var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+            data.Add ("sessionid", sessionIdEsc);
             data.Add ("message", msg);
             data.Add ("logpos", "" + LogPos);
             data.Add ("version", "" + Version);
-            return Fetch (baseTradeURL + "chat", "POST", data);
+
+            string result = Fetch (baseTradeURL + "chat", "POST", data);
+
+            dynamic json = JsonConvert.DeserializeObject(result);
+
+            if (json == null || json.success != "true")
+            {
+                return false;
+            }
+
+            return true;
         }
         
         /// <summary>
@@ -79,18 +73,24 @@ namespace SteamTrade
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        public bool AddItem (ulong itemid, int slot)
+        private bool AddItemWebCmd (ulong itemid, int slot)
         {
             var data = new NameValueCollection ();
 
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+            data.Add ("sessionid", sessionIdEsc);
             data.Add ("appid", "440");
             data.Add ("contextid", "2");
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
-            // TODO: add error checking for Fetch results
-            Fetch (baseTradeURL + "additem", "POST", data);
+            string result = Fetch(baseTradeURL + "additem", "POST", data);
+
+            dynamic json = JsonConvert.DeserializeObject(result);
+
+            if (json == null || json.success != "true")
+            {
+                return false;
+            }
 
             return true;
         }
@@ -100,18 +100,24 @@ namespace SteamTrade
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        public bool RemoveItem (ulong itemid, int slot)
+        private bool RemoveItemWebCmd (ulong itemid, int slot)
         {
             var data = new NameValueCollection ();
 
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+            data.Add ("sessionid", sessionIdEsc);
             data.Add ("appid", "440");
             data.Add ("contextid", "2");
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
-            // TODO: add error checking for Fetch results
-            Fetch (baseTradeURL + "removeitem", "POST", data);
+            string result = Fetch (baseTradeURL + "removeitem", "POST", data);
+
+            dynamic json = JsonConvert.DeserializeObject(result);
+
+            if (json == null || json.success != "true")
+            {
+                return false;
+            }
 
             return true;
         }
@@ -119,46 +125,87 @@ namespace SteamTrade
         /// <summary>
         /// Sets the bot to a ready status.
         /// </summary>
-        public void SetReady (bool ready)
+        private bool SetReadyWebCmd (bool ready)
         {
             var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+            data.Add ("sessionid", sessionIdEsc);
             data.Add ("ready", ready ? "true" : "false");
             data.Add ("version", "" + Version);
+            
+            string result = Fetch (baseTradeURL + "toggleready", "POST", data);
 
-            // TODO: add error checking for Fetch results
-            Fetch (baseTradeURL + "toggleready", "POST", data);
+            dynamic json = JsonConvert.DeserializeObject(result);
+
+            if (json == null || json.success != "true")
+            {
+                return false;
+            }
+
+            return true;
         }
         
         /// <summary>
         /// Accepts the trade from the user.  Returns a deserialized
         /// JSON object.
         /// </summary>
-        public dynamic AcceptTrade ()
+        private bool AcceptTradeWebCmd ()
         {
             var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
+
+            data.Add ("sessionid", sessionIdEsc);
             data.Add ("version", "" + Version);
+
             string response = Fetch (baseTradeURL + "confirm", "POST", data);
-            
-            return JsonConvert.DeserializeObject (response);
+
+            dynamic json = JsonConvert.DeserializeObject(response);
+
+            if (json == null || json.success != "true")
+            {
+                return false;
+            }
+
+            return true;
         }
         
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
         /// </summary>
-        public void CancelTrade ()
+        private bool CancelTradeWebCmd ()
         {
             var data = new NameValueCollection ();
-            data.Add ("sessionid", Uri.UnescapeDataString (sessionId));
-            Fetch (baseTradeURL + "cancel", "POST", data);
+
+            data.Add ("sessionid", sessionIdEsc);
+
+            string result = Fetch (baseTradeURL + "cancel", "POST", data);
+
+            dynamic json = JsonConvert.DeserializeObject(result);
+
+            if (json == null || json.success != "true")
+            {
+                return false;
+            }
+
+            return true;
         }
 
-        #endregion // Trade Interaction
+        #endregion // Trade Web command methods
         
-        public string Fetch (string url, string method, NameValueCollection data = null)
+        private string Fetch (string url, string method, NameValueCollection data = null)
         {
             return SteamWeb.Fetch (url, method, data, cookies);
+        }
+
+        private void Init()
+        {
+            sessionIdEsc = Uri.UnescapeDataString(sessionId);
+
+            Version = 1;
+
+            cookies = new CookieContainer();
+            cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
+            cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
+
+            baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64 ());
         }
 
         public class StatusObj
