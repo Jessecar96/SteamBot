@@ -10,7 +10,7 @@ namespace SteamBot
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
             string response = SteamWeb.Fetch (url, "GET", null, null, false);
-            InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse> (response);
+            InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
         }
 
@@ -42,7 +42,7 @@ namespace SteamBot
             {
                 if (item.Defindex == defindex)
                 {
-                    items.Add (item);
+                    items.Add(item);
                 }
             }
             return items;
@@ -65,11 +65,23 @@ namespace SteamBot
             [JsonProperty("quality")]
             public string Quality { get; set; }
 
-            [JsonProperty("pos")]
-            public int Position { get; set; }
+            [JsonProperty("quantity")]
+            public int RemainingUses { get; set; }
+
+            [JsonProperty("origin")]
+            public int Origin { get; set; }
+
+            [JsonProperty("custom_name")]
+            public string CustomName { get; set; }
+
+            [JsonProperty("custom_desc")]
+            public string CustomDescription { get; set; }
 
             [JsonProperty("flag_cannot_craft")]
             public bool IsNotCraftable { get; set; }
+
+            [JsonProperty("flag_cannot_trade")]
+            public bool IsNotTradeable { get; set; }
 
             [JsonProperty("attributes")]
             public ItemAttribute[] Attributes { get; set; }
@@ -93,7 +105,8 @@ namespace SteamBot
             public Item[] items { get; set; }
         }
 
-        protected class InventoryResponse {
+        protected class InventoryResponse
+        {
             public InventoryResult result;
         }
 
