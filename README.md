@@ -19,27 +19,26 @@ If you've just recently cloned this repository, there are a few things you need 
    - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string in quotes and seperated by a comma. These admins are global to all bots listed in the `Bots` array.
    - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string in quotes.
    - `mainLog`: The log containing runtime information for all bots.
-   - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values.
-    - `Username`: The Steam user name for this bot. It should be a string in quotes. **required**
-    - `Password`: The password for the Steam user associated with this bot. It should be a string in quotes. **required**
-    - `DisplayName`: The name the bot will present on Steam. It should be a string in quotes. **required**
-    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string in quotes. **required**
-    - `logFile`: The log file for this specific bot. It should be a string in quotes. **required**
-    - `BotControlClass`: The fully qualified class that controls how this specific bot will behave. Generally, this is a seperate file (ie. `SimpleUserHandler.cs`) and has the same name as your class (without the trailing `.cs` extension). It must be the fully qualified class (ie. `SteamBot.SimpleUserHandler`). It should be a string in quotes. **required**
+   - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values:
+    - `Username`: The Steam user name for this bot. It should be a string in quotes. _(required)_
+    - `Password`: The password for the Steam user associated with this bot. It should be a string in quotes. _(required)_
+    - `DisplayName`: The name the bot will present on Steam. It should be a string in quotes. _(required)_
+    - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string in quotes. _(required)_
+    - `logFile`: The log file for this specific bot. It should be a string in quotes. _required_
+    - `BotControlClass`: The fully qualified class that controls how this specific bot will behave. Generally, this is a seperate file (ie. `SimpleUserHandler.cs`) and has the same name as your class (without the trailing `.cs` extension). It must be the fully qualified class (ie. `SteamBot.SimpleUserHandler`). It should be a string in quotes. _(required)_
     - `Admins`: Additional admins, specific to this bot. _(optional)_
     - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
     - `MaximumActionGap`: Length of time the bot will allow the user to remain inactive. It should be a numeric value. Defaults to 30 seconds. _(optional)_
     - `DisplayNamePrefix`: A prefix to display in front of the DisplayName. It should be a string encloded by quotes. Defaults to an empty string. _(optional)_
     - `TradePollingInterval`: Length of time, in milliseconds, between polling events. Higher values reduce CPU usage at the cost of a slower trading session. It should be a numeric value. Default is 800 ms. Lowest value is 100 ms. _(optional)_
     - `LogLevel`: Detail level of bot's log. In order from most verbose to least verbose, valid options are:
-	 - `Debug`: Information that is helpful in performing diagnostics
-	 - `Info`: Generally useful information such as start/stop, polling events, etc. **Default**
-	 - `Success`: Events that have completed in an expected manner
-	 - `Warn`: Potential application problems, but which have been automatically handled
+	 - `Debug`: Information that is helpful in performing diagnostics.
+	 - `Info`: Generally useful information such as start/stop, polling events, etc. _(default)_
+	 - `Success`: Events that have completed in an expected manner.
+	 - `Warn`: Potential application problems, but which have been automatically handled.
 	 - `Error`: Event that prevents the bot from continuing to function without corrective action. 
-	 - `Interface`: Events that require user interaction, such as entering a Steam Guard code to complete a login
-	 - `Nothing`: A log level that surpresses all previous levels. **Not recommended**
-
+	 - `Interface`: Events that require user interaction, such as entering a Steam Guard code to complete a login.
+	 - `Nothing`: A log level that surpresses all previous levels. _(not recommended)_.
 3. Rename `settings-template.json` to `settings.json`
  
 ### Step 2 ###
