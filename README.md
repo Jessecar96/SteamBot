@@ -15,7 +15,6 @@ If you've just recently cloned this repository, there are a few things you need 
 ### Step 1 ###
 1. First, you need to configure your bots.
 2. Edit the file `settings-template.json` in `\SteamBot\bin\Debug`.  Some configuration options:
-
    - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string in quotes and seperated by a comma. These admins are global to all bots listed in the `Bots` array.
    - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string in quotes.
    - `mainLog`: The log containing runtime information for all bots.
@@ -39,6 +38,7 @@ If you've just recently cloned this repository, there are a few things you need 
 	 - `Error`: Event that prevents the bot from continuing to function without corrective action. 
 	 - `Interface`: Events that require user interaction, such as entering a Steam Guard code to complete a login.
 	 - `Nothing`: A log level that surpresses all previous levels. _(not recommended)_
+
 3. Rename `settings-template.json` to `settings.json`
  
 ### Step 2 ###
