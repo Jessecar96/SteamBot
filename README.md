@@ -24,7 +24,7 @@ If you've just recently cloned this repository, there are a few things you need 
     - `Password`: The password for the Steam user associated with this bot. It should be a string in quotes. _(required)_
     - `DisplayName`: The name the bot will present on Steam. It should be a string in quotes. _(required)_
     - `ChatResponse`: This is the response the bot will provide when a user chats with it via Steam Friends. It should be a string in quotes. _(required)_
-    - `logFile`: The log file for this specific bot. It should be a string in quotes. _required_
+    - `logFile`: The log file for this specific bot. It should be a string in quotes. _(required)_
     - `BotControlClass`: The fully qualified class that controls how this specific bot will behave. Generally, this is a seperate file (ie. `SimpleUserHandler.cs`) and has the same name as your class (without the trailing `.cs` extension). It must be the fully qualified class (ie. `SteamBot.SimpleUserHandler`). It should be a string in quotes. _(required)_
     - `Admins`: Additional admins, specific to this bot. _(optional)_
     - `MaximumTradeTime`: Maximium length of time for a trade session (in seconds). It should be a numeric value. Defaults to 180 seconds. _(optional)_
@@ -38,7 +38,7 @@ If you've just recently cloned this repository, there are a few things you need 
 	 - `Warn`: Potential application problems, but which have been automatically handled.
 	 - `Error`: Event that prevents the bot from continuing to function without corrective action. 
 	 - `Interface`: Events that require user interaction, such as entering a Steam Guard code to complete a login.
-	 - `Nothing`: A log level that surpresses all previous levels. _(not recommended)_.
+	 - `Nothing`: A log level that surpresses all previous levels. _(not recommended)_
 3. Rename `settings-template.json` to `settings.json`
  
 ### Step 2 ###
