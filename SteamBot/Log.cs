@@ -3,10 +3,10 @@ using System.IO;
 
 namespace SteamBot
 {
-public class Log
+    public class Log
     {
 
-        public enum LogLevel 
+        public enum LogLevel
         {
             Debug,
             Info,
@@ -22,15 +22,15 @@ public class Log
 
 
         protected StreamWriter _FileStream;
-        protected Bot _Bot;
+        protected string _Bot;
         public LogLevel OutputToConsole;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
 
-        public Log (string logFile, Bot bot = null, LogLevel output = LogLevel.Info)
+        public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
         {
             _FileStream = File.AppendText (logFile);
             _FileStream.AutoFlush = true;
-            _Bot = bot;
+            _Bot = botName;
             OutputToConsole = output;
             Console.ForegroundColor = DefaultConsoleColor;
         }
@@ -78,13 +78,13 @@ public class Log
             _OutputLine (LogLevel.Interface, data);
         }
 
-        // Outputs a line to both the log and the console, if 
+        // Outputs a line to both the log and the console, if
         // applicable.
         protected void _OutputLine (LogLevel level, string line)
         {
             string formattedString = String.Format (
                 "[{0} {1}] {2}: {3}",
-                (_Bot == null ? "(System)" : _Bot.DisplayName),
+                (_Bot == null ? "(System)" : _Bot),
                 DateTime.Now.ToString ("dd/MM/yyyy HH:mm:ss"),
                 _LogLevel (level).ToUpper (), line
                 );
@@ -93,7 +93,7 @@ public class Log
                 _OutputLineToConsole (level, formattedString);
         }
 
-        // Outputs a line to the console, with the correct color 
+        // Outputs a line to the console, with the correct color
         // formatting.
         protected void _OutputLineToConsole (LogLevel level, string line)
         {
@@ -107,8 +107,8 @@ public class Log
         {
             switch (level)
             {
-            case LogLevel.Info: 
-                return "info"; 
+            case LogLevel.Info:
+                return "info";
             case LogLevel.Debug:
                 return "debug";
             case LogLevel.Success:

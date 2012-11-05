@@ -48,25 +48,25 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="SteamWeb.cs" />
-    <Compile Include="Trade.cs" />
-    <Compile Include="Inventory.cs" />
-    <Compile Include="Schema.cs" />
     <Compile Include="Configuration.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\lib\SteamKit2\SteamKit2\SteamKit2.csproj">
+    <ProjectReference Include="..\Lib\SteamKit2\SteamKit2\SteamKit2.csproj">
       <Project>{BEB5BF07-BB56-402A-97A3-A41C6444C6A5}</Project>
       <Name>SteamKit2</Name>
     </ProjectReference>
-    <ProjectReference Include="..\lib\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.csproj">
+    <ProjectReference Include="..\Lib\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.csproj">
       <Project>{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}</Project>
       <Name>Newtonsoft.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
+      <Project>{6CEC0333-81EB-40EE-85D1-941363626FC7}</Project>
+      <Name>SteamTrade</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

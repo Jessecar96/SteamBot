@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using SteamKit2;
+using SteamTrade;
 
 namespace SteamBot
 {

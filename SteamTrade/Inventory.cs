@@ -1,17 +1,47 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using SteamKit2;
 
-namespace SteamBot
+namespace SteamTrade
 {
     public class Inventory
     {
+        /// <summary>
+        /// Fetches the inventory for the given Steam ID using the Steam API.
+        /// </summary>
+        /// <returns>The give users inventory.</returns>
+        /// <param name='steamId'>Steam identifier.</param>
+        /// <param name='apiKey'>The needed Steam API key.</param>
         public static Inventory FetchInventory (ulong steamId, string apiKey)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
             string response = SteamWeb.Fetch (url, "GET", null, null, false);
             InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
+        }
+
+        /// <summary>
+        /// Gets the inventory for the given Steam ID using the Steam Community website.
+        /// </summary>
+        /// <returns>The inventory for the given user. </returns>
+        /// <param name='steamid'>The Steam identifier. </param>
+        public static dynamic GetInventory (SteamID steamid)
+        {
+            string url = String.Format (
+                "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
+                steamid.ConvertToUInt64 ()
+            );
+            
+            try
+            {
+                string response = SteamWeb.Fetch (url, "GET", null, null, true);
+                return JsonConvert.DeserializeObject (response);
+            }
+            catch (Exception)
+            {
+                return JsonConvert.DeserializeObject ("{\"success\":\"false\"}");
+            }
         }
 
         public uint NumSlots { get; set; }
