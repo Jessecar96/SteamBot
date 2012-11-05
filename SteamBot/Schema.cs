@@ -72,6 +72,15 @@ namespace SteamBot
 
             [JsonProperty("used_by_classes")]
             public string[] UsableByClasses { get; set; }
+
+            [JsonProperty("item_slot")]
+            public string ItemSlot { get; set; }
+
+            [JsonProperty("craft_class")]
+            public string CraftClass { get; set; }
+
+            [JsonProperty("item_quality")]
+            public int ItemQuality { get; set; }
         }
 
         protected class SchemaResult

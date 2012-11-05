@@ -26,7 +26,6 @@ public class Log
         public LogLevel OutputToConsole;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
 
-#if DEBUG
         public Log (string logFile, Bot bot = null, LogLevel output = LogLevel.Info)
         {
             _FileStream = File.AppendText (logFile);
@@ -35,16 +34,6 @@ public class Log
             OutputToConsole = output;
             Console.ForegroundColor = DefaultConsoleColor;
         }
-#else
-        public Log (string logFile, Bot bot=null, LogLevel output=LogLevel.Success)
-        {
-            _FileStream = File.AppendText (logFile);
-            _FileStream.AutoFlush = true;
-            _Bot = bot;
-            OutputToConsole = output;
-            Console.ForegroundColor = DefaultConsoleColor;
-        }
-#endif
 
         ~Log ()
         {
@@ -128,6 +117,10 @@ public class Log
                 return "warn";
             case LogLevel.Error:
                 return "error";
+            case LogLevel.Interface:
+                return "interface";
+            case LogLevel.Nothing:
+                return "nothing";
             default:
                 return "undef";
             }
@@ -149,7 +142,7 @@ public class Log
             case LogLevel.Error:
                 return ConsoleColor.Red;
             case LogLevel.Interface:
-                return ConsoleColor.Magenta;
+                return ConsoleColor.DarkCyan;
             default:
                 return DefaultConsoleColor;
             }
