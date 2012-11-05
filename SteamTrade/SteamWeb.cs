@@ -8,8 +8,9 @@ using System.Security.Cryptography;
 using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
+using SteamKit2;
 
-namespace SteamBot
+namespace SteamTrade
 {
     public class SteamWeb
     {
@@ -166,6 +167,57 @@ namespace SteamBot
                 return null;
             }
 
+        }
+
+        ///<summary>
+        /// Authenticate using SteamKit2 and ISteamUserAuth. 
+        /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
+        /// </summary> 
+        /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
+        public static bool Authenticate (SteamUser.LoginKeyCallback callback, SteamClient client, out string sessionId, out string token)
+        {
+            sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (callback.UniqueID.ToString ()));
+            
+            using (dynamic userAuth = WebAPI.GetInterface ("ISteamUserAuth"))
+            {
+                // generate an AES session key
+                var sessionKey = CryptoHelper.GenerateRandomBlock (32);
+                
+                // rsa encrypt it with the public key for the universe we're on
+                byte[] cryptedSessionKey = null;
+                using (RSACrypto rsa = new RSACrypto (KeyDictionary.GetPublicKey (client.ConnectedUniverse)))
+                {
+                    cryptedSessionKey = rsa.Encrypt (sessionKey);
+                }
+                
+                
+                byte[] loginKey = new byte[20];
+                Array.Copy (Encoding.ASCII.GetBytes (callback.LoginKey), loginKey, callback.LoginKey.Length);
+                
+                // aes encrypt the loginkey with our session key
+                byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt (loginKey, sessionKey);
+                
+                KeyValue authResult;
+                
+                try
+                {
+                    authResult = userAuth.AuthenticateUser (
+                        steamid: client.SteamID.ConvertToUInt64 (),
+                        sessionkey: HttpUtility.UrlEncode (cryptedSessionKey),
+                        encrypted_loginkey: HttpUtility.UrlEncode (cryptedLoginKey),
+                        method: "POST"
+                        );
+                }
+                catch (Exception)
+                {
+                    token = null;
+                    return false;
+                }
+                
+                token = authResult ["token"].AsString ();
+                
+                return true;
+            }
         }
 
         static void SubmitCookies (CookieContainer cookies)

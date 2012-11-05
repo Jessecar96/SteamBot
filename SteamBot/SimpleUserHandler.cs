@@ -1,5 +1,6 @@
 using SteamKit2;
 using System.Collections.Generic;
+using SteamTrade;
 
 namespace SteamBot
 {
@@ -73,8 +74,9 @@ namespace SteamBot
         {
             if (Validate() || IsAdmin)
             {
-                dynamic js = Trade.AcceptTrade();
-                if (js.success == true)
+                bool success = Trade.AcceptTrade();
+
+                if (success)
                 {
                     Log.Success ("Trade was Successful!");
                 }

@@ -35,12 +35,12 @@ If you've just recently cloned this repository, there are a few things you need 
 	 - `Info`: Generally useful information such as start/stop, polling events, etc. _(default)_
 	 - `Success`: Events that have completed in an expected manner.
 	 - `Warn`: Potential application problems, but which have been automatically handled.
-	 - `Error`: Event that prevents the bot from continuing to function without corrective action. 
+	 - `Error`: Event that prevents the bot from continuing to function without corrective action.
 	 - `Interface`: Events that require user interaction, such as entering a Steam Guard code to complete a login.
 	 - `Nothing`: A log level that surpresses all previous levels. _(not recommended)_
 
 3. Rename `settings-template.json` to `settings.json`
- 
+
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
 2. You can edit the file `SimpleUserHandler.cs` as it contains events for everything you need. Alternatively, you can subclass `UserHandler` and create your own class to control bot behavior. If you do this, remember to modify the `BotControlClass` setting in your configuration. Add your code to each of the events. Events are explained in code commments.
