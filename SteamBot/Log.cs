@@ -26,7 +26,7 @@ namespace SteamBot
         public LogLevel OutputToConsole;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
 
-        public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info
+        public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
         {
             _FileStream = File.AppendText (logFile);
             _FileStream.AutoFlush = true;
