@@ -85,7 +85,7 @@ namespace SteamBot
             string formattedString = String.Format (
                 "[{0} {1}] {2}: {3}",
                 (_Bot == null ? "(System)" : _Bot),
-                DateTime.Now.ToString ("dd/MM/yyyy HH:mm:ss"),
+                DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss"),
                 _LogLevel (level).ToUpper (), line
                 );
             _FileStream.WriteLine (formattedString);
