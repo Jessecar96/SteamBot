@@ -32,8 +32,7 @@ namespace SteamTrade
         int _MaxTradeTime;
         int _MaxActionGap;
 
-        // Tracks the items that the Steam network thinks the bot has offered.
-        List<ulong> webCopyOfferedItems;
+        Dictionary<int, ulong> myOfferedItems;
 
         // The inventory of the bot.
         Inventory myInventory;
@@ -59,8 +58,7 @@ namespace SteamTrade
             MaximumActionGap = maxGapTime;
 
             OtherOfferedItems = new List<ulong>();
-            MyOfferedItems = new List<ulong>();
-            webCopyOfferedItems = new List<ulong>();
+            myOfferedItems = new Dictionary<int, ulong> ();
 
             Init();
 
@@ -89,10 +87,7 @@ namespace SteamTrade
         /// <summary>
         /// Gets the bot's Steam ID.
         /// </summary>
-        public SteamID MySteamId
-        {
-            get { return mySteamId; }
-        }
+        public readonly SteamID MySteamId;
 
         /// <summary>
         /// Gets or sets The maximum trading time the bot will take.  Will not take any value lower than 15.
@@ -130,14 +125,6 @@ namespace SteamTrade
                 _MaxActionGap = value <= 15 ? 15 : value;
             }
         }
-        
-        /// <summary>
-        /// Gets the list of items (itemids) the bot has offered.
-        /// </summary>
-        /// <value>
-        /// My offered items.
-        /// </value>
-        public List<ulong> MyOfferedItems { get; private set; }
 
         /// <summary> 
         /// Gets the inventory of the other user. 
@@ -278,124 +265,76 @@ namespace SteamTrade
         /// <summary>
         /// Adds a specified item by its itemid.
         /// </summary>
-        /// <param name="itemid">The items unique ID.</param>
-        /// <param name="slot">The trade slot to add the item to.</param>
-        /// <returns>
-        /// <c>false</c> if the item doesn't exist in the Bot's inventory.
-        /// </returns>
-        /// <remarks>
-        /// Since each itemid is unique to each item, you'd first have to 
-        /// find the item, or use AddItemByDefindex instead. 
-        /// </remarks>
-        public bool AddItem(ulong itemid, int slot)
+        public bool AddItem(ulong itemid)
         {
             if (myInventory.GetItem(itemid) == null)
                 return false;
 
+            var slot = NextTradeSlot ();
             bool ok = AddItemWebCmd(itemid, slot);
 
             if (!ok)
                 throw new TradeException("The Web command to add the Item failed");
 
-            MyOfferedItems.Add(itemid);
+            myOfferedItems[slot] = itemid;
 
             return true;
         }
 
         /// <summary>
-        /// Adds an item by its Defindex. Adds only one item at a
-        /// time, but can be called multiple times.
+        /// Adds a single item by its Defindex.
         /// </summary>
-        /// <param name="defindex">The item defindex (item type really).</param>
-        /// <param name="slot">The trade slot index to place the item in.</param>
         /// <returns>
         /// true if an item was found with the corresponding
         /// defindex, false otherwise.
         /// </returns>
-        public bool AddItemByDefindex(int defindex, int slot)
+        public bool AddItemByDefindex(int defindex)
         {
             List<Inventory.Item> items = myInventory.GetItemsByDefindex(defindex);
-
-            foreach (Inventory.Item item in items)
-            {
-                if (!(item == null || MyOfferedItems.Contains(item.Id)))
-                {
-                    bool ok = AddItemWebCmd(item.Id, slot);
-
-                    if (!ok)
-                        throw new TradeException("The Web command to add the Item failed");
-
-                    return true;
+            foreach (Inventory.Item item in items) {
+                if (!myOfferedItems.ContainsValue (item.Id)) {
+                    return AddItem (item.Id);
                 }
             }
-
             return false;
         }
 
         /// <summary>
-        /// Removes an item by its itemid. Read AddItem about itemids.
-        /// Returns false if the item isn't in the offered items, or
-        /// true if it appears it succeeded. Removes the item from
-        /// MyOfferedItems.
+        /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> if the item has not been added.</returns>
-        public bool RemoveItem(ulong itemid, int slot)
+        public bool RemoveItem(ulong itemid)
         {
-            if (!MyOfferedItems.Contains(itemid))
+            int? slot = GetItemSlot(itemid);
+            if (!slot.HasValue)
                 return false;
 
-            bool ok = RemoveItemWebCmd(itemid, slot);
+            bool ok = RemoveItemWebCmd(itemid, slot.Value);
 
             if (!ok)
                 throw new TradeException("The web command to remove the item failed.");
 
-            MyOfferedItems.Remove(itemid);
+            myOfferedItems.Remove(slot.Value);
 
             return true;
         }
 
         /// <summary>
-        /// Finds the last item in the trade that has the defindex
-        /// passed to it. It removes the last item, and can determine
-        /// the slot number of the item if you don't give it. REMEMBER:
-        /// the slot number of the item should be the the slot number
-        /// of the last instance of the item in the offered items.
-        /// The limit on determining the slot number is the assumption
-        /// that the items were put in order, i.e. slot 1, slot 2,
-        /// slot 3, ..., slot n.
+        /// Removes an item with the given Defindex from the trade.
         /// </summary>
         /// <returns>
         /// Returns true if it found a corresponding item; false otherwise.
         /// </returns>
-        public bool RemoveItemByDefindex(int defindex, int slot = -1)
+        public bool RemoveItemByDefindex(int defindex)
         {
-            ulong lastItem = 0;
-
-            bool slotGiven = slot == -1 ? true : false;
-
-            if (!slotGiven)
-                slot = 0;
-
-            foreach (ulong item in MyOfferedItems)
+            foreach (ulong id in myOfferedItems.Values)
             {
-                if (defindex == myInventory.GetItem(item).Defindex)
+                Inventory.Item item = myInventory.GetItem (id);
+                if (item.Defindex == defindex)
                 {
-                    lastItem = item;
-                    if (!slotGiven)
-                        slot++;
+                    return RemoveItem (item.Id);
                 }
             }
-
-            if (lastItem != 0)
-            {
-                bool ok = RemoveItemWebCmd(lastItem, slot);
-
-                if (!ok)
-                    throw new TradeException("The web command to remove the item failed.");
-
-                return true;
-            }
-
             return false;
         }
 
@@ -510,12 +449,7 @@ namespace SteamTrade
                     case 0:
                         itemID = (ulong)status.events [EventID].assetid;
 
-                        if (isBot)
-                        {
-                            webCopyOfferedItems.Add(itemID);
-                            MyOfferedItems = webCopyOfferedItems;
-                        }   
-                        else
+                        if (!isBot)
                         {
                             OtherOfferedItems.Add (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -527,12 +461,7 @@ namespace SteamTrade
                     case 1:
                         itemID = (ulong)status.events [EventID].assetid;
 
-                        if (isBot)
-                        {
-                            webCopyOfferedItems.Remove (itemID);
-                            MyOfferedItems = webCopyOfferedItems;
-                        }
-                        else
+                        if (!isBot)
                         {
                             OtherOfferedItems.Remove (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -677,6 +606,24 @@ namespace SteamTrade
                 else
                     throw new TradeException("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.", e);
             }
+        }
+
+        protected int NextTradeSlot ()
+        {
+            int slot = 0;
+            while (myOfferedItems.ContainsKey (slot)) {
+                slot++;
+            }
+            return slot;
+        }
+
+        protected int? GetItemSlot(ulong itemid) {
+            foreach (int slot in myOfferedItems.Keys) {
+                if (myOfferedItems[slot] == itemid) {
+                    return slot;
+                }
+            }
+            return null;
         }
     }
 }
