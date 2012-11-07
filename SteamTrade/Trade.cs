@@ -35,8 +35,6 @@ namespace SteamTrade
         // Tracks the items that the Steam network thinks the bot has offered.
         List<ulong> webCopyOfferedItems;
 
-        Dictionary<UInt32, ulong> itemPositions;
-
         // The inventory of the bot.
         Inventory myInventory;
 
