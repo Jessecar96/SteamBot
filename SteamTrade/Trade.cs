@@ -49,8 +49,6 @@ namespace SteamTrade
         private dynamic othersItems;
         private dynamic myItems;
 
-        //private TradeSession tradeSession;
-
         public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime)
         {
             mySteamId = me;
@@ -190,6 +188,11 @@ namespace SteamTrade
         {
             get { return tradeStarted; }
         }
+
+        /// <summary>
+        /// Gets a value indicating if the remote trading partner cancelled the trade.
+        /// </summary>
+        public bool OtherUserCancelled { get; private set; }
 
         #endregion
                 
@@ -463,9 +466,9 @@ namespace SteamTrade
             if (status.trade_status == 3)
             {
                 if (OnError != null)
-                    OnError ("Trade was cancelled");
+                    OnError ("Trade was cancelled by other user.");
 
-                CancelTrade ();
+                OtherUserCancelled = true;
                 return;
             }
 

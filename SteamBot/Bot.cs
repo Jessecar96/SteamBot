@@ -131,10 +131,18 @@ namespace SteamBot
                         try
                         {
                             CurrentTrade.Poll ();
+
+                            if (CurrentTrade.OtherUserCancelled)
+                            {
+                                log.Info("Other user cancelled the trade.");
+                                CurrentTrade = null;
+                            }
                         }
                         catch (Exception e)
                         {
                             log.Error ("Error Polling Trade: " + e);
+                            // ok then we should stop polling...
+                            CurrentTrade = null;
                         }
                     }
                 }
