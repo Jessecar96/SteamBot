@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Net;
-using System.Web;
 using Newtonsoft.Json;
-using SteamKit2;
 
 namespace SteamTrade
 {
@@ -13,21 +10,21 @@ namespace SteamTrade
     /// </summary>
     public partial class Trade
     {
-        private static string SteamCommunityDomain = "steamcommunity.com";
-        private static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
+        static string SteamCommunityDomain = "steamcommunity.com";
+        static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
-        private string sessionId;
-        private string sessionIdEsc;
-        private string baseTradeURL;
-        private string steamLogin;
-        private CookieContainer cookies;
+        string sessionId;
+        string sessionIdEsc;
+        string baseTradeURL;
+        string steamLogin;
+        CookieContainer cookies;
         
 
         internal int LogPos { get; set; }
 
         internal int Version { get; set; }
 
-        private StatusObj GetStatus ()
+        StatusObj GetStatus ()
         {
             var data = new NameValueCollection ();
 
@@ -44,7 +41,7 @@ namespace SteamTrade
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
-        private bool SendMessageWebCmd (string msg)
+        bool SendMessageWebCmd (string msg)
         {
             var data = new NameValueCollection ();
             data.Add ("sessionid", sessionIdEsc);
@@ -73,7 +70,7 @@ namespace SteamTrade
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        private bool AddItemWebCmd (ulong itemid, int slot)
+        bool AddItemWebCmd (ulong itemid, int slot)
         {
             var data = new NameValueCollection ();
 
@@ -100,7 +97,7 @@ namespace SteamTrade
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        private bool RemoveItemWebCmd (ulong itemid, int slot)
+        bool RemoveItemWebCmd (ulong itemid, int slot)
         {
             var data = new NameValueCollection ();
 
@@ -125,7 +122,7 @@ namespace SteamTrade
         /// <summary>
         /// Sets the bot to a ready status.
         /// </summary>
-        private bool SetReadyWebCmd (bool ready)
+        bool SetReadyWebCmd (bool ready)
         {
             var data = new NameValueCollection ();
             data.Add ("sessionid", sessionIdEsc);
@@ -148,7 +145,7 @@ namespace SteamTrade
         /// Accepts the trade from the user.  Returns a deserialized
         /// JSON object.
         /// </summary>
-        private bool AcceptTradeWebCmd ()
+        bool AcceptTradeWebCmd ()
         {
             var data = new NameValueCollection ();
 
@@ -170,7 +167,7 @@ namespace SteamTrade
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
         /// </summary>
-        private bool CancelTradeWebCmd ()
+        bool CancelTradeWebCmd ()
         {
             var data = new NameValueCollection ();
 
@@ -190,12 +187,12 @@ namespace SteamTrade
 
         #endregion // Trade Web command methods
         
-        private string Fetch (string url, string method, NameValueCollection data = null)
+        string Fetch (string url, string method, NameValueCollection data = null)
         {
             return SteamWeb.Fetch (url, method, data, cookies);
         }
 
-        private void Init()
+        void Init()
         {
             sessionIdEsc = Uri.UnescapeDataString(sessionId);
 

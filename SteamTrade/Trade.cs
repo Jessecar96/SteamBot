@@ -1,9 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Net;
-using System.Web;
-using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
@@ -16,38 +12,40 @@ namespace SteamTrade
         #endregion
 
         // current bot's sid
-        private SteamID mySteamId;
+        SteamID mySteamId;
 
         // If the bot is ready.
-        private bool meIsReady = false;
+        bool meIsReady = false;
 
         // If the other user is ready.
-        private bool otherIsReady = false;
+        bool otherIsReady = false;
 
         // Whether or not the trade actually started.
-        private bool tradeStarted = false;
+        bool tradeStarted = false;
 
         // When the trade started.
-        private DateTime tradeStartTime;
+        DateTime tradeStartTime;
 
         // When the last action taken by the user was.
-        private DateTime lastOtherActionTime;
+        DateTime lastOtherActionTime;
 
-        private int _MaxTradeTime;
-        private int _MaxActionGap;
+        int _MaxTradeTime;
+        int _MaxActionGap;
 
         // Tracks the items that the Steam network thinks the bot has offered.
-        private List<ulong> webCopyOfferedItems;
+        List<ulong> webCopyOfferedItems;
+
+        Dictionary<UInt32, ulong> itemPositions;
 
         // The inventory of the bot.
-        private Inventory myInventory;
+        Inventory myInventory;
 
         // Internal properties needed for Steam API.
-        private string apiKey;
-        private int numEvents;
+        string apiKey;
+        int numEvents;
 
-        private dynamic othersItems;
-        private dynamic myItems;
+        dynamic othersItems;
+        dynamic myItems;
 
         public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime)
         {
