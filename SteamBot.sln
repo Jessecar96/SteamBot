@@ -230,8 +230,12 @@ Global
 		$2.scope = text/x-csharp
 		$0.CSharpFormattingPolicy = $3
 		$3.AnonymousMethodBraceStyle = NextLine
+		$3.PropertyBraceStyle = NextLine
 		$3.PropertyGetBraceStyle = NextLine
 		$3.PropertySetBraceStyle = NextLine
+		$3.EventBraceStyle = NextLine
+		$3.EventAddBraceStyle = NextLine
+		$3.EventRemoveBraceStyle = NextLine
 		$3.StatementBraceStyle = NextLine
 		$3.inheritsSet = Mono
 		$3.inheritsScope = text/x-csharp
