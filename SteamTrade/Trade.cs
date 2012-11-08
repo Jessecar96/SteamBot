@@ -85,7 +85,10 @@ namespace SteamTrade
         /// <summary>
         /// Gets the bot's Steam ID.
         /// </summary>
-        public readonly SteamID MySteamId;
+        public SteamID MySteamId
+        {
+            get { return mySteamId; }
+        };
 
         /// <summary>
         /// Gets or sets The maximum trading time the bot will take.  Will not take any value lower than 15.
