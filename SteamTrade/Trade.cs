@@ -34,6 +34,8 @@ namespace SteamTrade
 
         Dictionary<int, ulong> myOfferedItems;
 
+        List<ulong> steamMyOfferedItems;
+
         // The inventory of the bot.
         Inventory myInventory;
 
@@ -59,6 +61,7 @@ namespace SteamTrade
 
             OtherOfferedItems = new List<ulong>();
             myOfferedItems = new Dictionary<int, ulong> ();
+            steamMyOfferedItems = new List<ulong> ();
 
             Init();
 
@@ -449,7 +452,12 @@ namespace SteamTrade
                     case 0:
                         itemID = (ulong)status.events [EventID].assetid;
 
-                        if (!isBot)
+                        if (isBot)
+                        {
+                            steamMyOfferedItems.Add(itemID);
+                            ValidateLocalTradeItems ();
+                        }
+                        else
                         {
                             OtherOfferedItems.Add (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -461,7 +469,12 @@ namespace SteamTrade
                     case 1:
                         itemID = (ulong)status.events [EventID].assetid;
 
-                        if (!isBot)
+                        if (isBot)
+                        {
+                            steamMyOfferedItems.Remove (itemID);
+                            ValidateLocalTradeItems ();
+                        }
+                        else
                         {
                             OtherOfferedItems.Remove (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -624,6 +637,19 @@ namespace SteamTrade
                 }
             }
             return null;
+        }
+
+        protected void ValidateLocalTradeItems () {
+            if (myOfferedItems.Count != steamMyOfferedItems.Count)
+                goto error;
+            foreach (ulong id in myOfferedItems.Values)
+            {
+                if (!steamMyOfferedItems.Contains (id))
+                    goto error;
+            }
+            return;
+        error:
+                throw new Exception ("Error validating local copy of items in the trade!");
         }
     }
 }
