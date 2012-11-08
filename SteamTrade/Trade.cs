@@ -268,6 +268,7 @@ namespace SteamTrade
         /// <summary>
         /// Adds a specified item by its itemid.
         /// </summary>
+        /// <returns><c>false</c> if the item was not found in the inventory.</returns>
         public bool AddItem(ulong itemid)
         {
             if (myInventory.GetItem(itemid) == null)
@@ -288,8 +289,8 @@ namespace SteamTrade
         /// Adds a single item by its Defindex.
         /// </summary>
         /// <returns>
-        /// true if an item was found with the corresponding
-        /// defindex, false otherwise.
+        /// <c>true</c> if an item was found with the corresponding
+        /// defindex, <c>false</c> otherwise.
         /// </returns>
         public bool AddItemByDefindex(int defindex)
         {
@@ -305,7 +306,7 @@ namespace SteamTrade
         /// <summary>
         /// Removes an item by its itemid.
         /// </summary>
-        /// <returns><c>false</c> if the item has not been added.</returns>
+        /// <returns><c>false</c> the item was not found in the trade.</returns>
         public bool RemoveItem(ulong itemid)
         {
             int? slot = GetItemSlot(itemid);
@@ -326,7 +327,7 @@ namespace SteamTrade
         /// Removes an item with the given Defindex from the trade.
         /// </summary>
         /// <returns>
-        /// Returns true if it found a corresponding item; false otherwise.
+        /// Returns <c>true</c> if it found a corresponding item; <c>false</c> otherwise.
         /// </returns>
         public bool RemoveItemByDefindex(int defindex)
         {
