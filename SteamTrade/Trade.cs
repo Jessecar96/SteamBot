@@ -621,7 +621,7 @@ namespace SteamTrade
             }
         }
 
-        protected int NextTradeSlot ()
+        int NextTradeSlot ()
         {
             int slot = 0;
             while (myOfferedItems.ContainsKey (slot)) 
@@ -631,7 +631,7 @@ namespace SteamTrade
             return slot;
         }
 
-        protected int? GetItemSlot(ulong itemid) {
+        int? GetItemSlot(ulong itemid) {
             foreach (int slot in myOfferedItems.Keys) {
                 if (myOfferedItems[slot] == itemid) {
                     return slot;
@@ -640,7 +640,7 @@ namespace SteamTrade
             return null;
         }
 
-        protected void ValidateLocalTradeItems () {
+        void ValidateLocalTradeItems () {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
                 goto error;
             foreach (ulong id in myOfferedItems.Values)
