@@ -93,7 +93,8 @@ namespace SteamTrade
         /// <value>
         /// The maximum trade time.
         /// </value>
-        public int MaximumTradeTime {
+        public int MaximumTradeTime
+        {
             get
             {
                 return _MaxTradeTime;
@@ -111,7 +112,8 @@ namespace SteamTrade
         /// <value>
         /// The maximum action gap.
         /// </value>
-        public int MaximumActionGap {
+        public int MaximumActionGap
+        {
             get
             {
                 return _MaxActionGap;
@@ -139,28 +141,32 @@ namespace SteamTrade
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
         /// </summary>
-        public bool OtherIsReady {
+        public bool OtherIsReady
+        {
             get { return otherIsReady; }
         }
 
         /// <summary>
         /// Gets a value indicating if the bot is ready to trade.
         /// </summary>
-        public bool MeIsReady {
+        public bool MeIsReady
+        {
             get { return meIsReady; }
         }
 
         /// <summary>
         /// Gets the time the trade started.
         /// </summary>
-        public DateTime TradeStartTime {
+        public DateTime TradeStartTime
+        {
             get { return tradeStartTime; }
         }
 
         /// <summary>
         /// Gets a value indicating if a trade has started.
         /// </summary>
-        public bool TradeStarted {
+        public bool TradeStarted
+        {
             get { return tradeStarted; }
         }
 
