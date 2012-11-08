@@ -624,7 +624,8 @@ namespace SteamTrade
         protected int NextTradeSlot ()
         {
             int slot = 0;
-            while (myOfferedItems.ContainsKey (slot)) {
+            while (myOfferedItems.ContainsKey (slot)) 
+            {
                 slot++;
             }
             return slot;
