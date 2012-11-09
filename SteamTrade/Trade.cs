@@ -316,19 +316,27 @@ namespace SteamTrade
         /// slot in the trade.
         /// </summary>
         /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
+        /// <param name="numToAdd">The upper limit on amount of items to add. <c>0</c> to add all items.</param>
         /// <returns><c>true</c> if successful.</returns>
-        /// <remarks>Sleeps for 250 ms between adding each item.</remarks>
-        public bool AddAllItemsByDefindex (int defindex)
+        /// <remarks>Sleeps for 2 seconds between adding each item.</remarks>
+        public bool AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
         {
             List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
 
-            // TODO: probably need to limit the numer of slots used...
+            uint added = 0;
+
             foreach (Inventory.Item item in items)
             {
                 if (item != null && !myOfferedItems.ContainsValue (item.Id))
                 {
-                    AddItem (item.Id);
+                    bool success = AddItem (item.Id);
+
                     System.Threading.Thread.Sleep (2000);
+
+                    if (success) added++;
+
+                    if (numToAdd > 0 && added >= numToAdd)
+                        return true;
                 }
             }
 
