@@ -312,6 +312,30 @@ namespace SteamTrade
         }
 
         /// <summary>
+        /// Adds an entire set of items by Defindex to each successive
+        /// slot in the trade.
+        /// </summary>
+        /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
+        /// <returns><c>true</c> if successful.</returns>
+        /// <remarks>Sleeps for 250 ms between adding each item.</remarks>
+        public bool AddAllItemsByDefindex (int defindex)
+        {
+            List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
+
+            // TODO: probably need to limit the numer of slots used...
+            foreach (Inventory.Item item in items)
+            {
+                if (item != null && !myOfferedItems.ContainsValue (item.Id))
+                {
+                    AddItem (item.Id);
+                    System.Threading.Thread.Sleep (2000);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
@@ -649,15 +673,20 @@ namespace SteamTrade
         void ValidateLocalTradeItems ()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
-                goto error;
+            {
+                //throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
+                if (OnError != null)
+                    OnError ("Error validating local copy of items in the trade: Count mismatch");
+            }
+
             foreach (ulong id in myOfferedItems.Values)
             {
                 if (!steamMyOfferedItems.Contains (id))
-                    goto error;
+                    //throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
+                    if (OnError != null)
+                        OnError("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
+
             }
-            return;
-            error:
-            throw new Exception ("Error validating local copy of items in the trade!");
         }
     }
 }
