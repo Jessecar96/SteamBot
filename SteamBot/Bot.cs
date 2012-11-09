@@ -276,13 +276,13 @@ namespace SteamBot
             {
                 EChatEntryType type = callback.EntryType;
 
-                log.Info (String.Format ("Chat Message from {0}: {1}",
-                                         SteamFriends.GetFriendPersonaName (callback.Sender),
-                                         callback.Message
-                                         ));
                 if (callback.EntryType == EChatEntryType.ChatMsg ||
                     callback.EntryType == EChatEntryType.Emote)
                 {
+                    log.Info (String.Format ("Chat Message from {0}: {1}",
+                                         SteamFriends.GetFriendPersonaName (callback.Sender),
+                                         callback.Message
+                                         ));
                     GetUserHandler(callback.Sender).OnMessage(callback.Message, type);
                 }
             });
