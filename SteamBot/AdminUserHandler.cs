@@ -8,7 +8,7 @@ namespace SteamBot
     /// A user handler class that implements basic text-based commands entered in
     /// chat or trade chat.
     /// </summary>
-    public class CommandedUserHandler : UserHandler
+    public class AdminUserHandler : UserHandler
     {
         private const string AddCmd = "add";
         private const string AddCratesSubCmd = "crates";
@@ -16,7 +16,7 @@ namespace SteamBot
         private const string AddMetalSubCmd = "metal";
         private const string HelpCmd = "help";
 
-        public CommandedUserHandler(Bot bot, SteamID sid)
+        public AdminUserHandler(Bot bot, SteamID sid)
             : base(bot, sid)
         {
         }
@@ -80,7 +80,7 @@ namespace SteamBot
 
         public override void OnTradeInit()
         {
-            Trade.SendMessage("Success. Tell me what to do, Master. (Type !help for commands.)");
+            Trade.SendMessage("Tell me what to do, Master. (Type " + HelpCmd + " for commands.)");
         }
 
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
@@ -196,8 +196,6 @@ namespace SteamBot
                     AddItemsByCraftType(typeToAdd, amount);
                     break;
             }
-
-            
         }
 
         private void AddItemsByCraftType(string typeToAdd, uint amount)
