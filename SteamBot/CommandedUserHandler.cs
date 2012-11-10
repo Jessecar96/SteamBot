@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using SteamKit2;
 using SteamTrade;
 
@@ -13,13 +10,11 @@ namespace SteamBot
     /// </summary>
     public class CommandedUserHandler : UserHandler
     {
-        private const string AddCratesCmd = "!addcrates";
-        private const string AddWepsCmd = "!addweapons";
-        private const string AddMetalCmd = "!addmetal";
-        private const string AddCraftTypeCmd = "!addcrafttype";
-        private const string HelpCmd = "!help";
-
-        private static List<Schema.Item> weaponsToCraft;
+        private const string AddCmd = "add";
+        private const string AddCratesSubCmd = "crates";
+        private const string AddWepsSubCmd = "weapons";
+        private const string AddMetalSubCmd = "metal";
+        private const string HelpCmd = "help";
 
         public CommandedUserHandler(Bot bot, SteamID sid)
             : base(bot, sid)
@@ -138,60 +133,87 @@ namespace SteamBot
         {
             if (message.Equals(HelpCmd))
             {
-                Trade.SendMessage(AddCratesCmd + " - adds all crates.");
-                Trade.SendMessage(AddMetalCmd + " - adds all metal.");
-                Trade.SendMessage(AddWepsCmd + " - adds all weapons.");
-                Trade.SendMessage(AddCraftTypeCmd + @" <craft_material_type> - adds all items of a given crafing type. See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema");
+                PrintHelpMessage();
+                return;
             }
 
-            if (message.Equals(AddCratesCmd))
-                Trade.AddAllItemsByDefindex(5022);
+            if (message.StartsWith(AddCmd))
+                HandleAddCommand(message);
 
-            if (message.Equals(AddWepsCmd))
+        }
+
+        private void PrintHelpMessage()
+        {
+            Trade.SendMessage(String.Format("{0} {1} - adds all crates", AddCmd, AddCratesSubCmd));
+            Trade.SendMessage(String.Format("{0} {1} - adds all metal", AddCmd, AddMetalSubCmd));
+            Trade.SendMessage(String.Format("{0} {1} - adds all weapons", AddCmd, AddWepsSubCmd));
+            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafing type.", AddCmd));
+            Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd));
+
+            Trade.SendMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
+        }
+
+        private void HandleAddCommand(string command)
+        {
+            var data = command.Split(' ');
+
+            if (data.Length < 2)
             {
-                if (Trade.CurrentSchema != null && weaponsToCraft == null)
-                {
-                    weaponsToCraft = Trade.CurrentSchema.GetItemsByCraftingMaterial("weapon");
-                }
+                Trade.SendMessage("No parameter for cmd: " + AddCmd);
+                return;
+            }
 
-                foreach (var weapon in weaponsToCraft)
+            if (String.IsNullOrEmpty(data[1]))
+            {
+                Trade.SendMessage("No parameter for cmd: " + AddCmd);
+                return;
+            }
+
+            uint amount = 0;
+            if (data.Length > 2)
+            {
+                // get the optional ammount parameter
+                if (!String.IsNullOrEmpty(data[2]))
                 {
-                    Trade.AddAllItemsByDefindex(weapon.Defindex);
+                    uint.TryParse(data[2], out amount);
                 }
             }
 
-            if (message.StartsWith(AddCraftTypeCmd))
-            {
-                var data = message.Split(' ');
+            string typeToAdd = data[1];
 
-                if (data.Length < 2)
-                {
-                    Trade.SendMessage("No parameter for cmd: " + AddCraftTypeCmd);
+            switch (typeToAdd)
+            {
+                case "metal":
+                    AddItemsByCraftType("craft_bar", amount);
+                    break;
+                case "weapons":
+                    AddItemsByCraftType("weapon", amount);
+                    break;
+                case "crates":
+                    AddItemsByCraftType("supply_crate", amount);
+                    break;
+                default:
+                    AddItemsByCraftType(typeToAdd, amount);
+                    break;
+            }
+
+            
+        }
+
+        private void AddItemsByCraftType(string typeToAdd, uint amount)
+        {
+            var items = Trade.CurrentSchema.GetItemsByCraftingMaterial(typeToAdd);
+
+            uint added = 0;
+
+            foreach (var item in items)
+            {
+                added += Trade.AddAllItemsByDefindex(item.Defindex, amount);
+
+                // if bulk adding something that has a lot of unique
+                // defindex (weapons) we may over add so limit here also
+                if (amount > 0 && added >= amount)
                     return;
-                }
-
-                if (String.IsNullOrEmpty(data[1]))
-                {
-                    Trade.SendMessage("No parameter for cmd: " + AddCraftTypeCmd);
-                    return;
-                }
-
-                if (Trade.CurrentSchema != null)
-                {
-                    var items = Trade.CurrentSchema.GetItemsByCraftingMaterial(data[1]);
-
-                    foreach (var item in items)
-                    {
-                        Trade.AddAllItemsByDefindex(item.Defindex);
-                    }
-                }
-            }
-
-            if (message.Equals(AddMetalCmd))
-            {
-                Trade.AddAllItemsByDefindex(5000);
-                Trade.AddAllItemsByDefindex(5001);
-                Trade.AddAllItemsByDefindex(5002);
             }
         }
     }

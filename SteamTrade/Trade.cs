@@ -317,9 +317,8 @@ namespace SteamTrade
         /// </summary>
         /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
         /// <param name="numToAdd">The upper limit on amount of items to add. <c>0</c> to add all items.</param>
-        /// <returns><c>true</c> if successful.</returns>
-        /// <remarks>Sleeps for 2 seconds between adding each item.</remarks>
-        public bool AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
+        /// <returns>Number of items added.</returns>
+        public uint AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
         {
             List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
 
@@ -331,16 +330,14 @@ namespace SteamTrade
                 {
                     bool success = AddItem (item.Id);
 
-                    System.Threading.Thread.Sleep (2000);
-
                     if (success) added++;
 
                     if (numToAdd > 0 && added >= numToAdd)
-                        return true;
+                        return added;
                 }
             }
 
-            return true;
+            return added;
         }
 
         /// <summary>
@@ -400,6 +397,9 @@ namespace SteamTrade
         /// </summary>
         public bool SetReady (bool ready)
         {
+            // testing
+            ValidateLocalTradeItems();
+
             bool ok = SetReadyWebCmd (ready);
 
             if (!ok)
@@ -414,6 +414,8 @@ namespace SteamTrade
         /// </summary>
         public bool AcceptTrade ()
         {
+            ValidateLocalTradeItems();
+
             bool ok = AcceptTradeWebCmd ();
 
             if (!ok)
@@ -495,7 +497,7 @@ namespace SteamTrade
                         if (isBot)
                         {
                             steamMyOfferedItems.Add (itemID);
-                            ValidateLocalTradeItems ();
+                            ValidateSteamItemChanged (itemID, true);
                         } else
                         {
                             OtherOfferedItems.Add (itemID);
@@ -511,7 +513,7 @@ namespace SteamTrade
                         if (isBot)
                         {
                             steamMyOfferedItems.Remove (itemID);
-                            ValidateLocalTradeItems ();
+                            ValidateSteamItemChanged (itemID, false);
                         } else
                         {
                             OtherOfferedItems.Remove (itemID);
@@ -557,8 +559,8 @@ namespace SteamTrade
                     if (!isBot)
                         lastOtherActionTime = DateTime.Now;
                 }
-
-            } else
+            } 
+            else
             {
                 // check if the user is AFK
                 var now = DateTime.Now;
@@ -678,22 +680,31 @@ namespace SteamTrade
             return null;
         }
 
-        void ValidateLocalTradeItems ()
+        void ValidateSteamItemChanged (ulong itemid, bool wasAdded)
+        {
+            // checks to make sure that the Trade polling saw
+            // the correct change for the given item.
+
+            // check if the correct item was added
+            if (wasAdded && !myOfferedItems.ContainsValue (itemid))
+                throw new TradeException ("Steam Trade had an invalid item added: " + itemid);
+
+            // check if the correct item was removed
+            if (!wasAdded && myOfferedItems.ContainsValue (itemid))
+                throw new TradeException("Steam Trade had an invalid item removed: " + itemid);
+        }
+
+        void ValidateLocalTradeItems()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
-                //throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
-                if (OnError != null)
-                    OnError ("Error validating local copy of items in the trade: Count mismatch");
+                throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
             }
 
             foreach (ulong id in myOfferedItems.Values)
             {
-                if (!steamMyOfferedItems.Contains (id))
-                    //throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
-                    if (OnError != null)
-                        OnError("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
-
+                if (!steamMyOfferedItems.Contains(id))
+                    throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
         }
     }

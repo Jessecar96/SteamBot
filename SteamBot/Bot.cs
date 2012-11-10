@@ -132,7 +132,8 @@ namespace SteamBot
                         {
                             CurrentTrade.Poll ();
 
-                            if (CurrentTrade.OtherUserCancelled)
+                            if (CurrentTrade != null && 
+                                CurrentTrade.OtherUserCancelled)
                             {
                                 log.Info("Other user cancelled the trade.");
                                 CurrentTrade = null;
