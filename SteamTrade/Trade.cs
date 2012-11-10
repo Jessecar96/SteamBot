@@ -463,7 +463,6 @@ namespace SteamTrade
                         if (isBot)
                         {
                             steamMyOfferedItems.Add (itemID);
-                            ValidateLocalTradeItems ();
                         } else
                         {
                             OtherOfferedItems.Add (itemID);
@@ -479,7 +478,6 @@ namespace SteamTrade
                         if (isBot)
                         {
                             steamMyOfferedItems.Remove (itemID);
-                            ValidateLocalTradeItems ();
                         } else
                         {
                             OtherOfferedItems.Remove (itemID);
@@ -525,6 +523,8 @@ namespace SteamTrade
                     if (!isBot)
                         lastOtherActionTime = DateTime.Now;
                 }
+
+                ValidateLocalTradeItems ();
 
             } else
             {
