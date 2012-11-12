@@ -221,6 +221,12 @@ namespace SteamBot
                     log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
                     AuthCode = Console.ReadLine();
                 }
+
+                if (callback.Result == EResult.InvalidLoginAuthCode)
+                {
+                    log.Interface("An Invalid Authorization Code was provided.  Enter the authentication code sent to the proper email: ");
+                    AuthCode = Console.ReadLine();
+                }
             });
 
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
