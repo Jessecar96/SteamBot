@@ -139,7 +139,6 @@ namespace SteamBot
 
             if (message.StartsWith(AddCmd))
                 HandleAddCommand(message);
-
         }
 
         private void PrintHelpMessage()
@@ -156,30 +155,22 @@ namespace SteamBot
         private void HandleAddCommand(string command)
         {
             var data = command.Split(' ');
+            string typeToAdd;
 
-            if (data.Length < 2)
+            bool subCmdOk = GetSubCommand (data, out typeToAdd);
+
+            if (!subCmdOk)
+                return;
+
+            uint amount = GetAddAmount (data);
+
+            // if user supplies the defindex directly use it to add.
+            int defindex;
+            if (int.TryParse(typeToAdd, out defindex))
             {
-                Trade.SendMessage("No parameter for cmd: " + AddCmd);
+                Trade.AddAllItemsByDefindex(defindex, amount);
                 return;
             }
-
-            if (String.IsNullOrEmpty(data[1]))
-            {
-                Trade.SendMessage("No parameter for cmd: " + AddCmd);
-                return;
-            }
-
-            uint amount = 0;
-            if (data.Length > 2)
-            {
-                // get the optional ammount parameter
-                if (!String.IsNullOrEmpty(data[2]))
-                {
-                    uint.TryParse(data[2], out amount);
-                }
-            }
-
-            string typeToAdd = data[1];
 
             switch (typeToAdd)
             {
@@ -213,6 +204,43 @@ namespace SteamBot
                 if (amount > 0 && added >= amount)
                     return;
             }
+        }
+
+        bool GetSubCommand (string[] data, out string subCommand)
+        {
+            if (data.Length < 2)
+            {
+                Trade.SendMessage ("No parameter for cmd: " + AddCmd);
+                subCommand = null;
+                return false;
+            }
+
+            if (String.IsNullOrEmpty (data [1]))
+            {
+                Trade.SendMessage ("No parameter for cmd: " + AddCmd);
+                subCommand = null;
+                return false;
+            }
+
+            subCommand = data [1];
+
+            return true;
+        }
+
+        static uint GetAddAmount (string[] data)
+        {
+            uint amount = 0;
+
+            if (data.Length > 2)
+            {
+                // get the optional ammount parameter
+                if (!String.IsNullOrEmpty (data [2]))
+                {
+                    uint.TryParse (data [2], out amount);
+                }
+            }
+
+            return amount;
         }
     }
 }
