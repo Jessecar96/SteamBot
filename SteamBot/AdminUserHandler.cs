@@ -11,9 +11,11 @@ namespace SteamBot
     public class AdminUserHandler : UserHandler
     {
         private const string AddCmd = "add";
+        private const string RemoveCmd = "remove";
         private const string AddCratesSubCmd = "crates";
         private const string AddWepsSubCmd = "weapons";
         private const string AddMetalSubCmd = "metal";
+        private const string AllSubCmd = "all";
         private const string HelpCmd = "help";
 
         public AdminUserHandler(Bot bot, SteamID sid)
@@ -80,7 +82,7 @@ namespace SteamBot
 
         public override void OnTradeInit()
         {
-            Trade.SendMessage("Tell me what to do, Master. (Type " + HelpCmd + " for commands.)");
+            Trade.SendMessage("Success. (Type " + HelpCmd + " for commands.)");
         }
 
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
@@ -139,6 +141,8 @@ namespace SteamBot
 
             if (message.StartsWith(AddCmd))
                 HandleAddCommand(message);
+            else if (message.StartsWith(RemoveCmd))
+                HandleRemoveCommand(message);
         }
 
         private void PrintHelpMessage()
@@ -174,13 +178,13 @@ namespace SteamBot
 
             switch (typeToAdd)
             {
-                case "metal":
+                case AddMetalSubCmd:
                     AddItemsByCraftType("craft_bar", amount);
                     break;
-                case "weapons":
+                case AddWepsSubCmd:
                     AddItemsByCraftType("weapon", amount);
                     break;
-                case "crates":
+                case AddCratesSubCmd:
                     AddItemsByCraftType("supply_crate", amount);
                     break;
                 default:
@@ -188,6 +192,21 @@ namespace SteamBot
                     break;
             }
         }
+
+
+
+        private void HandleRemoveCommand(string command)
+        {
+            var data = command.Split(' ');
+
+            string subCommand;
+
+            bool subCmdOk = GetSubCommand(data, out subCommand);
+
+            if (!subCmdOk)
+                return;
+        }
+
 
         private void AddItemsByCraftType(string typeToAdd, uint amount)
         {

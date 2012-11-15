@@ -380,6 +380,34 @@ namespace SteamTrade
         }
 
         /// <summary>
+        /// Removes an entire set of items by Defindex.
+        /// </summary>
+        /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
+        /// <param name="numToRemove">The upper limit on amount of items to remove. <c>0</c> to remove all items.</param>
+        /// <returns>Number of items removed.</returns>
+        public uint RemoveAllItemsByDefindex (int defindex, uint numToRemove = 0)
+        {
+            List<Inventory.Item> items = myInventory.GetItemsByDefindex(defindex);
+
+            uint removed = 0;
+
+            foreach (Inventory.Item item in items)
+            {
+                if (item != null && !myOfferedItems.ContainsValue(item.Id))
+                {
+                    bool success = RemoveItem (item.Id);
+
+                    if (success) removed++;
+
+                    if (numToRemove > 0 && removed >= numToRemove)
+                        return removed;
+                }
+            }
+
+            return removed;
+        }
+
+        /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
         public bool SendMessage (string msg)
