@@ -312,6 +312,35 @@ namespace SteamTrade
         }
 
         /// <summary>
+        /// Adds an entire set of items by Defindex to each successive
+        /// slot in the trade.
+        /// </summary>
+        /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
+        /// <param name="numToAdd">The upper limit on amount of items to add. <c>0</c> to add all items.</param>
+        /// <returns>Number of items added.</returns>
+        public uint AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
+        {
+            List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
+
+            uint added = 0;
+
+            foreach (Inventory.Item item in items)
+            {
+                if (item != null && !myOfferedItems.ContainsValue (item.Id))
+                {
+                    bool success = AddItem (item.Id);
+
+                    if (success) added++;
+
+                    if (numToAdd > 0 && added >= numToAdd)
+                        return added;
+                }
+            }
+
+            return added;
+        }
+
+        /// <summary>
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
@@ -351,6 +380,34 @@ namespace SteamTrade
         }
 
         /// <summary>
+        /// Removes an entire set of items by Defindex.
+        /// </summary>
+        /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
+        /// <param name="numToRemove">The upper limit on amount of items to remove. <c>0</c> to remove all items.</param>
+        /// <returns>Number of items removed.</returns>
+        public uint RemoveAllItemsByDefindex (int defindex, uint numToRemove = 0)
+        {
+            List<Inventory.Item> items = myInventory.GetItemsByDefindex(defindex);
+
+            uint removed = 0;
+
+            foreach (Inventory.Item item in items)
+            {
+                if (item != null && !myOfferedItems.ContainsValue(item.Id))
+                {
+                    bool success = RemoveItem (item.Id);
+
+                    if (success) removed++;
+
+                    if (numToRemove > 0 && removed >= numToRemove)
+                        return removed;
+                }
+            }
+
+            return removed;
+        }
+
+        /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
         public bool SendMessage (string msg)
@@ -368,6 +425,9 @@ namespace SteamTrade
         /// </summary>
         public bool SetReady (bool ready)
         {
+            // testing
+            ValidateLocalTradeItems();
+
             bool ok = SetReadyWebCmd (ready);
 
             if (!ok)
@@ -382,6 +442,8 @@ namespace SteamTrade
         /// </summary>
         public bool AcceptTrade ()
         {
+            ValidateLocalTradeItems();
+
             bool ok = AcceptTradeWebCmd ();
 
             if (!ok)
@@ -463,7 +525,7 @@ namespace SteamTrade
                         if (isBot)
                         {
                             steamMyOfferedItems.Add (itemID);
-                            ValidateLocalTradeItems ();
+                            ValidateSteamItemChanged (itemID, true);
                         } else
                         {
                             OtherOfferedItems.Add (itemID);
@@ -479,7 +541,7 @@ namespace SteamTrade
                         if (isBot)
                         {
                             steamMyOfferedItems.Remove (itemID);
-                            ValidateLocalTradeItems ();
+                            ValidateSteamItemChanged (itemID, false);
                         } else
                         {
                             OtherOfferedItems.Remove (itemID);
@@ -525,8 +587,8 @@ namespace SteamTrade
                     if (!isBot)
                         lastOtherActionTime = DateTime.Now;
                 }
-
-            } else
+            } 
+            else
             {
                 // check if the user is AFK
                 var now = DateTime.Now;
@@ -646,18 +708,32 @@ namespace SteamTrade
             return null;
         }
 
-        void ValidateLocalTradeItems ()
+        void ValidateSteamItemChanged (ulong itemid, bool wasAdded)
+        {
+            // checks to make sure that the Trade polling saw
+            // the correct change for the given item.
+
+            // check if the correct item was added
+            if (wasAdded && !myOfferedItems.ContainsValue (itemid))
+                throw new TradeException ("Steam Trade had an invalid item added: " + itemid);
+
+            // check if the correct item was removed
+            if (!wasAdded && myOfferedItems.ContainsValue (itemid))
+                throw new TradeException("Steam Trade had an invalid item removed: " + itemid);
+        }
+
+        void ValidateLocalTradeItems()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
-                goto error;
+            {
+                throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
+            }
+
             foreach (ulong id in myOfferedItems.Values)
             {
-                if (!steamMyOfferedItems.Contains (id))
-                    goto error;
+                if (!steamMyOfferedItems.Contains(id))
+                    throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
-            return;
-            error:
-            throw new Exception ("Error validating local copy of items in the trade!");
         }
     }
 }

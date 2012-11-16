@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace SteamTrade
@@ -39,6 +41,16 @@ namespace SteamTrade
                     return item;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Returns all Items of the given crafting material.
+        /// </summary>
+        /// <param name="material">Item's craft_material_type JSON property.</param>
+        /// <seealso cref="Item"/>
+        public List<Item> GetItemsByCraftingMaterial(string material)
+        {
+            return Items.Where(item => item.CraftMaterialType == material).ToList();
         }
 
         public class ItemOrigin
