@@ -131,7 +131,15 @@ namespace SteamTrade
         /// Gets the inventory of the other user. 
         /// </summary>
         public Inventory OtherInventory { get; private set; }
-        
+
+        /// <summary> 
+        /// Gets the inventory of the bot.
+        /// </summary>
+        public Inventory MyInventory
+        {
+            get { return myInventory; }
+        }
+
         /// <summary>
         /// Gets the items the user has offered, by itemid.
         /// </summary>
