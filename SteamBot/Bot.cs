@@ -2,9 +2,11 @@ using System;
 using System.Web;
 using System.Net;
 using System.Text;
+using System.IO;
 using System.Threading;
-using SteamKit2;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using SteamKit2;
 using SteamTrade;
 
 namespace SteamBot
@@ -76,6 +78,8 @@ namespace SteamBot
         string sessionId;
         string token;
 
+        CallbackManager callbacks;
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
             Username     = config.Username;
@@ -109,6 +113,13 @@ namespace SteamBot
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
+
+            // we have to register the callback for UpdateMachineAuthCallback
+            // as a job callback and have to use the CallbackManager instead
+            // of HandleSteamMsg function.
+            callbacks = new CallbackManager (SteamClient);
+            callbacks.Register(new JobCallback<SteamUser.UpdateMachineAuthCallback> (OnUpdateMachineAuthCallback));
+
             log.Info ("Connecting...");
             SteamClient.Connect();
 
@@ -117,6 +128,7 @@ namespace SteamBot
                 while (true)
                 {
                     CallbackMsg msg = SteamClient.WaitForCallback (true);
+
                     HandleSteamMessage (msg);
                 }
             });
@@ -193,11 +205,21 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK)
                 {
+                    // get sentry file
+                    FileInfo fi = new FileInfo(String.Format ("{0}.sentryfile", Username));
+                    byte[] sentryHash;
+
+                    if (fi.Exists && fi.Length > 0)
+                        sentryHash = SHAHash(File.ReadAllBytes (fi.FullName));
+                    else 
+                        sentryHash = null;
+
                     SteamUser.LogOn (new SteamUser.LogOnDetails
                          {
                         Username = Username,
                         Password = Password,
-                        AuthCode = AuthCode
+                        AuthCode = AuthCode, 
+                        SentryFileHash = sentryHash
                     });
                 }
                 else
@@ -361,5 +383,44 @@ namespace SteamBot
             }
             return userHandlers [sid.ConvertToUInt64 ()];
         }
+
+        private static byte [] SHAHash (byte[] input)
+        {
+            SHA1Managed sha = new SHA1Managed();
+            
+            byte[] output = sha.ComputeHash( input );
+            
+            sha.Clear();
+            
+            return output;
+        }
+
+        void OnUpdateMachineAuthCallback (SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
+        {
+            byte[] hash = SHAHash (machineAuth.Data);
+            
+            File.WriteAllBytes (String.Format ("{0}.sentryFile", Username), machineAuth.Data);
+            
+            var authResponse = new SteamUser.MachineAuthDetails
+            {
+                BytesWritten = machineAuth.BytesToWrite,
+                FileName = machineAuth.FileName,
+                FileSize = machineAuth.BytesToWrite,
+                Offset = machineAuth.Offset,
+                
+                SentryFileHash = hash, // should be the sha1 hash of the sentry file we just wrote
+                
+                OneTimePassword = machineAuth.OneTimePassword, // not sure on this one yet, since we've had no examples of steam using OTPs
+                
+                LastError = 0, // result from win32 GetLastError
+                Result = EResult.OK, // if everything went okay, otherwise ~who knows~
+                
+                JobID = jobId, // so we respond to the correct server job
+            };
+            
+            // send off our response
+            SteamUser.SendMachineAuthResponse (authResponse);
+        }
+
     }
 }
