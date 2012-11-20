@@ -237,6 +237,9 @@ Global
 		$3.EventAddBraceStyle = NextLine
 		$3.EventRemoveBraceStyle = NextLine
 		$3.StatementBraceStyle = NextLine
+		$3.ElseNewLinePlacement = NewLine
+		$3.CatchNewLinePlacement = NewLine
+		$3.FinallyNewLinePlacement = NewLine
 		$3.inheritsSet = Mono
 		$3.inheritsScope = text/x-csharp
 		$3.scope = text/x-csharp
