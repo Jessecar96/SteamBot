@@ -54,15 +54,6 @@ namespace SteamBot
         // trade actions.
         public int MaximiumActionGap { get; private set; }
 
-        // The bot's username (for the steam account).
-        //string Username;
-
-        // The bot's password (for the steam account).
-        //string Password;
-
-        // The SteamGuard authcode, if needed.
-        //string AuthCode;
-
         // The Steam Web API key.
         string apiKey;
 
@@ -116,9 +107,6 @@ namespace SteamBot
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
-
-
-
             log.Info ("Connecting...");
             SteamClient.Connect();
 
@@ -129,8 +117,6 @@ namespace SteamBot
                     CallbackMsg msg = SteamClient.WaitForCallback (true);
 
                     HandleSteamMessage (msg);
-
-                    //callbacks.RunWaitCallbacks(TimeSpan.FromMilliseconds(50));
                 }
             });
 
@@ -188,7 +174,8 @@ namespace SteamBot
         /// <summary>
         /// Closes the current active trade.
         /// </summary>
-        public void CloseTrade() {
+        public void CloseTrade() 
+        {
             if (CurrentTrade == null)
                 return;
             GetUserHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
@@ -369,7 +356,7 @@ namespace SteamBot
             #endregion
         }
 
-        private void UserLogOn()
+        void UserLogOn()
         {
             // get sentry file which has the machine hw info saved 
             // from when a steam guard code was entered
@@ -383,7 +370,7 @@ namespace SteamBot
             SteamUser.LogOn(logOnDetails);
         }
 
-        private UserHandler GetUserHandler (SteamID sid)
+        UserHandler GetUserHandler (SteamID sid)
         {
             if (!userHandlers.ContainsKey (sid))
             {
@@ -392,7 +379,7 @@ namespace SteamBot
             return userHandlers [sid.ConvertToUInt64 ()];
         }
 
-        private static byte [] SHAHash (byte[] input)
+        static byte [] SHAHash (byte[] input)
         {
             SHA1Managed sha = new SHA1Managed();
             
