@@ -66,6 +66,9 @@ Send a chat message to the specified user (by steam id).
 #### `Bot.SteamFriends.AddFriend(SteamID steamId)` ####
 Add a friend by steam id.
 
+#### `Bot.SteamFriends.RemoveFriend(SteamID steamId)` ####
+Remove a friend by steam id.
+
 ### `OnTrade*` Callbacks ###
 #### `Trade` ####
 The master class referring back to the current trade.
