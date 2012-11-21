@@ -2,9 +2,11 @@ using System;
 using System.Web;
 using System.Net;
 using System.Text;
+using System.IO;
 using System.Threading;
-using SteamKit2;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using SteamKit2;
 using SteamTrade;
 
 namespace SteamBot
@@ -52,15 +54,6 @@ namespace SteamBot
         // trade actions.
         public int MaximiumActionGap { get; private set; }
 
-        // The bot's username (for the steam account).
-        string Username;
-
-        // The bot's password (for the steam account).
-        string Password;
-
-        // The SteamGuard authcode, if needed.
-        string AuthCode;
-
         // The Steam Web API key.
         string apiKey;
 
@@ -76,10 +69,16 @@ namespace SteamBot
         string sessionId;
         string token;
 
+        SteamUser.LogOnDetails logOnDetails;
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
-            Username     = config.Username;
-            Password     = config.Password;
+            logOnDetails = new SteamUser.LogOnDetails
+            {
+                Username = config.Username,
+                Password = config.Password
+            };
+
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
             MaximumTradeTime = config.MaximumTradeTime;
@@ -88,7 +87,6 @@ namespace SteamBot
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
-            AuthCode     = null;
             try
             {
                 LogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
@@ -117,6 +115,7 @@ namespace SteamBot
                 while (true)
                 {
                     CallbackMsg msg = SteamClient.WaitForCallback (true);
+
                     HandleSteamMessage (msg);
                 }
             });
@@ -175,7 +174,8 @@ namespace SteamBot
         /// <summary>
         /// Closes the current active trade.
         /// </summary>
-        public void CloseTrade() {
+        public void CloseTrade() 
+        {
             if (CurrentTrade == null)
                 return;
             GetUserHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
@@ -193,12 +193,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK)
                 {
-                    SteamUser.LogOn (new SteamUser.LogOnDetails
-                         {
-                        Username = Username,
-                        Password = Password,
-                        AuthCode = AuthCode
-                    });
+                    UserLogOn();
                 }
                 else
                 {
@@ -220,13 +215,13 @@ namespace SteamBot
                 if (callback.Result == EResult.AccountLogonDenied)
                 {
                     log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
-                    AuthCode = Console.ReadLine();
+                    logOnDetails.AuthCode = Console.ReadLine();
                 }
 
                 if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
                     log.Interface("An Invalid Authorization Code was provided.  Enter the authentication code sent to the proper email: ");
-                    AuthCode = Console.ReadLine();
+                    logOnDetails.AuthCode = Console.ReadLine();
                 }
             });
 
@@ -261,6 +256,14 @@ namespace SteamBot
 
                 IsLoggedIn = true;
             });
+
+            // handle a special JobCallback differently than the others
+            if (msg.IsType<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>())
+            {
+                msg.Handle<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>(
+                    jobCallback => OnUpdateMachineAuthCallback(jobCallback.Callback, jobCallback.JobID)
+                );
+            }
             #endregion
 
             #region Friends
@@ -353,13 +356,65 @@ namespace SteamBot
             #endregion
         }
 
-        private UserHandler GetUserHandler (SteamID sid)
+        void UserLogOn()
+        {
+            // get sentry file which has the machine hw info saved 
+            // from when a steam guard code was entered
+            FileInfo fi = new FileInfo(String.Format("{0}.sentryfile", logOnDetails.Username));
+
+            if (fi.Exists && fi.Length > 0)
+                logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
+            else
+                logOnDetails.SentryFileHash = null;
+
+            SteamUser.LogOn(logOnDetails);
+        }
+
+        UserHandler GetUserHandler (SteamID sid)
         {
             if (!userHandlers.ContainsKey (sid))
             {
                 userHandlers [sid.ConvertToUInt64 ()] = CreateHandler (this, sid);
             }
             return userHandlers [sid.ConvertToUInt64 ()];
+        }
+
+        static byte [] SHAHash (byte[] input)
+        {
+            SHA1Managed sha = new SHA1Managed();
+            
+            byte[] output = sha.ComputeHash( input );
+            
+            sha.Clear();
+            
+            return output;
+        }
+
+        void OnUpdateMachineAuthCallback (SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
+        {
+            byte[] hash = SHAHash (machineAuth.Data);
+
+            File.WriteAllBytes (String.Format ("{0}.sentryFile", logOnDetails.Username), machineAuth.Data);
+            
+            var authResponse = new SteamUser.MachineAuthDetails
+            {
+                BytesWritten = machineAuth.BytesToWrite,
+                FileName = machineAuth.FileName,
+                FileSize = machineAuth.BytesToWrite,
+                Offset = machineAuth.Offset,
+                
+                SentryFileHash = hash, // should be the sha1 hash of the sentry file we just wrote
+                
+                OneTimePassword = machineAuth.OneTimePassword, // not sure on this one yet, since we've had no examples of steam using OTPs
+                
+                LastError = 0, // result from win32 GetLastError
+                Result = EResult.OK, // if everything went okay, otherwise ~who knows~
+                
+                JobID = jobId, // so we respond to the correct server job
+            };
+            
+            // send off our response
+            SteamUser.SendMachineAuthResponse (authResponse);
         }
     }
 }
