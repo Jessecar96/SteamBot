@@ -55,13 +55,13 @@ namespace SteamBot
         public int MaximiumActionGap { get; private set; }
 
         // The bot's username (for the steam account).
-        string Username;
+        //string Username;
 
         // The bot's password (for the steam account).
-        string Password;
+        //string Password;
 
         // The SteamGuard authcode, if needed.
-        string AuthCode;
+        //string AuthCode;
 
         // The Steam Web API key.
         string apiKey;
@@ -78,12 +78,16 @@ namespace SteamBot
         string sessionId;
         string token;
 
-        CallbackManager callbacks;
+        SteamUser.LogOnDetails logOnDetails;
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
-            Username     = config.Username;
-            Password     = config.Password;
+            logOnDetails = new SteamUser.LogOnDetails
+            {
+                Username = config.Username,
+                Password = config.Password
+            };
+
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
             MaximumTradeTime = config.MaximumTradeTime;
@@ -92,7 +96,6 @@ namespace SteamBot
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
-            AuthCode     = null;
             try
             {
                 LogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
@@ -114,11 +117,7 @@ namespace SteamBot
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
 
-            // we have to register the callback for UpdateMachineAuthCallback
-            // as a job callback and have to use the CallbackManager instead
-            // of HandleSteamMsg function.
-            callbacks = new CallbackManager (SteamClient);
-            callbacks.Register(new JobCallback<SteamUser.UpdateMachineAuthCallback> (OnUpdateMachineAuthCallback));
+
 
             log.Info ("Connecting...");
             SteamClient.Connect();
@@ -130,6 +129,8 @@ namespace SteamBot
                     CallbackMsg msg = SteamClient.WaitForCallback (true);
 
                     HandleSteamMessage (msg);
+
+                    //callbacks.RunWaitCallbacks(TimeSpan.FromMilliseconds(50));
                 }
             });
 
@@ -205,22 +206,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK)
                 {
-                    // get sentry file
-                    FileInfo fi = new FileInfo(String.Format ("{0}.sentryfile", Username));
-                    byte[] sentryHash;
-
-                    if (fi.Exists && fi.Length > 0)
-                        sentryHash = SHAHash(File.ReadAllBytes (fi.FullName));
-                    else 
-                        sentryHash = null;
-
-                    SteamUser.LogOn (new SteamUser.LogOnDetails
-                         {
-                        Username = Username,
-                        Password = Password,
-                        AuthCode = AuthCode, 
-                        SentryFileHash = sentryHash
-                    });
+                    UserLogOn();
                 }
                 else
                 {
@@ -242,13 +228,13 @@ namespace SteamBot
                 if (callback.Result == EResult.AccountLogonDenied)
                 {
                     log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
-                    AuthCode = Console.ReadLine();
+                    logOnDetails.AuthCode = Console.ReadLine();
                 }
 
                 if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
                     log.Interface("An Invalid Authorization Code was provided.  Enter the authentication code sent to the proper email: ");
-                    AuthCode = Console.ReadLine();
+                    logOnDetails.AuthCode = Console.ReadLine();
                 }
             });
 
@@ -283,6 +269,14 @@ namespace SteamBot
 
                 IsLoggedIn = true;
             });
+
+            // handle a special JobCallback differently than the others
+            if (msg.IsType<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>())
+            {
+                msg.Handle<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>(
+                    jobCallback => OnUpdateMachineAuthCallback(jobCallback.Callback, jobCallback.JobID)
+                );
+            }
             #endregion
 
             #region Friends
@@ -375,6 +369,20 @@ namespace SteamBot
             #endregion
         }
 
+        private void UserLogOn()
+        {
+            // get sentry file which has the machine hw info saved 
+            // from when a steam guard code was entered
+            FileInfo fi = new FileInfo(String.Format("{0}.sentryfile", logOnDetails.Username));
+
+            if (fi.Exists && fi.Length > 0)
+                logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
+            else
+                logOnDetails.SentryFileHash = null;
+
+            SteamUser.LogOn(logOnDetails);
+        }
+
         private UserHandler GetUserHandler (SteamID sid)
         {
             if (!userHandlers.ContainsKey (sid))
@@ -398,8 +406,8 @@ namespace SteamBot
         void OnUpdateMachineAuthCallback (SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
         {
             byte[] hash = SHAHash (machineAuth.Data);
-            
-            File.WriteAllBytes (String.Format ("{0}.sentryFile", Username), machineAuth.Data);
+
+            File.WriteAllBytes (String.Format ("{0}.sentryFile", logOnDetails.Username), machineAuth.Data);
             
             var authResponse = new SteamUser.MachineAuthDetails
             {
@@ -421,6 +429,5 @@ namespace SteamBot
             // send off our response
             SteamUser.SendMachineAuthResponse (authResponse);
         }
-
     }
 }
