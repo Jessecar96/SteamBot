@@ -185,7 +185,7 @@ namespace SteamTrade
             return true;
         }
 
-        #endregion // Trade Web command methods
+        #endregion Trade Web command methods
         
         string Fetch (string url, string method, NameValueCollection data = null)
         {

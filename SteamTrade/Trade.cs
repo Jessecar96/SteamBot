@@ -23,58 +23,29 @@ namespace SteamTrade
         // Whether or not the trade actually started.
         bool tradeStarted = false;
 
-        // When the trade started.
-        DateTime tradeStartTime;
-
-        // When the last action taken by the user was.
-        DateTime lastOtherActionTime;
-        int _MaxTradeTime;
-        int _MaxActionGap;
         Dictionary<int, ulong> myOfferedItems;
         List<ulong> steamMyOfferedItems;
-
-        // The inventory of the bot.
-        Inventory myInventory;
 
         // Internal properties needed for Steam API.
         string apiKey;
         int numEvents;
-        dynamic othersItems;
-        dynamic myItems;
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime)
+        internal Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Inventory myInventory, Inventory otherInventory)
         {
             mySteamId = me;
             OtherSID = other;
             this.sessionId = sessionId;
             this.steamLogin = token;
             this.apiKey = apiKey;
-            
-            // Moved here because when Poll is called below, these are
-            // set to zero, which closes the trade immediately.
-            MaximumTradeTime = maxTradeTime;
-            MaximumActionGap = maxGapTime;
 
             OtherOfferedItems = new List<ulong> ();
             myOfferedItems = new Dictionary<int, ulong> ();
             steamMyOfferedItems = new List<ulong> ();
 
+            OtherInventory = otherInventory;
+            MyInventory = myInventory;
+
             Init ();
-
-            // try to poll for the first time
-            try
-            {
-                Poll ();
-            } catch (Exception e)
-            {
-                if (OnError != null)
-                    OnError ("There was a problem connecting to Steam Trading.");
-                else 
-                    throw new TradeException ("Unhandled exception when Polling the trade.", e);
-            }
-
-            FetchInventories ();
-            sessionIdEsc = Uri.UnescapeDataString (this.sessionId);
         }
 
         #region Public Properties
@@ -90,43 +61,6 @@ namespace SteamTrade
             get { return mySteamId; }
         }
 
-        /// <summary>
-        /// Gets or sets The maximum trading time the bot will take.  Will not take any value lower than 15.
-        /// </summary>
-        /// <value>
-        /// The maximum trade time.
-        /// </value>
-        public int MaximumTradeTime
-        {
-            get
-            {
-                return _MaxTradeTime;
-            }
-            set
-            {
-                _MaxTradeTime = value <= 15 ? 15 : value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets The maxmium amount of time the bot will wait between actions. 
-        /// Will not take any value lower than 15.
-        /// </summary>
-        /// <value>
-        /// The maximum action gap.
-        /// </value>
-        public int MaximumActionGap
-        {
-            get
-            {
-                return _MaxActionGap;
-            }
-            set
-            {
-                _MaxActionGap = value <= 15 ? 15 : value;
-            }
-        }
-
         /// <summary> 
         /// Gets the inventory of the other user. 
         /// </summary>
@@ -135,10 +69,7 @@ namespace SteamTrade
         /// <summary> 
         /// Gets the inventory of the bot.
         /// </summary>
-        public Inventory MyInventory
-        {
-            get { return myInventory; }
-        }
+        public Inventory MyInventory { get; private set; }
 
         /// <summary>
         /// Gets the items the user has offered, by itemid.
@@ -147,7 +78,6 @@ namespace SteamTrade
         /// The other offered items.
         /// </value>
         public List<ulong> OtherOfferedItems { get; private set; }
-
 
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
@@ -163,14 +93,6 @@ namespace SteamTrade
         public bool MeIsReady
         {
             get { return meIsReady; }
-        }
-
-        /// <summary>
-        /// Gets the time the trade started.
-        /// </summary>
-        public DateTime TradeStartTime
-        {
-            get { return tradeStartTime; }
         }
 
         /// <summary>
@@ -220,13 +142,6 @@ namespace SteamTrade
         /// not loading.
         /// </summary>
         public event ErrorHandler OnError;
-
-        /// <summary>
-        /// This is for a timeout (either the user didn't complete an
-        /// action in a set amount of time, or they took too long with
-        /// the whole trade).
-        /// </summary>
-        public event TimeoutHandler OnTimeout;
 
         /// <summary>
         /// This occurs after Inventories have been loaded.
@@ -285,7 +200,7 @@ namespace SteamTrade
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
         public bool AddItem (ulong itemid)
         {
-            if (myInventory.GetItem (itemid) == null)
+            if (MyInventory.GetItem (itemid) == null)
                 return false;
 
             var slot = NextTradeSlot ();
@@ -308,7 +223,7 @@ namespace SteamTrade
         /// </returns>
         public bool AddItemByDefindex (int defindex)
         {
-            List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
             foreach (Inventory.Item item in items)
             {
                 if (!myOfferedItems.ContainsValue (item.Id))
@@ -328,7 +243,7 @@ namespace SteamTrade
         /// <returns>Number of items added.</returns>
         public uint AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
         {
-            List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
 
             uint added = 0;
 
@@ -338,7 +253,8 @@ namespace SteamTrade
                 {
                     bool success = AddItem (item.Id);
 
-                    if (success) added++;
+                    if (success)
+                        added++;
 
                     if (numToAdd > 0 && added >= numToAdd)
                         return added;
@@ -378,7 +294,7 @@ namespace SteamTrade
         {
             foreach (ulong id in myOfferedItems.Values)
             {
-                Inventory.Item item = myInventory.GetItem (id);
+                Inventory.Item item = MyInventory.GetItem (id);
                 if (item.Defindex == defindex)
                 {
                     return RemoveItem (item.Id);
@@ -395,17 +311,18 @@ namespace SteamTrade
         /// <returns>Number of items removed.</returns>
         public uint RemoveAllItemsByDefindex (int defindex, uint numToRemove = 0)
         {
-            List<Inventory.Item> items = myInventory.GetItemsByDefindex(defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
 
             uint removed = 0;
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !myOfferedItems.ContainsValue(item.Id))
+                if (item != null && !myOfferedItems.ContainsValue (item.Id))
                 {
                     bool success = RemoveItem (item.Id);
 
-                    if (success) removed++;
+                    if (success)
+                        removed++;
 
                     if (numToRemove > 0 && removed >= numToRemove)
                         return removed;
@@ -434,7 +351,7 @@ namespace SteamTrade
         public bool SetReady (bool ready)
         {
             // testing
-            ValidateLocalTradeItems();
+            ValidateLocalTradeItems ();
 
             bool ok = SetReadyWebCmd (ready);
 
@@ -450,7 +367,7 @@ namespace SteamTrade
         /// </summary>
         public bool AcceptTrade ()
         {
-            ValidateLocalTradeItems();
+            ValidateLocalTradeItems ();
 
             bool ok = AcceptTradeWebCmd ();
 
@@ -465,13 +382,19 @@ namespace SteamTrade
         /// default of 800ms, not including the execution time of the
         /// method itself.
         /// </summary>
-        public void Poll ()
+        /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
+        public bool Poll ()
         {
+            bool otherDidSomething = false;
+
             if (!TradeStarted)
             {
                 tradeStarted = true;
-                tradeStartTime = DateTime.Now;
-                lastOtherActionTime = DateTime.Now;
+
+                // since there's is no feed back to let us know that the trade
+                // is fully initialized we assume that it is when we start polling.
+                if (OnAfterInit != null)
+                    OnAfterInit ();
             }
 
             StatusObj status = GetStatus ();
@@ -486,7 +409,7 @@ namespace SteamTrade
                     OnError ("Trade was cancelled by other user.");
 
                 OtherUserCancelled = true;
-                return;
+                return otherDidSomething;
             }
 
             if (status.events != null && numEvents != status.events.Length)
@@ -502,7 +425,8 @@ namespace SteamTrade
                     if (numLoops == 1)
                     {
                         EventID = numEvents - 1;
-                    } else
+                    }
+                    else
                     {
                         EventID = numEvents - i;
                     }
@@ -534,7 +458,8 @@ namespace SteamTrade
                         {
                             steamMyOfferedItems.Add (itemID);
                             ValidateSteamItemChanged (itemID, true);
-                        } else
+                        }
+                        else
                         {
                             OtherOfferedItems.Add (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -550,7 +475,8 @@ namespace SteamTrade
                         {
                             steamMyOfferedItems.Remove (itemID);
                             ValidateSteamItemChanged (itemID, false);
-                        } else
+                        }
+                        else
                         {
                             OtherOfferedItems.Remove (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -593,30 +519,7 @@ namespace SteamTrade
                     }
 
                     if (!isBot)
-                        lastOtherActionTime = DateTime.Now;
-                }
-            } 
-            else
-            {
-                // check if the user is AFK
-                var now = DateTime.Now;
-
-                DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaximumActionGap);
-                int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
-
-                DateTime tradeTimeout = TradeStartTime.AddSeconds (MaximumTradeTime);
-                int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
-
-                if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
-                {
-                    if (OnTimeout != null)
-                    {
-                        OnTimeout ();
-                    }
-                    CancelTrade ();
-                } else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
-                {
-                    SendMessageWebCmd ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                        otherDidSomething = true;
                 }
             }
 
@@ -637,61 +540,8 @@ namespace SteamTrade
             {
                 LogPos = status.logpos;
             }
-        }
 
-        /// <summary>
-        /// Grabs the inventories of both users over both Trading and
-        /// SteamAPI.
-        /// </summary>
-        protected void FetchInventories ()
-        {
-            try
-            {
-                // [cmw] OtherItems and MyItems don't appear to be used... the should be removed.
-                // fetch the other player's inventory
-                othersItems = Inventory.GetInventory (OtherSID);
-                if (othersItems == null || othersItems.success != "true")
-                {
-                    throw new Exception ("Could not fetch other player's inventory via Trading!");
-                }
-
-                // fetch our inventory
-                myItems = Inventory.GetInventory (MySteamId);
-                if (myItems == null || myItems.success != "true")
-                {
-                    throw new Exception ("Could not fetch own inventory via Trading!");
-                }
-
-                // fetch other player's inventory from the Steam API.
-                OtherInventory = Inventory.FetchInventory (OtherSID.ConvertToUInt64 (), apiKey);
-                if (OtherInventory == null)
-                {
-                    throw new Exception ("Could not fetch other player's inventory via Steam API!");
-                }
-
-                // fetch our inventory from the Steam API.
-                myInventory = Inventory.FetchInventory (MySteamId.ConvertToUInt64 (), apiKey);
-                if (myInventory == null)
-                {
-                    throw new Exception ("Could not fetch own inventory via Steam API!");
-                }
-
-                // check that the schema was already successfully fetched
-                if (CurrentSchema == null)
-                {
-                    throw new Exception ("It seems the item schema was not fetched correctly!");
-                }
-
-                if (OnAfterInit != null)
-                    OnAfterInit ();
-
-            } catch (Exception e)
-            {
-                if (OnError != null)
-                    OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                else
-                    throw new TradeException ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.", e);
-            }
+            return otherDidSomething;
         }
 
         int NextTradeSlot ()
@@ -727,19 +577,19 @@ namespace SteamTrade
 
             // check if the correct item was removed
             if (!wasAdded && myOfferedItems.ContainsValue (itemid))
-                throw new TradeException("Steam Trade had an invalid item removed: " + itemid);
+                throw new TradeException ("Steam Trade had an invalid item removed: " + itemid);
         }
 
-        void ValidateLocalTradeItems()
+        void ValidateLocalTradeItems ()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
-                throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
+                throw new TradeException ("Error validating local copy of items in the trade: Count mismatch");
             }
 
             foreach (ulong id in myOfferedItems.Values)
             {
-                if (!steamMyOfferedItems.Contains(id))
+                if (!steamMyOfferedItems.Contains (id))
                     throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
         }
