@@ -16,12 +16,20 @@ namespace SteamBot
         {
             get { return Bot.Admins.Contains (OtherSID); }
         }
-        protected Trade Trade;
+        //protected Trade Trade;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
+        }
+
+        public Trade Trade 
+        {
+            get 
+            {
+                return Bot.CurrentTrade; 
+            }
         }
 
         /// <summary>
@@ -49,39 +57,6 @@ namespace SteamBot
         public abstract bool OnTradeRequest();
 
         #region Trade events
-        /// <summary>
-        /// Subscribes all listeners of this to the trade.
-        /// </summary>
-        public void SubscribeTrade (Trade trade)
-        {
-            trade.OnClose += OnTradeClose;
-            trade.OnError += OnTradeError;
-            trade.OnTimeout += OnTradeTimeout;
-            trade.OnAfterInit += OnTradeInit;
-            trade.OnUserAddItem += OnTradeAddItem;
-            trade.OnUserRemoveItem += OnTradeRemoveItem;
-            trade.OnMessage += OnTradeMessage;
-            trade.OnUserSetReady += OnTradeReady;
-            trade.OnUserAccept += OnTradeAccept;
-            Trade = trade;
-        }
-
-        /// <summary>
-        /// Unsubscribes all listeners of this from the current trade.
-        /// </summary>
-        public void UnsubscribeTrade ()
-        {
-            Trade.OnClose -= OnTradeClose;
-            Trade.OnError -= OnTradeError;
-            Trade.OnTimeout -= OnTradeTimeout;
-            Trade.OnAfterInit -= OnTradeInit;
-            Trade.OnUserAddItem -= OnTradeAddItem;
-            Trade.OnUserRemoveItem -= OnTradeRemoveItem;
-            Trade.OnMessage -= OnTradeMessage;
-            Trade.OnUserSetReady -= OnTradeReady;
-            Trade.OnUserAccept -= OnTradeAccept;
-            Trade = null;
-        }
 
         public abstract void OnTradeError (string error);
 
