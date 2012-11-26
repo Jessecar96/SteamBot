@@ -120,33 +120,33 @@ namespace SteamBot
                 }
             });
 
-            new Thread(() => // Trade Polling if needed
-            {
-                while (true)
-                {
-                    Thread.Sleep (TradePollingInterval);
-                    if (CurrentTrade != null)
-                    {
-                        try
-                        {
-                            CurrentTrade.Poll ();
-
-                            if (CurrentTrade != null && 
-                                CurrentTrade.OtherUserCancelled)
-                            {
-                                log.Info("Other user cancelled the trade.");
-                                CurrentTrade = null;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            log.Error ("Error Polling Trade: " + e);
-                            // ok then we should stop polling...
-                            CurrentTrade = null;
-                        }
-                    }
-                }
-            }).Start ();
+//            new Thread(() => // Trade Polling if needed
+//            {
+//                while (true)
+//                {
+//                    Thread.Sleep (TradePollingInterval);
+//                    if (CurrentTrade != null)
+//                    {
+//                        try
+//                        {
+//                            CurrentTrade.Poll ();
+//
+//                            if (CurrentTrade != null && 
+//                                CurrentTrade.OtherUserCancelled)
+//                            {
+//                                log.Info("Other user cancelled the trade.");
+//                                CurrentTrade = null;
+//                            }
+//                        }
+//                        catch (Exception e)
+//                        {
+//                            log.Error ("Error Polling Trade: " + e);
+//                            // ok then we should stop polling...
+//                            CurrentTrade = null;
+//                        }
+//                    }
+//                }
+//            }).Start ();
 
             CallbackThread.Start();
             log.Success ("Done Loading Bot!");

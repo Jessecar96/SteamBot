@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using SteamKit2;
 
 namespace SteamTrade
@@ -7,6 +8,7 @@ namespace SteamTrade
     {
         const int MaxGapTimeDefault = 30;
         const int MaxTradeTimeDefault = 180;
+        const int TradePollingIntervalDefault = 800;
 
         string apiKey;
         string sessionId;
@@ -23,7 +25,7 @@ namespace SteamTrade
             if (token == null)
                 throw new ArgumentNullException ("token");
 
-            SetTradeTimeLimits(MaxTradeTimeDefault, MaxGapTimeDefault);
+            SetTradeTimeLimits(MaxTradeTimeDefault, MaxGapTimeDefault, TradePollingIntervalDefault);
 
             this.apiKey = apiKey;
             this.sessionId = sessionId;
@@ -44,6 +46,7 @@ namespace SteamTrade
             private set;
         }
 
+
         #endregion Public Properties
 
         /// <summary>
@@ -55,15 +58,19 @@ namespace SteamTrade
         /// <param name='maxActionGap'>
         /// Max gap between user action in seconds.
         /// </param>
-        public void SetTradeTimeLimits(int maxTradeTime, int maxActionGap)
+        /// <param name='pollingInterval'>The trade polling interval in milliseconds.</param>
+        public void SetTradeTimeLimits(int maxTradeTime, int maxActionGap, int pollingInterval)
         {
             MaxTradeTimeSec = maxTradeTime;
             MaxActionGapSec = maxActionGap;
+            Trade.TradePollingInterval = pollingInterval;
         }
 
         public Trade StartTrade (SteamID  me, SteamID other)
         {
             var t = new Trade (me, other, sessionId, token, apiKey, MaxTradeTimeSec, MaxActionGapSec);
+
+            t.StartTrade ();
 
             return t;
         }

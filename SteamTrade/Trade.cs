@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
@@ -61,17 +62,6 @@ namespace SteamTrade
 
             Init ();
 
-            // try to poll for the first time
-            try
-            {
-                Poll ();
-            } catch (Exception e)
-            {
-                if (OnError != null)
-                    OnError ("There was a problem connecting to Steam Trading.");
-                else 
-                    throw new TradeException ("Unhandled exception when Polling the trade.", e);
-            }
 
             FetchInventories ();
             sessionIdEsc = Uri.UnescapeDataString (this.sessionId);
@@ -262,6 +252,26 @@ namespace SteamTrade
         public event UserAcceptHandler OnUserAccept;
         
         #endregion
+
+        public bool StartTrade ()
+        {
+            // try to poll for the first time
+            try
+            {
+                Poll ();
+            } 
+            catch (Exception e)
+            {
+                if (OnError != null)
+                    OnError ("There was a problem connecting to Steam Trading.");
+                else 
+                    throw new TradeException ("Unhandled exception when Polling the trade.", e);
+            }
+
+            StartTradeThread();
+
+            return IsTradeThreadRunning;
+        }
 
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
