@@ -42,6 +42,7 @@
     <Compile Include="Inventory.cs" />
     <Compile Include="SteamWeb.cs" />
     <Compile Include="TradeSession.cs" />
+    <Compile Include="TradeManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
