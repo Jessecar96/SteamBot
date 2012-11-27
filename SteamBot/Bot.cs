@@ -71,6 +71,8 @@ namespace SteamBot
 
         SteamUser.LogOnDetails logOnDetails;
 
+        TradeManager tradeManager;
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
             logOnDetails = new SteamUser.LogOnDetails
@@ -120,34 +122,6 @@ namespace SteamBot
                 }
             });
 
-//            new Thread(() => // Trade Polling if needed
-//            {
-//                while (true)
-//                {
-//                    Thread.Sleep (TradePollingInterval);
-//                    if (CurrentTrade != null)
-//                    {
-//                        try
-//                        {
-//                            CurrentTrade.Poll ();
-//
-//                            if (CurrentTrade != null && 
-//                                CurrentTrade.OtherUserCancelled)
-//                            {
-//                                log.Info("Other user cancelled the trade.");
-//                                CurrentTrade = null;
-//                            }
-//                        }
-//                        catch (Exception e)
-//                        {
-//                            log.Error ("Error Polling Trade: " + e);
-//                            // ok then we should stop polling...
-//                            CurrentTrade = null;
-//                        }
-//                    }
-//                }
-//            }).Start ();
-
             CallbackThread.Start();
             log.Success ("Done Loading Bot!");
             CallbackThread.Join();
@@ -164,7 +138,31 @@ namespace SteamBot
         {
             if (CurrentTrade != null)
                 return false;
-            CurrentTrade = new Trade (SteamUser.SteamID, other, sessionId, token, apiKey, MaximumTradeTime, MaximiumActionGap);
+            try
+            {
+                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other);
+            }
+            catch (SteamTrade.Exceptions.InventoryFetchException ie)
+            {
+                // we shouldn't get here because the inv checks are also
+                // done in the TradeProposedCallback handler.
+                string response = String.Empty;
+
+                if (ie.FailingSteamId.ConvertToUInt64() == other.ConvertToUInt64())
+                {
+                    response = @"Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessable or your backpack is private.";
+                }
+                else 
+                    response = @"Trade failed. Could not correctly fetch my backpack.";
+
+                SteamFriends.SendChatMessage(other, 
+                                             EChatEntryType.ChatMsg,
+                                             response);
+
+                CurrentTrade = null;
+                return false;
+            }
+
             CurrentTrade.OnTimeout += CloseTrade;
             GetUserHandler (other).SubscribeTrade (CurrentTrade);
             GetUserHandler (other).OnTradeInit ();
@@ -233,6 +231,9 @@ namespace SteamBot
                     if (authd)
                     {
                         log.Success ("User Authenticated!");
+
+                        tradeManager = new TradeManager(apiKey, sessionId, token);
+                        tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
                         break;
                     }
                     else
@@ -242,12 +243,12 @@ namespace SteamBot
                     }
                 }
 
-                log.Info ("Downloading Schema...");
-
                 if (Trade.CurrentSchema == null)
+                {
+                    log.Info ("Downloading Schema...");
                     Trade.CurrentSchema = Schema.FetchSchema (apiKey);
-
-                log.Success ("Schema Downloaded!");
+                    log.Success ("Schema Downloaded!");
+                }
 
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.Online);
@@ -307,6 +308,30 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
             {
+                try
+                {
+                    tradeManager.FetchInventories(SteamUser.SteamID, callback.OtherClient);
+                }
+                catch 
+                {
+                    SteamFriends.SendChatMessage(callback.OtherClient, 
+                                                 EChatEntryType.ChatMsg,
+                                                 @"Trade declined. Could not correctly fetch your backpack.");
+                    
+                    SteamTrade.RespondToTrade (callback.TradeID, false);
+                    return;
+                }
+
+                if (tradeManager.OtherInventory.IsPrivate)
+                {
+                    SteamFriends.SendChatMessage(callback.OtherClient, 
+                                                 EChatEntryType.ChatMsg,
+                                                 @"Trade declined. Your backpack cannot be private.");
+
+                    SteamTrade.RespondToTrade (callback.TradeID, false);
+                    return;
+                }
+
                 if (CurrentTrade == null && GetUserHandler (callback.OtherClient).OnTradeRequest ())
                     SteamTrade.RespondToTrade (callback.TradeID, true);
                 else

@@ -19,32 +19,34 @@ namespace SteamTrade
 
         internal void StartTradeThread ()
         {
-            IsTradeThreadRunning = true;
-
-            new Thread (() => // Trade Polling if needed
+            new Thread (() =>
             {
+                IsTradeThreadRunning = true;
+
+                // main thread loop for polling
                 while (IsTradeThreadRunning)
                 {
                     Thread.Sleep (TradePollingInterval);
 
+                    try
                     {
-                        try
-                        {
-                            Poll ();
+                        Poll ();
                             
-                            if (OtherUserCancelled)
-                            {
-                                IsTradeThreadRunning = false;
-                            }
-                        }
-                        catch (Exception e)
+                        if (OtherUserCancelled)
                         {
-                            if (OnError != null)
-                                OnError("Error Polling Trade: " + e);
-
-                            // ok then we should stop polling...
                             IsTradeThreadRunning = false;
+
+                            if (OnClose != null)
+                                OnClose ();
                         }
+                    }
+                    catch (Exception e)
+                    {
+                        if (OnError != null)
+                            OnError ("Error Polling Trade: " + e);
+
+                        // ok then we should stop polling...
+                        IsTradeThreadRunning = false;
                     }
                 }
             }).Start ();

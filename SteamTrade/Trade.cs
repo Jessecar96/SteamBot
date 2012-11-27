@@ -10,6 +10,8 @@ namespace SteamTrade
     {
         #region Static Public data
         public static Schema CurrentSchema = null;
+        static int _MaxTradeTime = 15;
+        static int _MaxActionGap = 15;
         #endregion
 
         // current bot's sid
@@ -29,42 +31,35 @@ namespace SteamTrade
 
         // When the last action taken by the user was.
         DateTime lastOtherActionTime;
-        int _MaxTradeTime;
-        int _MaxActionGap;
+
         Dictionary<int, ulong> myOfferedItems;
         List<ulong> steamMyOfferedItems;
 
         // The inventory of the bot.
-        Inventory myInventory;
+        //Inventory myInventory;
 
         // Internal properties needed for Steam API.
         string apiKey;
         int numEvents;
-        dynamic othersItems;
-        dynamic myItems;
+        //dynamic othersItems;
+        //dynamic myItems;
 
-        public Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, int maxTradeTime, int maxGapTime)
+        internal Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Inventory myInventory, Inventory otherInventory)
         {
             mySteamId = me;
             OtherSID = other;
             this.sessionId = sessionId;
             this.steamLogin = token;
             this.apiKey = apiKey;
-            
-            // Moved here because when Poll is called below, these are
-            // set to zero, which closes the trade immediately.
-            MaximumTradeTime = maxTradeTime;
-            MaximumActionGap = maxGapTime;
 
             OtherOfferedItems = new List<ulong> ();
             myOfferedItems = new Dictionary<int, ulong> ();
             steamMyOfferedItems = new List<ulong> ();
 
+            OtherInventory = otherInventory;
+            MyInventory = myInventory;
+
             Init ();
-
-
-            FetchInventories ();
-            sessionIdEsc = Uri.UnescapeDataString (this.sessionId);
         }
 
         #region Public Properties
@@ -86,7 +81,7 @@ namespace SteamTrade
         /// <value>
         /// The maximum trade time.
         /// </value>
-        public int MaximumTradeTime
+        public static int MaximumTradeTime
         {
             get
             {
@@ -105,7 +100,7 @@ namespace SteamTrade
         /// <value>
         /// The maximum action gap.
         /// </value>
-        public int MaximumActionGap
+        public static int MaximumActionGap
         {
             get
             {
@@ -125,10 +120,7 @@ namespace SteamTrade
         /// <summary> 
         /// Gets the inventory of the bot.
         /// </summary>
-        public Inventory MyInventory
-        {
-            get { return myInventory; }
-        }
+        public Inventory MyInventory { get; private set; }
 
         /// <summary>
         /// Gets the items the user has offered, by itemid.
@@ -137,7 +129,6 @@ namespace SteamTrade
         /// The other offered items.
         /// </value>
         public List<ulong> OtherOfferedItems { get; private set; }
-
 
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
@@ -295,7 +286,7 @@ namespace SteamTrade
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
         public bool AddItem (ulong itemid)
         {
-            if (myInventory.GetItem (itemid) == null)
+            if (MyInventory.GetItem (itemid) == null)
                 return false;
 
             var slot = NextTradeSlot ();
@@ -318,7 +309,7 @@ namespace SteamTrade
         /// </returns>
         public bool AddItemByDefindex (int defindex)
         {
-            List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
             foreach (Inventory.Item item in items)
             {
                 if (!myOfferedItems.ContainsValue (item.Id))
@@ -338,7 +329,7 @@ namespace SteamTrade
         /// <returns>Number of items added.</returns>
         public uint AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
         {
-            List<Inventory.Item> items = myInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
 
             uint added = 0;
 
@@ -388,7 +379,7 @@ namespace SteamTrade
         {
             foreach (ulong id in myOfferedItems.Values)
             {
-                Inventory.Item item = myInventory.GetItem (id);
+                Inventory.Item item = MyInventory.GetItem (id);
                 if (item.Defindex == defindex)
                 {
                     return RemoveItem (item.Id);
@@ -405,7 +396,7 @@ namespace SteamTrade
         /// <returns>Number of items removed.</returns>
         public uint RemoveAllItemsByDefindex (int defindex, uint numToRemove = 0)
         {
-            List<Inventory.Item> items = myInventory.GetItemsByDefindex(defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
 
             uint removed = 0;
 
@@ -482,6 +473,11 @@ namespace SteamTrade
                 tradeStarted = true;
                 tradeStartTime = DateTime.Now;
                 lastOtherActionTime = DateTime.Now;
+
+                // since there's is no feed back to let us know that the trade
+                // is fully initialized we assume that it is when we start polling.
+                if (OnAfterInit != null)
+                    OnAfterInit ();
             }
 
             StatusObj status = GetStatus ();
@@ -617,14 +613,17 @@ namespace SteamTrade
                 DateTime tradeTimeout = TradeStartTime.AddSeconds (MaximumTradeTime);
                 int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
 
+
                 if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
                 {
                     if (OnTimeout != null)
                     {
                         OnTimeout ();
                     }
+
                     CancelTrade ();
-                } else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
+                } 
+                else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
                 {
                     SendMessageWebCmd ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
                 }
@@ -646,61 +645,6 @@ namespace SteamTrade
             if (status.logpos != 0)
             {
                 LogPos = status.logpos;
-            }
-        }
-
-        /// <summary>
-        /// Grabs the inventories of both users over both Trading and
-        /// SteamAPI.
-        /// </summary>
-        protected void FetchInventories ()
-        {
-            try
-            {
-                // [cmw] OtherItems and MyItems don't appear to be used... the should be removed.
-                // fetch the other player's inventory
-                othersItems = Inventory.GetInventory (OtherSID);
-                if (othersItems == null || othersItems.success != "true")
-                {
-                    throw new Exception ("Could not fetch other player's inventory via Trading!");
-                }
-
-                // fetch our inventory
-                myItems = Inventory.GetInventory (MySteamId);
-                if (myItems == null || myItems.success != "true")
-                {
-                    throw new Exception ("Could not fetch own inventory via Trading!");
-                }
-
-                // fetch other player's inventory from the Steam API.
-                OtherInventory = Inventory.FetchInventory (OtherSID.ConvertToUInt64 (), apiKey);
-                if (OtherInventory == null)
-                {
-                    throw new Exception ("Could not fetch other player's inventory via Steam API!");
-                }
-
-                // fetch our inventory from the Steam API.
-                myInventory = Inventory.FetchInventory (MySteamId.ConvertToUInt64 (), apiKey);
-                if (myInventory == null)
-                {
-                    throw new Exception ("Could not fetch own inventory via Steam API!");
-                }
-
-                // check that the schema was already successfully fetched
-                if (CurrentSchema == null)
-                {
-                    throw new Exception ("It seems the item schema was not fetched correctly!");
-                }
-
-                if (OnAfterInit != null)
-                    OnAfterInit ();
-
-            } catch (Exception e)
-            {
-                if (OnError != null)
-                    OnError ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.");
-                else
-                    throw new TradeException ("I'm having a problem getting one of our backpacks. The Steam Community might be down. Ensure your backpack isn't private.", e);
             }
         }
 

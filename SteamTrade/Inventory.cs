@@ -46,11 +46,15 @@ namespace SteamTrade
 
         public uint NumSlots { get; set; }
         public Item[] Items { get; set; }
+        public bool IsPrivate { get; private set; }
+        public bool IsGood { get; private set; }
 
         protected Inventory (InventoryResult apiInventory)
         {
             NumSlots = apiInventory.num_backpack_slots;
             Items = apiInventory.items;
+            IsPrivate = (apiInventory.status == "15");
+            IsGood = (apiInventory.status == "1");
         }
 
         public Item GetItem (ulong id)
