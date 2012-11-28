@@ -88,10 +88,13 @@ namespace SteamTrade
         /// <param name='other'>
         /// The <see cref="SteamID"/> of the other trade partner.
         /// </param>
+        /// <remarks>
+        /// If the needed inventories are <c>null</c> then they will be fetched.
+        /// </remarks>
         public Trade StartTrade (SteamID  me, SteamID other)
         {
             if (OtherInventory == null || MyInventory == null)
-                FetchInventories(me, other);
+                InitializeTrade(me, other);
 
             var t = new Trade (me, other, sessionId, token, apiKey, MyInventory, OtherInventory);
 
@@ -100,7 +103,20 @@ namespace SteamTrade
             return t;
         }
 
-        public void FetchInventories (SteamID me, SteamID other)
+        /// <summary>
+        /// Fetchs the inventories of both the bot and the other user as well as the TF2 item schema.
+        /// </summary>
+        /// <param name='me'>
+        /// The <see cref="SteamID"/> of the bot.
+        /// </param>
+        /// <param name='other'>
+        /// The <see cref="SteamID"/> of the other trade partner.
+        /// </param>
+        /// <remarks>
+        /// This should be done anytime a new user is traded with or the inventories are out of date. It should
+        /// be done sometime before calling <see cref="StartTrade"/>.
+        /// </remarks>
+        public void InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
             OtherInventory = Inventory.FetchInventory (other.ConvertToUInt64 (), apiKey);

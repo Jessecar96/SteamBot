@@ -310,7 +310,7 @@ namespace SteamBot
             {
                 try
                 {
-                    tradeManager.FetchInventories(SteamUser.SteamID, callback.OtherClient);
+                    tradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
                 }
                 catch 
                 {
