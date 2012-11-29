@@ -14,6 +14,18 @@ namespace SteamTrade
         string sessionId;
         string token;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
+        /// </summary>
+        /// <param name='apiKey'>
+        /// The Steam Web API key. Cannot be null.
+        /// </param>
+        /// <param name='sessionId'>
+        /// Session identifier. Cannot be null.
+        /// </param>
+        /// <param name='token'>
+        /// Session token. Cannot be null.
+        /// </param>
         public TradeManager (string apiKey, string sessionId, string token)
         {
             if (apiKey == null)
@@ -34,23 +46,39 @@ namespace SteamTrade
 
         #region Public Properties
 
+        /// <summary>
+        /// Gets the max trade time in seconds.
+        /// </summary>
         public int MaxTradeTimeSec
         {
-            get; 
-            private set;
+            get; private set;
         }
 
+        /// <summary>
+        /// Gets the max action gap time in seconds.
+        /// </summary>
         public int MaxActionGapSec
         {
-            get;
-            private set;
+            get; private set;
         }
 
+        /// <summary>
+        /// Gets the inventory of the bot.
+        /// </summary>
+        /// <value>
+        /// The bot's inventory fetched via Steam Web API.
+        /// </value>
         public Inventory MyInventory
         {
             get; private set;
         }
 
+        /// <summary>
+        /// Gets the inventory of the other trade partner.
+        /// </summary>
+        /// <value>
+        /// The other trade partner's inventory fetched via Steam Web API.
+        /// </value>
         public Inventory OtherInventory
         {
             get; private set;
