@@ -7,12 +7,14 @@ namespace SteamTrade
 {
     public class TradeManager
     {
-        const int MaxGapTimeDefault = 30;
+        const int MaxGapTimeDefault = 15;
         const int MaxTradeTimeDefault = 180;
         const int TradePollingIntervalDefault = 800;
         string apiKey;
         string sessionId;
         string token;
+        DateTime tradeStartTime;
+        DateTime lastOtherActionTime;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -47,20 +49,38 @@ namespace SteamTrade
         #region Public Properties
 
         /// <summary>
-        /// Gets the max trade time in seconds.
+        /// Gets or the maximum trading time the bot will take in seconds.
         /// </summary>
+        /// <value>
+        /// The maximum trade time.
+        /// </value>
         public int MaxTradeTimeSec
         {
-            get; private set;
+            get;
+            private set;
         }
 
         /// <summary>
-        /// Gets the max action gap time in seconds.
+        /// Gets or the maxmium amount of time the bot will wait between actions. 
         /// </summary>
+        /// <value>
+        /// The maximum action gap.
+        /// </value>
         public int MaxActionGapSec
         {
-            get; private set;
+            get;
+            private set;
         }
+        
+        /// <summary>
+        /// Gets the Trade polling interval in milliseconds.
+        /// </summary>
+        public int TradePollingInterval
+        {
+            get;
+            private set;
+        }
+
 
         /// <summary>
         /// Gets the inventory of the bot.
@@ -70,7 +90,8 @@ namespace SteamTrade
         /// </value>
         public Inventory MyInventory
         {
-            get; private set;
+            get;
+            private set;
         }
 
         /// <summary>
@@ -81,10 +102,34 @@ namespace SteamTrade
         /// </value>
         public Inventory OtherInventory
         {
-            get; private set;
+            get;
+            private set;
+        }
+
+        public bool IsTradeThreadRunning
+        {
+            get;
+            internal set;
         }
 
         #endregion Public Properties
+
+        #region Public Events
+
+        /// <summary>
+        /// Occurs when the trade times out because either the user didn't complete an
+        /// action in a set amount of time, or they took too long with the whole trade.
+        /// </summary>
+        public EventHandler OnTimeout;
+
+        /// <summary>
+        /// Occurs When the trade ends either by timeout, error, cancellation, or acceptance.
+        /// </summary>
+        public EventHandler OnTradeEnded;
+
+        #endregion Public Events
+
+        #region Public Methods
 
         /// <summary>
         /// Sets the trade time limits.
@@ -98,9 +143,9 @@ namespace SteamTrade
         /// <param name='pollingInterval'>The trade polling interval in milliseconds.</param>
         public void SetTradeTimeLimits (int maxTradeTime, int maxActionGap, int pollingInterval)
         {
-            Trade.MaximumTradeTime = maxTradeTime;
-            Trade.MaximumActionGap = maxActionGap;
-            Trade.TradePollingInterval = pollingInterval;
+            MaxTradeTimeSec = maxTradeTime;
+            MaxActionGapSec = maxActionGap;
+            TradePollingInterval = pollingInterval;
         }
 
         /// <summary>
@@ -122,11 +167,25 @@ namespace SteamTrade
         public Trade StartTrade (SteamID  me, SteamID other)
         {
             if (OtherInventory == null || MyInventory == null)
-                InitializeTrade(me, other);
+                InitializeTrade (me, other);
 
             var t = new Trade (me, other, sessionId, token, apiKey, MyInventory, OtherInventory);
 
-            t.StartTrade ();
+            t.OnClose += delegate
+            {
+                IsTradeThreadRunning = false;
+
+                if (OnTradeEnded != null)
+                    OnTradeEnded (this, null);
+            };
+
+            t.OnUserAccept += delegate
+            {
+                if (OnTradeEnded != null)
+                    OnTradeEnded (this, null);
+            };
+
+            StartTradeThread (t);
 
             return t;
         }
@@ -168,6 +227,98 @@ namespace SteamTrade
 
             if (Trade.CurrentSchema == null)
                 throw new TradeException ("Could not download the latest item schema.");
+        }
+
+        #endregion Public Methods
+
+        private void StartTradeThread (Trade trade)
+        {
+            // initialize data to use in thread
+            tradeStartTime = DateTime.Now;
+            lastOtherActionTime = DateTime.Now;
+
+            var pollThread = new Thread (() =>
+            {
+                IsTradeThreadRunning = true;
+                
+                // main thread loop for polling
+                while (IsTradeThreadRunning)
+                {
+                    Thread.Sleep (TradePollingInterval);
+                    
+                    try
+                    {
+                        bool action = trade.Poll ();
+
+                        if (action)
+                            lastOtherActionTime = DateTime.Now;
+                        
+                        if (trade.OtherUserCancelled)
+                        {
+                            IsTradeThreadRunning = false;
+
+                            try
+                            {
+                                trade.CancelTrade ();
+                            }
+                            catch (Exception)
+                            {
+                                // ignore. possibly log. We don't care if the Cancel web command fails here we just want 
+                                // to fire the OnClose event.
+                                System.Console.WriteLine ("error trying to cancel from poll thread");
+                            }
+                        }
+
+                        CheckTradeTimeout (trade);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: find a new way to do this w/o the trade events
+//                        if (OnError != null)
+//                            OnError ("Error Polling Trade: " + e);
+                        
+                        // ok then we should stop polling...
+                        IsTradeThreadRunning = false;
+                    }
+                }
+
+                if (OnTradeEnded != null)
+                    OnTradeEnded (this, null);
+            });
+
+            pollThread.Start();
+        }
+
+        void CheckTradeTimeout (Trade trade)
+        {
+            var now = DateTime.Now;
+
+            DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaxActionGapSec);
+            int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
+
+            System.Console.WriteLine (String.Format ("{0} {1}", actionTimeout, untilActionTimeout));
+
+            DateTime tradeTimeout = tradeStartTime.AddSeconds (MaxTradeTimeSec);
+            int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
+
+            if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
+            {
+                // stop thread
+                IsTradeThreadRunning = false;
+
+                System.Console.WriteLine ("timed out...");
+
+                if (OnTimeout != null)
+                {
+                    OnTimeout (this, null);
+                }
+
+                trade.CancelTrade ();
+            }
+            else if (untilActionTimeout <= 20 && untilActionTimeout % 10 == 0)
+            {
+                trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+            }
         }
     }
 }

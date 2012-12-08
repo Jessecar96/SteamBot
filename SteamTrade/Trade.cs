@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
@@ -10,8 +9,6 @@ namespace SteamTrade
     {
         #region Static Public data
         public static Schema CurrentSchema = null;
-        static int _MaxTradeTime = 15;
-        static int _MaxActionGap = 15;
         #endregion
 
         // current bot's sid
@@ -26,23 +23,12 @@ namespace SteamTrade
         // Whether or not the trade actually started.
         bool tradeStarted = false;
 
-        // When the trade started.
-        DateTime tradeStartTime;
-
-        // When the last action taken by the user was.
-        DateTime lastOtherActionTime;
-
         Dictionary<int, ulong> myOfferedItems;
         List<ulong> steamMyOfferedItems;
-
-        // The inventory of the bot.
-        //Inventory myInventory;
 
         // Internal properties needed for Steam API.
         string apiKey;
         int numEvents;
-        //dynamic othersItems;
-        //dynamic myItems;
 
         internal Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Inventory myInventory, Inventory otherInventory)
         {
@@ -73,43 +59,6 @@ namespace SteamTrade
         public SteamID MySteamId
         {
             get { return mySteamId; }
-        }
-
-        /// <summary>
-        /// Gets or sets The maximum trading time the bot will take.  Will not take any value lower than 15.
-        /// </summary>
-        /// <value>
-        /// The maximum trade time.
-        /// </value>
-        public static int MaximumTradeTime
-        {
-            get
-            {
-                return _MaxTradeTime;
-            }
-            set
-            {
-                _MaxTradeTime = value <= 15 ? 15 : value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets The maxmium amount of time the bot will wait between actions. 
-        /// Will not take any value lower than 15.
-        /// </summary>
-        /// <value>
-        /// The maximum action gap.
-        /// </value>
-        public static int MaximumActionGap
-        {
-            get
-            {
-                return _MaxActionGap;
-            }
-            set
-            {
-                _MaxActionGap = value <= 15 ? 15 : value;
-            }
         }
 
         /// <summary> 
@@ -144,14 +93,6 @@ namespace SteamTrade
         public bool MeIsReady
         {
             get { return meIsReady; }
-        }
-
-        /// <summary>
-        /// Gets the time the trade started.
-        /// </summary>
-        public DateTime TradeStartTime
-        {
-            get { return tradeStartTime; }
         }
 
         /// <summary>
@@ -203,13 +144,6 @@ namespace SteamTrade
         public event ErrorHandler OnError;
 
         /// <summary>
-        /// This is for a timeout (either the user didn't complete an
-        /// action in a set amount of time, or they took too long with
-        /// the whole trade).
-        /// </summary>
-        public event TimeoutHandler OnTimeout;
-
-        /// <summary>
         /// This occurs after Inventories have been loaded.
         /// </summary>
         public event SuccessfulInit OnAfterInit;
@@ -243,26 +177,6 @@ namespace SteamTrade
         public event UserAcceptHandler OnUserAccept;
         
         #endregion
-
-        public bool StartTrade ()
-        {
-            // try to poll for the first time
-            try
-            {
-                Poll ();
-            } 
-            catch (Exception e)
-            {
-                if (OnError != null)
-                    OnError ("There was a problem connecting to Steam Trading.");
-                else 
-                    throw new TradeException ("Unhandled exception when Polling the trade.", e);
-            }
-
-            StartTradeThread();
-
-            return IsTradeThreadRunning;
-        }
 
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
@@ -339,7 +253,8 @@ namespace SteamTrade
                 {
                     bool success = AddItem (item.Id);
 
-                    if (success) added++;
+                    if (success)
+                        added++;
 
                     if (numToAdd > 0 && added >= numToAdd)
                         return added;
@@ -396,17 +311,18 @@ namespace SteamTrade
         /// <returns>Number of items removed.</returns>
         public uint RemoveAllItemsByDefindex (int defindex, uint numToRemove = 0)
         {
-            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
 
             uint removed = 0;
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !myOfferedItems.ContainsValue(item.Id))
+                if (item != null && !myOfferedItems.ContainsValue (item.Id))
                 {
                     bool success = RemoveItem (item.Id);
 
-                    if (success) removed++;
+                    if (success)
+                        removed++;
 
                     if (numToRemove > 0 && removed >= numToRemove)
                         return removed;
@@ -435,7 +351,7 @@ namespace SteamTrade
         public bool SetReady (bool ready)
         {
             // testing
-            ValidateLocalTradeItems();
+            ValidateLocalTradeItems ();
 
             bool ok = SetReadyWebCmd (ready);
 
@@ -451,7 +367,7 @@ namespace SteamTrade
         /// </summary>
         public bool AcceptTrade ()
         {
-            ValidateLocalTradeItems();
+            ValidateLocalTradeItems ();
 
             bool ok = AcceptTradeWebCmd ();
 
@@ -466,13 +382,14 @@ namespace SteamTrade
         /// default of 800ms, not including the execution time of the
         /// method itself.
         /// </summary>
-        public void Poll ()
+        /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
+        public bool Poll ()
         {
+            bool otherDidSomething = false;
+
             if (!TradeStarted)
             {
                 tradeStarted = true;
-                tradeStartTime = DateTime.Now;
-                lastOtherActionTime = DateTime.Now;
 
                 // since there's is no feed back to let us know that the trade
                 // is fully initialized we assume that it is when we start polling.
@@ -492,7 +409,7 @@ namespace SteamTrade
                     OnError ("Trade was cancelled by other user.");
 
                 OtherUserCancelled = true;
-                return;
+                return otherDidSomething;
             }
 
             if (status.events != null && numEvents != status.events.Length)
@@ -508,7 +425,8 @@ namespace SteamTrade
                     if (numLoops == 1)
                     {
                         EventID = numEvents - 1;
-                    } else
+                    }
+                    else
                     {
                         EventID = numEvents - i;
                     }
@@ -540,7 +458,8 @@ namespace SteamTrade
                         {
                             steamMyOfferedItems.Add (itemID);
                             ValidateSteamItemChanged (itemID, true);
-                        } else
+                        }
+                        else
                         {
                             OtherOfferedItems.Add (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -556,7 +475,8 @@ namespace SteamTrade
                         {
                             steamMyOfferedItems.Remove (itemID);
                             ValidateSteamItemChanged (itemID, false);
-                        } else
+                        }
+                        else
                         {
                             OtherOfferedItems.Remove (itemID);
                             Inventory.Item item = OtherInventory.GetItem (itemID);
@@ -599,33 +519,7 @@ namespace SteamTrade
                     }
 
                     if (!isBot)
-                        lastOtherActionTime = DateTime.Now;
-                }
-            } 
-            else
-            {
-                // check if the user is AFK
-                var now = DateTime.Now;
-
-                DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaximumActionGap);
-                int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
-
-                DateTime tradeTimeout = TradeStartTime.AddSeconds (MaximumTradeTime);
-                int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
-
-
-                if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
-                {
-                    if (OnTimeout != null)
-                    {
-                        OnTimeout ();
-                    }
-
-                    CancelTrade ();
-                } 
-                else if (untilActionTimeout <= 15 && untilActionTimeout % 5 == 0)
-                {
-                    SendMessageWebCmd ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                        otherDidSomething = true;
                 }
             }
 
@@ -646,6 +540,8 @@ namespace SteamTrade
             {
                 LogPos = status.logpos;
             }
+
+            return otherDidSomething;
         }
 
         int NextTradeSlot ()
@@ -681,19 +577,19 @@ namespace SteamTrade
 
             // check if the correct item was removed
             if (!wasAdded && myOfferedItems.ContainsValue (itemid))
-                throw new TradeException("Steam Trade had an invalid item removed: " + itemid);
+                throw new TradeException ("Steam Trade had an invalid item removed: " + itemid);
         }
 
-        void ValidateLocalTradeItems()
+        void ValidateLocalTradeItems ()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
-                throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
+                throw new TradeException ("Error validating local copy of items in the trade: Count mismatch");
             }
 
             foreach (ulong id in myOfferedItems.Values)
             {
-                if (!steamMyOfferedItems.Contains(id))
+                if (!steamMyOfferedItems.Contains (id))
                     throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
         }

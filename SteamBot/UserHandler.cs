@@ -56,7 +56,7 @@ namespace SteamBot
         {
             trade.OnClose += OnTradeClose;
             trade.OnError += OnTradeError;
-            trade.OnTimeout += OnTradeTimeout;
+            //trade.OnTimeout += OnTradeTimeout;
             trade.OnAfterInit += OnTradeInit;
             trade.OnUserAddItem += OnTradeAddItem;
             trade.OnUserRemoveItem += OnTradeRemoveItem;
@@ -73,7 +73,7 @@ namespace SteamBot
         {
             Trade.OnClose -= OnTradeClose;
             Trade.OnError -= OnTradeError;
-            Trade.OnTimeout -= OnTradeTimeout;
+            //Trade.OnTimeout -= OnTradeTimeout;
             Trade.OnAfterInit -= OnTradeInit;
             Trade.OnUserAddItem -= OnTradeAddItem;
             Trade.OnUserRemoveItem -= OnTradeRemoveItem;

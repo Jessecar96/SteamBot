@@ -150,10 +150,12 @@ namespace SteamBot
 
                 if (ie.FailingSteamId.ConvertToUInt64() == other.ConvertToUInt64())
                 {
-                    response = @"Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessable or your backpack is private.";
+                    response = "Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessable or your backpack is private.";
                 }
                 else 
-                    response = @"Trade failed. Could not correctly fetch my backpack.";
+                {
+                    response = "Trade failed. Could not correctly fetch my backpack.";
+                }
 
                 SteamFriends.SendChatMessage(other, 
                                              EChatEntryType.ChatMsg,
@@ -163,7 +165,10 @@ namespace SteamBot
                 return false;
             }
 
-            CurrentTrade.OnTimeout += CloseTrade;
+            // TODO: only do this once and extend OnTradeTimeout to check the trade.
+            tradeManager.OnTimeout += OnTradeTimeout;
+            tradeManager.OnTradeEnded += OnTradeEnded;
+            CurrentTrade.OnClose += CloseTrade;
             GetUserHandler (other).SubscribeTrade (CurrentTrade);
             GetUserHandler (other).OnTradeInit ();
             return true;
@@ -179,6 +184,19 @@ namespace SteamBot
             GetUserHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
             CurrentTrade = null;
         }
+
+        void OnTradeTimeout(object sender, EventArgs args) 
+        {
+            // ignore event params and just null out the trade.
+            GetUserHandler (CurrentTrade.OtherSID).OnTradeTimeout();
+
+            CloseTrade();
+        }
+
+        void OnTradeEnded (object sender, EventArgs e)
+        {
+            CloseTrade();
+        }        
 
         void HandleSteamMessage (CallbackMsg msg)
         {
