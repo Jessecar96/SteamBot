@@ -43,7 +43,6 @@
     <Compile Include="SteamWeb.cs" />
     <Compile Include="TradeSession.cs" />
     <Compile Include="TradeManager.cs" />
-    <Compile Include="TradeThread.cs" />
     <Compile Include="Exceptions\InventoryFetchException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

@@ -81,7 +81,6 @@ namespace SteamTrade
             private set;
         }
 
-
         /// <summary>
         /// Gets the inventory of the bot.
         /// </summary>
@@ -106,6 +105,12 @@ namespace SteamTrade
             private set;
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the trade thread running.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if the trade thread running; otherwise, <c>false</c>.
+        /// </value>
         public bool IsTradeThreadRunning
         {
             get;
