@@ -169,7 +169,7 @@ namespace SteamBot
             tradeManager.OnTimeout += OnTradeTimeout;
             tradeManager.OnTradeEnded += OnTradeEnded;
             CurrentTrade.OnClose += CloseTrade;
-            GetUserHandler (other).SubscribeTrade (CurrentTrade);
+            SubscribeTrade (CurrentTrade, GetUserHandler (other));
             GetUserHandler (other).OnTradeInit ();
             return true;
         }
@@ -181,7 +181,11 @@ namespace SteamBot
         {
             if (CurrentTrade == null)
                 return;
-            GetUserHandler (CurrentTrade.OtherSID).UnsubscribeTrade ();
+
+            UnsubscribeTrade (GetUserHandler (CurrentTrade.OtherSID), CurrentTrade);
+
+            tradeManager.StopTrade (CurrentTrade);
+
             CurrentTrade = null;
         }
 
@@ -189,8 +193,6 @@ namespace SteamBot
         {
             // ignore event params and just null out the trade.
             GetUserHandler (CurrentTrade.OtherSID).OnTradeTimeout();
-
-            CloseTrade();
         }
 
         void OnTradeEnded (object sender, EventArgs e)
@@ -458,6 +460,38 @@ namespace SteamBot
             
             // send off our response
             SteamUser.SendMachineAuthResponse (authResponse);
+        }
+
+        /// <summary>
+        /// Subscribes all listeners of this to the trade.
+        /// </summary>
+        public void SubscribeTrade (Trade trade, UserHandler handler)
+        {
+            trade.OnClose += handler.OnTradeClose;
+            trade.OnError += handler.OnTradeError;
+            //trade.OnTimeout += OnTradeTimeout;
+            trade.OnAfterInit += handler.OnTradeInit;
+            trade.OnUserAddItem += handler.OnTradeAddItem;
+            trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
+            trade.OnMessage += handler.OnTradeMessage;
+            trade.OnUserSetReady += handler.OnTradeReady;
+            trade.OnUserAccept += handler.OnTradeAccept;
+        }
+        
+        /// <summary>
+        /// Unsubscribes all listeners of this from the current trade.
+        /// </summary>
+        public void UnsubscribeTrade (UserHandler handler, Trade trade)
+        {
+            trade.OnClose -= handler.OnTradeClose;
+            trade.OnError -= handler.OnTradeError;
+            //Trade.OnTimeout -= OnTradeTimeout;
+            trade.OnAfterInit -= handler.OnTradeInit;
+            trade.OnUserAddItem -= handler.OnTradeAddItem;
+            trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
+            trade.OnMessage -= handler.OnTradeMessage;
+            trade.OnUserSetReady -= handler.OnTradeReady;
+            trade.OnUserAccept -= handler.OnTradeAccept;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using SteamKit2;
 using SteamTrade.Exceptions;
@@ -15,6 +16,7 @@ namespace SteamTrade
         string token;
         DateTime tradeStartTime;
         DateTime lastOtherActionTime;
+        Trade trade;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -184,15 +186,20 @@ namespace SteamTrade
                     OnTradeEnded (this, null);
             };
 
-            t.OnUserAccept += delegate
-            {
-                if (OnTradeEnded != null)
-                    OnTradeEnded (this, null);
-            };
+            trade = t;
 
-            StartTradeThread (t);
+            StartTradeThread ();
 
             return t;
+        }
+
+        public void StopTrade (Trade trade)
+        {
+            // TODO: something to check that trade was the Trade returned from StartTrade
+            OtherInventory = null;
+            MyInventory = null;
+
+            IsTradeThreadRunning = false;
         }
 
         /// <summary>
@@ -236,7 +243,7 @@ namespace SteamTrade
 
         #endregion Public Methods
 
-        private void StartTradeThread (Trade trade)
+        private void StartTradeThread ()
         {
             // initialize data to use in thread
             tradeStartTime = DateTime.Now;
@@ -245,6 +252,8 @@ namespace SteamTrade
             var pollThread = new Thread (() =>
             {
                 IsTradeThreadRunning = true;
+
+                DebugPrint ("Trade thread starting.");
                 
                 // main thread loop for polling
                 while (IsTradeThreadRunning)
@@ -270,7 +279,7 @@ namespace SteamTrade
                             {
                                 // ignore. possibly log. We don't care if the Cancel web command fails here we just want 
                                 // to fire the OnClose event.
-                                System.Console.WriteLine ("error trying to cancel from poll thread");
+                                System.Console.WriteLine ("[TRADEMANAGER] error trying to cancel from poll thread");
                             }
                         }
 
@@ -287,6 +296,8 @@ namespace SteamTrade
                     }
                 }
 
+                DebugPrint ("Trade thread shutting down.");
+
                 if (OnTradeEnded != null)
                     OnTradeEnded (this, null);
             });
@@ -301,7 +312,7 @@ namespace SteamTrade
             DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaxActionGapSec);
             int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
 
-            System.Console.WriteLine (String.Format ("{0} {1}", actionTimeout, untilActionTimeout));
+            DebugPrint (String.Format ("{0} {1}", actionTimeout, untilActionTimeout));
 
             DateTime tradeTimeout = tradeStartTime.AddSeconds (MaxTradeTimeSec);
             int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
@@ -311,7 +322,7 @@ namespace SteamTrade
                 // stop thread
                 IsTradeThreadRunning = false;
 
-                System.Console.WriteLine ("timed out...");
+                DebugPrint ("timed out...");
 
                 if (OnTimeout != null)
                 {
@@ -324,6 +335,16 @@ namespace SteamTrade
             {
                 trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
             }
+        }
+
+        [Conditional ("DEBUG_TRADE_MANAGER")]
+        void DebugPrint (string output)
+        {
+            // I don't really want to add the Logger as a dependecy to TradeManager so I 
+            // print using the console directly. To enable this for debugging put this:
+            // #define DEBUG_TRADE_MANAGER
+            // at the first line of this file.
+            System.Console.WriteLine (output);
         }
     }
 }
