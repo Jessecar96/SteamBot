@@ -279,13 +279,13 @@ namespace SteamTrade
                             {
                                 // ignore. possibly log. We don't care if the Cancel web command fails here we just want 
                                 // to fire the OnClose event.
-                                System.Console.WriteLine ("[TRADEMANAGER] error trying to cancel from poll thread");
+                                DebugPrint ("[TRADEMANAGER] error trying to cancel from poll thread");
                             }
                         }
 
                         CheckTradeTimeout (trade);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         // TODO: find a new way to do this w/o the trade events
 //                        if (OnError != null)
@@ -293,6 +293,7 @@ namespace SteamTrade
                         
                         // ok then we should stop polling...
                         IsTradeThreadRunning = false;
+                        DebugPrint ("[TRADEMANAGER] general error caught: " + ex);
                     }
                 }
 

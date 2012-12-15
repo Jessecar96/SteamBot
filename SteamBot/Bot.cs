@@ -138,39 +138,9 @@ namespace SteamBot
         {
             if (CurrentTrade != null)
                 return false;
-            try
-            {
-                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other);
-            }
-            catch (SteamTrade.Exceptions.InventoryFetchException ie)
-            {
-                // we shouldn't get here because the inv checks are also
-                // done in the TradeProposedCallback handler.
-                string response = String.Empty;
 
-                if (ie.FailingSteamId.ConvertToUInt64() == other.ConvertToUInt64())
-                {
-                    response = "Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessable or your backpack is private.";
-                }
-                else 
-                {
-                    response = "Trade failed. Could not correctly fetch my backpack.";
-                }
+            SteamTrade.Trade(other);
 
-                SteamFriends.SendChatMessage(other, 
-                                             EChatEntryType.ChatMsg,
-                                             response);
-
-                CurrentTrade = null;
-                return false;
-            }
-
-            // TODO: only do this once and extend OnTradeTimeout to check the trade.
-            tradeManager.OnTimeout += OnTradeTimeout;
-            tradeManager.OnTradeEnded += OnTradeEnded;
-            CurrentTrade.OnClose += CloseTrade;
-            SubscribeTrade (CurrentTrade, GetUserHandler (other));
-            GetUserHandler (other).OnTradeInit ();
             return true;
         }
 
@@ -199,6 +169,47 @@ namespace SteamBot
         {
             CloseTrade();
         }        
+
+        bool HandleTradeSessionStart (SteamID other)
+        {
+            if (CurrentTrade != null)
+                return false;
+
+            try
+            {
+                tradeManager.InitializeTrade(SteamUser.SteamID, other);
+                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other);
+            }
+            catch (SteamTrade.Exceptions.InventoryFetchException ie)
+            {
+                // we shouldn't get here because the inv checks are also
+                // done in the TradeProposedCallback handler.
+                string response = String.Empty;
+                
+                if (ie.FailingSteamId.ConvertToUInt64() == other.ConvertToUInt64())
+                {
+                    response = "Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessable or your backpack is private.";
+                }
+                else 
+                {
+                    response = "Trade failed. Could not correctly fetch my backpack.";
+                }
+                
+                SteamFriends.SendChatMessage(other, 
+                                             EChatEntryType.ChatMsg,
+                                             response);
+
+                log.Info ("Bot sent other: " + response);
+                
+                CurrentTrade = null;
+                return false;
+            }
+            
+            CurrentTrade.OnClose += CloseTrade;
+            SubscribeTrade (CurrentTrade, GetUserHandler (other));
+
+            return true;
+        }
 
         void HandleSteamMessage (CallbackMsg msg)
         {
@@ -254,6 +265,8 @@ namespace SteamBot
 
                         tradeManager = new TradeManager(apiKey, sessionId, token);
                         tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
+                        tradeManager.OnTimeout += OnTradeTimeout;
+                        tradeManager.OnTradeEnded += OnTradeEnded;
                         break;
                     }
                     else
@@ -323,7 +336,12 @@ namespace SteamBot
             #region Trading
             msg.Handle<SteamTrading.SessionStartCallback> (callback =>
             {
-                OpenTrade (callback.OtherClient);
+                bool started = HandleTradeSessionStart (callback.OtherClient);
+
+                if (!started)
+                    log.Error ("Could not start the trade session.");
+                else
+                    log.Debug ("SteamTrading.SessionStartCallback handled successfully. Trade Opened.");
             });
 
             msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
