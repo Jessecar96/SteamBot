@@ -394,7 +394,7 @@ namespace SteamBot
         {
             byte[] hash = SHAHash (machineAuth.Data);
 
-            File.WriteAllBytes (String.Format ("{0}.sentryFile", logOnDetails.Username), machineAuth.Data);
+            File.WriteAllBytes (String.Format ("{0}.sentryfile", logOnDetails.Username), machineAuth.Data);
             
             var authResponse = new SteamUser.MachineAuthDetails
             {
