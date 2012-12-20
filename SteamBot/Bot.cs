@@ -354,7 +354,7 @@ namespace SteamBot
                 {
                     SteamFriends.SendChatMessage(callback.OtherClient, 
                                                  EChatEntryType.ChatMsg,
-                                                 @"Trade declined. Could not correctly fetch your backpack.");
+                                                 "Trade declined. Could not correctly fetch your backpack.");
                     
                     SteamTrade.RespondToTrade (callback.TradeID, false);
                     return;
@@ -364,7 +364,7 @@ namespace SteamBot
                 {
                     SteamFriends.SendChatMessage(callback.OtherClient, 
                                                  EChatEntryType.ChatMsg,
-                                                 @"Trade declined. Your backpack cannot be private.");
+                                                 "Trade declined. Your backpack cannot be private.");
 
                     SteamTrade.RespondToTrade (callback.TradeID, false);
                     return;
