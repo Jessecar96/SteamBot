@@ -193,7 +193,14 @@ namespace SteamTrade
             return t;
         }
 
-        public void StopTrade (Trade trade)
+        /// <summary>
+        /// Stops the trade thread.
+        /// </summary>
+        /// <remarks>
+        /// Also, nulls out the inventory objects so they have to be fetched
+        /// again if a new trade is started.
+        /// </remarks>            
+        public void StopTrade ()
         {
             // TODO: something to check that trade was the Trade returned from StartTrade
             OtherInventory = null;

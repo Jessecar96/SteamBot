@@ -154,7 +154,7 @@ namespace SteamBot
 
             UnsubscribeTrade (GetUserHandler (CurrentTrade.OtherSID), CurrentTrade);
 
-            tradeManager.StopTrade (CurrentTrade);
+            tradeManager.StopTrade ();
 
             CurrentTrade = null;
         }
