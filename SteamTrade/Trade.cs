@@ -391,7 +391,7 @@ namespace SteamTrade
             {
                 tradeStarted = true;
 
-                // since there's is no feed back to let us know that the trade
+                // since there is no feedback to let us know that the trade
                 // is fully initialized we assume that it is when we start polling.
                 if (OnAfterInit != null)
                     OnAfterInit ();
