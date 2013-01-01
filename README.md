@@ -1,5 +1,7 @@
 ## Info ##
 
+**BEFORE YOU GET STARTED:** This bot requires you use git to download the bot.  **Downloading the zip will not work!**  It doesn't work because the bot uses git submodules, which are not included with the zip download.
+
 **SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 8 contributors have all added to the bot.  The bot is publicly available under the MIT License.
 
 ## Configuration Instructions ##
