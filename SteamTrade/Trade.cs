@@ -226,7 +226,7 @@ namespace SteamTrade
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
             foreach (Inventory.Item item in items)
             {
-                if (!myOfferedItems.ContainsValue (item.Id))
+                if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
                 {
                     return AddItem (item.Id);
                 }
@@ -249,7 +249,7 @@ namespace SteamTrade
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !myOfferedItems.ContainsValue (item.Id))
+                if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
                 {
                     bool success = AddItem (item.Id);
 
