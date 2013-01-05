@@ -23,10 +23,11 @@ namespace SteamBot
                         {
                             try
                             {
-                                new Bot(info, config.ApiKey, (Bot bot, SteamID sid) => 
-                                {
-                                    return (SteamBot.UserHandler)System.Activator.CreateInstance(Type.GetType(info.BotControlClass), new object[] { bot, sid });
-                                }, true);
+                                new Bot(info, config.ApiKey, (Bot bot, SteamID sid) => {
+                                    
+                                    return (SteamBot.UserHandler)System.Activator.CreateInstance(Type.GetType(bot.BotControlClass), new object[] { bot, sid });  
+                                }, false);
+
                             }
                             catch (Exception e)
                             {
