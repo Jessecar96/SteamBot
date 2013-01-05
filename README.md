@@ -7,16 +7,17 @@
 ## Configuration Instructions ##
 
 ### Step 0 ###
-If you've just recently cloned this repository, there are a few things you need to do.
+If you've just recently cloned this repository, there are a few things you need to do in order to build the source code.
 
 1. Run `git submodule init` to initalize the submodule configuration file.
 2. Run `git submodule update` to pull the latest version of the submodules that are included (namely, SteamKit2).
-3. Build the program.  Since SteamKit2 is licensed under the LGPL, and SteamBot should be released under the MIT license, SteamKit2's code cannot be included in SteamBot.  This includes executables.  We'll probably make downloads available on GitHub.
-4. Continue on like normal.
+ - Since SteamKit2 is licensed under the LGPL, and SteamBot should be released under the MIT license, SteamKit2's code cannot be included in SteamBot.  This includes executables.  We'll probably make downloads available on GitHub.
+3. Open `SteamBot.sln` in your C# development environment, either MonoDevelop or Visual Studio should work.
+4. Build the program.
 
 ### Step 1 ###
-1. First, you need to configure your bots.
-2. Edit the file `settings-template.json` in `\SteamBot\bin\Debug`.  Some configuration options:
+1. First, you need to configure your bots. This is done by creating a `settings.json` file located in the same place as the SteamBot executable.
+2. There is a template settings file provided for you. Edit the file `settings-template.json` in `project_root\Bin\Debug`.  Some configuration options:
    - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string in quotes and seperated by a comma. These admins are global to all bots listed in the `Bots` array.
    - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string in quotes.
    - `mainLog`: The log containing runtime information for all bots.
@@ -45,61 +46,69 @@ If you've just recently cloned this repository, there are a few things you need 
 
 ### Step 2 ###
 1. Next you need to actually edit the bot to make it do what you want.
-2. You can edit the file `SimpleUserHandler.cs` as it contains events for everything you need. Alternatively, you can subclass `UserHandler` and create your own class to control bot behavior. If you do this, remember to modify the `BotControlClass` setting in your configuration. Add your code to each of the events. Events are explained in code commments.
-3. Look at Usage below to see some useful functions.
+2. You can edit the files `SimpleUserHandler.cs` or `AdminUserHandler.cs` as they contains examples of most everything you need. Alternatively, you can subclass `UserHandler` and create your own class to control bot behavior. If you do this, remember to modify the `BotControlClass` setting in your configuration. Add your code to each of the events. Events are explained in code comments.
+3. Look at the section below to see some useful information if you intend to create your own `UserHandler`.
 
-## Usage ##
+### Step 3 ###
+1. Run the SteamBot executable. 
+ - Open your operating systems console or command prompt.
+ - Run the executable (SteamBot.exe under Windows). After a successful build it should be under `<project_root>\Bin\Debug` by default. 
 
-These are a few things you can use when writing your user handler:
+## UserHandlers ##
 
-### Basic Steam Community ###
-#### `IsAdmin` ####
-Returns true if the user handler instance is for an administrator.
+In order to fully customize your bot you are going to want to create a class that inherits from `SteamBot.UserHandler`. This class is an abstract base class that provides several methods that *must be overridden* in order to work. These methods are mostly reactionary in nature, i.e. what to do when the bot has been proposed a trade or sent a message. These explained well in `UserHandler.cs` code comments. Here is a basic run-down of what's available to your subclass if you decide to do this.
 
-#### `Bot` ####
-The `Bot` instance for the bot the user handler is running for.
+### Steam Community ###
 
-#### `Bot.log` ####
-The `Log` class for the Bot.
+#### `UserHandler.IsAdmin` ####
+Returns `true` if the other user interacting with the bot is one of the configured Admins. See settings.json format above.
 
-#### `Bot.SteamFriends.SendChatMessage(SteamID target, EChatEntryType type, string message)` ####
+#### `UserHandler.Log` ####
+The `Log` class for the Bot that you can use this to output important information to the console you see on the screen.
+
+#### `UserHandler.Bot` ####
+The `Bot` instance for the bot the user handler is running for. You can use this to access some advanced features of the Bot like the Steam Friends system below.
+
+#### `UserHandler.Bot.SteamFriends.SendChatMessage(SteamID target, EChatEntryType type, string message)` ####
 Send a chat message to the specified user (by steam id).
 
-#### `Bot.SteamFriends.AddFriend(SteamID steamId)` ####
+#### `UserHandler.Bot.SteamFriends.AddFriend(SteamID steamId)` ####
 Add a friend by steam id.
 
-#### `Bot.SteamFriends.RemoveFriend(SteamID steamId)` ####
+#### `UserHandler.Bot.SteamFriends.RemoveFriend(SteamID steamId)` ####
 Remove a friend by steam id.
 
-### `OnTrade*` Callbacks ###
-#### `Trade` ####
-The master class referring back to the current trade.
+### Trade Support ###
 
-#### `Trade.AddItem(ulong itemid, int slot)` ####
-Add an item by its `id` property into the specified slot in the trade.
+Most of the trade interaction will occur through the abstract methods that you will have to implement as a subclass. These are mostly Trade events that happened outside of the Bot. For example `OnTradeAddItem` is called when the other user adds an item to the trade window. In this function your class could add equal, lesser, or greater value items (or send the user a nasty message about low-balling). To do this you will have to interact with the trade via the `UserHandler.Trade` object described below.
 
-#### `Trade.AddItemByDefindex(int defindex, int slot)` ####
+
+#### `UserHandler.Trade.AddItem(ulong itemid)` ####
+Add an item by its `id` property into the next available slot in the trade window.
+
+#### `UserHandler.Trade.AddItemByDefindex(int defindex)` ####
 Same as AddItem, but you specify the defindex of the item instead of the id.
 
-#### `Trade.RemoveItem(ulong itemid, int slot)` ####
-Removes the specified item from the trade.
+#### `UserHandler.Trade.RemoveItem(ulong itemid)` ####
+Removes the specified item from the trade window.
 
-#### `Trade.SetReady(bool ready)` ####
-Sets the trade ready or not ready according to the boolean.
+#### `UserHandler.Trade.SetReady(bool ready)` ####
+Sets the trade ready-status depending on the `ready` parameter. `true` to set the bot's status to ready.
 
-#### `Trade.AcceptTrade()` ####
-Accepts the trade.
+#### `UserHandler.Trade.AcceptTrade()` ####
+Calling this method accepts the trade. It's the second step after both parties ready-up.
 
-#### `Trade.SendMessage(string msg)` ####
+#### `UserHandler.Trade.SendMessage(string msg)` ####
 Sends a message to the other user over trade chat.
 
 ## More help? ##
-If it's a bug, open an Issue; if you have a fix, open a Pull Request.  A list of contributors (add yourself if you want to):
+If it's a bug, open an Issue; if you have a fix, read [CONTRIBUTING.md](https://github.com/Jessecar96/SteamBot/blob/master/CONTRIBUTING.md) and open a Pull Request.  A list of contributors (add yourself if you want to):
 - [Jessecar96](http://steamcommunity.com/id/jessecar) (project lead)
 - [geel9](http://steamcommunity.com/id/geel9)
 - [Dr. Cat, MD or redjazz96](http://steamcommunity.com/id/redjazz96)
+- [cwhelchel](http://steamcommunity.com/id/cmw69krinkle)
 
 SteamBot is licensed under the MIT License.  Check out LICENSE for more details.
 
 ## Wanna Contribute? ##
-Check out CONTRIBUTING.md.
+Please read [CONTRIBUTING.md](https://github.com/Jessecar96/SteamBot/blob/master/CONTRIBUTING.md).
