@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Net;
+using System.IO;
 
 namespace SteamTrade
 {
@@ -12,7 +14,27 @@ namespace SteamTrade
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=" + apiKey;
 
-            string result = SteamWeb.Fetch (url, "GET");
+            string cachefile="tf_schema.cache";
+            string result;
+
+            HttpWebResponse response = SteamWeb.Request(url, "GET");
+
+            DateTime SchemaLastModified = DateTime.Parse(response.Headers["Last-Modified"]);
+           
+            if (!System.IO.File.Exists(cachefile) || (SchemaLastModified> System.IO.File.GetCreationTime(cachefile)))
+            {
+                StreamReader reader = new StreamReader (response.GetResponseStream ());
+                result = reader.ReadToEnd();
+                File.WriteAllText(cachefile, result);
+                System.IO.File.SetCreationTime(cachefile,SchemaLastModified);
+            }
+            else
+            {
+                TextReader reader = new StreamReader(cachefile);
+                result = reader.ReadToEnd();
+                reader.Close();
+            }
+            response.Close();
 
             SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
             return schemaResult.result ?? null;
