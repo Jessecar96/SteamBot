@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Threading;
 using SteamBot;
 
-namespace Runners
+namespace SteamBot.Runners
 {
     /// <summary>
     /// Console bot runner.  Despite its name, it also logs to a file, as well.
@@ -15,16 +16,44 @@ namespace Runners
 
         protected StreamWriter fileStream;
 
-        ~ConsoleBotRunner ()
-        {
-            fileStream.Close ();
-        }
-
         public void Start (Options options) 
         {
             this.LogLevel = options.LogLevel;
             fileStream = File.AppendText (options.LogFile);
             fileStream.AutoFlush = true;
+
+            BotConfig botConfig = new BotConfig
+            {
+                Username = SteamBot.Default.BotUserName,
+                Password = SteamBot.Default.BotPassword,
+                ApiKey = SteamBot.Default.ApiKey,
+                BotName = SteamBot.Default.Name,
+                SentryFile = SteamBot.Default.SentryFile,
+                runner = this
+            };
+            Bot bot = Bot.InitializeBot(botConfig, typeof(Handlers.ConsoleBotHandler));
+            Thread botThread = new Thread( ()=>
+            {
+                bot.Start();
+            });
+            botThread.Start();
+            string cLine;
+            bool run = true;
+            while (run)
+            {
+                cLine = Console.ReadLine();
+                if (cLine == "disconnect")
+                {
+                    run = false;
+                    bot.Exit();
+                    botThread.Join();
+                }
+                else
+                {
+                    DoLog(ELogType.INFO, cLine);
+                }
+            }
+            
         }
 
         public void DoLog (ELogType type, string log)
@@ -43,6 +72,11 @@ namespace Runners
             }
 
             fileStream.WriteLine (formattedString);
+        }
+
+        public string GetSteamGuardCode()
+        {
+            return Console.ReadLine();
         }
     }
 }

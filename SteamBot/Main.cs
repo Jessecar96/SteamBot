@@ -12,11 +12,13 @@ namespace SteamBot
             Options options = new Options ();
             if (CommandLineParser.Default.ParseArguments (args, options))
             {
-                Console.WriteLine ("Getting {0}...", options.Runner);
                 var runner = (IBotRunner) System.Activator.CreateInstance(Type.GetType(options.Runner, true));
                 // We passed the options to runner, it's now up to the runner to deal with it.
                 runner.Start (options);
             }
+#if DEBUG
+            Console.ReadKey ();
+#endif
 		}
 	}
 }
