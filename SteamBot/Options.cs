@@ -20,13 +20,8 @@ namespace SteamBot
                 DefaultValue = ELogType.INFO)]
         public ELogType LogLevel { get; set; }
 
-#if WINDOW_BOT_RUNNER
-        [Option('r', "runner", HelpText = "The bot runner that SteamBot will use.",
-                DefaultValue = "Runners.WindowBotRunner")]
-#else
         [Option('r', "runner", HelpText = "The bot runner that SteamBot will use.",
                 DefaultValue = "Runners.ConsoleBotRunner")]
-#endif
         public string Runner { get; set; }
 
         [HelpOption]

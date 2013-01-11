@@ -14,17 +14,9 @@ namespace SteamBot
             {
                 Console.WriteLine ("Getting {0}...", options.Runner);
                 var runner = (IBotRunner) System.Activator.CreateInstance(Type.GetType(options.Runner, true));
+                // We passed the options to runner, it's now up to the runner to deal with it.
                 runner.Start (options);
-                //runner.DoLog (ELogType.ERROR, "Hello, World!");
-                runner.DoLog (ELogType.DEBUG, "Debug");
-                runner.DoLog (ELogType.INFO, "Info");
-                runner.DoLog (ELogType.SUCCESS, "Success");
-                runner.DoLog (ELogType.WARN, "Warn");
-                runner.DoLog (ELogType.ERROR, "Error");
-                runner.DoLog (ELogType.INTERFACE, "Interface");
-                runner.DoLog (ELogType.NOTHING, "Nothing");
             }
-            Console.ReadKey ();
 		}
 	}
 }
