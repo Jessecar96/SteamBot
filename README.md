@@ -1,5 +1,5 @@
 # SteamBot #
-**SteamBot** is an open-source bot written in C# and licensed under the MIT License (check out `LICENSE` for more information).  SteamBot uses [SteamKit2](http://hg.opensteamworks.org/steamre/overview) in order to communicate with the steam network.
+**SteamBot** is an open-source bot written in C# and licensed under the MIT License (check out `LICENSE` for more information).  SteamBot uses a modified version of [SteamKit2](http://hg.opensteamworks.org/steamre/overview) in order to communicate with the steam network.
 
 **Note: this is a rewrite of the original SteamBot.  All suggested changes are to be in the format of pull requests.**
 

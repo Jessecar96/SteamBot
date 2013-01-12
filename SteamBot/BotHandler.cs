@@ -61,8 +61,8 @@ namespace SteamBot
         /// <summary>
         /// This is called when a friend added the bot.
         /// </summary>
-        /// <param name="callback">The callback response.</param>
-        public abstract void HandleFriendAdd(SteamFriends.FriendAddedCallback callback);
+        /// <param name="steamId">The steam ID of the friend.</param>
+        public abstract void HandleFriendAdd(SteamID steamId);
 
         /// <summary>
         /// This is called when a friend messages the bot.
@@ -72,7 +72,8 @@ namespace SteamBot
 
         /// <summary>
         /// This is called when the bot recieves their friends list from the
-        /// server.
+        /// server.  This includes friends whose relationship status is still
+        /// not 'friend'.
         /// </summary>
         /// <param name="callback"></param>
         public virtual void HandleFriendsList(SteamFriends.FriendsListCallback callback) { }
@@ -89,5 +90,9 @@ namespace SteamBot
         public SteamUser steamUser;
         public SteamFriends steamFriends;
         public SteamUser.LogOnDetails logOnDetails;
+
+        public string steamID;
+        public string steamLogin;
+        public Trading.Web web;
     }
 }

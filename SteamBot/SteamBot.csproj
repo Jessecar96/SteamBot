@@ -54,6 +54,7 @@
     <Reference Include="SteamKit2">
       <HintPath>..\Lib\SteamKit2.dll</HintPath>
     </Reference>
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bot.cs" />
@@ -71,12 +72,22 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>SteamBot.settings</DependentUpon>
     </Compile>
+    <Compile Include="Trading\Api.cs" />
+    <Compile Include="Trading\Authenticator\SteamUserAuth.cs" />
+    <Compile Include="Trading\IAuthenticator.cs" />
+    <Compile Include="Trading\ITrader.cs" />
+    <Compile Include="Trading\Trade.cs" />
+    <Compile Include="Trading\Web.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <ProjectReference Include="..\Lib\commandline\src\libcmdline\CommandLine.csproj">
       <Project>{5DEA2811-2FFA-4959-830B-CAD3ACACABEB}</Project>
       <Name>CommandLine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Lib\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.csproj">
+      <Project>{a9ae40ff-1a21-414a-9fe7-3be13644cc6d}</Project>
+      <Name>Newtonsoft.Json</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -103,5 +114,7 @@
       <LastGenOutput>SteamBot.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Trading\Traders\" />
+  </ItemGroup>
 </Project>

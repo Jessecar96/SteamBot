@@ -23,48 +23,63 @@ namespace SteamBot {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("000")]
         public string ApiKey {
             get {
                 return ((string)(this["ApiKey"]));
             }
+            set {
+                this["ApiKey"] = value;
+            }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("ac1dl3ak")]
         public string BotUserName {
             get {
                 return ((string)(this["BotUserName"]));
             }
+            set {
+                this["BotUserName"] = value;
+            }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Apples")]
         public string BotPassword {
             get {
                 return ((string)(this["BotPassword"]));
             }
+            set {
+                this["BotPassword"] = value;
+            }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Trinity")]
         public string Name {
             get {
                 return ((string)(this["Name"]));
             }
+            set {
+                this["Name"] = value;
+            }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Trinity.sentryFile")]
         public string SentryFile {
             get {
                 return ((string)(this["SentryFile"]));
+            }
+            set {
+                this["SentryFile"] = value;
             }
         }
     }

@@ -5,6 +5,7 @@ using System.Text;
 using SteamKit2;
 using System.Security.Cryptography;
 using System.IO;
+using System.Net;
 
 namespace SteamBot.Handlers
 {
@@ -13,6 +14,9 @@ namespace SteamBot.Handlers
 
         private bool running = true;
         private IBotRunner log;
+        private Trading.Web web;
+
+        List<SteamID> friends = new List<SteamID>();
 
         public override void HandleBotConnection()
         {
@@ -81,6 +85,21 @@ namespace SteamBot.Handlers
         {
             steamFriends.SetPersonaName(bot.botConfig.BotName);
             steamFriends.SetPersonaState(EPersonaState.Online);
+
+            web = new Trading.Web();
+            Trading.IAuthenticator authenticator = (Trading.IAuthenticator) System.Activator.CreateInstance(bot.botConfig.Authenticator);
+            authenticator.handler = this;
+            authenticator.loginKeyCallback = callback;
+            authenticator.web = web;
+            string[] result = authenticator.Authenticate();
+
+            steamID = result[0];
+            steamLogin = result[1];
+
+            web.Cookies.Add(new Cookie("steamid", steamID, String.Empty, "steamcommunity.com"));
+            web.Cookies.Add(new Cookie("steamLogin", steamLogin, String.Empty, "steamcommunity.com"));
+
+            DoLog(ELogType.SUCCESS, "Logged in!");
         }
 
         public override void HandleUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
@@ -144,10 +163,26 @@ namespace SteamBot.Handlers
             }
         }
 
-        public override void HandleFriendAdd(SteamFriends.FriendAddedCallback callback)
+        public override void HandleFriendAdd(SteamID steamId)
         {
-            steamFriends.AddFriend(callback.SteamID);
-            DoLog(ELogType.INFO, "Recieved friend request from " + callback.PersonaName);
+            steamFriends.AddFriend(steamId);
+            DoLog(ELogType.INFO, "Recieved friend request from " + steamFriends.GetFriendPersonaName(steamId));
+        }
+
+        public override void HandleFriendsList(SteamFriends.FriendsListCallback callback)
+        {
+            foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
+            {
+                if (!friends.Contains(friend.SteamID))
+                {
+                    friends.Add(friend.SteamID);
+                }
+
+                if (friend.Relationship == EFriendRelationship.RequestInitiator)
+                {
+                    HandleFriendAdd(friend.SteamID);
+                }
+            }
         }
 
         static byte[] SHAHash(byte[] input)

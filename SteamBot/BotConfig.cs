@@ -32,6 +32,9 @@ namespace SteamBot
         /// The SentryFile the bot should use for saving auth codes.
         /// </summary>
         public string SentryFile { get; set; }
+
+        public Type Authenticator { get; set; }
+
         public IBotRunner runner;
     }
 }

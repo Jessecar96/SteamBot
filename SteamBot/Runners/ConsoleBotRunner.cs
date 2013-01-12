@@ -29,6 +29,7 @@ namespace SteamBot.Runners
                 ApiKey = SteamBot.Default.ApiKey,
                 BotName = SteamBot.Default.Name,
                 SentryFile = SteamBot.Default.SentryFile,
+                Authenticator = typeof(Trading.Authenticator.SteamUserAuth),
                 runner = this
             };
             Bot bot = Bot.InitializeBot(botConfig, typeof(Handlers.ConsoleBotHandler));

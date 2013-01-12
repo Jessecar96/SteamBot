@@ -2,19 +2,19 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SteamBot" GeneratedClassName="SteamBot">
   <Profiles />
   <Settings>
-    <Setting Name="ApiKey" Type="System.String" Scope="Application">
+    <Setting Name="ApiKey" Type="System.String" Scope="User">
       <Value Profile="(Default)">000</Value>
     </Setting>
-    <Setting Name="BotUserName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)" />
+    <Setting Name="BotUserName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">ac1dl3ak</Value>
     </Setting>
-    <Setting Name="BotPassword" Type="System.String" Scope="Application">
-      <Value Profile="(Default)" />
+    <Setting Name="BotPassword" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Apples</Value>
     </Setting>
-    <Setting Name="Name" Type="System.String" Scope="Application">
+    <Setting Name="Name" Type="System.String" Scope="User">
       <Value Profile="(Default)">Trinity</Value>
     </Setting>
-    <Setting Name="SentryFile" Type="System.String" Scope="Application">
+    <Setting Name="SentryFile" Type="System.String" Scope="User">
       <Value Profile="(Default)">Trinity.sentryFile</Value>
     </Setting>
   </Settings>
