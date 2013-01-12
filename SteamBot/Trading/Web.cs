@@ -12,7 +12,7 @@ using SteamKit2;
 
 namespace SteamBot.Trading
 {
-    class Web
+    public class Web
     {
         public string Domain { get; set; }
         public string Scheme { get; set; }
@@ -22,6 +22,7 @@ namespace SteamBot.Trading
         public Web()
         {
             this.ActAsAjax = false;
+            this.Cookies = new CookieContainer();
         }
 
         public string Do(string uri, string method = "GET")

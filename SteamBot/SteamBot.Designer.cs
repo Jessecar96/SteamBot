@@ -37,7 +37,7 @@ namespace SteamBot {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("ac1dl3ak")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string BotUserName {
             get {
                 return ((string)(this["BotUserName"]));
@@ -49,7 +49,7 @@ namespace SteamBot {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Apples")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string BotPassword {
             get {
                 return ((string)(this["BotPassword"]));

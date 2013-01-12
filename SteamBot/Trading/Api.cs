@@ -27,6 +27,9 @@ namespace SteamBot.Trading
             this.otherSID = OtherSID;
             this.botHandler = botHandler;
             this.web = botHandler.web;
+            web.Domain = SteamCommunityDomain;
+            web.Scheme = "https";
+            web.ActAsAjax = true;
 
             sessionId = botHandler.steamID;
             steamLogin = botHandler.steamLogin;

@@ -6,10 +6,10 @@
       <Value Profile="(Default)">000</Value>
     </Setting>
     <Setting Name="BotUserName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">ac1dl3ak</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="BotPassword" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Apples</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Name" Type="System.String" Scope="User">
       <Value Profile="(Default)">Trinity</Value>

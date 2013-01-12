@@ -49,12 +49,12 @@ namespace SteamBot.Trading.Authenticator
 
                 try
                 {
-                    authResult = userAuth.Call("AuthenticateUser", 1, args, "GET", true);
+                    authResult = userAuth.Call("AuthenticateUser", 1, args, "POST", true);
                     token = authResult["token"].AsString();
                 }
                 catch (Exception)
                 {
-                    token = null;
+                    token = "";
                 }
             }
             return new string[] { sessionId, token };

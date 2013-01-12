@@ -14,9 +14,9 @@ namespace SteamBot.Handlers
 
         private bool running = true;
         private IBotRunner log;
-        private Trading.Web web;
 
         List<SteamID> friends = new List<SteamID>();
+        SteamID steamId;
 
         public override void HandleBotConnection()
         {
@@ -67,6 +67,7 @@ namespace SteamBot.Handlers
             if (callback.Result == EResult.OK)
             {
                 DoLog(ELogType.SUCCESS, "Login Completed Successfully.");
+                steamId = callback.ClientSteamID;
             }
             else if (callback.Result == EResult.InvalidLoginAuthCode ||
                     callback.Result == EResult.AccountLogonDenied)
@@ -92,10 +93,8 @@ namespace SteamBot.Handlers
             authenticator.loginKeyCallback = callback;
             authenticator.web = web;
             string[] result = authenticator.Authenticate();
-
             steamID = result[0];
             steamLogin = result[1];
-
             web.Cookies.Add(new Cookie("steamid", steamID, String.Empty, "steamcommunity.com"));
             web.Cookies.Add(new Cookie("steamLogin", steamLogin, String.Empty, "steamcommunity.com"));
 
