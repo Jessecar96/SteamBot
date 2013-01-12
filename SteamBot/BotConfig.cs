@@ -35,6 +35,8 @@ namespace SteamBot
 
         public Type Authenticator { get; set; }
 
+        public Type Trader { get; set; }
+
         public IBotRunner runner;
     }
 }

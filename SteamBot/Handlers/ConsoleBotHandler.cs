@@ -14,9 +14,9 @@ namespace SteamBot.Handlers
 
         private bool running = true;
         private IBotRunner log;
+        private Trading.Trade currentTrade { get; set; }
 
         List<SteamID> friends = new List<SteamID>();
-        SteamID steamId;
 
         public override void HandleBotConnection()
         {
@@ -28,6 +28,7 @@ namespace SteamBot.Handlers
             steamClient = new SteamClient ();
             steamUser = steamClient.GetHandler<SteamUser>();
             steamFriends = steamClient.GetHandler<SteamFriends>();
+            steamTrading = steamClient.GetHandler<SteamTrading>();
             log = bot.botConfig.runner;
 
             steamClient.Connect ();
@@ -93,9 +94,9 @@ namespace SteamBot.Handlers
             authenticator.loginKeyCallback = callback;
             authenticator.web = web;
             string[] result = authenticator.Authenticate();
-            steamID = result[0];
+            sessionId = result[0];
             steamLogin = result[1];
-            web.Cookies.Add(new Cookie("steamid", steamID, String.Empty, "steamcommunity.com"));
+            web.Cookies.Add(new Cookie("sessionid", sessionId, String.Empty, "steamcommunity.com"));
             web.Cookies.Add(new Cookie("steamLogin", steamLogin, String.Empty, "steamcommunity.com"));
 
             DoLog(ELogType.SUCCESS, "Logged in!");
@@ -182,6 +183,39 @@ namespace SteamBot.Handlers
                     HandleFriendAdd(friend.SteamID);
                 }
             }
+        }
+
+        public override void HandleTrade(SteamTrading.SessionStartCallback callback)
+        {
+            CreateTrade(callback.OtherClient);
+        }
+
+        public override void HandleTrade(SteamTrading.TradeProposedCallback callback)
+        {
+            if (currentTrade == null)
+                steamTrading.RespondToTrade(callback.TradeID, true);
+        }
+
+        public override void HandleTrade(SteamTrading.TradeResultCallback callback)
+        {
+            if (callback.Response != EEconTradeResponse.Accepted)
+            {
+                steamFriends.SendChatMessage(callback.OtherClient, EChatEntryType.ChatMsg, ":(");
+            }
+        }
+
+        void CreateTrade(SteamID steamId)
+        {
+            if (currentTrade == null)
+            {
+                currentTrade = new Trading.Trade(steamId, bot);
+            }
+        }
+
+        public void HandleTradeClose(string reason)
+        {
+            DoLog(ELogType.WARN, String.Format("Trade Closed: {0}", reason));
+            currentTrade = null;
         }
 
         static byte[] SHAHash(byte[] input)

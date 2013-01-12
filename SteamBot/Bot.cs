@@ -25,18 +25,18 @@ namespace SteamBot
         /// <param name="handler">The handler that will handle things like users.</param>
         /// <param name="username">The username the bot with authenticate with.</param>
         /// <param name="password">The password the bot will authenticate with.</param>
-        Bot(BotConfig botConfig, BotHandler handler)
+        public Bot(BotConfig botConfig, BotHandler handler)
         {
             handler.bot = this;
             this.botConfig = botConfig;
             this.handler = handler;
         }
 
-        public static Bot InitializeBot(BotConfig botConfig, Type handler)
+        public Bot(BotConfig botConfig, Type handler)
         {
-            BotHandler botHandler = (BotHandler) System.Activator.CreateInstance(handler);
-            Bot bot = new Bot(botConfig, botHandler);
-            return bot;
+            this.handler = (BotHandler) System.Activator.CreateInstance(handler);
+            this.handler.bot = this;
+            this.botConfig = botConfig;
         }
 
         public void Start()
@@ -112,6 +112,23 @@ namespace SteamBot
             msg.Handle<SteamFriends.FriendMsgCallback>(callback =>
             {
                 handler.HandleFriendMsg(callback);
+            });
+            #endregion
+
+            #region Trading
+            msg.Handle<SteamTrading.TradeProposedCallback>(callback =>
+            {
+                handler.HandleTrade(callback);
+            });
+
+            msg.Handle<SteamTrading.TradeResultCallback>(callback =>
+            {
+                handler.HandleTrade(callback);
+            });
+
+            msg.Handle<SteamTrading.SessionStartCallback>(callback =>
+            {
+                handler.HandleTrade(callback);
             });
             #endregion
         }

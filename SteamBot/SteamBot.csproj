@@ -24,6 +24,8 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>True</DebugSymbols>
@@ -36,6 +38,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <Externalconsole>True</Externalconsole>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>none</DebugType>
@@ -45,6 +48,7 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <Externalconsole>True</Externalconsole>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>SteamBot.MainClass</StartupObject>
@@ -77,6 +81,7 @@
     <Compile Include="Trading\IAuthenticator.cs" />
     <Compile Include="Trading\ITrader.cs" />
     <Compile Include="Trading\Trade.cs" />
+    <Compile Include="Trading\Traders\ConsoleTrader.cs" />
     <Compile Include="Trading\Web.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
@@ -114,7 +119,5 @@
       <LastGenOutput>SteamBot.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Trading\Traders\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

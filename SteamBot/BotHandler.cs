@@ -85,13 +85,20 @@ namespace SteamBot
         /// <param name="callback"></param>
         public virtual void HandleFriendPersonaState(SteamFriends.PersonaStateCallback callback) { }
 
+        public abstract void HandleTrade(SteamTrading.TradeProposedCallback callback);
+
+        public abstract void HandleTrade(SteamTrading.TradeResultCallback callback);
+
+        public abstract void HandleTrade(SteamTrading.SessionStartCallback callback);
+
         public Bot bot;
+        public SteamID steamId;
         public SteamClient steamClient;
         public SteamUser steamUser;
         public SteamFriends steamFriends;
+        public SteamTrading steamTrading;
         public SteamUser.LogOnDetails logOnDetails;
-
-        public string steamID;
+        public string sessionId;
         public string steamLogin;
         public Trading.Web web;
     }

@@ -19,10 +19,23 @@ namespace SteamBot.Trading
         public bool ActAsAjax { get; set; }
         public CookieContainer Cookies { get; private set; }
 
-        public Web()
+        public Web(CookieContainer cookies = null)
         {
             this.ActAsAjax = false;
-            this.Cookies = new CookieContainer();
+            if (cookies != null)
+            {
+                this.Cookies = cookies;
+            }
+            else
+            {
+                this.Cookies = new CookieContainer();
+            }
+        }
+
+        public Web(Web web)
+        {
+            this.ActAsAjax = web.ActAsAjax;
+            this.Cookies = web.Cookies;
         }
 
         public string Do(string uri, string method = "GET")
@@ -44,6 +57,7 @@ namespace SteamBot.Trading
 
         public HttpWebResponse Request(string uri, string method, NameValueCollection data)
         {
+
             HttpWebRequest request = WebRequest.Create(CreateUri(uri)) as HttpWebRequest;
             
             request.Method = method; 
@@ -61,6 +75,11 @@ namespace SteamBot.Trading
 
             request.CookieContainer = Cookies;
 
+            foreach (Cookie cookie in Cookies.GetCookies(request.RequestUri))
+            {
+                Console.WriteLine("COOKIE:\nNAME: {0}, VALUE: {1}", cookie.Name, cookie.Value);
+            }
+
             if (data != null)
             {
                 string dataString = String.Join("&", Array.ConvertAll(data.AllKeys, key =>
@@ -68,7 +87,7 @@ namespace SteamBot.Trading
                     )
                 );
 
-                byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
+                byte[] dataBytes = Encoding.ASCII.GetBytes(dataString);
                 request.ContentLength = dataBytes.Length;
 
                 Stream requestStream = request.GetRequestStream();
@@ -80,7 +99,7 @@ namespace SteamBot.Trading
 
         private Uri CreateUri(string path)
         {
-            Uri uri = new Uri(Scheme + "://" + Domain + "/" + path);
+            Uri uri = new Uri(Scheme + "://" + Domain + path);
             return uri;
         }
     }

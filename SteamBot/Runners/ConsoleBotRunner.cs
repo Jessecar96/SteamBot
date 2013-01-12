@@ -30,9 +30,10 @@ namespace SteamBot.Runners
                 BotName = SteamBot.Default.Name,
                 SentryFile = SteamBot.Default.SentryFile,
                 Authenticator = typeof(Trading.Authenticator.SteamUserAuth),
+                Trader = typeof(Trading.Traders.ConsoleTrader),
                 runner = this
             };
-            Bot bot = Bot.InitializeBot(botConfig, typeof(Handlers.ConsoleBotHandler));
+            Bot bot = new Bot(botConfig, typeof(Handlers.ConsoleBotHandler));
             Thread botThread = new Thread( ()=>
             {
                 bot.Start();
