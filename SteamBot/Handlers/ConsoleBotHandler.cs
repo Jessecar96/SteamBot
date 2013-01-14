@@ -6,6 +6,7 @@ using SteamKit2;
 using System.Security.Cryptography;
 using System.IO;
 using System.Net;
+using SteamBot.Trading;
 
 namespace SteamBot.Handlers
 {
@@ -212,9 +213,10 @@ namespace SteamBot.Handlers
             }
         }
 
-        public void HandleTradeClose(string reason)
+        public override void HandleTradeClose(Api.ETradeStatus status)
         {
-            DoLog(ELogType.WARN, String.Format("Trade Closed: {0}", reason));
+            DoLog(ELogType.WARN, String.Format("Trade Closed: {0}", status));
+            steamFriends.SendChatMessage(currentTrade.otherSid, EChatEntryType.ChatMsg, ":(");
             currentTrade = null;
         }
 

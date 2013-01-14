@@ -16,9 +16,6 @@ namespace SteamBot
                 // We passed the options to runner, it's now up to the runner to deal with it.
                 runner.Start (options);
             }
-#if DEBUG
-            Console.ReadKey ();
-#endif
 		}
 	}
 }

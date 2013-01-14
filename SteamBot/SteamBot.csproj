@@ -81,7 +81,7 @@
     <Compile Include="Trading\IAuthenticator.cs" />
     <Compile Include="Trading\ITrader.cs" />
     <Compile Include="Trading\Trade.cs" />
-    <Compile Include="Trading\Traders\ConsoleTrader.cs" />
+    <Compile Include="Trading\Traders\BasicTrader.cs" />
     <Compile Include="Trading\Web.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

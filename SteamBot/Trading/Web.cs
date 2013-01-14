@@ -46,7 +46,7 @@ namespace SteamBot.Trading
         public string Do(string uri, string method, NameValueCollection data)
         {
             HttpWebResponse response = Request(uri, method, data);
-            StreamReader reader = new StreamReader(response.GetResponseStream());
+            StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
             return reader.ReadToEnd();
         }
 
@@ -65,7 +65,7 @@ namespace SteamBot.Trading
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             request.Host = Domain;
             request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
-            request.Referer = Scheme + "://" + Domain;
+            request.Referer = Scheme + "://" + Domain + "/trade/1";
 
             if (ActAsAjax)
             {

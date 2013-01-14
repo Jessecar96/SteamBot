@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SteamKit2;
+using SteamBot.Trading;
 
 namespace SteamBot
 {
@@ -90,6 +91,8 @@ namespace SteamBot
         public abstract void HandleTrade(SteamTrading.TradeResultCallback callback);
 
         public abstract void HandleTrade(SteamTrading.SessionStartCallback callback);
+
+        public abstract void HandleTradeClose(Api.ETradeStatus status);
 
         public Bot bot;
         public SteamID steamId;

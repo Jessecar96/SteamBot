@@ -12,6 +12,7 @@ namespace SteamBot.Trading
         public Api api;
         public ITrader trader;
         public Bot bot;
+        public SteamID otherSid;
 
         private Thread statusThread;
         private Thread pollThread;
@@ -29,11 +30,20 @@ namespace SteamBot.Trading
             Start(otherSID, bot, trader);
         }
 
+        public void CloseTrade()
+        {
+            this.trading = false;
+            pollThread.Join(500);
+            if (statusThread != null)
+                statusThread.Join(500);
+        }
+
         void Start(SteamID otherSid, Bot bot, Type trader)
         {
             this.bot = bot;
             this.trader = (ITrader)System.Activator.CreateInstance(trader);
             this.trader.trade = this;
+            this.otherSid = otherSid;
             statusThread = null;
 
             api = new Api(otherSid, bot.handler);
@@ -44,11 +54,8 @@ namespace SteamBot.Trading
             {
                 while (trading)
                 {
-                    //DoLog(ELogType.INFO, "(POLL) AWAITING LOCK ON API...");
                     apiMutex.WaitOne();
-                    //DoLog(ELogType.INFO, "(POLL) GOT LOCK ON API.");
                     api.GetStatus();
-                    //DoLog(ELogType.INFO, "(POLL) RELEASED LOCK ON API.");
                     apiMutex.ReleaseMutex();
                     Thread.Sleep(800);
                 }
@@ -64,12 +71,9 @@ namespace SteamBot.Trading
             {
                 statusThread = new Thread(() =>
                 {
-                    //DoLog(ELogType.INFO, "(STATUS) AWAITING LOCK ON API...");
                     apiMutex.WaitOne();
-                    //DoLog(ELogType.INFO, "(STATUS) GOT LOCK ON API.");
                     trader.OnStatusUpdate(status);
                     apiMutex.ReleaseMutex();
-                    //DoLog(ELogType.INFO, "(STATUS) RELEASED LOCK ON API.");
                 });
                 statusThread.Start();
             }

@@ -7,26 +7,7 @@ using System.Web;
 
 namespace SteamBot.Trading
 {
-    /*
-     * Trade Status
-     * 1 - Trade Completed
-     * 2 - 
-     * 3 - Trade Cancelled (by them)
-     * 4 - Parter Timed out
-     * 5 - Failed (?)
-     */
 
-    /*
-     * Event Actions
-     * 0 - Add Item
-     * 1 - Remove Item
-     * 2 - Ready
-     * 3 - Unready
-     * 4 - 
-     * 5 - 
-     * 6 - Currency(?)
-     * 7 - Message
-     */
     public class Api
     {
 
@@ -41,12 +22,12 @@ namespace SteamBot.Trading
         /// <summary>
         /// The position of the event log we are on.
         /// </summary>
-        private int logPos { get; set; }
+        public int logPos { get; set; }
 
         /// <summary>
         /// The version of the item lists each player has put up.
         /// </summary>
-        private int version { get; set; }
+        public int version { get; set; }
 
         /// <summary>
         /// Becaause whenever we do an action, such as chat, additem, or
@@ -70,12 +51,7 @@ namespace SteamBot.Trading
             web.Scheme = "http";
             web.ActAsAjax = true;
             logPos = 0;
-            version = 0;
-
-            foreach (System.Net.Cookie cookie in web.Cookies.GetCookies(new Uri("http://steamcommunity.com")))
-            {
-                Console.WriteLine(cookie);
-            }
+            version = 1;
 
             sessionId = Uri.UnescapeDataString(botHandler.sessionId);
             steamLogin = botHandler.steamLogin;
@@ -132,7 +108,7 @@ namespace SteamBot.Trading
             public bool Success { get; set; }
 
             [JsonProperty("trade_status")]
-            public long TradeStatus { get; set; }
+            public ETradeStatus TradeStatus { get; set; }
 
             [JsonProperty("version")]
             public int Version { get; set; }
@@ -145,6 +121,9 @@ namespace SteamBot.Trading
 
             [JsonProperty("them")]
             public TradeUser Other { get; set; }
+
+            [JsonProperty("events")]
+            public TradeEvent[] Events { get; set; }
 
         }
 
@@ -166,10 +145,24 @@ namespace SteamBot.Trading
         {
 
             [JsonProperty("steamid")]
-            public string SteamId { get; set; }
+            public ulong _SteamId
+            {
+                get
+                {
+                    return SteamId.ConvertToUInt64();
+                }
+
+                set
+                {
+                    SteamId = new SteamID(value);
+                }
+            }
+
+            [JsonIgnore]
+            public SteamID SteamId { get; set; }
 
             [JsonProperty("action")]
-            public int Action { get; set; }
+            public ETradeAction Action { get; set; }
 
             [JsonProperty("timestamp")]
             public ulong Timestamp { get; set; }
@@ -186,6 +179,44 @@ namespace SteamBot.Trading
             [JsonProperty("assetid")]
             public ulong AssetId { get; set; }
 
+        }
+
+        /*
+         * Trade Status
+         * 1 - Trade Completed
+         * 2 - 
+         * 3 - Trade Cancelled (by them)
+         * 4 - Parter Timed out
+         * 5 - Failed (?)
+         */
+        public enum ETradeStatus
+        {
+            TradeInProgress = 0,
+            TradeCompleted  = 1,
+            TradeCancelled  = 3,
+            TradeTimedout   = 4,
+            TradeFailed     = 5
+        }
+
+        /*
+         * Event Actions
+         * 0 - Add Item
+         * 1 - Remove Item
+         * 2 - Ready
+         * 3 - Unready
+         * 4 - 
+         * 5 - 
+         * 6 - Currency(?)
+         * 7 - Message
+         */
+        public enum ETradeAction
+        {
+            ItemAdd        = 0,
+            ItemRemove     = 1,
+            UserReady      = 2,
+            UserUnready    = 3,
+            CurrencyChange = 6,
+            UserMessage    = 7
         }
         #endregion
     }
