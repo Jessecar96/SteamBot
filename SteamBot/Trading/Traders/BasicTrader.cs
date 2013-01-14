@@ -12,6 +12,20 @@ namespace SteamBot.Trading.Traders
         public Trade trade { get; set; }
         private int numEvents;
 
+        protected Dictionary<int, Inventory> myInventory;
+        protected Dictionary<int, Inventory> theirInventory;
+        protected Dictionary<int, Schema> schema;
+
+        public void Start()
+        {
+            schema = new Dictionary<int, Schema>();
+            schema.Add(440, new Schema(440, trade.bot.botConfig.ApiKey));
+            myInventory = new Dictionary<int, Inventory>();
+            myInventory.Add(440, new Inventory(trade.botSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
+            theirInventory = new Dictionary<int, Inventory>();
+            theirInventory.Add(440, new Inventory(trade.otherSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
+        }
+
         public void OnStatusUpdate(Api.Status status)
         {
             trade.DoLog(ELogType.DEBUG, 
@@ -97,7 +111,9 @@ namespace SteamBot.Trading.Traders
         /// <param name="tradeEvent">The event itself.</param>
         public virtual void OnItemAdd(Api.Status status, Api.TradeEvent tradeEvent)
         {
-            trade.api.SendMessage("You added an item!");
+            Inventory.Item item = theirInventory[tradeEvent.AppId].GetItem(tradeEvent.AssetId);
+            Schema.Item schemaItem = item.GetSchemaItem(schema[tradeEvent.AppId]);
+            trade.api.SendMessage(String.Format("You added {0}!", schemaItem.Name));
         }
 
         /// <summary>

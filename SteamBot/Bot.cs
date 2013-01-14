@@ -18,6 +18,8 @@ namespace SteamBot
         /// </summary>
         public BotHandler handler;
 
+        public SteamID steamId;
+
         /// <summary>
         /// Sets up the bot.
         /// </summary>

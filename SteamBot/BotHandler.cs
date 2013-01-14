@@ -95,7 +95,6 @@ namespace SteamBot
         public abstract void HandleTradeClose(Api.ETradeStatus status);
 
         public Bot bot;
-        public SteamID steamId;
         public SteamClient steamClient;
         public SteamUser steamUser;
         public SteamFriends steamFriends;

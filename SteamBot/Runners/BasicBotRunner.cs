@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using SteamBot;
+using SteamBot.Trading;
 
 namespace SteamBot.Runners
 {
@@ -9,7 +10,7 @@ namespace SteamBot.Runners
     /// Console bot runner.  Despite its name, it also logs to a file, as well.
     /// The log file(s) are taken from the arguments passed to the file.
     /// </summary>
-    public class ConsoleBotRunner : IBotRunner
+    public class BasicBotRunner : IBotRunner
     {
 
         private ELogType LogLevel;
@@ -22,6 +23,12 @@ namespace SteamBot.Runners
             fileStream = File.AppendText (options.LogFile);
             fileStream.AutoFlush = true;
 
+            if (!options.SkipSchema)
+            {
+                DoLog(ELogType.INFO, "Caching Schema...");
+                Schema schema = new Schema(440, SteamBot.Default.ApiKey);
+            }
+
             BotConfig botConfig = new BotConfig
             {
                 Username = SteamBot.Default.BotUserName,
@@ -33,7 +40,7 @@ namespace SteamBot.Runners
                 Trader = typeof(Trading.Traders.BasicTrader),
                 runner = this
             };
-            Bot bot = new Bot(botConfig, typeof(Handlers.ConsoleBotHandler));
+            Bot bot = new Bot(botConfig, typeof(Handlers.BasicBotHandler));
             Thread botThread = new Thread( ()=>
             {
                 bot.Start();

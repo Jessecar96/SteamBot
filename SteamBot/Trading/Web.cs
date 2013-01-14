@@ -50,6 +50,13 @@ namespace SteamBot.Trading
             return reader.ReadToEnd();
         }
 
+        public string Do(HttpWebRequest request)
+        {
+            HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+            StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
+            return reader.ReadToEnd();
+        }
+
         public HttpWebResponse Request(string uri, string method = "GET")
         {
             return Request(uri, method, null);
@@ -57,10 +64,14 @@ namespace SteamBot.Trading
 
         public HttpWebResponse Request(string uri, string method, NameValueCollection data)
         {
+            return GetRequest(uri, method, data).GetResponse() as HttpWebResponse;
+        }
 
+        public HttpWebRequest GetRequest(string uri, string method, NameValueCollection data)
+        {
             HttpWebRequest request = WebRequest.Create(CreateUri(uri)) as HttpWebRequest;
-            
-            request.Method = method; 
+
+            request.Method = method;
             request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             request.Host = Domain;
@@ -87,14 +98,14 @@ namespace SteamBot.Trading
                     )
                 );
 
-                byte[] dataBytes = Encoding.ASCII.GetBytes(dataString);
+                byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
                 request.ContentLength = dataBytes.Length;
 
                 Stream requestStream = request.GetRequestStream();
                 requestStream.Write(dataBytes, 0, dataBytes.Length);
             }
 
-            return request.GetResponse() as HttpWebResponse;
+            return request;
         }
 
         private Uri CreateUri(string path)

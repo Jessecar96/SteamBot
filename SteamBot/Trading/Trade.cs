@@ -12,6 +12,7 @@ namespace SteamBot.Trading
         public Api api;
         public ITrader trader;
         public Bot bot;
+        public SteamID botSid;
         public SteamID otherSid;
 
         private Thread statusThread;
@@ -38,12 +39,14 @@ namespace SteamBot.Trading
                 statusThread.Join(500);
         }
 
-        void Start(SteamID otherSid, Bot bot, Type trader)
+        void Start(SteamID otherSid, Bot bot, Type traderType)
         {
             this.bot = bot;
-            this.trader = (ITrader)System.Activator.CreateInstance(trader);
-            this.trader.trade = this;
             this.otherSid = otherSid;
+            trader = (ITrader)System.Activator.CreateInstance(traderType);
+            trader.trade = this;
+            botSid = bot.steamId;
+            trader.Start();
             statusThread = null;
 
             api = new Api(otherSid, bot.handler);

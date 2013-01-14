@@ -10,7 +10,7 @@ using SteamBot.Trading;
 
 namespace SteamBot.Handlers
 {
-    public class ConsoleBotHandler : BotHandler
+    public class BasicBotHandler : BotHandler
     {
 
         private bool running = true;
@@ -69,7 +69,7 @@ namespace SteamBot.Handlers
             if (callback.Result == EResult.OK)
             {
                 DoLog(ELogType.SUCCESS, "Login Completed Successfully.");
-                steamId = callback.ClientSteamID;
+                bot.steamId = callback.ClientSteamID;
             }
             else if (callback.Result == EResult.InvalidLoginAuthCode ||
                     callback.Result == EResult.AccountLogonDenied)

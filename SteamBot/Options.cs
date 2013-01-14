@@ -26,8 +26,12 @@ namespace SteamBot
         public ELogType LogLevel { get; set; }
 
         [Option('r', "runner", HelpText = "The bot runner that SteamBot will use.",
-                DefaultValue = "SteamBot.Runners.ConsoleBotRunner")]
+                DefaultValue = "SteamBot.Runners.BasicBotRunner")]
         public string Runner { get; set; }
+
+        [Option('s', "skip", HelpText = "Skip caching the schema.",
+                DefaultValue = false)]
+        public bool SkipSchema { get; set; }
 
         [HelpOption]
         public string GetUsage() {

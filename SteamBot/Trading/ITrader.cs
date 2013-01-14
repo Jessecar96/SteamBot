@@ -15,6 +15,8 @@ namespace SteamBot.Trading
         /// <param name="status">The current status of the server.</param>
         void OnStatusUpdate(Api.Status status);
 
+        void Start();
+
         Trade trade { get; set; }
     }
 }

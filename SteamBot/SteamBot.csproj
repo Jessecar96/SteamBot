@@ -63,23 +63,20 @@
   <ItemGroup>
     <Compile Include="Bot.cs" />
     <Compile Include="BotConfig.cs" />
-    <Compile Include="Handlers\ConsoleBotHandler.cs" />
+    <Compile Include="Handlers\BasicBotHandler.cs" />
     <Compile Include="BotHandler.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="IBotRunner.cs" />
     <Compile Include="Options.cs" />
-    <Compile Include="Runners\ConsoleBotRunner.cs" />
+    <Compile Include="Runners\BasicBotRunner.cs" />
     <Compile Include="SteamBot.cs" />
-    <Compile Include="SteamBot.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <DependentUpon>SteamBot.settings</DependentUpon>
-    </Compile>
     <Compile Include="Trading\Api.cs" />
     <Compile Include="Trading\Authenticator\SteamUserAuth.cs" />
     <Compile Include="Trading\IAuthenticator.cs" />
+    <Compile Include="Trading\Inventory.cs" />
     <Compile Include="Trading\ITrader.cs" />
+    <Compile Include="Trading\Schema.cs" />
     <Compile Include="Trading\Trade.cs" />
     <Compile Include="Trading\Traders\BasicTrader.cs" />
     <Compile Include="Trading\Web.cs" />
@@ -111,13 +108,6 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="SteamBot.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>SteamBot.Designer.cs</LastGenOutput>
-    </None>
   </ItemGroup>
   <ItemGroup />
 </Project>
