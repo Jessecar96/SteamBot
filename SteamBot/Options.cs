@@ -8,9 +8,9 @@ namespace SteamBot
     /// </summary>
     public class Options : CommandLineOptionsBase
     {
-        //[Option('f', "from", HelpText = "Settings file to read from.", 
-        //        Required = true)]
-        //public string ReadFile { get; set; }
+        [Option('f', "from", HelpText = "Settings file to read from.", 
+                DefaultValue = "settings.json")]
+        public string ReadFile { get; set; }
 
         [Option('l', "log", HelpText = "File to log to.",
                 DefaultValue = "steambot.log")]

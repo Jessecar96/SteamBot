@@ -29,6 +29,12 @@ namespace SteamBot
         /// <param name="password">The password the bot will authenticate with.</param>
         public Bot(BotConfig botConfig, BotHandler handler)
         {
+            if (botConfig.AppIds == null)
+            {
+                throw new ArgumentNullException("botConfig.AppIds", 
+                    "Please check your config file, because botConfig.AppIds is not set.");
+            }
+
             handler.bot = this;
             this.botConfig = botConfig;
             this.handler = handler;
@@ -48,91 +54,12 @@ namespace SteamBot
 
         public void Exit()
         {
-            handler.HandleBotShutdown();
+            handler.OnBotShutdown();
         }
 
         ~Bot()
         {
             Exit();
-        }
-
-        /// <summary>
-        /// Takes all steam messages and delegates them to the BotHandler.
-        /// </summary>
-        /// <param name="msg"></param>
-        public void HandleSteamMessage(CallbackMsg msg)
-        {
-            botConfig.runner.DoLog(ELogType.DEBUG, botConfig.BotName, msg.ToString());
-            #region Connection
-            msg.Handle<SteamClient.ConnectedCallback>(callback =>
-            {
-                botConfig.runner.DoLog (ELogType.DEBUG, String.Format ("Callback Result: {0}", callback.Result.ToString ()));
-                handler.HandleBotLogin(callback);
-            });
-
-            msg.Handle<SteamClient.DisconnectedCallback>(callback =>
-            {
-                handler.HandleBotDisconnect();
-            });
-            #endregion
-
-            #region Login
-            msg.Handle<SteamUser.LoggedOnCallback>(callback =>
-            {
-                handler.HandleBotLogin(callback);
-            });
-
-            msg.Handle<SteamUser.LoginKeyCallback>(callback =>
-            {
-                handler.HandleBotLogin(callback);
-            });
-
-            msg.Handle<SteamUser.LoggedOffCallback>(callback =>
-            {
-                handler.HandleBotLogoff(callback);
-            });
-
-            if (msg.IsType<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>())
-            {
-                msg.Handle<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>(
-                    jobCallback => handler.HandleUpdateMachineAuth(jobCallback.Callback, jobCallback.JobID)
-                );
-            }
-            #endregion
-
-            #region Friends
-            msg.Handle<SteamFriends.PersonaStateCallback>(callback =>
-            {
-                handler.HandleFriendPersonaState(callback);
-            });
-
-            msg.Handle<SteamFriends.FriendsListCallback>(callback =>
-            {
-                handler.HandleFriendsList(callback);
-            });
-
-            msg.Handle<SteamFriends.FriendMsgCallback>(callback =>
-            {
-                handler.HandleFriendMsg(callback);
-            });
-            #endregion
-
-            #region Trading
-            msg.Handle<SteamTrading.TradeProposedCallback>(callback =>
-            {
-                handler.HandleTrade(callback);
-            });
-
-            msg.Handle<SteamTrading.TradeResultCallback>(callback =>
-            {
-                handler.HandleTrade(callback);
-            });
-
-            msg.Handle<SteamTrading.SessionStartCallback>(callback =>
-            {
-                handler.HandleTrade(callback);
-            });
-            #endregion
         }
     }
 }

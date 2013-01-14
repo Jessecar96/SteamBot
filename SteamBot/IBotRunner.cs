@@ -14,6 +14,7 @@ namespace SteamBot
 
     public interface IBotRunner
     {
+
         /// <summary>
         /// This initializes the bot runner.
         /// </summary>

@@ -19,7 +19,7 @@ namespace SteamBot.Trading
         private Thread pollThread;
         private Mutex apiMutex;
 
-        public bool trading = true;
+        public volatile bool trading = true;
 
         public Trade(SteamID otherSID, Bot bot)
         {

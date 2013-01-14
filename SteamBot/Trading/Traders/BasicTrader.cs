@@ -19,18 +19,21 @@ namespace SteamBot.Trading.Traders
         public void Start()
         {
             schema = new Dictionary<int, Schema>();
-            schema.Add(440, new Schema(440, trade.bot.botConfig.ApiKey));
             myInventory = new Dictionary<int, Inventory>();
-            myInventory.Add(440, new Inventory(trade.botSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
             theirInventory = new Dictionary<int, Inventory>();
-            theirInventory.Add(440, new Inventory(trade.otherSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
+            foreach(int appId in trade.bot.botConfig.AppIds)
+            {
+                schema.Add(appId, new Schema(appId, trade.bot.botConfig.ApiKey));
+                myInventory.Add(appId, new Inventory(trade.botSid, appId, trade.bot.botConfig.ApiKey));
+                theirInventory.Add(appId, new Inventory(trade.otherSid, appId, trade.bot.botConfig.ApiKey));
+            }
+            //schema.Add(440, new Schema(440, trade.bot.botConfig.ApiKey));
+            //myInventory.Add(440, new Inventory(trade.botSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
+            //theirInventory.Add(440, new Inventory(trade.otherSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
         }
 
         public void OnStatusUpdate(Api.Status status)
         {
-            trade.DoLog(ELogType.DEBUG, 
-                String.Format("STATUS:\nerror: {0}, new_version: {1}, sucess: {2}, trade_status: {3}, version: {4}, logpos: {5}, events: {6}",
-                status.Error, status.NewVersion, status.Success, status.TradeStatus, status.Version, status.Logpos, status.Events));
 
             if (status.NewVersion)
             {
@@ -56,7 +59,6 @@ namespace SteamBot.Trading.Traders
                 // the bot generates events, too, so we should check for those.
                 if (status.Events != null && status.Events.Length > 0 && numEvents < status.Events.Length)
                 {
-                    trade.DoLog(ELogType.DEBUG, "NEW EVENTS");
                     for(int i = numEvents; i < status.Events.Length; i++)
                     {
                         Api.TradeEvent tradeEvent = status.Events[i];

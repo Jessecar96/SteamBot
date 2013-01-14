@@ -13,7 +13,7 @@ namespace SteamBot.Handlers
     public class BasicBotHandler : BotHandler
     {
 
-        private bool running = true;
+        private volatile bool running = true;
         private IBotRunner log;
         private Trading.Trade currentTrade { get; set; }
 
@@ -32,16 +32,37 @@ namespace SteamBot.Handlers
             steamTrading = steamClient.GetHandler<SteamTrading>();
             log = bot.botConfig.runner;
 
+            manager = new CallbackManager(steamClient);
+
+            new Callback<SteamClient.ConnectedCallback>(OnClientConnected, manager);
+            new Callback<SteamClient.DisconnectedCallback>(OnClientDisconnect, manager);
+            new Callback<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>((jobCallback) =>
+            {
+                OnUserUpdateMachineAuth(jobCallback.Callback, jobCallback.JobID);
+            }, manager);
+
+            new Callback<SteamUser.LoggedOnCallback>(OnUserLoggedOn, manager);
+            new Callback<SteamUser.LoginKeyCallback>(OnUserLoginKey, manager);
+            new Callback<SteamUser.LoggedOffCallback>(OnUserLoggedOff, manager);
+
+            new Callback<SteamFriends.FriendMsgCallback>(OnFriendMsg, manager);
+            new Callback<SteamFriends.FriendsListCallback>(OnFriendsListUpdate, manager);
+            new Callback<SteamFriends.PersonaStateCallback>(OnFriendsPersonaStateUpdate, manager);
+
+            new Callback<SteamTrading.SessionStartCallback>(OnTradingSessionStart, manager);
+            new Callback<SteamTrading.TradeProposedCallback>(OnTradeProposed, manager);
+            new Callback<SteamTrading.TradeResultCallback>(OnTradeResult, manager);
+
             steamClient.Connect ();
             DoLog (ELogType.INFO, "Connecting...");
-            do
+
+            while (running)
             {
-                CallbackMsg msg = steamClient.WaitForCallback(true);
-                bot.HandleSteamMessage(msg);
-            } while (running);
+                manager.RunWaitCallbacks(new TimeSpan(1));
+            }
         }
 
-        public override void HandleBotLogin(SteamClient.ConnectedCallback callback)
+        public override void OnClientConnected(SteamClient.ConnectedCallback callback)
         {
             if(callback.Result == EResult.OK)
             {
@@ -64,7 +85,7 @@ namespace SteamBot.Handlers
             }
         }
 
-        public override void HandleBotLogin(SteamUser.LoggedOnCallback callback)
+        public override void OnUserLoggedOn(SteamUser.LoggedOnCallback callback)
         {
             if (callback.Result == EResult.OK)
             {
@@ -84,7 +105,7 @@ namespace SteamBot.Handlers
             }
         }
 
-        public override void HandleBotLogin(SteamUser.LoginKeyCallback callback)
+        public override void OnUserLoginKey(SteamUser.LoginKeyCallback callback)
         {
             steamFriends.SetPersonaName(bot.botConfig.BotName);
             steamFriends.SetPersonaState(EPersonaState.Online);
@@ -103,7 +124,7 @@ namespace SteamBot.Handlers
             DoLog(ELogType.SUCCESS, "Logged in!");
         }
 
-        public override void HandleUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
+        private void OnUserUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
         {
             byte[] hash = SHAHash(machineAuth.Data);
             File.WriteAllBytes(bot.botConfig.SentryFile, machineAuth.Data);
@@ -123,7 +144,7 @@ namespace SteamBot.Handlers
             steamUser.SendMachineAuthResponse(authDetails);
         }
 
-        public override void HandleBotDisconnect()
+        public override void OnClientDisconnect(SteamClient.DisconnectedCallback callback)
         {
             if (running)
             {
@@ -136,7 +157,7 @@ namespace SteamBot.Handlers
             }
         }
 
-        public override void HandleBotLogoff(SteamUser.LoggedOffCallback callback)
+        public override void OnUserLoggedOff(SteamUser.LoggedOffCallback callback)
         {
             if (running)
             {
@@ -148,13 +169,17 @@ namespace SteamBot.Handlers
             }
         }
 
-        public override void HandleBotShutdown()
+        public override void OnBotShutdown()
         {
             running = false;
             steamUser.LogOff();
+            if (currentTrade != null)
+            {
+                currentTrade.CloseTrade();
+            }
         }
 
-        public override void HandleFriendMsg(SteamFriends.FriendMsgCallback callback)
+        public override void OnFriendMsg(SteamFriends.FriendMsgCallback callback)
         {
             if (callback.EntryType == EChatEntryType.Emote ||
                 callback.EntryType == EChatEntryType.ChatMsg)
@@ -164,13 +189,13 @@ namespace SteamBot.Handlers
             }
         }
 
-        public override void HandleFriendAdd(SteamID steamId)
+        public override void OnFriendAdd(SteamID steamId)
         {
             steamFriends.AddFriend(steamId);
             DoLog(ELogType.INFO, "Recieved friend request from " + steamFriends.GetFriendPersonaName(steamId));
         }
 
-        public override void HandleFriendsList(SteamFriends.FriendsListCallback callback)
+        public override void OnFriendsListUpdate(SteamFriends.FriendsListCallback callback)
         {
             foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
             {
@@ -181,23 +206,23 @@ namespace SteamBot.Handlers
 
                 if (friend.Relationship == EFriendRelationship.RequestInitiator)
                 {
-                    HandleFriendAdd(friend.SteamID);
+                    OnFriendAdd(friend.SteamID);
                 }
             }
         }
 
-        public override void HandleTrade(SteamTrading.SessionStartCallback callback)
+        public override void OnTradingSessionStart(SteamTrading.SessionStartCallback callback)
         {
             CreateTrade(callback.OtherClient);
         }
 
-        public override void HandleTrade(SteamTrading.TradeProposedCallback callback)
+        public override void OnTradeProposed(SteamTrading.TradeProposedCallback callback)
         {
             if (currentTrade == null)
                 steamTrading.RespondToTrade(callback.TradeID, true);
         }
 
-        public override void HandleTrade(SteamTrading.TradeResultCallback callback)
+        public override void OnTradeResult(SteamTrading.TradeResultCallback callback)
         {
             if (callback.Response != EEconTradeResponse.Accepted)
             {

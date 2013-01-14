@@ -15,6 +15,9 @@ namespace SteamBot.Trading
         /// <param name="status">The current status of the server.</param>
         void OnStatusUpdate(Api.Status status);
 
+        /// <summary>
+        /// This is called to initalize the values.
+        /// </summary>
         void Start();
 
         Trade trade { get; set; }

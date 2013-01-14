@@ -86,11 +86,6 @@ namespace SteamBot.Trading
 
             request.CookieContainer = Cookies;
 
-            foreach (Cookie cookie in Cookies.GetCookies(request.RequestUri))
-            {
-                Console.WriteLine("COOKIE:\nNAME: {0}, VALUE: {1}", cookie.Name, cookie.Value);
-            }
-
             if (data != null)
             {
                 string dataString = String.Join("&", Array.ConvertAll(data.AllKeys, key =>

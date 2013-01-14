@@ -33,9 +33,22 @@ namespace SteamBot
         /// </summary>
         public string SentryFile { get; set; }
 
+        /// <summary>
+        /// The authenticator to use.  
+        /// <see cref="SteamBot.Trading.IAuthenticator"/>.
+        /// </summary>
         public Type Authenticator { get; set; }
 
+        /// <summary>
+        /// The trader to use.
+        /// <see cref="SteamBot.Trading.ITrader"/>.
+        /// </summary>
         public Type Trader { get; set; }
+
+        /// <summary>
+        /// The Steam App IDs to support.
+        /// </summary>
+        public int[] AppIds { get; set; }
 
         public IBotRunner runner;
     }

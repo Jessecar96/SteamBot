@@ -19,57 +19,50 @@ namespace SteamBot
         /// connected.
         /// </summary>
         /// <param name="callback">The callback response.</param>
-        public abstract void HandleBotLogin(SteamClient.ConnectedCallback callback);
+        public abstract void OnClientConnected(SteamClient.ConnectedCallback callback);
 
         /// <summary>
         /// Handle the login for the Bot class.  This is called after logging 
         /// in.
         /// </summary>
         /// <param name="callback">The callback response.</param>
-        public abstract void HandleBotLogin(SteamUser.LoggedOnCallback callback);
+        public abstract void OnUserLoggedOn(SteamUser.LoggedOnCallback callback);
 
         /// <summary>
         /// Handle the login for the Bot class.  This is called when the user
         /// is compeletely logged in.
         /// </summary>
         /// <param name="callback">The callback response.</param>
-        public abstract void HandleBotLogin(SteamUser.LoginKeyCallback callback);
+        public abstract void OnUserLoginKey(SteamUser.LoginKeyCallback callback);
 
         /// <summary>
         /// Handle shutting down the connection.  Take as much time as you
         /// need.
         /// </summary>
-        public abstract void HandleBotShutdown();
+        public abstract void OnBotShutdown();
 
         /// <summary>
         /// When the bot is disconnected from Steam.
         /// </summary>
-        public abstract void HandleBotDisconnect();
+        public abstract void OnClientDisconnect(SteamClient.DisconnectedCallback callback);
 
         /// <summary>
         /// When the bot is logged off.
         /// </summary>
         /// <param name="callback">The callback response.</param>
-        public abstract void HandleBotLogoff(SteamUser.LoggedOffCallback callback);
-
-        /// <summary>
-        /// Handle updating the SentryFile.
-        /// </summary>
-        /// <param name="machineAuth">The callback data for MachineAuth.</param>
-        /// <param name="jobId">The JobID.</param>
-        public abstract void HandleUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId);
+        public abstract void OnUserLoggedOff(SteamUser.LoggedOffCallback callback);
 
         /// <summary>
         /// This is called when a friend added the bot.
         /// </summary>
         /// <param name="steamId">The steam ID of the friend.</param>
-        public abstract void HandleFriendAdd(SteamID steamId);
+        public abstract void OnFriendAdd(SteamID steamId);
 
         /// <summary>
         /// This is called when a friend messages the bot.
         /// </summary>
         /// <param name="callback"></param>
-        public abstract void HandleFriendMsg(SteamFriends.FriendMsgCallback callback);
+        public abstract void OnFriendMsg(SteamFriends.FriendMsgCallback callback);
 
         /// <summary>
         /// This is called when the bot recieves their friends list from the
@@ -77,20 +70,20 @@ namespace SteamBot
         /// not 'friend'.
         /// </summary>
         /// <param name="callback"></param>
-        public virtual void HandleFriendsList(SteamFriends.FriendsListCallback callback) { }
+        public virtual void OnFriendsListUpdate(SteamFriends.FriendsListCallback callback) { }
 
         /// <summary>
         /// This is called when the bot recieves a persona change from a 
         /// friend.
         /// </summary>
         /// <param name="callback"></param>
-        public virtual void HandleFriendPersonaState(SteamFriends.PersonaStateCallback callback) { }
+        public virtual void OnFriendsPersonaStateUpdate(SteamFriends.PersonaStateCallback callback) { }
 
-        public abstract void HandleTrade(SteamTrading.TradeProposedCallback callback);
+        public abstract void OnTradeProposed(SteamTrading.TradeProposedCallback callback);
 
-        public abstract void HandleTrade(SteamTrading.TradeResultCallback callback);
+        public abstract void OnTradeResult(SteamTrading.TradeResultCallback callback);
 
-        public abstract void HandleTrade(SteamTrading.SessionStartCallback callback);
+        public abstract void OnTradingSessionStart(SteamTrading.SessionStartCallback callback);
 
         public abstract void HandleTradeClose(Api.ETradeStatus status);
 
@@ -100,6 +93,7 @@ namespace SteamBot
         public SteamFriends steamFriends;
         public SteamTrading steamTrading;
         public SteamUser.LogOnDetails logOnDetails;
+        public CallbackManager manager;
         public string sessionId;
         public string steamLogin;
         public Trading.Web web;
