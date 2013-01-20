@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace SteamBot.Trading
 {
-    class Inventory
+    public class Inventory
     {
 
         /// <summary>

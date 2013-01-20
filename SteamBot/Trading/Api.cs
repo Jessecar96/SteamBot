@@ -74,24 +74,98 @@ namespace SteamBot.Trading
         /// Send a message to the chat.
         /// </summary>
         /// <param name="message">The message to send.</param>
-        /// <returns>The status of the server.</returns>
         public Status SendMessage(string message)
         {
             NameValueCollection data = GetData();
+
             data.Add("message", message);
-            string result = web.Do(baseTradeUri + "chat", "POST", data);
-            Status status = JsonConvert.DeserializeObject<Status>(result);
-            StatusUpdater(status);
-            return status;
+
+            return HandleStatus(baseTradeUri + "chat", "POST", data);
+        }
+
+        /// <summary>
+        /// Add an item to the trade.
+        /// </summary>
+        /// <param name="appId">The app Id of the game.</param>
+        /// <param name="item">The item to add.</param>
+        /// <param name="slot">The slot to put the item in.</param>
+        public Status AddItem(int appId, Inventory.Item item, int slot)
+        {
+            NameValueCollection data = GetData();
+
+            data.Add("appid", appId.ToString());
+            data.Add("contextid", "2");
+            data.Add("itemid", item.Id.ToString());
+            data.Add("slot", slot.ToString());
+
+            return HandleStatus(baseTradeUri + "additem", "POST", data);
+        }
+
+        /// <summary>
+        /// Remove an item from the trade.
+        /// </summary>
+        /// <param name="appId">The app id of the game.</param>
+        /// <param name="item">The inventory item.</param>
+        /// <param name="slot">The slot to put it in.</param>
+        public Status RemoveItem(int appId, Inventory.Item item, int slot)
+        {
+            NameValueCollection data = GetData();
+
+            data.Add("appid", appId.ToString());
+            data.Add("contextid", "2");
+            data.Add("itemid", item.Id.ToString());
+            data.Add("slot", slot.ToString());
+
+            return HandleStatus(baseTradeUri + "removeitem", "POST", data);
+        }
+
+        /// <summary>
+        /// Set the status of the bot to ready.
+        /// </summary>
+        /// <param name="ready">Whether or not to be ready.</param>
+        public Status SetReady(bool ready)
+        {
+            NameValueCollection data = GetData();
+
+            data.Add("ready", ready ? "true" : "false");
+
+            return HandleStatus(baseTradeUri + "toggleready", "POST", data);
+        }
+
+        /// <summary>
+        /// Accept this trade.
+        /// </summary>
+        public Status AcceptTrade()
+        {
+            NameValueCollection data = GetData();
+
+            return HandleStatus(baseTradeUri + "confirm", "POST", data);
+        }
+
+        public Status CancelTrade()
+        {
+            NameValueCollection data = GetData();
+
+            return HandleStatus(baseTradeUri + "cancel", "POST", data);
         }
 
         NameValueCollection GetData()
         {
             NameValueCollection data = new NameValueCollection();
+
             data.Add("sessionid", sessionId);
             data.Add("logpos", "" + logPos);
             data.Add("version", "" + version);
+
             return data;
+        }
+
+        Status HandleStatus(string uri, string method, NameValueCollection data)
+        {
+            string result = web.Do(uri, method, data);
+            Status status = JsonConvert.DeserializeObject<Status>(result);
+            StatusUpdater(status);
+            return status;
         }
 
         #region JSON Responses
@@ -204,7 +278,7 @@ namespace SteamBot.Trading
          * 1 - Remove Item
          * 2 - Ready
          * 3 - Unready
-         * 4 - 
+         * 4 - Accept(?)
          * 5 - 
          * 6 - Currency(?)
          * 7 - Message
@@ -215,6 +289,7 @@ namespace SteamBot.Trading
             ItemRemove     = 1,
             UserReady      = 2,
             UserUnready    = 3,
+            UserAccept     = 4,
             CurrencyChange = 6,
             UserMessage    = 7
         }

@@ -27,9 +27,6 @@ namespace SteamBot.Trading.Traders
                 myInventory.Add(appId, new Inventory(trade.botSid, appId, trade.bot.botConfig.ApiKey));
                 theirInventory.Add(appId, new Inventory(trade.otherSid, appId, trade.bot.botConfig.ApiKey));
             }
-            //schema.Add(440, new Schema(440, trade.bot.botConfig.ApiKey));
-            //myInventory.Add(440, new Inventory(trade.botSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
-            //theirInventory.Add(440, new Inventory(trade.otherSid.ConvertToUInt64(), 440, trade.bot.botConfig.ApiKey));
         }
 
         public void OnStatusUpdate(Api.Status status)
@@ -84,6 +81,11 @@ namespace SteamBot.Trading.Traders
                             case Api.ETradeAction.UserUnready:
                                 OnUserUnReady(status, tradeEvent);
                                 break;
+
+                            case Api.ETradeAction.UserAccept:
+                                OnUserAccept(status, tradeEvent);
+                                break;
+
                         }
                     }
 
@@ -92,7 +94,9 @@ namespace SteamBot.Trading.Traders
             }
 
             if (status.Success == false)
-                trade.trading = false;
+            {
+                trade.DoLog(ELogType.WARN, "status.Success was false!");
+            }
         }
 
         /// <summary>
@@ -100,7 +104,7 @@ namespace SteamBot.Trading.Traders
         /// </summary>
         /// <param name="status">The status of the trade.</param>
         /// <param name="reason">The reason for closing.</param>
-        public void CloseTrade(Api.ETradeStatus status)
+        public virtual void CloseTrade(Api.ETradeStatus status)
         {
             trade.CloseTrade();
             trade.bot.handler.HandleTradeClose(status);
@@ -147,6 +151,7 @@ namespace SteamBot.Trading.Traders
         public virtual void OnUserReady(Api.Status status, Api.TradeEvent tradeEvent)
         {
             trade.api.SendMessage("You readied!");
+            trade.api.SetReady(true);
         }
 
         /// <summary>
@@ -157,6 +162,14 @@ namespace SteamBot.Trading.Traders
         public virtual void OnUserUnReady(Api.Status status, Api.TradeEvent tradeEvent)
         {
             trade.api.SendMessage("You unreadied!");
+            trade.api.SetReady(false);
+        }
+
+        public virtual void OnUserAccept(Api.Status status, Api.TradeEvent tradeEvent)
+        {
+            trade.api.SendMessage("You accepted!");
+            trade.api.AcceptTrade();
+            trade.CloseTrade();
         }
 
     }

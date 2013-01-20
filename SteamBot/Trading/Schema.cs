@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace SteamBot.Trading
 {
-    class Schema
+    public class Schema
     {
 
         public SteamSchema itemSchema;
