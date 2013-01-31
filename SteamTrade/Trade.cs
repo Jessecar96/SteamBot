@@ -317,7 +317,7 @@ namespace SteamTrade
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !myOfferedItems.ContainsValue (item.Id))
+                if (item != null && myOfferedItems.ContainsValue (item.Id))
                 {
                     bool success = RemoveItem (item.Id);
 
