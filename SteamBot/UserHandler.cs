@@ -53,7 +53,7 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Called when a the user adds the bot as a friend.
+        /// Called when the user adds the bot as a friend.
         /// </summary>
         /// <returns>
         /// Whether to accept.
@@ -61,9 +61,8 @@ namespace SteamBot
         public abstract bool OnFriendAdd ();
 
         /// <summary>
-        /// NOT IMPLEMENTED.
+        /// Called when the user removes the bot as a friend.
         /// </summary>
-        /// <remarks>This will probably be implemented as the opposite of <see cref="OnFriendAdd"/>.</remarks>
         public abstract void OnFriendRemove ();
 
         /// <summary>
