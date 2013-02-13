@@ -63,7 +63,6 @@ namespace SteamBot
         /// <summary>
         /// Called when the user removes the bot as a friend.
         /// </summary>
-        /// <remarks>This will probably be implemented as the opposite of <see cref="OnFriendAdd"/>.</remarks>
         public abstract void OnFriendRemove ();
 
         /// <summary>
