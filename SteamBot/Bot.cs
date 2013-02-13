@@ -311,7 +311,15 @@ namespace SteamBot
                         if (friend.Relationship == EFriendRelationship.PendingInvitee &&
                             GetUserHandler(friend.SteamID).OnFriendAdd())
                         {
-                            SteamFriends.AddFriend (friend.SteamID);
+                            SteamFriends.AddFriend(friend.SteamID);
+                        }
+                    }
+                    else
+                    {
+                        if (friend.Relationship == EFriendRelationship.None)
+                        {
+                            friends.Remove(friend.SteamID);
+                            GetUserHandler(friend.SteamID).OnFriendRemove();
                         }
                     }
                 }
