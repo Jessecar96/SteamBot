@@ -44,6 +44,15 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Checks if the users inventory is Free to play
+        /// </summary>
+        /// <returns>True if free to play, False if not.</returns>
+        public bool IsFreeToPlay()
+        {
+            return NumSlots % 100 == 50;//If slots divided by 100 has a remander of 50, user is F2P
+        }//IsFreeToPlay()
+
         public uint NumSlots { get; set; }
         public Item[] Items { get; set; }
         public bool IsPrivate { get; private set; }
