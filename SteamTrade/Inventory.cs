@@ -57,6 +57,15 @@ namespace SteamTrade
             IsGood = (apiInventory.status == "1");
         }
 
+        /// <summary>
+        /// Check to see if user is Free to play
+        /// </summary>
+        /// <returns>Yes or no</returns>
+        public bool IsFreeToPlay()
+        {
+            return this.NumSlots % 100 == 50;
+        }
+
         public Item GetItem (ulong id)
         {
             foreach (Item item in Items)
