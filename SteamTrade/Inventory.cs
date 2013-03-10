@@ -137,6 +137,9 @@ namespace SteamTrade
 
             [JsonProperty("value")]
             public string Value { get; set; }
+
+            [JsonProperty("float_value")]
+            public float FloatValue { get; set; }
         }
 
         protected class InventoryResult
