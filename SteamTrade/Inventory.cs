@@ -128,6 +128,9 @@ namespace SteamTrade
 
             [JsonProperty("attributes")]
             public ItemAttribute[] Attributes { get; set; }
+
+            [JsonProperty("contained_item")]
+            public Item ContainedItem { get; set; }
         }
 
         public class ItemAttribute
@@ -137,6 +140,9 @@ namespace SteamTrade
 
             [JsonProperty("value")]
             public string Value { get; set; }
+
+            [JsonProperty("float_value")]
+            public float FloatValue { get; set; }
         }
 
         protected class InventoryResult
