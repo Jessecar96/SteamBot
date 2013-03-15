@@ -73,6 +73,9 @@ namespace SteamBot
 
         TradeManager tradeManager;
 
+        public Inventory MyInventory;
+        public Inventory OtherInventory;
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
             logOnDetails = new SteamUser.LogOnDetails
@@ -486,6 +489,47 @@ namespace SteamBot
             
             // send off our response
             SteamUser.SendMachineAuthResponse (authResponse);
+        }
+
+        /// <summary>
+        /// Gets the bot's inventory and stores it in MyInventory.
+        /// </summary>
+        /// <example> This sample shows how to find items in the bot's inventory from a user handler.
+        /// <code>
+        /// Bot.GetInventory(); // Get the inventory first
+        /// foreach (var item in Bot.MyInventory.Items)
+        /// {
+        ///     if (item.Defindex == 5021)
+        ///     {
+        ///         // Bot has a key in its inventory
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public void GetInventory()
+        {
+            MyInventory = Inventory.FetchInventory(SteamUser.SteamID, apiKey);
+        }
+
+        /// <summary>
+        /// Gets the other user's inventory and stores it in OtherInventory.
+        /// </summary>
+        /// <param name="OtherSID">The SteamID of the other user</param>
+        /// <example> This sample shows how to find items in the other user's inventory from a user handler.
+        /// <code>
+        /// Bot.GetOtherInventory(OtherSID); // Get the inventory first
+        /// foreach (var item in Bot.OtherInventory.Items)
+        /// {
+        ///     if (item.Defindex == 5021)
+        ///     {
+        ///         // User has a key in its inventory
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public void GetOtherInventory(SteamID OtherSID)
+        {
+            OtherInventory = Inventory.FetchInventory(OtherSID, apiKey);
         }
 
         /// <summary>
