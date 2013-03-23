@@ -49,6 +49,7 @@
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="AdminUserHandler.cs" />
+    <Compile Include="BotManager.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
