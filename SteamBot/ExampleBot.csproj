@@ -50,8 +50,10 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="AdminUserHandler.cs" />
     <Compile Include="BotManager.cs" />
+    <Compile Include="BotManagerInterpreter.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />

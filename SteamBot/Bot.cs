@@ -68,6 +68,8 @@ namespace SteamBot
 
         string sessionId;
         string token;
+        private Thread botCallbackThread;
+        private ManualResetEvent runThread;
 
         SteamUser.LogOnDetails logOnDetails;
 
@@ -112,22 +114,44 @@ namespace SteamBot
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
-            log.Info ("Connecting...");
-            SteamClient.Connect();
-            
-            Thread CallbackThread = new Thread(() => // Callback Handling
-            {
-                while (true)
-                {
-                    CallbackMsg msg = SteamClient.WaitForCallback (true);
 
-                    HandleSteamMessage (msg);
-                }
-            }); 
+
+            runThread = new ManualResetEvent(true);
+            botCallbackThread = new Thread(BotCallbackTreadFunc);
+            botCallbackThread.Name = "botCbThread";
+            botCallbackThread.Start();
+        }
+
+        /// <summary>
+        /// Starts the callback thread and connects to Steam via SteamKit2.
+        /// </summary>
+        /// <remarks>
+        /// THIS NEVER RETURNS.
+        /// </remarks>
+        /// <returns><c>true</c>. See remarks</returns>
+        public bool StartBot()
+        {
+            log.Info("Connecting...");
+            SteamClient.Connect();
+
+            runThread.Set();
             
-            CallbackThread.Start();
-            log.Success ("Done Loading Bot!");
-            CallbackThread.Join();
+            log.Success("Done Loading Bot!");
+
+            botCallbackThread.Join();
+
+            return true; // never get here
+        }
+
+        /// <summary>
+        /// Disconnect from the Steam network and stop the callback
+        /// thread.
+        /// </summary>
+        public void StopBot()
+        {
+            log.Debug("Tryring to shut down bot thread.");
+            SteamClient.Disconnect();
+            runThread.Reset();
         }
 
         /// <summary>
@@ -563,5 +587,19 @@ namespace SteamBot
             trade.OnUserSetReady -= handler.OnTradeReady;
             trade.OnUserAccept -= handler.OnTradeAccept;
         }
+
+        private void BotCallbackTreadFunc()
+        {
+            // wait until we recieve the signal to shut down this thread.
+            while (runThread.WaitOne(0))
+            {
+                CallbackMsg msg = SteamClient.WaitForCallback(true);
+
+                HandleSteamMessage(msg);
+            }
+
+            //log.Info("Bot thread exiting.");
+        }
+
     }
 }
