@@ -39,6 +39,7 @@ namespace SteamBot
         public BotInfo[] Bots { get; set; }
         public string ApiKey { get; set; }
         public string MainLog { get; set; }
+        public bool UseSeparateProcesses { get; set; }
 
         public override string ToString()
         {

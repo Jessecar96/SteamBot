@@ -20,6 +20,7 @@ namespace SteamBot
         private static BotManager manager;
         private static bool isclosing = false;
 
+        [STAThread]
         public static void Main(string[] args)
         {
             opts.Parse(args);
@@ -42,8 +43,6 @@ namespace SteamBot
             {
                 BotMode(botIndex);
             }
-
-            opts.WriteOptionDescriptions(Console.Out);
         }
 
         #region SteamBot Operational Modes
@@ -75,13 +74,18 @@ namespace SteamBot
                 Console.Title = configObject.Bots[botIndex].DisplayName;
                 b.StartBot(); // never returns from this.
             }
+
+            while (true)
+            {
+                // we need this in here so we can keep
+                // the console alive so we can read the 
+                // steamguard code if need be.
+            }
         }
 
         // This mode is to manage child bot processes and take use command line inputs
         private static void BotManagerMode()
         {
-            SetConsoleCtrlHandler(ConsoleCtrlCheck, true);
-
             Console.Title = "Bot Manager";
 
             manager = new BotManager();
@@ -97,6 +101,9 @@ namespace SteamBot
             }
             else
             {
+                if (manager.ConfigObject.UseSeparateProcesses)
+                    SetConsoleCtrlHandler(ConsoleCtrlCheck, true);
+
                 var startedOk = manager.StartBots();
 
                 if (!startedOk)
