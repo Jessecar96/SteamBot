@@ -382,43 +382,6 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Returns if the trade event list contains an event
-        /// I know this is messy, but the .Contains() didn't work for me at all.
-        /// </summary>
-        /// <param name="tradeEvent">Event to check</param>
-        /// <returns>True if found, False if not</returns>
-        public bool ContainsEvent(TradeEvent tradeEvent)
-        {
-            foreach (TradeEvent trdevent in eventList)
-            {
-                if (tradeEvent.action == trdevent.action)
-                {
-                    if (tradeEvent.appid == trdevent.appid)
-                    {
-                        if (tradeEvent.assetid == trdevent.assetid)
-                        {
-                            if (tradeEvent.contextid == trdevent.contextid)
-                            {
-                                if (tradeEvent.steamid == trdevent.steamid)
-                                {
-                                    if (tradeEvent.text == trdevent.text)
-                                    {
-                                        if (tradeEvent.timestamp == trdevent.timestamp)
-                                        {
-                                            return true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-
-        /// <summary>
         /// This updates the trade.  This is called at an interval of a
         /// default of 800ms, not including the execution time of the
         /// method itself.
@@ -457,7 +420,7 @@ namespace SteamTrade
             {
                 foreach (TradeEvent trdEvent in status.events)
                 {
-                    if (!ContainsEvent(trdEvent))
+                    if (!eventList.Contains(trdEvent))
                     {
                         eventList.Add(trdEvent);//add event to processed list, as we are taking care of this event now
                         bool isBot = trdEvent.steamid == MySteamId.ConvertToUInt64().ToString();
