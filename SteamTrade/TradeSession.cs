@@ -226,7 +226,7 @@ namespace SteamTrade
             public TradeEvent[] events { get; set; }
         }
 
-        public class TradeEvent
+        public class TradeEvent : IEquatable<TradeEvent>
         {
             public string steamid { get; set; }
             
@@ -241,6 +241,26 @@ namespace SteamTrade
             public int contextid { get; set; }
             
             public ulong assetid { get; set; }
+
+            /// <summary>
+            /// Determins if the TradeEvent is equal to another.
+            /// </summary>
+            /// <param name="other">TradeEvent to compare to</param>
+            /// <returns>True if equal, false if not</returns>
+            public bool Equals(TradeEvent other)
+            {
+                if (this.steamid == other.steamid && this.action == other.action
+                    && this.timestamp == other.timestamp && this.appid == other.appid
+                    && this.text == other.text && this.contextid == other.contextid
+                    && this.assetid == other.assetid)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
         
         public class TradeUserObj

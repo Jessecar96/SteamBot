@@ -11,6 +11,9 @@ namespace SteamTrade
         public static Schema CurrentSchema = null;
         #endregion
 
+        // list to store all trade events already processed
+        List<TradeEvent> eventList;
+
         // current bot's sid
         SteamID mySteamId;
 
@@ -37,6 +40,7 @@ namespace SteamTrade
             this.sessionId = sessionId;
             this.steamLogin = token;
             this.apiKey = apiKey;
+            this.eventList = new List<TradeEvent>();
 
             OtherOfferedItems = new List<ulong> ();
             myOfferedItems = new Dictionary<int, ulong> ();
@@ -376,7 +380,7 @@ namespace SteamTrade
 
             return true;
         }
-        
+
         /// <summary>
         /// This updates the trade.  This is called at an interval of a
         /// default of 800ms, not including the execution time of the
@@ -412,116 +416,108 @@ namespace SteamTrade
                 return otherDidSomething;
             }
 
-            if (status.events != null && numEvents != status.events.Length)
+            if (status.events != null)
             {
-                int numLoops = status.events.Length - numEvents;
-                numEvents = status.events.Length;
-
-                for (int i = numLoops; i > 0; i--)
+                foreach (TradeEvent trdEvent in status.events)
                 {
-
-                    int EventID;
-
-                    if (numLoops == 1)
+                    if (!eventList.Contains(trdEvent))
                     {
-                        EventID = numEvents - 1;
-                    }
-                    else
-                    {
-                        EventID = numEvents - i;
-                    }
+                        eventList.Add(trdEvent);//add event to processed list, as we are taking care of this event now
+                        bool isBot = trdEvent.steamid == MySteamId.ConvertToUInt64().ToString();
 
-                    bool isBot = status.events [EventID].steamid == MySteamId.ConvertToUInt64 ().ToString ();
+                        /*
+                            *
+                            * Trade Action ID's
+                            *
+                            * 0 = Add item (itemid = "assetid")
+                            * 1 = remove item (itemid = "assetid")
+                            * 2 = Toggle ready
+                            * 3 = Toggle not ready
+                            * 4
+                            * 5
+                            * 6
+                            * 7 = Chat (message = "text")
+                            *
+                            */
+                        ulong itemID;
 
-                    /*
-                     *
-                     * Trade Action ID's
-                     *
-                     * 0 = Add item (itemid = "assetid")
-                     * 1 = remove item (itemid = "assetid")
-                     * 2 = Toggle ready
-                     * 3 = Toggle not ready
-                     * 4
-                     * 5
-                     * 6
-                     * 7 = Chat (message = "text")
-                     *
-                     */
-                    ulong itemID;
-
-                    switch (status.events [EventID].action)
-                    {
-                    case 0:
-                        itemID = (ulong)status.events [EventID].assetid;
-
-                        if (isBot)
+                        switch (trdEvent.action)
                         {
-                            steamMyOfferedItems.Add (itemID);
-                            ValidateSteamItemChanged (itemID, true);
-                        }
-                        else
-                        {
-                            OtherOfferedItems.Add (itemID);
-                            Inventory.Item item = OtherInventory.GetItem (itemID);
-                            Schema.Item schemaItem = CurrentSchema.GetItem (item.Defindex);
-                            OnUserAddItem (schemaItem, item);
+                            case 0:
+                                itemID = (ulong)trdEvent.assetid;
+
+                                if (isBot)
+                                {
+                                    steamMyOfferedItems.Add(itemID);
+                                    ValidateSteamItemChanged(itemID, true);
+                                    Inventory.Item item = MyInventory.GetItem(itemID);
+                                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                                }
+                                else
+                                {
+                                    OtherOfferedItems.Add(itemID);
+                                    Inventory.Item item = OtherInventory.GetItem(itemID);
+                                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                                    OnUserAddItem(schemaItem, item);
+                                }
+
+                                break;
+                            case 1:
+                                itemID = (ulong)trdEvent.assetid;
+
+                                if (isBot)
+                                {
+                                    steamMyOfferedItems.Remove(itemID);
+                                    ValidateSteamItemChanged(itemID, false);
+                                    Inventory.Item item = MyInventory.GetItem(itemID);
+                                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                                }
+                                else
+                                {
+                                    OtherOfferedItems.Remove(itemID);
+                                    Inventory.Item item = OtherInventory.GetItem(itemID);
+                                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                                    OnUserRemoveItem(schemaItem, item);
+                                }
+                                break;
+                            case 2:
+                                if (!isBot)
+                                {
+                                    otherIsReady = true;
+                                    OnUserSetReady(true);
+                                }
+                                break;
+                            case 3:
+                                if (!isBot)
+                                {
+                                    otherIsReady = false;
+                                    OnUserSetReady(false);
+                                }
+                                break;
+                            case 4:
+                                if (!isBot)
+                                {
+                                    OnUserAccept();
+                                }
+                                break;
+                            case 7:
+                                if (!isBot)
+                                {
+                                    OnMessage(trdEvent.text);
+                                }
+                                break;
+                            default:
+                                // Todo: add an OnWarning or similar event
+                                if (OnError != null)
+                                    OnError("Unkown Event ID: " + trdEvent.action);
+                                break;
                         }
 
-                        break;
-                    case 1:
-                        itemID = (ulong)status.events [EventID].assetid;
-
-                        if (isBot)
-                        {
-                            steamMyOfferedItems.Remove (itemID);
-                            ValidateSteamItemChanged (itemID, false);
-                        }
-                        else
-                        {
-                            OtherOfferedItems.Remove (itemID);
-                            Inventory.Item item = OtherInventory.GetItem (itemID);
-                            Schema.Item schemaItem = CurrentSchema.GetItem (item.Defindex);
-                            OnUserRemoveItem (schemaItem, item);
-                        }
-
-                        break;
-                    case 2:
                         if (!isBot)
-                        {
-                            otherIsReady = true;
-                            OnUserSetReady (true);
-                        }
-                        break;
-                    case 3:
-                        if (!isBot)
-                        {
-                            otherIsReady = false;
-                            OnUserSetReady (false);
-                        }
-                        break;
-                    case 4:
-                        if (!isBot)
-                        {
-                            OnUserAccept ();
-                        }
-                        break;
-                    case 7:
-                        if (!isBot)
-                        {
-                            OnMessage (status.events [EventID].text);
-                        }
-                        break;
-                    default:
-                        // Todo: add an OnWarning or similar event
-                        if (OnError != null)
-                            OnError ("Unkown Event ID: " + status.events [EventID].action);
-                        break;
-                    }
-
-                    if (!isBot)
-                        otherDidSomething = true;
-                }
-            }
+                            otherDidSomething = true;
+                    }// if (!ContainsEvent(trdEvent))
+                }// foreach (TradeEvent trdEvent in status.events)
+            }//if (status.events != null)
 
             // Update Local Variables
             if (status.them != null)
