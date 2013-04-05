@@ -21,6 +21,7 @@ If you've just recently cloned this repository, there are a few things you need 
    - `Admins`: An array of Steam Profile IDs of the users that are an Admin of your bot(s). Each Profile ID should be a string in quotes and seperated by a comma. These admins are global to all bots listed in the `Bots` array.
    - `ApiKey`: The API key you have been assigned by Valve. If you do not have one, it can be requested from Value at their [Web API Key](http://steamcommunity.com/dev/apikey) page. **This is required and the bot(s) will not work without an API Key**. The API Key should be a string in quotes.
    - `mainLog`: The log containing runtime information for all bots.
+   - `UseSeparateProcesses`: Determines whether or not bot manager opens each bot in it's own process. Default is `false`.
    - `Bots`: An array of dictionaries containing information about each individual bot you will be running. You can run multiple bots at the same time by having multiple elements in the `Bots` array. Each entry in the `Bots` array consists of the following values:
     - `Username`: The Steam user name for this bot. It should be a string in quotes. _(required)_
     - `Password`: The password for the Steam user associated with this bot. It should be a string in quotes. _(required)_
@@ -100,6 +101,19 @@ Calling this method accepts the trade. It's the second step after both parties r
 
 #### `UserHandler.Trade.SendMessage(string msg)` ####
 Sends a message to the other user over trade chat.
+
+## Bot Manager Commands ##
+The Bot Manager manages how the bots behave, whether in separate processes or in separate threads. It also allows the user/administrator to interact with the bots via the console window.
+
+`start <index in configuration>`: Start the bot that is at the index specified in `settings.json`. It is a 0 based index.
+`stop <index in configuration>`: Stop the both that is at the index specified in `settings.json`. It is a 0 based index. 
+`show bots`: Dump the bot configuration to the console
+`help`: Shows available commands
+
+The `UseSeparateProcesses` option from `settings.json` controls whether the bots will remain in one console and use a threading mechanism to handle the Steam interaction. This prevents exceptions in one running bot from interfering with other bots.
+
+
+
 
 ## More help? ##
 If it's a bug, open an Issue; if you have a fix, read [CONTRIBUTING.md](https://github.com/Jessecar96/SteamBot/blob/master/CONTRIBUTING.md) and open a Pull Request.  A list of contributors (add yourself if you want to):
