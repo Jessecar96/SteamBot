@@ -509,13 +509,13 @@ namespace SteamTrade
                             default:
                                 // Todo: add an OnWarning or similar event
                                 if (OnError != null)
-                                    OnError("Unkown Event ID: " + trdEvent.action);
+                                    OnError("Unknown Event ID: " + trdEvent.action);
                                 break;
                         }
 
                         if (!isBot)
                             otherDidSomething = true;
-                    }// if (!ContainsEvent(trdEvent))
+                    }//if (!eventList.Contains(trdEvent))
                 }// foreach (TradeEvent trdEvent in status.events)
             }//if (status.events != null)
 

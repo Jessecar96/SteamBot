@@ -188,7 +188,7 @@ namespace SteamBot
                 
                 if (ie.FailingSteamId.ConvertToUInt64() == other.ConvertToUInt64())
                 {
-                    response = "Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessable or your backpack is private.";
+                    response = "Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessible or your backpack is private.";
                 }
                 else 
                 {
