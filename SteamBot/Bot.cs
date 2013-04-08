@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.ComponentModel;
 using SteamKit2;
 using SteamTrade;
 
@@ -76,6 +77,8 @@ namespace SteamBot
         public Inventory MyInventory;
         public Inventory OtherInventory;
 
+        private BackgroundWorker backgroundWorker;
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
         {
             logOnDetails = new SteamUser.LogOnDetails
@@ -112,22 +115,53 @@ namespace SteamBot
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
-            log.Info ("Connecting...");
+
+            backgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
+            backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
+            backgroundWorker.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
+            backgroundWorker.RunWorkerAsync();
+        }
+
+        /// <summary>
+        /// Occurs when the bot needs the SteamGuard authentication code.
+        /// </summary>
+        /// <remarks>
+        /// Return the code in <see cref="SteamGuardRequiredEventArgs.SteamGuard"/>
+        /// </remarks>
+        public event EventHandler<SteamGuardRequiredEventArgs> OnSteamGuardRequired;
+
+        /// <summary>
+        /// Starts the callback thread and connects to Steam via SteamKit2.
+        /// </summary>
+        /// <remarks>
+        /// THIS NEVER RETURNS.
+        /// </remarks>
+        /// <returns><c>true</c>. See remarks</returns>
+        public bool StartBot()
+        {
+            log.Info("Connecting...");
+
+            if (!backgroundWorker.IsBusy)
+                // background worker is not running
+                backgroundWorker.RunWorkerAsync();
+
             SteamClient.Connect();
             
-            Thread CallbackThread = new Thread(() => // Callback Handling
-            {
-                while (true)
-                {
-                    CallbackMsg msg = SteamClient.WaitForCallback (true);
+            log.Success("Done Loading Bot!");
 
-                    HandleSteamMessage (msg);
-                }
-            }); 
-            
-            CallbackThread.Start();
-            log.Success ("Done Loading Bot!");
-            CallbackThread.Join();
+            return true; // never get here
+        }
+
+        /// <summary>
+        /// Disconnect from the Steam network and stop the callback
+        /// thread.
+        /// </summary>
+        public void StopBot()
+        {
+            log.Debug("Tryring to shut down bot thread.");
+            SteamClient.Disconnect();
+
+            backgroundWorker.CancelAsync();
         }
 
         /// <summary>
@@ -247,7 +281,14 @@ namespace SteamBot
                 if (callback.Result == EResult.AccountLogonDenied)
                 {
                     log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
-                    logOnDetails.AuthCode = Console.ReadLine();
+
+                    // try to get the steamguard auth code from the event callback
+                    var eva = new SteamGuardRequiredEventArgs();
+                    FireOnSteamGuardRequired(eva);
+                    if (!String.IsNullOrEmpty(eva.SteamGuard))
+                        logOnDetails.AuthCode = eva.SteamGuard;
+                    else
+                        logOnDetails.AuthCode = Console.ReadLine();
                 }
 
                 if (callback.Result == EResult.InvalidLoginAuthCode)
@@ -562,6 +603,47 @@ namespace SteamBot
             trade.OnMessage -= handler.OnTradeMessage;
             trade.OnUserSetReady -= handler.OnTradeReady;
             trade.OnUserAccept -= handler.OnTradeAccept;
+        }
+
+        #region Background Worker Methods
+
+        private void BackgroundWorkerOnRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)
+        {
+            if (runWorkerCompletedEventArgs.Error != null)
+            {
+                Exception ex = runWorkerCompletedEventArgs.Error;
+
+                var s = string.Format("Unhandled exceptions in bot {0} callback thread: {1} {2}",
+                      DisplayName,
+                      Environment.NewLine,
+                      ex);
+                log.Error(s);
+
+                log.Info("This bot died. Stopping it..");
+                //backgroundWorker.RunWorkerAsync();
+                //Thread.Sleep(10000);
+                StopBot();
+                //StartBot();
+            }
+
+            log.Dispose();
+        }
+
+        private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
+        {
+            while (!backgroundWorker.CancellationPending)
+            {
+                CallbackMsg msg = SteamClient.WaitForCallback(true);
+                HandleSteamMessage(msg);
+            }
+        }
+
+        #endregion Background Worker Methods
+
+        private void FireOnSteamGuardRequired(SteamGuardRequiredEventArgs e)
+        {
+            EventHandler<SteamGuardRequiredEventArgs> handler = OnSteamGuardRequired;
+            if (handler != null) handler(this, e);
         }
     }
 }
