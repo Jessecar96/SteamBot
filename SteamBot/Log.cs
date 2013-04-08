@@ -3,7 +3,7 @@ using System.IO;
 
 namespace SteamBot
 {
-    public class Log
+    public class Log : IDisposable
     {
 
         public enum LogLevel
@@ -35,9 +35,9 @@ namespace SteamBot
             Console.ForegroundColor = DefaultConsoleColor;
         }
 
-        ~Log ()
+        public void Dispose()
         {
-            _FileStream.Close ();
+            _FileStream.Dispose();
         }
 
         // This outputs a log entry of the level info.

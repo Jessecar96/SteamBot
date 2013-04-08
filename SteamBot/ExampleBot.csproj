@@ -32,9 +32,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Net" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Management" />
@@ -44,14 +46,25 @@
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SteamGuardRequiredEventArgs.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="AdminUserHandler.cs" />
+    <Compile Include="BotManager.cs" />
+    <Compile Include="BotManagerInterpreter.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="SteamGuardForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SteamGuardForm.Designer.cs">
+      <DependentUpon>SteamGuardForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
@@ -69,5 +82,10 @@
       <Project>{6CEC0333-81EB-40EE-85D1-941363626FC7}</Project>
       <Name>SteamTrade</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SteamGuardForm.resx">
+      <DependentUpon>SteamGuardForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

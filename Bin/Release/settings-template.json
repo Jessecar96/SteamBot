@@ -2,6 +2,7 @@
 "Admins":["234567"],
 "ApiKey":"Steam API Key goes here!",
 "mainLog": "syslog.log",
+"UseSeparateProcesses": "false",
 "Bots": [
         {
             "Username":"BOT USERNAME",

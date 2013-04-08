@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace SteamBot
@@ -38,6 +39,22 @@ namespace SteamBot
         public BotInfo[] Bots { get; set; }
         public string ApiKey { get; set; }
         public string MainLog { get; set; }
+        public bool UseSeparateProcesses { get; set; }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            var fields = this.GetType().GetProperties();
+
+            foreach (var propInfo in fields)
+            {
+                sb.AppendFormat("{0} = {1}" + Environment.NewLine,
+                    propInfo.Name,
+                    propInfo.GetValue(this, null));
+            }
+
+            return sb.ToString();
+        }
 
         public class BotInfo
         {
@@ -52,7 +69,22 @@ namespace SteamBot
             public string DisplayNamePrefix { get; set; }
             public int TradePollingInterval { get; set; }
             public string LogLevel { get; set; }
-            public ulong[] Admins;
+            public ulong[] Admins { get; set; }
+
+            public override string ToString()
+            {
+                StringBuilder sb = new StringBuilder();
+                var fields = this.GetType().GetProperties();
+
+                foreach (var propInfo in fields)
+                {
+                    sb.AppendFormat("{0} = {1}" + Environment.NewLine,
+                        propInfo.Name, 
+                        propInfo.GetValue(this, null));
+                }
+
+                return sb.ToString();
+            }
         }
     }
 }
