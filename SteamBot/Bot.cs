@@ -430,24 +430,14 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeResultCallback> (callback =>
             {
-                log.Debug ("Trade Status: "+ callback.Response);
-
                 if (callback.Response == EEconTradeResponse.Accepted)
                 {
+                    log.Debug ("Trade Status: " + callback.Response);
                     log.Info ("Trade Accepted!");
                 }
-                if (callback.Response == EEconTradeResponse.Cancel ||
-                    callback.Response == EEconTradeResponse.ConnectionFailed ||
-                    callback.Response == EEconTradeResponse.Declined ||
-                    callback.Response == EEconTradeResponse.Error ||
-                    callback.Response == EEconTradeResponse.InitiatorAlreadyTrading ||
-                    callback.Response == EEconTradeResponse.TargetAlreadyTrading ||
-                    callback.Response == EEconTradeResponse.Timeout ||
-                    callback.Response == EEconTradeResponse.TooSoon ||
-                    callback.Response == EEconTradeResponse.VacBannedInitiator ||
-                    callback.Response == EEconTradeResponse.VacBannedTarget ||
-                    callback.Response == EEconTradeResponse.NotLoggedIn) // uh...
+                else
                 {
+                    log.Warn ("Trade failed: " + callback.Response);
                     CloseTrade ();
                 }
 
