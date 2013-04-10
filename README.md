@@ -21,12 +21,15 @@ Retrieving the source code should be done by following the [installation guide] 
 
 Next you need to actually edit the bot to make it do what you want. You can edit the files `SimpleUserHandler.cs` or `AdminUserHandler.cs` or you can create your very own `UserHandler`. See the [configuration guide] on the wiki. This guide covers configuring a basic bot as well as creating a custom user handler.
 
+## Bot Administration
+
+While running the bots you may find it necessary to do some basic operations like shutting down and restarting a bot. The console will take some commands to allow you to do some this. See the [usage guide] for more information.
+
 ## More help?
 If it's a bug, open an Issue; if you have a fix, read [CONTRIBUTING.md] and open a Pull Request.  A list of contributors (add yourself if you want to):
 
 - [Jessecar96](http://steamcommunity.com/id/jessecar) (project lead)
 - [geel9](http://steamcommunity.com/id/geel9)
-- [Dr. Cat, MD or redjazz96](http://steamcommunity.com/id/redjazz96)
 - [cwhelchel](http://steamcommunity.com/id/cmw69krinkle)
 
 ## Wanna Contribute?
@@ -37,3 +40,4 @@ Please read [CONTRIBUTING.md].
    [CONTRIBUTING.md]: https://github.com/Jessecar96/SteamBot/blob/master/CONTRIBUTING.md
    [LICENSE]: https://github.com/Jessecar96/SteamBot/blob/master/LICENSE
    [configuration guide]: https://github.com/Jessecar96/SteamBot/wiki/Configuration-Guide
+   [usage guide]: https://github.com/Jessecar96/SteamBot/wiki/Usage-Guide
