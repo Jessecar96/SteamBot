@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.ObjectModel;
 
@@ -20,6 +20,7 @@ namespace SteamBot
         private int start = -1;
         private string stopName = String.Empty;
         private bool showHelp;
+        private bool clearConsole;
 
         public BotManagerInterpreter(BotManager manager)
         {
@@ -34,7 +35,8 @@ namespace SteamBot
                         new BotManagerOption("help", "shows this help text", s => showHelp = s != null),
                         new BotManagerOption("show",
                                              "show (x) where x is one of the following: index, \"bots\", or empty",
-                                             param => ShowCommand(param))
+                                             param => ShowCommand(param)),
+                        new BotManagerOption("clear", "clears this console", s => clearConsole = s != null)
                     };
         }
 
@@ -69,6 +71,12 @@ namespace SteamBot
             if (start > -1)
             {
                 manager.StartBot(start);
+            }
+
+            if (clearConsole)
+            {
+                clearConsole = false;
+                Console.Clear();
             }
         }
 
