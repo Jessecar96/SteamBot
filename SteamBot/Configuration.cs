@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -128,6 +129,20 @@ namespace SteamBot
             public int TradePollingInterval { get; set; }
             public string LogLevel { get; set; }
             public ulong[] Admins { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether to auto start this bot.
+            /// </summary>
+            /// <value>
+            /// <c>true</c> to make the bot start on program load.
+            /// </value>
+            /// <remarks>
+            /// If <see cref="SteamBot.Configuration.AutoStartBots "/> is true,
+            /// then this property has no effect and is ignored.
+            /// </remarks>
+            [JsonProperty (Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Populate)]
+            [DefaultValue (true)]
+            public bool AutoStart { get; set; }
 
             public override string ToString()
             {

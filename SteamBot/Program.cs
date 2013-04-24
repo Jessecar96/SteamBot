@@ -116,6 +116,17 @@ namespace SteamBot
                         Console.ReadLine();
                     }
                 }
+                else
+                {
+                    foreach (var botInfo in manager.ConfigObject.Bots)
+                    {
+                        if (botInfo.AutoStart)
+                        {
+                            // auto start this particual bot...
+                            manager.StartBot(botInfo.Username);
+                        }
+                    }
+                }
 
                 Console.WriteLine("Type help for bot manager commands. ");
                 Console.Write("botmgr > ");
