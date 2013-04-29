@@ -3,6 +3,7 @@
 "ApiKey":"Steam API Key goes here!",
 "mainLog": "syslog.log",
 "UseSeparateProcesses": "false",
+"AutoStartBots": "true",
 "Bots": [
         {
             "Username":"BOT USERNAME",
@@ -15,7 +16,8 @@
             "MaximumActionGap":30,
             "DisplayNamePrefix":"[AutomatedBot] ",
             "TradePollingInterval":800,
-            "LogLevel":"Success"
+            "LogLevel":"Success",
+            "AutoStart": "true"
         }
     ]
 }
