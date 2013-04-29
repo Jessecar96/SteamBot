@@ -104,14 +104,28 @@ namespace SteamBot
                 if (manager.ConfigObject.UseSeparateProcesses)
                     SetConsoleCtrlHandler(ConsoleCtrlCheck, true);
 
-                var startedOk = manager.StartBots();
-
-                if (!startedOk)
+                if (manager.ConfigObject.AutoStartBots)
                 {
-                    Console.WriteLine(
-                        "Error starting the bots because either the configuration was bad or because the log file was not opened.");
-                    Console.Write("Press Enter to exit...");
-                    Console.ReadLine();
+                    var startedOk = manager.StartBots();
+
+                    if (!startedOk)
+                    {
+                        Console.WriteLine(
+                            "Error starting the bots because either the configuration was bad or because the log file was not opened.");
+                        Console.Write("Press Enter to exit...");
+                        Console.ReadLine();
+                    }
+                }
+                else
+                {
+                    foreach (var botInfo in manager.ConfigObject.Bots)
+                    {
+                        if (botInfo.AutoStart)
+                        {
+                            // auto start this particual bot...
+                            manager.StartBot(botInfo.Username);
+                        }
+                    }
                 }
 
                 Console.WriteLine("Type help for bot manager commands. ");
