@@ -75,6 +75,11 @@ namespace SteamTrade
             return Items.Where(item => item.CraftMaterialType == material).ToList();
         }
 
+        public List<Item> GetItems()
+        {
+            return Items.ToList();
+        }
+
         public class ItemOrigin
         {
             [JsonProperty("origin")]
