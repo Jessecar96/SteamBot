@@ -15,7 +15,7 @@ namespace SteamBot
         private const string AddCratesSubCmd = "crates";
         private const string AddWepsSubCmd = "weapons";
         private const string AddMetalSubCmd = "metal";
-        private const string AllSubCmd = "all";
+        private const string AddAllSubCmd = "all";
         private const string HelpCmd = "help";
 
         public AdminUserHandler(Bot bot, SteamID sid)
@@ -150,6 +150,7 @@ namespace SteamBot
             Trade.SendMessage(String.Format("{0} {1} - adds all crates", AddCmd, AddCratesSubCmd));
             Trade.SendMessage(String.Format("{0} {1} - adds all metal", AddCmd, AddMetalSubCmd));
             Trade.SendMessage(String.Format("{0} {1} - adds all weapons", AddCmd, AddWepsSubCmd));
+            Trade.SendMessage(String.Format("{0} {1} - adds all items", AddCmd, AddAllSubCmd));
             Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafing type.", AddCmd));
             Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd));
 
@@ -187,6 +188,9 @@ namespace SteamBot
                 case AddCratesSubCmd:
                     AddItemsByCraftType("supply_crate", amount);
                     break;
+                case AddAllSubCmd:
+                    AddAllItems();
+                    break;
                 default:
                     AddItemsByCraftType(typeToAdd, amount);
                     break;
@@ -222,6 +226,16 @@ namespace SteamBot
                 // defindex (weapons) we may over add so limit here also
                 if (amount > 0 && added >= amount)
                     return;
+            }
+        }
+
+        private void AddAllItems()
+        {
+            var items = Trade.CurrentSchema.GetItems();
+
+            foreach (var item in items)
+            {
+                Trade.AddAllItemsByDefindex(item.Defindex, 0);
             }
         }
 
