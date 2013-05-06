@@ -14,8 +14,6 @@
 _ReSharper.*
 *.resharper
 Ankh.NoLoad
-settings.json
-.gitignore
 
 #OS junk files
 [Tt]humbs.db
