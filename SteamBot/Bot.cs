@@ -50,6 +50,9 @@ namespace SteamBot
 
         List<SteamID> friends = new List<SteamID>();
 
+        // List of Steam clans the bot is in.
+        private readonly List<SteamID> clans = new List<SteamID>();
+
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
 
@@ -398,10 +401,37 @@ namespace SteamBot
             #endregion
 
             #region Friends
-            msg.Handle<SteamFriends.FriendsListCallback> (callback =>
+            msg.Handle<SteamFriends.FriendsListCallback>(callback =>
             {
                 foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
                 {
+                    if (friend.SteamID.AccountType == EAccountType.Clan)
+                    {
+                        if (!clans.Contains(friend.SteamID))
+                        {
+                            clans.Add(friend.SteamID);
+                            if (friend.Relationship == EFriendRelationship.RequestRecipient)
+                            {
+                                if (GetUserHandler(friend.SteamID).OnGroupAdd())
+                                {
+                                    AcceptClanInvite(friend.SteamID);
+                                }
+                                else
+                                {
+                                    DeclineClanInvite(friend.SteamID);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (friend.Relationship == EFriendRelationship.None)
+                            {
+                                clans.Remove(friend.SteamID);
+                            }
+                        }
+                    }
+                    else if (friend.SteamID.AccountType != EAccountType.Clan)
+                    {
                     if (!friends.Contains(friend.SteamID))
                     {
                         friends.Add(friend.SteamID);
@@ -420,7 +450,9 @@ namespace SteamBot
                         }
                     }
                 }
+                }
             });
+
 
             msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
             {
@@ -726,5 +758,54 @@ namespace SteamBot
                 }
             }
         }
+
+        #region Clan Methods
+
+        /// <summary>
+        /// Accepts the invite from a clan (aka group).
+        /// </summary>
+        /// <param name="group">SteamID of the group to accept the invite from.</param>
+        private void AcceptClanInvite(SteamID group)
+        {
+            var AcceptInvite = new ClientMsg<CMsgClanInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+
+            AcceptInvite.Body.GroupID = group.ConvertToUInt64();
+            AcceptInvite.Body.AcceptInvite = true;
+
+            this.SteamClient.Send(AcceptInvite);
+            
+        }
+
+        /// <summary>
+        /// Declines the invite of a clan (aka group).
+        /// </summary>
+        /// <param name="group">SteamID of the group to decline the invite from.</param>
+        private void DeclineClanInvite(SteamID group)
+        {
+            var DeclineInvite = new ClientMsg<CMsgClanInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+
+            DeclineInvite.Body.GroupID = group.ConvertToUInt64();
+            DeclineInvite.Body.AcceptInvite = false;
+
+            this.SteamClient.Send(DeclineInvite);
+        }
+
+        /// <summary>
+        /// Invites a use to the specified clan (aka group).
+        /// </summary>
+        /// <param name="user">SteamID of the user to invite.</param>
+        /// <param name="clan">SteamID of the clan to invite the user to.</param>
+        public void InviteUserToClan(SteamID user, SteamID clan)
+        {
+            var InviteUser = new ClientMsg<CMsgInviteUserToClan>((int)EMsg.ClientInviteUserToClan);
+
+            InviteUser.Body.GroupID = clan.ConvertToUInt64();
+            InviteUser.Body.Invitee = user.ConvertToUInt64();
+            InviteUser.Body.UnknownInfo = true;
+
+            this.SteamClient.Send(InviteUser);
+        }
+
+        #endregion
     }
 }

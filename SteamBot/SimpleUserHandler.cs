@@ -10,6 +10,11 @@ namespace SteamBot
 
         public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
+        public override bool OnClanAdd()
+        {
+            return false;
+        }
+
         public override bool OnFriendAdd () 
         {
             return true;
