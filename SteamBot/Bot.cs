@@ -48,6 +48,9 @@ namespace SteamBot
 
         List<SteamID> friends = new List<SteamID>();
 
+        // List of clans the bot is in.
+        List<SteamID> clans = new List<SteamID>();
+
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
 
@@ -158,7 +161,7 @@ namespace SteamBot
         /// </summary>
         public void StopBot()
         {
-            log.Debug("Tryring to shut down bot thread.");
+            log.Debug("Trying to shut down bot thread.");
             SteamClient.Disconnect();
 
             backgroundWorker.CancelAsync();
@@ -345,29 +348,58 @@ namespace SteamBot
             #endregion
 
             #region Friends
-            msg.Handle<SteamFriends.FriendsListCallback> (callback =>
+            msg.Handle<SteamFriends.FriendsListCallback>(callback =>
             {
                 foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
                 {
-                    if (!friends.Contains(friend.SteamID))
+                    if (friend.SteamID.AccountType == EAccountType.Clan)
                     {
-                        friends.Add(friend.SteamID);
-                        if (friend.Relationship == EFriendRelationship.PendingInvitee &&
-                            GetUserHandler(friend.SteamID).OnFriendAdd())
+                        if (!clans.Contains(friend.SteamID))
                         {
-                            SteamFriends.AddFriend(friend.SteamID);
+                            clans.Add(friend.SteamID);
+                            if (friend.Relationship == EFriendRelationship.RequestRecipient)
+                            {
+                                if (GetUserHandler(friend.SteamID).OnClanAdd())
+                                {
+                                    AcceptClanInvite(friend.SteamID);
+                                }
+                                else
+                                {
+                                    DeclineClanInvite(friend.SteamID);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (friend.Relationship == EFriendRelationship.None)
+                            {
+                                clans.Remove(friend.SteamID);
+                            }
                         }
                     }
-                    else
+                    else if (friend.SteamID.AccountType != EAccountType.Clan)
                     {
-                        if (friend.Relationship == EFriendRelationship.None)
+                        if (!friends.Contains(friend.SteamID))
                         {
-                            friends.Remove(friend.SteamID);
-                            GetUserHandler(friend.SteamID).OnFriendRemove();
+                            friends.Add(friend.SteamID);
+                            if (friend.Relationship == EFriendRelationship.RequestRecipient &&
+                                GetUserHandler(friend.SteamID).OnFriendAdd())
+                            {
+                                SteamFriends.AddFriend(friend.SteamID);
+                            }
+                        }
+                        else
+                        {
+                            if (friend.Relationship == EFriendRelationship.None)
+                            {
+                                friends.Remove(friend.SteamID);
+                                GetUserHandler(friend.SteamID).OnFriendRemove();
+                            }
                         }
                     }
                 }
             });
+
 
             msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
             {
@@ -444,8 +476,8 @@ namespace SteamBot
                     callback.Response == EEconTradeResponse.TargetAlreadyTrading ||
                     callback.Response == EEconTradeResponse.Timeout ||
                     callback.Response == EEconTradeResponse.TooSoon ||
-                    callback.Response == EEconTradeResponse.VacBannedInitiator ||
-                    callback.Response == EEconTradeResponse.VacBannedTarget ||
+                    callback.Response == EEconTradeResponse.TradeBannedInitiator ||
+                    callback.Response == EEconTradeResponse.TradeBannedTarget ||
                     callback.Response == EEconTradeResponse.NotLoggedIn) // uh...
                 {
                     CloseTrade ();
@@ -645,5 +677,55 @@ namespace SteamBot
             EventHandler<SteamGuardRequiredEventArgs> handler = OnSteamGuardRequired;
             if (handler != null) handler(this, e);
         }
+
+        #region Clan Methods
+
+        /// <summary>
+        /// Accepts the invite from a clan (aka group).
+        /// </summary>
+        /// <param name="group">SteamID of the group to accept the invite from.</param>
+        private void AcceptClanInvite(SteamID group)
+        {
+            var AcceptInvite = new ClientMsg<CMsgClanInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+
+            AcceptInvite.Body.GroupID = group.ConvertToUInt64();
+            AcceptInvite.Body.AcceptInvite = true;
+
+            this.SteamClient.Send(AcceptInvite);
+            
+        }
+
+        /// <summary>
+        /// Declines the invite of a clan (aka group).
+        /// </summary>
+        /// <param name="group">SteamID of the group to decline the invite from.</param>
+        private void DeclineClanInvite(SteamID group)
+        {
+            var DeclineInvite = new ClientMsg<CMsgClanInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+
+            DeclineInvite.Body.GroupID = group.ConvertToUInt64();
+            DeclineInvite.Body.AcceptInvite = false;
+
+            this.SteamClient.Send(DeclineInvite);
+        }
+
+        /// <summary>
+        /// Invites a use to the specified clan (aka group).
+        /// </summary>
+        /// <param name="user">SteamID of the user to invite.</param>
+        /// <param name="clan">SteamID of the clan to invite the user to.</param>
+        public void InviteUserToClan(SteamID user, SteamID clan)
+        {
+            var InviteUser = new ClientMsg<CMsgInviteUserToClan>((int)EMsg.ClientInviteUserToClan);
+
+            InviteUser.Body.GroupID = clan.ConvertToUInt64();
+            InviteUser.Body.Invitee = user.ConvertToUInt64();
+            InviteUser.Body.UnknownInfo = true;
+
+            this.SteamClient.Send(InviteUser);
+        }
+
+        #endregion
+
     }
 }

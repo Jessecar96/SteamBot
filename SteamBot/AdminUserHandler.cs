@@ -26,6 +26,17 @@ namespace SteamBot
         #region Overrides of UserHandler
 
         /// <summary>
+        /// Triggered when a clan invites the bot.
+        /// </summary>
+        /// <returns>
+        /// Whether to accept.
+        /// </returns>
+        public override bool OnClanAdd()
+        {
+            return false;
+        }
+
+        /// <summary>
         /// Called when a the user adds the bot as a friend.
         /// </summary>
         /// <returns>
@@ -150,7 +161,7 @@ namespace SteamBot
             Trade.SendMessage(String.Format("{0} {1} - adds all crates", AddCmd, AddCratesSubCmd));
             Trade.SendMessage(String.Format("{0} {1} - adds all metal", AddCmd, AddMetalSubCmd));
             Trade.SendMessage(String.Format("{0} {1} - adds all weapons", AddCmd, AddWepsSubCmd));
-            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafing type.", AddCmd));
+            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafting type.", AddCmd));
             Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd));
 
             Trade.SendMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
@@ -252,7 +263,7 @@ namespace SteamBot
 
             if (data.Length > 2)
             {
-                // get the optional ammount parameter
+                // get the optional amount parameter
                 if (!String.IsNullOrEmpty (data [2]))
                 {
                     uint.TryParse (data [2], out amount);

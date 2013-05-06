@@ -64,7 +64,7 @@ namespace SteamBot
             catch (Newtonsoft.Json.JsonReaderException)
             {
                 // handle basic json formatting screwups
-                Console.WriteLine("settings.json file is currupt or improperly formatted.");
+                Console.WriteLine("settings.json file is corrupt or improperly formatted.");
                 return;
             }
 
