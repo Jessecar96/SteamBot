@@ -36,8 +36,28 @@ namespace SteamBot
                         new BotManagerOption("show",
                                              "show (x) where x is one of the following: index, \"bots\", or empty",
                                              param => ShowCommand(param)),
-                        new BotManagerOption("clear", "clears this console", s => clearConsole = s != null)
+                        new BotManagerOption("clear", "clears this console", s => clearConsole = s != null),
+                        new BotManagerOption("auth", "auth (X)=(Y) where X = index of the configured bot and Y = the steamguard code",
+                            AuthSet)
                     };
+        }
+
+        void AuthSet(string auth)
+        {
+            string[] xy = auth.Split('=');
+
+            if (xy.Length == 2)
+            {
+                int index;
+
+                if (int.TryParse(xy[0], out index))
+                {
+                    string code = xy[1].Trim();
+
+                    Console.WriteLine("Authing bot with '" + code + "'");
+                    manager.AuthBot(index, code);
+                }
+            }
         }
 
         /// <summary>
