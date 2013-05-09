@@ -271,6 +271,16 @@ namespace SteamTrade
             
             public int sec_since_touch { get; set; }
         }
+
+        public enum TradeEventType : int
+        {
+            ItemAdded = 0,
+            ItemRemoved = 1,
+            UserSetReady = 2,
+            UserSetUnReady = 3,
+            UserAccept = 4,
+            UserChat = 7
+        }
     }
 
 

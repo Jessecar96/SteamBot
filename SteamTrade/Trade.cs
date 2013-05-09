@@ -441,9 +441,9 @@ namespace SteamTrade
                             */
                         ulong itemID;
 
-                        switch (trdEvent.action)
+                        switch ((TradeEventType)trdEvent.action)
                         {
-                            case 0:
+                            case TradeEventType.ItemAdded:
                                 itemID = (ulong)trdEvent.assetid;
 
                                 if (isBot)
@@ -462,7 +462,7 @@ namespace SteamTrade
                                 }
 
                                 break;
-                            case 1:
+                            case TradeEventType.ItemRemoved:
                                 itemID = (ulong)trdEvent.assetid;
 
                                 if (isBot)
@@ -480,27 +480,27 @@ namespace SteamTrade
                                     OnUserRemoveItem(schemaItem, item);
                                 }
                                 break;
-                            case 2:
+                            case TradeEventType.UserSetReady:
                                 if (!isBot)
                                 {
                                     otherIsReady = true;
                                     OnUserSetReady(true);
                                 }
                                 break;
-                            case 3:
+                            case TradeEventType.UserSetUnReady:
                                 if (!isBot)
                                 {
                                     otherIsReady = false;
                                     OnUserSetReady(false);
                                 }
                                 break;
-                            case 4:
+                            case TradeEventType.UserAccept:
                                 if (!isBot)
                                 {
                                     OnUserAccept();
                                 }
                                 break;
-                            case 7:
+                            case TradeEventType.UserChat:
                                 if (!isBot)
                                 {
                                     OnMessage(trdEvent.text);
