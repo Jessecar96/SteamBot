@@ -162,6 +162,20 @@ namespace SteamBot
         }
 
         /// <summary>
+        /// Sets the SteamGuard auth code on the given bot
+        /// </summary>
+        /// <param name="index">The bot's index</param>
+        /// <param name="AuthCode">The auth code</param>
+        public void AuthBot(int index, string AuthCode)
+        {
+            if (index < botProcs.Count)
+            {
+                if (!botProcs[index].UsingProcesses)
+                    botProcs[index].TheBot.AuthCode = AuthCode;
+            }
+        }
+
+        /// <summary>
         /// A method to return an instance of the <c>bot.BotControlClass</c>.
         /// </summary>
         /// <param name="bot">The bot.</param>
@@ -280,22 +294,8 @@ namespace SteamBot
                                 UserHandlerCreator,
                                 true);
 
-                b.OnSteamGuardRequired += BotOnOnSteamGuardRequired;
-
                 TheBot = b;
                 TheBot.StartBot();
-            }
-
-            private void BotOnOnSteamGuardRequired(object sender, SteamGuardRequiredEventArgs barf)
-            {
-                var bot = sender as Bot;
-                var window = new SteamGuardForm(bot.DisplayName);
-                var dialogResult = window.ShowDialog();
-
-                if (dialogResult == DialogResult.OK)
-                {
-                    barf.SteamGuard = window.UserEnteredCode;
-                }
             }
 
             //private static void BotStdOutHandler(object sender, DataReceivedEventArgs e)
