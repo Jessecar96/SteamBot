@@ -59,12 +59,6 @@
     <Compile Include="Log.cs" />
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="SteamGuardForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="SteamGuardForm.Designer.cs">
-      <DependentUpon>SteamGuardForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
@@ -82,10 +76,5 @@
       <Project>{6CEC0333-81EB-40EE-85D1-941363626FC7}</Project>
       <Name>SteamTrade</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="SteamGuardForm.resx">
-      <DependentUpon>SteamGuardForm.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
 </Project>

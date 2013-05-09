@@ -69,6 +69,17 @@ namespace SteamBot
 
         string sessionId;
         string token;
+        string _authcode;
+
+        public string AuthCode
+        {
+            get { return this._authcode; }
+
+            set
+            {
+                this._authcode = value;
+            }
+        }
 
         SteamUser.LogOnDetails logOnDetails;
 
@@ -633,7 +644,21 @@ namespace SteamBot
         private void FireOnSteamGuardRequired(SteamGuardRequiredEventArgs e)
         {
             EventHandler<SteamGuardRequiredEventArgs> handler = OnSteamGuardRequired;
-            if (handler != null) handler(this, e);
+            if (handler != null)
+                handler(this, e);
+            else
+            {
+                while (true)
+                {
+                    if (this.AuthCode != null)
+                    {
+                        e.SteamGuard = this.AuthCode;
+                        break;
+                    }
+
+                    Thread.Sleep(5);
+                }
+            }
         }
     }
 }
