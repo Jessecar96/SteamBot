@@ -69,17 +69,9 @@ namespace SteamBot
 
         string sessionId;
         string token;
-        string _authcode;
+        bool isprocess;
 
-        public string AuthCode
-        {
-            get { return this._authcode; }
-
-            set
-            {
-                this._authcode = value;
-            }
-        }
+        public string AuthCode { get; set; }
 
         SteamUser.LogOnDetails logOnDetails;
 
@@ -90,7 +82,7 @@ namespace SteamBot
 
         private BackgroundWorker backgroundWorker;
 
-        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false)
+        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
             logOnDetails = new SteamUser.LogOnDetails
             {
@@ -105,6 +97,7 @@ namespace SteamBot
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
             this.apiKey  = apiKey;
+            this.isprocess = process;
             try
             {
                 LogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
@@ -643,20 +636,32 @@ namespace SteamBot
 
         private void FireOnSteamGuardRequired(SteamGuardRequiredEventArgs e)
         {
+            // Set to null in case this is another attempt
+            this.AuthCode = null;
+
             EventHandler<SteamGuardRequiredEventArgs> handler = OnSteamGuardRequired;
             if (handler != null)
                 handler(this, e);
             else
             {
-                while (true)
+                if (!this.isprocess)
                 {
-                    if (this.AuthCode != null)
+                    while (true)
                     {
-                        e.SteamGuard = this.AuthCode;
-                        break;
-                    }
+                        if (this.AuthCode != null)
+                        {
+                            e.SteamGuard = this.AuthCode;
+                            break;
+                        }
 
-                    Thread.Sleep(5);
+                        Thread.Sleep(5);
+                    }
+                }
+                else
+                {
+                    // Apparently we're a process. So read in the code from stdin.
+                    this.AuthCode = Console.ReadLine();
+                    e.SteamGuard = this.AuthCode;
                 }
             }
         }

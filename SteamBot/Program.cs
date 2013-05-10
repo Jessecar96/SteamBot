@@ -70,7 +70,7 @@ namespace SteamBot
 
             if (configObject.Bots.Length > botIndex)
             {
-                Bot b = new Bot(configObject.Bots[botIndex], configObject.ApiKey, BotManager.UserHandlerCreator, true);
+                Bot b = new Bot(configObject.Bots[botIndex], configObject.ApiKey, BotManager.UserHandlerCreator, true, true);
                 Console.Title = configObject.Bots[botIndex].DisplayName;
                 b.StartBot(); // never returns from this.
             }
