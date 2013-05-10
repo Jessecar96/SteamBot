@@ -172,6 +172,14 @@ namespace SteamBot
             {
                 if (!botProcs[index].UsingProcesses)
                     botProcs[index].TheBot.AuthCode = AuthCode;
+                else
+                {
+                    //  Write out auth code to the bot process' stdin
+                    StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
+
+                    BotStdIn.WriteLine(AuthCode);
+                    BotStdIn.Flush();
+                }
             }
         }
 
@@ -268,11 +276,14 @@ namespace SteamBot
                 botProc.StartInfo.Arguments = @"-bot " + botIndex;
 
                 // Set UseShellExecute to false for redirection.
-                botProc.StartInfo.UseShellExecute = true;
+                botProc.StartInfo.UseShellExecute = false;
 
                 // Redirect the standard output.  
                 // This stream is read asynchronously using an event handler.
                 botProc.StartInfo.RedirectStandardOutput = false;
+
+                // Redirect standard input to allow manager commands to be read properly
+                botProc.StartInfo.RedirectStandardInput = true;
 
                 // Set our event handler to asynchronously read the output.
                 //botProc.OutputDataReceived += new DataReceivedEventHandler(BotStdOutHandler);
