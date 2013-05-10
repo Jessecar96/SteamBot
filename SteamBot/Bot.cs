@@ -69,17 +69,8 @@ namespace SteamBot
 
         string sessionId;
         string token;
-        string _authcode;
 
-        public string AuthCode
-        {
-            get { return this._authcode; }
-
-            set
-            {
-                this._authcode = value;
-            }
-        }
+        public string AuthCode { get; set; }
 
         SteamUser.LogOnDetails logOnDetails;
 
