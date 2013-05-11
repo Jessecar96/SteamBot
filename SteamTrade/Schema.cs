@@ -4,40 +4,75 @@ using System.Linq;
 using Newtonsoft.Json;
 using System.Net;
 using System.IO;
+using System.Threading;
 
 namespace SteamTrade
 {
+    /// <summary>
+    /// This class represents the TF2 Item schema as deserialized from its
+    /// JSON representation.
+    /// </summary>
     public class Schema
     {
+        private const string SchemaMutexName = "steam_bot_cache_file_mutex";
+        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
+        private const string cachefile = "tf_schema.cache";
 
+        private static Mutex schemaMutex = new Mutex(false, SchemaMutexName);
+
+        /// <summary>
+        /// Fetches the Tf2 Item schema.
+        /// </summary>
+        /// <param name="apiKey">The API key.</param>
+        /// <returns>A  deserialized instance of the Item Schema.</returns>
+        /// <remarks>
+        /// The schema will be cached for future use if it is updated.
+        /// </remarks>
         public static Schema FetchSchema (string apiKey)
-        {
-            var url = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=" + apiKey;
+        {   
+            var url = SchemaApiUrlBase + apiKey;
 
-            string cachefile="tf_schema.cache";
-            string result;
+            // just let one thread/proc do the initial check/possible update.
+            schemaMutex.WaitOne();
 
             HttpWebResponse response = SteamWeb.Request(url, "GET");
 
-            DateTime SchemaLastModified = DateTime.Parse(response.Headers["Last-Modified"]);
-           
-            if (!System.IO.File.Exists(cachefile) || (SchemaLastModified> System.IO.File.GetCreationTime(cachefile)))
+            DateTime schemaLastModified = DateTime.Parse(response.Headers["Last-Modified"]);
+
+            string result = GetSchemaString(response, schemaLastModified);
+
+            response.Close();
+
+            // were done here. let others read (sequentially... but eh.)
+            schemaMutex.Close(); 
+
+            SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
+            return schemaResult.result ?? null;
+        }
+
+        // Gets the schema from the web or from the cached file.
+        private static string GetSchemaString(HttpWebResponse response, DateTime schemaLastModified)
+        {
+            string result;
+            bool mustUpdateCache = !File.Exists(cachefile) || schemaLastModified > File.GetCreationTime(cachefile);
+
+            if (mustUpdateCache)
             {
-                StreamReader reader = new StreamReader (response.GetResponseStream ());
+                var reader = new StreamReader(response.GetResponseStream());
                 result = reader.ReadToEnd();
+
                 File.WriteAllText(cachefile, result);
-                System.IO.File.SetCreationTime(cachefile,SchemaLastModified);
+                File.SetCreationTime(cachefile, schemaLastModified);
             }
             else
             {
+                // read previously cached file.
                 TextReader reader = new StreamReader(cachefile);
                 result = reader.ReadToEnd();
                 reader.Close();
             }
-            response.Close();
 
-            SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
-            return schemaResult.result ?? null;
+            return result;
         }
 
         [JsonProperty("status")]
