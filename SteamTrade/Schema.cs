@@ -18,8 +18,6 @@ namespace SteamTrade
         private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
         private const string cachefile = "tf_schema.cache";
 
-        private static Mutex schemaMutex = new Mutex(false, SchemaMutexName);
-
         /// <summary>
         /// Fetches the Tf2 Item schema.
         /// </summary>
@@ -33,7 +31,21 @@ namespace SteamTrade
             var url = SchemaApiUrlBase + apiKey;
 
             // just let one thread/proc do the initial check/possible update.
-            schemaMutex.WaitOne();
+            bool wasCreated;
+            var mre = new EventWaitHandle(false, 
+                EventResetMode.ManualReset, SchemaMutexName, out wasCreated);
+
+            // the thread that create the wait handle will be the one to 
+            // write the cache file. The others will wait patiently.
+            if (!wasCreated)
+            {
+                bool signaled = mre.WaitOne(10000);
+
+                if (!signaled)
+                {
+                    return null;
+                }
+            }
 
             HttpWebResponse response = SteamWeb.Request(url, "GET");
 
@@ -43,8 +55,8 @@ namespace SteamTrade
 
             response.Close();
 
-            // were done here. let others read (sequentially... but eh.)
-            schemaMutex.Close(); 
+            // were done here. let others read.
+            mre.Set();
 
             SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
             return schemaResult.result ?? null;
