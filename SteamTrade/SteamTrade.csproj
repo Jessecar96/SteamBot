@@ -37,11 +37,13 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Exceptions\TradeException.cs" />
+    <Compile Include="ForeignInventory.cs" />
     <Compile Include="Trade.cs" />
     <Compile Include="Schema.cs" />
     <Compile Include="Inventory.cs" />
     <Compile Include="SteamWeb.cs" />
-    <Compile Include="TradeSession.cs" />
+    <Compile Include="TradeWebAPI\TradeStatus.cs" />
+    <Compile Include="TradeWebAPI\TradeSession.cs" />
     <Compile Include="TradeManager.cs" />
     <Compile Include="Exceptions\InventoryFetchException.cs" />
   </ItemGroup>
