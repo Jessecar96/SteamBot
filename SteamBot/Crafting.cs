@@ -19,8 +19,8 @@ namespace SteamBot
 
             var craftMsg = new ClientGCMsg<MsgCraft>();
 
-            craftMsg.Body.numItems = (short)items.Length;
-            craftMsg.Body.recipe = recipe;
+            craftMsg.Body.NumItems = (short)items.Length;
+            craftMsg.Body.Recipe = recipe;
 
             foreach (ulong id in items)
                 craftMsg.Write(id);
@@ -35,8 +35,8 @@ namespace SteamBot
 
             var craftMsg = new ClientGCMsg<MsgCraft>();
 
-            craftMsg.Body.numItems = (short)items.Length;
-            craftMsg.Body.recipe = recipe;
+            craftMsg.Body.NumItems = (short)items.Length;
+            craftMsg.Body.Recipe = recipe;
 
             foreach (ulong id in items)
                 craftMsg.Write(id);

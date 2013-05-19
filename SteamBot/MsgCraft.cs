@@ -13,9 +13,9 @@ namespace SteamBot
     public class MsgCraft : IGCSerializableMessage
     {
 
-        public ulong[] idsToSend;
-        public short recipe = -2;
-        public short numItems = 2;
+        public ulong[] IdsToSend;
+        public short Recipe = -2;
+        public short NumItems = 2;
 
         public MsgCraft()
         {
@@ -47,8 +47,8 @@ namespace SteamBot
         public byte[] Serialize()
         {
             List<byte> ret = new List<byte>();
-            ret.AddRange(BitConverter.GetBytes((short)recipe));
-            ret.AddRange(BitConverter.GetBytes((short)numItems));
+            ret.AddRange(BitConverter.GetBytes((short)Recipe));
+            ret.AddRange(BitConverter.GetBytes((short)NumItems));
             return ret.ToArray();
         }
 
