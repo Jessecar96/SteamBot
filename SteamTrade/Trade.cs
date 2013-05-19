@@ -337,6 +337,29 @@ namespace SteamTrade
         }
 
         /// <summary>
+        /// Removes all offered items from the trade.
+        /// </summary>
+        /// <returns>Number of items removed.</returns>
+        public uint RemoveAllItems()
+        {
+            uint removed = 0;
+
+            var copy = new Dictionary<int, ulong>(myOfferedItems);
+
+            foreach (var id in copy)
+            {
+                Inventory.Item item = MyInventory.GetItem(id.Value);
+
+                bool success = RemoveItem(item.Id);
+
+                if (success)
+                    removed++;
+            }
+
+            return removed;
+        }
+
+        /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
         public bool SendMessage (string msg)
