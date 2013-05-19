@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SteamCraft.cs" />
     <Compile Include="SteamGuardRequiredEventArgs.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
@@ -64,6 +65,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <ProjectReference Include="..\Lib\protobuf-net\protobuf-net\protobuf-net.csproj">
+      <Project>{8374e4d7-2a91-48f1-9360-09b09cf27c3f}</Project>
+      <Name>protobuf-net</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Lib\SteamKit2\SteamKit2\SteamKit2.csproj">
       <Project>{BEB5BF07-BB56-402A-97A3-A41C6444C6A5}</Project>
       <Name>SteamKit2</Name>

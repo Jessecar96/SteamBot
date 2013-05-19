@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.ComponentModel;
 using SteamKit2;
+using SteamKit2.Internal;
+using SteamKit2.GC;
 using SteamTrade;
 
 namespace SteamBot
@@ -32,6 +34,7 @@ namespace SteamBot
         public SteamClient SteamClient;
         public SteamTrading SteamTrade;
         public SteamUser SteamUser;
+        public SteamGameCoordinator SteamGC;
 
         // The current trade; if the bot is not in a trade, this is
         // null.
@@ -82,6 +85,9 @@ namespace SteamBot
 
         private BackgroundWorker backgroundWorker;
 
+        private bool inGame = false;
+        const int TF2 = 440;
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
             logOnDetails = new SteamUser.LogOnDetails
@@ -119,6 +125,7 @@ namespace SteamBot
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
+            SteamGC = SteamClient.GetHandler<SteamGameCoordinator>();
 
             backgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
@@ -582,7 +589,64 @@ namespace SteamBot
             trade.OnUserSetReady += handler.OnTradeReady;
             trade.OnUserAccept += handler.OnTradeAccept;
         }
-        
+
+        /// <summary>
+        /// Connects to SteamGC as the TF2 application.
+        /// </summary>
+        public void LaunchTF2()
+        {
+            var playMsg = new ClientMsgProtobuf<CMsgClientGamesPlayed>(
+                EMsg.ClientGamesPlayedWithDataBlob);
+            var game = new CMsgClientGamesPlayed.GamePlayed
+            {
+                game_id = new GameID(TF2),
+            };
+            playMsg.Body.games_played.Add(game);
+            SteamClient.Send(playMsg);
+            inGame = true;
+        }
+
+        /// <summary>
+        /// Disconnects from SteamGC.
+        /// </summary>
+        public void QuitTF2()
+        {
+            var deregMsg = new ClientMsgProtobuf<CMsgClientDeregisterWithServer>(
+                EMsg.ClientDeregisterWithServer);
+            deregMsg.Body.eservertype = 42;
+            deregMsg.Body.app_id = 0;
+            SteamClient.Send(deregMsg);
+            var quitMsg = new ClientMsgProtobuf<CMsgClientGamesPlayed>(
+                EMsg.ClientGamesPlayedWithDataBlob);
+            var game = new CMsgClientGamesPlayed.GamePlayed
+            {
+                game_id = 0,
+            };
+            quitMsg.Body.games_played.Add(game);
+            SteamClient.Send(quitMsg);
+            inGame = false;
+        }
+
+        /// <summary>
+        /// Enables SteamBot to craft items. You should call QuitTF2() after.
+        /// </summary>
+        /// <param name="items">A list of items by ID</param>
+        /// </example>
+        public void CraftItems(List<ulong> items)
+        {
+            if (!inGame)
+                LaunchTF2();
+            var craftMsg = new ClientGCMsg<CMsgCraft>();
+            craftMsg.Body.Blueprint = 0xFF;
+            craftMsg.Body.ItemCount = (ushort)items.Count;
+            craftMsg.Body.Items = new ulong[items.Count];
+
+            for (int i = 0; i < items.Count; ++i)
+                craftMsg.Body.Items[i] = items[i];
+
+            SteamGC.Send(craftMsg, TF2);
+        }
+
         /// <summary>
         /// Unsubscribes all listeners of this from the current trade.
         /// </summary>
