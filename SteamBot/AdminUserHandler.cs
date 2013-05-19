@@ -54,12 +54,6 @@ namespace SteamBot
         public override void OnMessage(string message, EChatEntryType type)
         {
             // TODO: magic command system
-            if (message == "test")
-            {
-                Bot.LaunchTF2();
-                System.Threading.Thread.Sleep(5000);
-                Bot.QuitTF2();
-            }
         }
 
         /// <summary>
