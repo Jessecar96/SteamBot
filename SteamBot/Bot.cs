@@ -305,7 +305,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.AccountLogonDenied)
                 {
-                    log.Interface ("This account is protected by Steam Guard.  Enter the authentication code sent to the proper email: ");
+                    log.Interface ("This account is SteamGuard enabled. Enter the code via the `auth' command.");
 
                     // try to get the steamguard auth code from the event callback
                     var eva = new SteamGuardRequiredEventArgs();
@@ -318,7 +318,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
-                    log.Interface("An Invalid Authorization Code was provided.  Enter the authentication code sent to the proper email: ");
+                    log.Interface("The given SteamGuard code was invalid. Try again using the `auth' command.");
                     logOnDetails.AuthCode = Console.ReadLine();
                 }
             });
