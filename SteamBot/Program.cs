@@ -104,7 +104,7 @@ namespace SteamBot
                 if (manager.ConfigObject.UseSeparateProcesses)
                     SetConsoleCtrlHandler(ConsoleCtrlCheck, true);
 
-                if (manager.ConfigObject.AutoStartBots)
+                if (manager.ConfigObject.AutoStartAllBots)
                 {
                     var startedOk = manager.StartBots();
 

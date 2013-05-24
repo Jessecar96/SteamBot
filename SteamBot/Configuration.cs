@@ -84,13 +84,13 @@ namespace SteamBot
         public bool UseSeparateProcesses { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to auto start bots.
+        /// Gets or sets a value indicating whether to auto start all bots.
         /// </summary>
         /// <value>
         /// <c>true</c> to make the bots start on program load; otherwise,
         /// <c>false</c> to not start them.
         /// </value>
-        public bool AutoStartBots { get; set; }
+        public bool AutoStartAllBots { get; set; }
 
         #endregion Top-level config properties
 
@@ -137,7 +137,7 @@ namespace SteamBot
             /// <c>true</c> to make the bot start on program load.
             /// </value>
             /// <remarks>
-            /// If <see cref="SteamBot.Configuration.AutoStartBots "/> is true,
+            /// If <see cref="SteamBot.Configuration.AutoStartAllBots "/> is true,
             /// then this property has no effect and is ignored.
             /// </remarks>
             [JsonProperty (Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Populate)]
