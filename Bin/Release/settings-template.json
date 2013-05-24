@@ -3,7 +3,7 @@
 "ApiKey":"Steam API Key goes here!",
 "mainLog": "syslog.log",
 "UseSeparateProcesses": "false",
-"AutoStartBots": "true",
+"AutoStartAllBots": "true",
 "Bots": [
         {
             "Username":"BOT USERNAME",
