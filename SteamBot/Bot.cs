@@ -258,7 +258,7 @@ namespace SteamBot
             return true;
         }
 
-        void SetGamePlaying(int id)
+        public void SetGamePlaying(int id)
         {
             var gamePlaying = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
 
