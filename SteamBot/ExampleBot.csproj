@@ -49,8 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Crafting.cs" />
-    <Compile Include="MsgCraft.cs" />
+    <Compile Include="TF2GC\Crafting.cs" />
+    <Compile Include="TF2GC\Items.cs" />
+    <Compile Include="TF2GC\MsgCraft.cs" />
     <Compile Include="SteamGuardRequiredEventArgs.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Log.cs" />
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="TF2GC\MsgDelete.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>

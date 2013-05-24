@@ -4,11 +4,18 @@ using System.Linq;
 using System.Text;
 using SteamKit2.GC;
 
-namespace SteamBot
+namespace SteamBot.TF2GC
 {
     public static class Crafting
     {
-        //NOTE: The Steam Bot MUST have told Steam that it is in TF2 in order to do any TF2 related things.
+        /// <summary>
+        /// Crafts the specified items using the best fit recipe.
+        /// </summary>
+        /// <param name="bot">The current Bot</param>
+        /// <param name="items">A list of ulong Item IDs to craft</param>
+        /// <remarks>
+        /// You must have set the current game to 440 for this to do anything.
+        /// </remarks>
         public static void CraftItems(Bot bot, params ulong[] items)
         {
             if (bot.CurrentGame != 440)
@@ -28,6 +35,15 @@ namespace SteamBot
             bot.SteamGameCoordinator.Send(craftMsg, 440);
         }
 
+        /// <summary>
+        /// Crafts the specified items using the specified recipe.
+        /// </summary>
+        /// <param name="bot">The current Bot</param>
+        /// <param name="recipe">The recipe number (unknown atm; -2 is "best fit")</param>
+        /// <param name="items">A list of ulong Item IDs to craft</param>
+        /// <remarks>
+        /// You must have set the current game to 440 for this to do anything.
+        /// </remarks>
         public static void CraftItems(Bot bot, short recipe, params ulong[] items)
         {
             if (bot.CurrentGame != 440)

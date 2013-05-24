@@ -8,11 +8,10 @@ using SteamKit2.GC;
 using SteamKit2.GC.TF2;
 using SteamKit2.Internal;
 
-namespace SteamBot
+namespace SteamBot.TF2GC
 {
     public class MsgCraft : IGCSerializableMessage
     {
-
         public ulong[] IdsToSend;
         public short Recipe = -2;
         public short NumItems = 2;
