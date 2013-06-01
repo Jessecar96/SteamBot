@@ -28,6 +28,9 @@ namespace SteamBot
 
         #region Overrides of UserHandler
 
+        /// <summary>
+        /// Called when the bot is fully logged in.
+        /// </summary>
         public override void OnLoginCompleted()
         {
         }
