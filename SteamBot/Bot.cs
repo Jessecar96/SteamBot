@@ -358,6 +358,8 @@ namespace SteamBot
                 log.Success ("Steam Bot Logged In Completely!");
 
                 IsLoggedIn = true;
+
+                GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });
 
             // handle a special JobCallback differently than the others
@@ -407,6 +409,13 @@ namespace SteamBot
                                          ));
                     GetUserHandler(callback.Sender).OnMessage(callback.Message, type);
                 }
+            });
+            #endregion
+
+            #region Group Chat
+            msg.Handle<SteamFriends.ChatMsgCallback>(callback =>
+            {
+                GetUserHandler(callback.ChatterID).OnChatRoomMessage(callback.ChatRoomID, callback.ChatterID, callback.Message);
             });
             #endregion
 

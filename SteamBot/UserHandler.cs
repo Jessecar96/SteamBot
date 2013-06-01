@@ -72,12 +72,28 @@ namespace SteamBot
         public abstract void OnMessage (string message, EChatEntryType type);
 
         /// <summary>
+        /// Called when the bot is fully logged in.
+        /// </summary>
+        public abstract void OnLoginCompleted();
+       
+        /// <summary>
         /// Called whenever a user requests a trade.
         /// </summary>
         /// <returns>
         /// Whether to accept the request.
         /// </returns>
         public abstract bool OnTradeRequest ();
+
+        /// <summary>
+        /// Called when a chat message is sent in a chatroom
+        /// </summary>
+        /// <param name="chatID">The SteamID of the group chat</param>
+        /// <param name="sender">The SteamID of the sender</param>
+        /// <param name="message">The message sent</param>
+        public virtual void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
+        {
+
+        }
 
         #region Trade events
         // see the various events in SteamTrade.Trade for descriptions of these handlers.

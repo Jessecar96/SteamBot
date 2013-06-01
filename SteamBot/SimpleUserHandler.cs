@@ -14,7 +14,17 @@ namespace SteamBot
         {
             return true;
         }
-        
+
+        public override void OnLoginCompleted()
+        {
+        }
+
+        public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
+        {
+            Log.Info(Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message);
+            base.OnChatRoomMessage(chatID, sender, message);
+        }
+
         public override void OnFriendRemove () {}
         
         public override void OnMessage (string message, EChatEntryType type) 

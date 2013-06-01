@@ -29,6 +29,13 @@ namespace SteamBot
         #region Overrides of UserHandler
 
         /// <summary>
+        /// Called when the bot is fully logged in.
+        /// </summary>
+        public override void OnLoginCompleted()
+        {
+        }
+
+        /// <summary>
         /// Called when a the user adds the bot as a friend.
         /// </summary>
         /// <returns>
