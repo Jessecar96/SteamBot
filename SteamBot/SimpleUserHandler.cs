@@ -66,6 +66,9 @@ namespace SteamBot
         
         public override void OnTradeReady (bool ready) 
         {
+            //Because SetReady must use its own version, it's important
+            //we poll the trade to make sure everything is up-to-date.
+            Trade.Poll();
             if (!ready)
             {
                 Trade.SetReady (false);
@@ -84,16 +87,16 @@ namespace SteamBot
         {
             if (Validate() || IsAdmin)
             {
-                bool success = Trade.AcceptTrade();
+                //Even if it is successful, AcceptTrade can fail on
+                //trades with a lot of items so we use a try-catch
+                try {
+                    Trade.AcceptTrade();
+                }
+                catch {
+                    Log.Warn ("The trade might have failed, but we can't be sure.");
+                }
 
-                if (success)
-                {
-                    Log.Success ("Trade was Successful!");
-                }
-                else
-                {
-                    Log.Warn ("Trade might have failed.");
-                }
+                Log.Success ("Trade Complete!");
             }
 
             OnTradeClose ();
