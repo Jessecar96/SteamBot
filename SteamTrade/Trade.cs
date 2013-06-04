@@ -112,6 +112,12 @@ namespace SteamTrade
         /// </summary>
         public bool OtherUserCancelled { get; private set; }
 
+        /// <summary>
+        /// Gets a value indicating whether the trade completed normally. This
+        /// is independent of other flags.
+        /// </summary>
+        public bool HasTradeCompletedOk { get; private set; }
+
         #endregion
                 
         #region Public Events
@@ -439,6 +445,14 @@ namespace SteamTrade
                 return otherDidSomething;
             }
 
+            if (status.trade_status == 1)
+            {
+                // trade completed successfully.
+                HasTradeCompletedOk = true;
+                return otherDidSomething;
+            }
+
+
             if (status.events != null)
             {
                 foreach (TradeEvent trdEvent in status.events)
@@ -561,6 +575,14 @@ namespace SteamTrade
             }
 
             return otherDidSomething;
+        }
+
+        internal void FireOnCloseEvent()
+        {
+            var onCloseEvent = OnClose;
+
+            if (onCloseEvent != null)
+                onCloseEvent();
         }
 
         int NextTradeSlot ()
