@@ -143,6 +143,18 @@ namespace SteamTrade
 
             [JsonProperty("float_value")]
             public float FloatValue { get; set; }
+
+            [JsonProperty("account_info")]
+            public AccountInfo AccountInfo { get; set; } 
+        }
+
+        public class AccountInfo
+        {
+            [JsonProperty("steamid")]
+            public ulong SteamID { get; set; }
+
+            [JsonProperty("personaname")]
+            public string PersonaName { get; set; }
         }
 
         protected class InventoryResult
