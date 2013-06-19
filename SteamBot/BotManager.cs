@@ -243,30 +243,46 @@ namespace SteamBot
             // will not be null in threaded mode. will be null in process mode.
             public Bot TheBot { get; set; }
 
+            public bool IsRunning = false;
+
             public void Stop()
             {
-                if (UsingProcesses)
+                if (IsRunning)
                 {
-                    if (!BotProcess.HasExited)
-                        BotProcess.Kill();
-                }
-                else
-                {
-                    if (TheBot != null)
-                        TheBot.StopBot();
+                    if (UsingProcesses)
+                    {
+                        if (!BotProcess.HasExited)
+                        {
+                            BotProcess.Kill();
+                            IsRunning = false;
+                        }
+                    }
+                    else
+                    {
+                        if (TheBot != null)
+                        {
+                            TheBot.StopBot();
+                            IsRunning = false;
+                        }
+                    }
                 }
             }
 
             public void Start()
             {
-                if (UsingProcesses)
+                if (!IsRunning)
                 {
-                    SpawnSteamBotProcess(BotConfigIndex);
+                    if (UsingProcesses)
+                    {
+                        SpawnSteamBotProcess(BotConfigIndex);
+                        IsRunning = true;
+                    }
+                    else
+                    {
+                        SpawnBotThread(BotConfig);
+                        IsRunning = true;
+                    }
                 }
-                else
-                {
-                    SpawnBotThread(BotConfig);
-                }  
             }
 
             private void SpawnSteamBotProcess(int botIndex)
