@@ -75,6 +75,7 @@ namespace SteamBot
         string sessionId;
         string token;
         bool isprocess;
+        public bool IsRunning = false;
 
         public string AuthCode { get; set; }
 
@@ -149,6 +150,8 @@ namespace SteamBot
         /// <returns><c>true</c>. See remarks</returns>
         public bool StartBot()
         {
+            IsRunning = true;
+
             log.Info("Connecting...");
 
             if (!backgroundWorker.IsBusy)
@@ -168,7 +171,9 @@ namespace SteamBot
         /// </summary>
         public void StopBot()
         {
-            log.Debug("Tryring to shut down bot thread.");
+            IsRunning = false;
+
+            log.Debug("Trying to shut down bot thread.");
             SteamClient.Disconnect();
 
             backgroundWorker.CancelAsync();
