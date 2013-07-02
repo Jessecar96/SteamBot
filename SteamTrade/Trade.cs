@@ -496,10 +496,7 @@ namespace SteamTrade
                                 else
                                 {
                                     if (OtherOfferedItems.Contains(itemID))
-                                    {
-                                        CancelTrade();
-                                        SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "The trade was aborted because a duplicate item ID of " + itemID + " was detected. This may be a glitch with the Steam network.");
-                                    }
+                                        throw new TradeException("A duplicate item was added: " + itemID);
                                     OtherOfferedItems.Add(itemID);
                                     Inventory.Item item = OtherInventory.GetItem(itemID);
                                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
