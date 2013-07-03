@@ -33,6 +33,9 @@ namespace SteamTrade
         string apiKey;
         int numEvents;
 
+        // Need this for sending cancellation messages
+        SteamFriends SteamFriends;
+
         internal Trade (SteamID me, SteamID other, string sessionId, string token, string apiKey, Inventory myInventory, Inventory otherInventory)
         {
             mySteamId = me;
@@ -492,6 +495,8 @@ namespace SteamTrade
                                 }
                                 else
                                 {
+                                    if (OtherOfferedItems.Contains(itemID))
+                                        throw new TradeException("A duplicate item was added: " + itemID);
                                     OtherOfferedItems.Add(itemID);
                                     Inventory.Item item = OtherInventory.GetItem(itemID);
                                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
