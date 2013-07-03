@@ -17,6 +17,8 @@ There are several things you must do in order to get SteamBot working:
 
 Retrieving the source code should be done by following the [installation guide] on the wiki. The install guide covers the instructions needed to obtain the source code as well as the instructions for compiling the code.
 
+[![Build Status](https://travis-ci.org/Jessecar96/SteamBot.png?branch=master)](https://travis-ci.org/Jessecar96/SteamBot)
+
 ## Configuring the Bot
 
 Next you need to actually edit the bot to make it do what you want. You can edit the files `SimpleUserHandler.cs` or `AdminUserHandler.cs` or you can create your very own `UserHandler`. See the [configuration guide] on the wiki. This guide covers configuring a basic bot as well as creating a custom user handler.

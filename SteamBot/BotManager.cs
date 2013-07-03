@@ -57,7 +57,10 @@ namespace SteamBot
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {
                 Configuration.BotInfo info = ConfigObject.Bots[i];
-                mainLog.Info("Launching Bot " + info.DisplayName + "...");
+                if (ConfigObject.AutoStartAllBots || info.AutoStart)
+                {
+                    mainLog.Info("Launching Bot " + info.DisplayName + "...");
+                }
 
                 var v = new RunningBot(useSeparateProcesses, i, ConfigObject);
                 botProcs.Add(v);
@@ -240,17 +243,22 @@ namespace SteamBot
             // will not be null in threaded mode. will be null in process mode.
             public Bot TheBot { get; set; }
 
+            public bool IsRunning = false;
+
             public void Stop()
             {
-                if (UsingProcesses)
+                if (IsRunning && UsingProcesses)
                 {
                     if (!BotProcess.HasExited)
+                    {
                         BotProcess.Kill();
+                        IsRunning = false;
+                    }
                 }
-                else
+                else if (TheBot != null && TheBot.IsRunning)
                 {
-                    if (TheBot != null)
-                        TheBot.StopBot();
+                    TheBot.StopBot();
+                    IsRunning = false;
                 }
             }
 
@@ -258,12 +266,22 @@ namespace SteamBot
             {
                 if (UsingProcesses)
                 {
-                    SpawnSteamBotProcess(BotConfigIndex);
+                    if (!IsRunning)
+                    {
+                        SpawnSteamBotProcess(BotConfigIndex);
+                        IsRunning = true;
+                    }
                 }
-                else
+                else if (TheBot == null)
                 {
                     SpawnBotThread(BotConfig);
-                }  
+                    IsRunning = true;
+                }
+                else if (!TheBot.IsRunning)
+                {
+                    SpawnBotThread(BotConfig);
+                    IsRunning = true;
+                }
             }
 
             private void SpawnSteamBotProcess(int botIndex)
