@@ -492,10 +492,17 @@ namespace SteamTrade
                                 }
                                 else
                                 {
-                                    OtherOfferedItems.Add(itemID);
-                                    Inventory.Item item = OtherInventory.GetItem(itemID);
-                                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                                    OnUserAddItem(schemaItem, item);
+                                    if (!OtherOfferedItems.Contains(itemID))
+                                    {
+                                        OtherOfferedItems.Add(itemID);
+                                        Inventory.Item item = OtherInventory.GetItem(itemID);
+                                        Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                                        OnUserAddItem(schemaItem, item);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Duplicate item ID of " + itemID + " was detected; ignoring event.");
+                                    }
                                 }
 
                                 break;
