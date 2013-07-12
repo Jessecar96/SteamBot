@@ -4,7 +4,7 @@ before_install:
   # Make sure mono is installed,
   # pipe stdout to dev/null because qq is still too chatty
   - sudo apt-get update -qq > /dev/null
-  - sudo apt-get install -qq mono-devel > /dev/null
+  - sudo apt-get install -qq mono-devel mono-gmcs > /dev/null
 
 script:
-  - xbuild SteamBot.sln
+  - xbuild /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln
