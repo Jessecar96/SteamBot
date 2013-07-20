@@ -6,13 +6,15 @@ namespace SteamBot
 {
     public class SimpleUserHandler : UserHandler
     {
-        public int ScrapPutUp;
-        public int botCardAdded, userCardAdded,isthisacard= 0;
-        public string[] playerCardName = new string [85] {"Akke","Loda","AdmiralBulldog","EGM","S4","universe","sneyking","Aui_2000","Waytosexy","fogged","BurNIng","Super","rOtk","QQQ","X!!","Fly","N0tail","Era","H4nn1","Trixi","ChuaN","Zhou","Ferrari_430","YYF","Faith","xiao8","DDC","Yao","Sylar","DD","Misery","Pajkatt","God","1437","Brax","ixmike88","FLUFFNSTUFF","TC","Bulba","Korok","Black^","syndereN","FATA","paS","qojqva","Winter","FzFz","TFG","Ling","dabeliuteef","Dendi","XBOCT","Puppey","Funn1k","KuroKy","Mushi","Xtinct","Akke","Loda","FLUFFNSTUFF","7ckngmad","Funzii","Sockshka","Silent","Goblak","Kabu","Lanm","Sag","Icy","Luo","Hao","Mu","Sansheng","KingJ","Banana","ARS-ART","NS","KSi","Crazy","Illidan","iceiceice","xFreedom","xy","Yamateh","ice"};
+        int botCardAdded, userCardAdded,isthisacard= 0;
+        string[] playerCardName = new string [85] {"Akke","Loda","AdmiralBulldog","EGM","S4","universe","sneyking","Aui_2000","Waytosexy","fogged","BurNIng","Super","rOtk","QQQ","X","Fly","N0tail","Era","H4nn1","Trixi","ChuaN","Zhou","Ferrari_430","YYF","Faith","xiao8","DDC","Yao","Sylar","DD","Misery","Pajkatt","God","1437","Brax","ixmike88","FLUFFNSTUFF","TC","Bulba","Korok","Black^","syndereN","FATA","paS","qojqva","Winter","FzFz","TFG","Ling","dabeliuteef","Dendi","XBOCT","Puppey","Funn1k","KuroKy","Mushi","Xtinct","Akke","Loda","FLUFFNSTUFF","7ckngmad","Funzii","Sockshka","Silent","Goblak","Kabu","Lanm","Sag","Icy","Luo","Hao","Mu","Sansheng","KingJ","Banana","ARS-ART","NS","KSi","Crazy","Illidan","iceiceice","xFreedom","xy","Yamateh","ice"};
         int[] playerCardDefindex = new int [85] {10217,10218,10263,10264,10265,10231,10272,10273,10274,10275,10234,10235,10236,10237,10238,10266,10267,10268,10269,10270,10196,10207,10208,10209,10210,10246,10247,10248,10249,10250,10239,10240,10241,10242,10282,10205,10219,10220,10221,10271,10244,10245,10288,10289,10290,10243,10283,10284,10285,10286,10197,10222,10223,10224,10225,10215,10216,10217,10218,10219,10252,10253,10254,10255,10256,10257,10258,10291,10292,10293,10211,10212,10213,10214,10259,10233,10276,10277,10278,10279,10226,10227,10228,10229,10251};
-        public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) {}
         static int TimerInterval = 170000;
         static int InviteTimerInterval = 2000;
+        public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) 
+        {
+        }
+       
         public override bool OnFriendAdd () 
         {
             Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ToString() + ") added me!");
@@ -20,6 +22,12 @@ namespace SteamBot
             
             return true;
         }
+        public void ReInit()
+        {
+            botCardAdded = 0;
+            userCardAdded = 0;
+        }
+
 
         public override void OnLoginCompleted()
         {
@@ -64,6 +72,7 @@ namespace SteamBot
         
         public override void OnTradeInit() 
         {
+            ReInit();
             Trade.SendMessage ("Success. Please put up your items.And type add xxx yyy or remove xxx yyy to ask bot to add or remove player card");
         }
         
@@ -112,21 +121,25 @@ namespace SteamBot
          public override void OnTradeMessage(string message) //根据用户在交易窗口的指令添加及移除卡
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);            
-            message = message.ToLower();
             isthisacard = 0; 
             if ( message.Contains("add") )
             {
                 for (int i = 0; i <= 84; i++)
                 {
-                if (message.Contains(playerCardName[i]))
-                    if (Trade.AddItemByDefindex(playerCardDefindex[i]))
+                    if ( message.Contains(playerCardName[i]) )
+                  
                     {
-                        botCardAdded++;
-                        Trade.SendMessage("Bot added a player card. ");
-                    }
-                    else
-                    {
-                        isthisacard++;
+                        if (Trade.AddItemByDefindex(playerCardDefindex[i]))
+                  
+                        
+                        {
+                            botCardAdded++;
+                        }
+                        else
+                        {
+                            isthisacard++;
+                            Bot.log.Warn("don't have" + playerCardName[i]);
+                        }
                     }
                 }
                 if (isthisacard == 85)
@@ -164,17 +177,25 @@ namespace SteamBot
         {
             //Because SetReady must use its own version, it's important
             //we poll the trade to make sure everything is up-to-date.
-           Bot.log.Success("User is ready to trade!");
-           if (Validate())
-           {
-               Trade.SetReady(true);
-           }
-           else
-           {
-               Trade.SendMessage("你添加的卡片必须大于机器人添加的卡片");
-               Trade.SetReady(false);
-           }
+            if (!ready)
+            {
+                Trade.SetReady(false);
+            }
+            else 
+            {
+                Bot.log.Success("User is ready to trade!");
+                if (Validate())
+                {
+                    Trade.SetReady(true);
+                }
+                else
+                {
+                    Trade.SendMessage("你添加的卡片必须大于机器人添加的卡片");
+                    Trade.SetReady(false);
+                }
 
+            }
+           
                     
                
          
@@ -196,6 +217,11 @@ namespace SteamBot
            
 
             OnTradeClose ();
+        }
+        public override void OnTradeClose()
+        {
+            Bot.SteamFriends.SetPersonaState(EPersonaState.Online);
+            base.OnTradeClose();
         }
 
         public bool Validate ()
