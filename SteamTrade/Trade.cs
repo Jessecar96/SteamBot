@@ -41,7 +41,7 @@ namespace SteamTrade
         {
             mySteamId = me;
             OtherSID = other;
-            session = new TradeSession(sessionId, token, other, "440");
+            session = new TradeSession(sessionId, token, other, "570");
 
             this.eventList = new List<TradeEvent>();
 

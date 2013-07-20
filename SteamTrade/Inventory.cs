@@ -15,7 +15,7 @@ namespace SteamTrade
         /// <param name='apiKey'>The needed Steam API key.</param>
         public static Inventory FetchInventory (ulong steamId, string apiKey)
         {
-            var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+            var url = "http://api.steampowered.com/IEconItems_570/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
             string response = SteamWeb.Fetch (url, "GET", null, null, false);
             InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
@@ -29,7 +29,7 @@ namespace SteamTrade
         public static dynamic GetInventory (SteamID steamid)
         {
             string url = String.Format (
-                "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
+                "http://steamcommunity.com/profiles/{0}/inventory/json/570/2/?trading=1",
                 steamid.ConvertToUInt64 ()
             );
             
