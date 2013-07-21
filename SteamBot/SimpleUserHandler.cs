@@ -1,14 +1,16 @@
 using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
+using System;
+using System.Timers;
 
 namespace SteamBot
 {
     public class SimpleUserHandler : UserHandler
     {
         int botCardAdded, userCardAdded,isthisacard= 0;
-        string[] playerCardName = new string [85] {"Akke","Loda","AdmiralBulldog","EGM","S4","universe","sneyking","Aui_2000","Waytosexy","fogged","BurNIng","Super","rOtk","QQQ","X","Fly","N0tail","Era","H4nn1","Trixi","ChuaN","Zhou","Ferrari_430","YYF","Faith","xiao8","DDC","Yao","Sylar","DD","Misery","Pajkatt","God","1437","Brax","ixmike88","FLUFFNSTUFF","TC","Bulba","Korok","Black^","syndereN","FATA","paS","qojqva","Winter","FzFz","TFG","Ling","dabeliuteef","Dendi","XBOCT","Puppey","Funn1k","KuroKy","Mushi","Xtinct","Akke","Loda","FLUFFNSTUFF","7ckngmad","Funzii","Sockshka","Silent","Goblak","Kabu","Lanm","Sag","Icy","Luo","Hao","Mu","Sansheng","KingJ","Banana","ARS-ART","NS","KSi","Crazy","Illidan","iceiceice","xFreedom","xy","Yamateh","ice"};
-        int[] playerCardDefindex = new int [85] {10217,10218,10263,10264,10265,10231,10272,10273,10274,10275,10234,10235,10236,10237,10238,10266,10267,10268,10269,10270,10196,10207,10208,10209,10210,10246,10247,10248,10249,10250,10239,10240,10241,10242,10282,10205,10219,10220,10221,10271,10244,10245,10288,10289,10290,10243,10283,10284,10285,10286,10197,10222,10223,10224,10225,10215,10216,10217,10218,10219,10252,10253,10254,10255,10256,10257,10258,10291,10292,10293,10211,10212,10213,10214,10259,10233,10276,10277,10278,10279,10226,10227,10228,10229,10251};
+        string[] playerCardName = new string[85] { "Akke", "Loda", "AdmiralBulldog", "EGM", "S4", "universe", "sneyking", "Aui_2000", "Waytosexy", "fogged", "BurNIng", "Super", "rOtk", "QQQ", "X", "Fly", "N0tail", "Era", "H4nn1", "Trixi", "ChuaN", "Zhou", "Ferrari_430", "YYF", "Faith", "xiao8", "DDC", "Yao", "Sylar", "dd", "Misery", "Pajkatt", "God", "1437", "Brax", "ixmike88", "FLUFFNSTUFF", "TC", "Bulba", "Korok", "Black^", "syndereN", "FATA", "paS", "qojqva", "Winter", "FzFz", "TFG", "Ling", "dabeliuteef", "Dendi", "XBOCT", "Puppey", "Funn1k", "KuroKy", "Mushi", "Xtinct", "ohayo", "ky.xy", "net", "7ckngmad", "Funzii", "Sockshka", "Silent", "Goblak", "Kabu", "Lanm", "Sag", "Icy", "Luo", "Hao", "Mu", "Sansheng", "KingJ", "Banana", "ARS-ART", "ns", "KSi", "Crazy", "Illidan", "iceiceice", "xFreedom", "xy", "Yamateh", "Ice" };
+        int[] playerCardDefindex = new int[85] { 10217, 10218, 10263, 10264, 10265, 10231, 10272, 10273, 10274, 10275, 10234, 10235, 10236, 10237, 10238, 10266, 10267, 10268, 10269, 10270, 10196, 10207, 10208, 10209, 10210, 10246, 10247, 10248, 10249, 10250, 10239, 10240, 10241, 10242, 10282, 10205, 10219, 10220, 10221, 10271, 10244, 10245, 10288, 10289, 10290, 10243, 10283, 10284, 10285, 10286, 10197, 10222, 10223, 10224, 10225, 10215, 10216, 10260, 10261, 10262, 10252, 10253, 10254, 10255, 10256, 10257, 10258, 10291, 10292, 10293, 10211, 10212, 10213, 10214, 10259, 10233, 10276, 10277, 10278, 10279, 10226, 10227, 10228, 10229, 10251 };
         static int TimerInterval = 170000;
         static int InviteTimerInterval = 2000;
         public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) 
@@ -46,6 +48,12 @@ namespace SteamBot
         
         public override void OnMessage (string message, EChatEntryType type) 
         {
+           // if (message == ".removeall")
+            //{
+                // Commenting this out because RemoveAllFriends is a custom function I wrote.
+              // Bot.SteamFriends.RemoveAllFriends();
+               // Bot.log.Warn("Removed all friends from my friends list.");
+           // }
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
 
