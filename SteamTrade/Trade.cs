@@ -442,21 +442,25 @@ namespace SteamTrade
             if (status == null)
                 throw new TradeException ("The web command to get the trade status failed.");
 
-            // I've noticed this when the trade is cancelled.
-            if (status.trade_status == 3)
+            switch (status.trade_status)
             {
-                if (OnError != null)
-                    OnError ("Trade was cancelled by other user.");
+                // Nothing happened. i.e. trade hasn't closed yet.
+                case 0:
+                    break;
 
-                OtherUserCancelled = true;
-                return otherDidSomething;
-            }
-
-            if (status.trade_status == 1)
-            {
-                // trade completed successfully.
-                HasTradeCompletedOk = true;
-                return otherDidSomething;
+                // Successful trade
+                case 1:
+                    HasTradeCompletedOk = true;
+                    return otherDidSomething; 
+                
+                // All other known values (3, 4) correspond to trades closing.
+                default:
+                    if (OnError != null)
+                    {
+                        OnError("Trade was closed by other user. Trade status: " + status.trade_status);
+                    }
+                    OtherUserCancelled = true;
+                    return otherDidSomething;
             }
 
             if (status.newversion)
