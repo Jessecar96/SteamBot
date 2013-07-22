@@ -51,7 +51,6 @@ namespace SteamTrade
 
             OtherInventory = otherInventory;
             MyInventory = myInventory;
-
         }
 
         #region Public Properties
@@ -126,26 +125,26 @@ namespace SteamTrade
         public bool HasTradeCompletedOk { get; private set; }
 
         #endregion
-                
+
         #region Public Events
 
-        public delegate void CloseHandler ();
+        public delegate void CloseHandler();
 
-        public delegate void ErrorHandler (string error);
+        public delegate void ErrorHandler(string error);
 
-        public delegate void TimeoutHandler ();
+        public delegate void TimeoutHandler();
 
-        public delegate void SuccessfulInit ();
+        public delegate void SuccessfulInit();
 
-        public delegate void UserAddItemHandler (Schema.Item schemaItem,Inventory.Item inventoryItem);
+        public delegate void UserAddItemHandler(Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public delegate void UserRemoveItemHandler (Schema.Item schemaItem,Inventory.Item inventoryItem);
+        public delegate void UserRemoveItemHandler(Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public delegate void MessageHandler (string msg);
+        public delegate void MessageHandler(string msg);
 
-        public delegate void UserSetReadyStateHandler (bool ready);
+        public delegate void UserSetReadyStateHandler(bool ready);
 
-        public delegate void UserAcceptHandler ();
+        public delegate void UserAcceptHandler();
 
         /// <summary>
         /// When the trade closes, this is called.  It doesn't matter
@@ -153,7 +152,7 @@ namespace SteamTrade
         /// to close the trade.
         /// </summary>
         public event CloseHandler OnClose;
-        
+
         /// <summary>
         /// This is for handling errors that may occur, like inventories
         /// not loading.
@@ -169,7 +168,7 @@ namespace SteamTrade
         /// This occurs when the other user adds an item to the trade.
         /// </summary>
         public event UserAddItemHandler OnUserAddItem;
-        
+
         /// <summary>
         /// This occurs when the other user removes an item from the 
         /// trade.
@@ -192,21 +191,21 @@ namespace SteamTrade
         /// This occurs when the user accepts the trade.
         /// </summary>
         public event UserAcceptHandler OnUserAccept;
-        
+
         #endregion
 
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
         /// </summary>
-        public bool CancelTrade ()
+        public bool CancelTrade()
         {
-            bool ok = session.CancelTradeWebCmd ();
+            bool ok = session.CancelTradeWebCmd();
 
             if (!ok)
-                throw new TradeException ("The Web command to cancel the trade failed");
-            
+                throw new TradeException("The Web command to cancel the trade failed");
+
             if (OnClose != null)
-                OnClose ();
+                OnClose();
 
             return true;
         }
@@ -215,18 +214,18 @@ namespace SteamTrade
         /// Adds a specified item by its itemid.
         /// </summary>
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
-        public bool AddItem (ulong itemid)
+        public bool AddItem(ulong itemid)
         {
-            if (MyInventory.GetItem (itemid) == null)
+            if (MyInventory.GetItem(itemid) == null)
                 return false;
 
-            var slot = NextTradeSlot ();
-            bool ok = session.AddItemWebCmd (itemid, slot);
+            var slot = NextTradeSlot();
+            bool ok = session.AddItemWebCmd(itemid, slot);
 
             if (!ok)
-                throw new TradeException ("The Web command to add the Item failed");
+                throw new TradeException("The Web command to add the Item failed");
 
-            myOfferedItems [slot] = itemid;
+            myOfferedItems[slot] = itemid;
 
             return true;
         }
@@ -238,14 +237,14 @@ namespace SteamTrade
         /// <c>true</c> if an item was found with the corresponding
         /// defindex, <c>false</c> otherwise.
         /// </returns>
-        public bool AddItemByDefindex (int defindex)
+        public bool AddItemByDefindex(int defindex)
         {
-            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
             foreach (Inventory.Item item in items)
             {
                 if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
                 {
-                    return AddItem (item.Id);
+                    return AddItem(item.Id);
                 }
             }
             return false;
@@ -258,9 +257,9 @@ namespace SteamTrade
         /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
         /// <param name="numToAdd">The upper limit on amount of items to add. <c>0</c> to add all items.</param>
         /// <returns>Number of items added.</returns>
-        public uint AddAllItemsByDefindex (int defindex, uint numToAdd = 0)
+        public uint AddAllItemsByDefindex(int defindex, uint numToAdd = 0)
         {
-            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
 
             uint added = 0;
 
@@ -268,7 +267,7 @@ namespace SteamTrade
             {
                 if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
                 {
-                    bool success = AddItem (item.Id);
+                    bool success = AddItem(item.Id);
 
                     if (success)
                         added++;
@@ -285,18 +284,18 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem (ulong itemid)
+        public bool RemoveItem(ulong itemid)
         {
-            int? slot = GetItemSlot (itemid);
+            int? slot = GetItemSlot(itemid);
             if (!slot.HasValue)
                 return false;
 
             bool ok = session.RemoveItemWebCmd(itemid, slot.Value);
 
             if (!ok)
-                throw new TradeException ("The web command to remove the item failed.");
+                throw new TradeException("The web command to remove the item failed.");
 
-            myOfferedItems.Remove (slot.Value);
+            myOfferedItems.Remove(slot.Value);
 
             return true;
         }
@@ -307,14 +306,14 @@ namespace SteamTrade
         /// <returns>
         /// Returns <c>true</c> if it found a corresponding item; <c>false</c> otherwise.
         /// </returns>
-        public bool RemoveItemByDefindex (int defindex)
+        public bool RemoveItemByDefindex(int defindex)
         {
             foreach (ulong id in myOfferedItems.Values)
             {
-                Inventory.Item item = MyInventory.GetItem (id);
+                Inventory.Item item = MyInventory.GetItem(id);
                 if (item.Defindex == defindex)
                 {
-                    return RemoveItem (item.Id);
+                    return RemoveItem(item.Id);
                 }
             }
             return false;
@@ -326,17 +325,17 @@ namespace SteamTrade
         /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
         /// <param name="numToRemove">The upper limit on amount of items to remove. <c>0</c> to remove all items.</param>
         /// <returns>Number of items removed.</returns>
-        public uint RemoveAllItemsByDefindex (int defindex, uint numToRemove = 0)
+        public uint RemoveAllItemsByDefindex(int defindex, uint numToRemove = 0)
         {
-            List<Inventory.Item> items = MyInventory.GetItemsByDefindex (defindex);
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
 
             uint removed = 0;
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && myOfferedItems.ContainsValue (item.Id))
+                if (item != null && myOfferedItems.ContainsValue(item.Id))
                 {
-                    bool success = RemoveItem (item.Id);
+                    bool success = RemoveItem(item.Id);
 
                     if (success)
                         removed++;
@@ -375,12 +374,12 @@ namespace SteamTrade
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
-        public bool SendMessage (string msg)
+        public bool SendMessage(string msg)
         {
             bool ok = session.SendMessageWebCmd(msg);
 
             if (!ok)
-                throw new TradeException ("The web command to send the trade message failed.");
+                throw new TradeException("The web command to send the trade message failed.");
 
             return true;
         }
@@ -388,15 +387,15 @@ namespace SteamTrade
         /// <summary>
         /// Sets the bot to a ready status.
         /// </summary>
-        public bool SetReady (bool ready)
+        public bool SetReady(bool ready)
         {
             // testing
-            ValidateLocalTradeItems ();
+            ValidateLocalTradeItems();
 
             bool ok = session.SetReadyWebCmd(ready);
 
             if (!ok)
-                throw new TradeException ("The web command to set trade ready state failed.");
+                throw new TradeException("The web command to set trade ready state failed.");
 
             return true;
         }
@@ -405,14 +404,14 @@ namespace SteamTrade
         /// Accepts the trade from the user.  Returns a deserialized
         /// JSON object.
         /// </summary>
-        public bool AcceptTrade ()
+        public bool AcceptTrade()
         {
-            ValidateLocalTradeItems ();
+            ValidateLocalTradeItems();
 
             bool ok = session.AcceptTradeWebCmd();
 
             if (!ok)
-                throw new TradeException ("The web command to accept the trade failed.");
+                throw new TradeException("The web command to accept the trade failed.");
 
             return true;
         }
@@ -423,7 +422,7 @@ namespace SteamTrade
         /// method itself.
         /// </summary>
         /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
-        public bool Poll ()
+        public bool Poll()
         {
             bool otherDidSomething = false;
 
@@ -434,13 +433,13 @@ namespace SteamTrade
                 // since there is no feedback to let us know that the trade
                 // is fully initialized we assume that it is when we start polling.
                 if (OnAfterInit != null)
-                    OnAfterInit ();
+                    OnAfterInit();
             }
 
             TradeStatus status = session.GetStatus();
 
             if (status == null)
-                throw new TradeException ("The web command to get the trade status failed.");
+                throw new TradeException("The web command to get the trade status failed.");
 
             switch (status.trade_status)
             {
@@ -451,13 +450,13 @@ namespace SteamTrade
                 // Successful trade
                 case 1:
                     HasTradeCompletedOk = true;
-                    return otherDidSomething; 
-                
+                    return otherDidSomething;
+
                 // All other known values (3, 4) correspond to trades closing.
                 default:
                     if (OnError != null)
                     {
-                        OnError("Trade was closed by other user. Trade status: " + status.trade_status);
+                        OnError("Trade was closed by customer. Trade status: " + status.trade_status);
                     }
                     OtherUserCancelled = true;
                     return otherDidSomething;
@@ -469,7 +468,7 @@ namespace SteamTrade
                 session.Version = status.version;
 
                 TradeEvent trdEvent = status.GetLastEvent();
-                TradeEventType actionType = (TradeEventType) trdEvent.action;
+                TradeEventType actionType = (TradeEventType)trdEvent.action;
                 HandleTradeVersionChange(status);
                 return true;
             }
@@ -509,7 +508,7 @@ namespace SteamTrade
                  * 5 = ? - maybe some sort of cancel
                  * 6 = ?
                  * 7 = Chat (message = "text")        */
-                switch ((TradeEventType) tradeEvent.action)
+                switch ((TradeEventType)tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
                         FireOnUserAddItem(tradeEvent);
@@ -563,7 +562,7 @@ namespace SteamTrade
 
         private void CopyNewAssets(List<ulong> dest, TradeUserAssets[] assetList)
         {
-            if (assetList == null) 
+            if (assetList == null)
                 return;
 
             //Console.WriteLine("clearing dest");
@@ -576,21 +575,59 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Gets an item from a TradeEvent, and passes it into the UserHandler's implemented OnUserAddItem([...]) routine.
+        /// Passes in null items if something went wrong.
+        /// </summary>
+        /// <param name="tradeEvent">TradeEvent to get item from</param>
+        /// <returns></returns>
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
+            // TODO: Add log
+            // Customer removed item
+
             ulong itemID = tradeEvent.assetid;
 
-            if (OtherInventory != null)
+            if (null != OtherInventory)
             {
                 Inventory.Item item = OtherInventory.GetItem(itemID);
-                Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                OnUserAddItem(schemaItem, item);
+                if (null != item)
+                {
+                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                    if (null == schemaItem)
+                    {
+                        // TODO: Log this
+                        // Could not find item in schema.
+                    }
+
+                    OnUserAddItem(schemaItem, item);
+                    return;
+                }
+                else
+                {
+                    // TODO: Log this
+                    // Could not find item in customer's inventory."
+                    // Cannot look for item in schema.
+
+                    OnUserAddItem(null, item);
+                    return;
+                }
             }
             else
             {
+                // Customer inventory is private.
+
                 var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
+                if (null == schemaItem)
+                {
+                    // TODO: Log this
+                    // Could not find item in schema.
+                }
+
                 OnUserAddItem(schemaItem, null);
                 // todo: figure out what to send in with Inventory item.....
+
+                return;
             }
         }
 
@@ -611,18 +648,51 @@ namespace SteamTrade
 
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            ulong itemID = (ulong) tradeEvent.assetid;
+            ulong itemID = (ulong)tradeEvent.assetid;
+
+            // TODO: Add log
+            // Customer removed item [itemID]
 
             if (OtherInventory != null)
             {
                 Inventory.Item item = OtherInventory.GetItem(itemID);
-                Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                OnUserRemoveItem(schemaItem, item);
+                if (null != item)
+                {
+                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                    if (null == schemaItem)
+                    {
+
+                        // TODO: Add log
+                        // Could not find item in schema.
+                    }
+
+                    OnUserRemoveItem(schemaItem, item);
+                    return;
+                }
+                else
+                {
+                    // TODO: Add log
+                    // Could not find item in customer's inventory.
+                    // Cannot look for item in schema.
+
+                    OnUserAddItem(null, item);
+                    return;
+                }
             }
             else
             {
+                // TODO: Add log
+                // Customer inventory is private.
+
                 var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
+                if (null == schemaItem)
+                {
+                    // TODO: Add log
+                    // Could not find item in schema.
+                }
+
                 OnUserRemoveItem(schemaItem, null);
+                return;
             }
         }
 
@@ -634,21 +704,21 @@ namespace SteamTrade
                 onCloseEvent();
         }
 
-        int NextTradeSlot ()
+        int NextTradeSlot()
         {
             int slot = 0;
-            while (myOfferedItems.ContainsKey (slot))
+            while (myOfferedItems.ContainsKey(slot))
             {
                 slot++;
             }
             return slot;
         }
 
-        int? GetItemSlot (ulong itemid)
+        int? GetItemSlot(ulong itemid)
         {
             foreach (int slot in myOfferedItems.Keys)
             {
-                if (myOfferedItems [slot] == itemid)
+                if (myOfferedItems[slot] == itemid)
                 {
                     return slot;
                 }
@@ -656,31 +726,31 @@ namespace SteamTrade
             return null;
         }
 
-        void ValidateSteamItemChanged (ulong itemid, bool wasAdded)
+        void ValidateSteamItemChanged(ulong itemid, bool wasAdded)
         {
             // checks to make sure that the Trade polling saw
             // the correct change for the given item.
 
             // check if the correct item was added
-            if (wasAdded && !myOfferedItems.ContainsValue (itemid))
-                throw new TradeException ("Steam Trade had an invalid item added: " + itemid);
+            if (wasAdded && !myOfferedItems.ContainsValue(itemid))
+                throw new TradeException("Steam Trade had an invalid item added: " + itemid);
 
             // check if the correct item was removed
-            if (!wasAdded && myOfferedItems.ContainsValue (itemid))
-                throw new TradeException ("Steam Trade had an invalid item removed: " + itemid);
+            if (!wasAdded && myOfferedItems.ContainsValue(itemid))
+                throw new TradeException("Steam Trade had an invalid item removed: " + itemid);
         }
 
-        void ValidateLocalTradeItems ()
+        void ValidateLocalTradeItems()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
-                throw new TradeException ("Error validating local copy of items in the trade: Count mismatch");
+                throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
             }
 
             foreach (ulong id in myOfferedItems.Values)
             {
-                if (!steamMyOfferedItems.Contains (id))
-                    throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
+                if (!steamMyOfferedItems.Contains(id))
+                    throw new TradeException("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
         }
     }
