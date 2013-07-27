@@ -106,6 +106,7 @@ namespace SteamBot
         {
             Bot.log.Warn ("[USERHANDLER] TRADE CLOSED");
             Bot.CloseTrade ();
+            
         }
 
         public abstract void OnTradeInit ();

@@ -10,13 +10,13 @@ namespace SteamBot
     {
         int botCardAdded, userCardAdded,isthisacard= 0;
        // string[] playerCardName = new string[85] { " Akke ", " Loda ", " AdmiralBulldog ", " EGM ", " S4 ", " universe ", " sneyking ", " Aui_2000 ", " Waytosexy ", " fogged ", " BurNIng ", " Super ", " rOtk ", " QQQ ", " X!! ", " Fly ", " N0tail ", " Era ", " H4nn1 ", " Trixi ", " ChuaN ", " Zhou ", " Ferrari_430 ", " YYF ", " Faith ", " xiao8 ", " DDC ", " Yao ", " Sylar ", " DD ", " Misery ", " Pajkatt ", " God ", " 1437 ", " Brax ", " ixmike88 ", " FLUFFNSTUFF ", " TC ", " Bulba ", " Korok ", " Black^ ", " syndereN ", " FATA ", " paS ", " qojqva ", " Winter ", " FzFz ", " TFG ", " Ling ", " dabeliuteef ", " Dendi ", " XBOCT ", " Puppey ", " Funn1k ", " KuroKy ", " Mushi ", " Xtinct ", " ohayo ", " ky.xy ", " net ", " 7ckngmad ", " Funzii ", " Sockshka ", " Silent ", " Goblak ", " Kabu ", " Lanm ", " Sag ", " Icy ", " Luo ", " Hao ", " Mu ", " Sansheng ", " KingJ ", " Banana ", " ARS-ART ", " NS ", " KSi ", " Crazy ", " Illidan ", " iceiceice ", " xFreedom ", " xy ", " Yamateh ", " Ice " };
-        string[] playerCardName = new string[85] { " akke ", " loda ", " admiralbulldog ", " egm ", " s4 ", " universe ", " sneyking ", " aui_2000 ", " waytosexy ", " fogged ", " burning ", " super ", " rotk ", " qqq ", " x!! ", " fly ", " n0tail ", " era ", " h4nn1 ", " trixi ", " chuan ", " zhou ", " ferrari_430 ", " yyf ", " faith ", " xiao8 ", " ddc ", " yao ", " sylar ", " dd ", " misery ", " pajkatt ", " god ", " 1437 ", " brax ", " ixmike88 ", " fluffnstuff ", " tc ", " bulba ", " korok ", " black^ ", " synderen ", " fata ", " pas ", " qojqva ", " winter ", " fzfz ", " tfg ", " ling ", " dabeliuteef ", " dendi ", " xboct ", " puppey ", " funn1k ", " kuroky ", " mushi ", " xtinct ", " ohayo ", " ky.xy ", " net ", " 7ckngmad ", " funzii ", " sockshka ", " silent ", " goblak ", " kabu ", " lanm ", " sag ", " icy ", " luo ", " hao ", " mu ", " sansheng ", " kingj ", " banana ", " ars-art ", " ns ", " ksi ", " crazy ", " illidan ", " iceiceice ", " xfreedom ", " xy ", " yamateh ", " ice " };
-        int[] playerCardDefindex = new int[85] { 10217, 10218, 10263, 10264, 10265, 10231, 10272, 10273, 10274, 10275, 10234, 10235, 10236, 10237, 10238, 10266, 10267, 10268, 10269, 10270, 10196, 10207, 10208, 10209, 10210, 10246, 10247, 10248, 10249, 10250, 10239, 10240, 10241, 10242, 10282, 10205, 10219, 10220, 10221, 10271, 10244, 10245, 10288, 10289, 10290, 10243, 10283, 10284, 10285, 10286, 10197, 10222, 10223, 10224, 10225, 10215, 10216, 10260, 10261, 10262, 10252, 10253, 10254, 10255, 10256, 10257, 10258, 10291, 10292, 10293, 10211, 10212, 10213, 10214, 10259, 10233, 10276, 10277, 10278, 10279, 10226, 10227, 10228, 10229, 10251 };
-        int[] playerCardInventory=new int[85];
-        bool[] playerCardOk = new bool[85];
-        int totalPlayCardInventory = 0;
-        static int TimerInterval = 170000;
-        static int InviteTimerInterval = 2000;
+        static string[] playerCardName = new string[85] { " akke ", " loda ", " admiralbulldog ", " egm ", " s4 ", " universe ", " sneyking ", " aui_2000 ", " waytosexy ", " fogged ", " burning ", " super ", " rotk ", " qqq ", " x!! ", " fly ", " n0tail ", " era ", " h4nn1 ", " trixi ", " chuan ", " zhou ", " ferrari_430 ", " yyf ", " faith ", " xiao8 ", " ddc ", " yao ", " sylar ", " dd ", " misery ", " pajkatt ", " god ", " 1437 ", " brax ", " ixmike88 ", " fluffnstuff ", " tc ", " bulba ", " korok ", " black^ ", " synderen ", " fata ", " pas ", " qojqva ", " winter ", " fzfz ", " tfg ", " ling ", " dabeliuteef ", " dendi ", " xboct ", " puppey ", " funn1k ", " kuroky ", " mushi ", " xtinct ", " ohayo ", " ky.xy ", " net ", " 7ckngmad ", " funzii ", " sockshka ", " silent ", " goblak ", " kabu ", " lanm ", " sag ", " icy ", " luo ", " hao ", " mu ", " sansheng ", " kingj ", " banana ", " ars-art ", " ns ", " ksi ", " crazy ", " illidan ", " iceiceice ", " xfreedom ", " xy ", " yamateh ", " ice " };
+        static int[] playerCardDefindex = new int[85] { 10217, 10218, 10263, 10264, 10265, 10231, 10272, 10273, 10274, 10275, 10234, 10235, 10236, 10237, 10238, 10266, 10267, 10268, 10269, 10270, 10196, 10207, 10208, 10209, 10210, 10246, 10247, 10248, 10249, 10250, 10239, 10240, 10241, 10242, 10282, 10205, 10219, 10220, 10221, 10271, 10244, 10245, 10288, 10289, 10290, 10243, 10283, 10284, 10285, 10286, 10197, 10222, 10223, 10224, 10225, 10215, 10216, 10260, 10261, 10262, 10252, 10253, 10254, 10255, 10256, 10257, 10258, 10291, 10292, 10293, 10211, 10212, 10213, 10214, 10259, 10233, 10276, 10277, 10278, 10279, 10226, 10227, 10228, 10229, 10251 };
+        static int[] playerCardInventory=new int[85];
+        static bool[] playerCardOk = new bool[85];
+        static int totalPlayCardInventory = 0;
+        //static int TimerInterval = 170000;
+        //static int InviteTimerInterval = 2000;
         public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) 
         {
         }
@@ -142,9 +142,9 @@ namespace SteamBot
                     else
                     {
 
-                        if (playerCardInventory[i] * 5 > totalPlayCardInventory)
+                        if (playerCardInventory[i] * 20 > totalPlayCardInventory)
                         {
-                            Trade.SendMessage("因为这种卡片已超过卡片总数的20%,我现在不接受这种卡片 ");
+                            Trade.SendMessage("因为这种卡片已超过卡片总数的5%,我现在不接受这种卡片 ");
                         }
                         else
                         {
@@ -182,7 +182,7 @@ namespace SteamBot
                     }
                     else
                     {
-                        if (playerCardInventory[i] * 5 > totalPlayCardInventory)
+                        if (playerCardInventory[i] * 20 > totalPlayCardInventory)
                         {
                             Trade.SendMessage("你移除了我不接受的卡片 ");
                         }
