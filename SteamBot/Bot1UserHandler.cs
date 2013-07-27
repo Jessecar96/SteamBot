@@ -31,6 +31,7 @@ namespace SteamBot
                 if (status(OtherSid, type))
                 {
                     Bot1Queue.locked = true;
+                    Bot1Queue.requesttradefiletime = DateTime.Now.ToFileTime();
                     for (int i = postionInQueue - 1; i < Bot1Queue.peopleInQueue; i++)
                     {
                         Bot1Queue.steamidInQueue[i] = Bot1Queue.steamidInQueue[i + 1];
