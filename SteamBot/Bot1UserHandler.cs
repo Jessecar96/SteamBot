@@ -172,11 +172,13 @@ namespace SteamBot
         public bool tradenext()
         {
 
-            if (Bot1Queue.locked == false && Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0)
+            //if (Bot1Queue.locked == false && Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0)
             //{
                 //Thread.Sleep(10000);
                 //Bot1Queue.requestTrade = true;
                 //if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0)
+            long dttime =  DateTime.Now.ToFileTime();
+            if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0 && (dttime -Bot1Queue.requesttradefiletime) >500000000)
                 {
                    
                     Bot1Queue.locked = true;
@@ -246,42 +248,42 @@ namespace SteamBot
                                     Bot.SteamFriends.RemoveFriend(player);
                                 }
                             }*/
-                        }
-                    });//msg结束
+                        } 
+                    });
 
-
-                    if (Bot1Queue.success != 1)
-                    {
+                    
+                    
                         if (Bot1Queue.peopleInQueue > 1)
                         {
                             Bot.SteamFriends.SendChatMessage(Bot1Queue.steamidInQueue[1], EChatEntryType.ChatMsg, "这个交易完成之后,我将交易你,请做好准备 ");
                         }
-                        for (int i = 0; i < Bot1Queue.peopleInQueue; i++)
-                        {
-                            Bot1Queue.steamidInQueue[i] = Bot1Queue.steamidInQueue[i + 1];
-                        }
+                        
                         if (Bot1Queue.peopleInQueue > 1)
                         {
+                            for (int i = 0; i < Bot1Queue.peopleInQueue; i++)
+                            {
+                                Bot1Queue.steamidInQueue[i] = Bot1Queue.steamidInQueue[i + 1];
+                            }
                             Bot1Queue.peopleInQueue--;
                         }
                         else
                         {
                             Bot1Queue.peopleInQueue = 0;
                         }
-                    }
+                   
                                       
                     //Thread.Sleep(60000);
                     Bot1Queue.locked =false;
-                    if (Bot1Queue.success == 2)
+                   if (Bot1Queue.success == 2)
                     {
-                        return false;
+                       return false;
                     }
                     else
-                    {
+                    
                         return true;
                     }
                 
-                }
+               // }
             //}
             else
             {
@@ -297,7 +299,8 @@ namespace SteamBot
                 Bot1Queue.locked = false;
             }
             do { }
-            while (!tradenext());
+           while (!tradenext());
+            //tradenext();
         }
 
         public override bool OnFriendAdd () 
@@ -348,10 +351,10 @@ namespace SteamBot
                 status(OtherSID, type);
                  
             }
-            else if (message.Contains("/leave"))
-            {
-                leavethequeue(OtherSID, type);
-            }
+           // else if (message.Contains("/leave"))
+            //{
+            //    leavethequeue(OtherSID, type);
+           // }
             else
             {
 
