@@ -463,13 +463,6 @@ namespace SteamTrade
                     return otherDidSomething;
             }
 
-            if (status.trade_status == 1)
-            {
-                // trade completed successfully.
-                HasTradeCompletedOk = true;
-                return otherDidSomething;
-            }
-
             if (status.newversion)
             {
                 // handle item adding and removing
