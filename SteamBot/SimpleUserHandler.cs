@@ -125,6 +125,11 @@ namespace SteamBot
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
         {
             var item = Trade.CurrentSchema.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
+            var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
+            /*if (Trade.Dota2Schema == null)
+            {
+                Trade.SendMessage("null ");
+            } */
             isthisacard = 0;
             for (int i = 0; i <= 84; i++) //做一个85次的循环检验物品是否属于卡片
             {
@@ -161,6 +166,15 @@ namespace SteamBot
             if (isthisacard == 85)
             {
                 Trade.SendMessage("You added a item which is not a player card , and if you'd like to donate something,i appreciate it. ");//不是卡片则提示用户，不做其他操作
+            }
+            Trade.SendMessage(  Trade.Dota2Schema.Items.Length.ToString );
+            if (dota2item == null)
+            {
+                Trade.SendMessage("null");
+            }
+            else
+            {
+                Trade.SendMessage(dota2item.Name + dota2item.Item_rarity + Trade.Dota2Schema.Items.Length);
             }
         }
         

@@ -38,7 +38,7 @@ namespace SteamBot
         // The current trade; if the bot is not in a trade, this is
         // null.
         public Trade CurrentTrade;
-
+        public Trade Dota2Trade;
         public bool IsDebugMode = false;
 
         // The log for the bot.  This logs with the bot's display name.
@@ -354,6 +354,7 @@ namespace SteamBot
                 {
                     log.Info ("Downloading Schema...");
                     Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                    Trade.Dota2Schema = Dota2.FetchSchema();
                     log.Success ("Schema Downloaded!");
                 }
 
