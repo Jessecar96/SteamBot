@@ -1,10 +1,18 @@
 language: c
 
+env:
+  - EnableNuGetPackageRestore=true
+
 before_install:
   # Make sure mono is installed,
   # pipe stdout to dev/null because qq is still too chatty
   - sudo apt-get update -qq > /dev/null
   - sudo apt-get install -qq mono-devel mono-gmcs > /dev/null
+  # update root certs for nuget
+  - mozroots --import --sync
 
 script:
-  - xbuild /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln
+  - .ci/build.sh
+  
+#script:
+#  - xbuild /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln
