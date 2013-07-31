@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.ComponentModel;
 using SteamKit2;
-using SteamKit2.GC;
 using SteamTrade;
 using SteamKit2.Internal;
 
@@ -266,7 +265,7 @@ namespace SteamBot
 
         public void SetGamePlaying(int id)
         {
-            var gamePlaying = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
+            var gamePlaying = new SteamKit2.ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
 
             if (id != 0)
                 gamePlaying.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
