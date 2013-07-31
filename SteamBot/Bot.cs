@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.ComponentModel;
 using SteamKit2;
+using SteamKit2.GC;
 using SteamTrade;
 using SteamKit2.Internal;
 
