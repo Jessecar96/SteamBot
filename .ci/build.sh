@@ -6,5 +6,5 @@ function ExitIfNonZero {
 	fi
 }
 
-xbuild /p:NoWarn=1584 /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln /target:ExampleBot /target:SteamTrade
+xbuild /p:NoWarn=1584 /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln 
 ExitIfNonZero $?
