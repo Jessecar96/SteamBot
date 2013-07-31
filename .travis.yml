@@ -10,6 +10,7 @@ before_install:
   - sudo apt-get install -qq mono-devel mono-gmcs > /dev/null
   # update root certs for nuget
   - mozroots --import --sync
+  - chmod a+x .ci/build.sh
 
 script:
   - .ci/build.sh
