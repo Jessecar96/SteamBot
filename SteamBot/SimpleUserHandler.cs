@@ -58,9 +58,43 @@ namespace SteamBot
             Trade.SendMessage ("Success. Please put up your items.");
         }
         
-        public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
+        public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
+            switch (inventoryItem.appid)
+            {
+                case 440:
+                    Trade.SendMessage("TF2 ITEM");
+                break;
+
+                case 753:
+                    SteamInventory.ItemDescription tmpiDesc = Trade.OtherSteamInventory.getInfo(inventoryItem.Id);
+                    Trade.SendMessage("STEAM INV ITEM");
+                    Trade.SendMessage("TYPE: " + tmpiDesc.type);
+                break;
+
+                default:
+                    Trade.SendMessage("Other TYPE");
+                break;
+            }
+        }
         
-        public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
+        public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
+            switch (inventoryItem.appid)
+            {
+                case 440:
+                    Trade.SendMessage("TF2 ITEM");
+                    break;
+
+                case 753:
+                    SteamInventory.ItemDescription tmpiDesc = Trade.OtherSteamInventory.getInfo(inventoryItem.Id);
+                    Trade.SendMessage("STEAM INV ITEM");
+                    Trade.SendMessage("TYPE: " + tmpiDesc.type);
+                    break;
+
+                default:
+                    Trade.SendMessage("Other TYPE");
+                    break;
+            }
+        }
         
         public override void OnTradeMessage (string message) {}
         

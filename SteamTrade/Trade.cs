@@ -37,6 +37,9 @@ namespace SteamTrade
 
         private readonly TradeSession session;
 
+        public SteamInventory OtherSteamInventory;
+        public SteamInventory MySteamInventory;
+
         internal Trade(SteamID me, SteamID other, string sessionId, string token, Inventory myInventory, Inventory otherInventory)
         {
             mySteamId = me;
@@ -52,6 +55,12 @@ namespace SteamTrade
             OtherInventory = otherInventory;
             MyInventory = myInventory;
 
+            /*STEAM ADDON*/
+            OtherSteamInventory = new SteamInventory();
+            MySteamInventory = new SteamInventory();
+
+            OtherSteamInventory.Load(other);
+            MySteamInventory.Load(me);
         }
 
         #region Public Properties
@@ -217,7 +226,7 @@ namespace SteamTrade
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
         public bool AddItem (ulong itemid)
         {
-            if (MyInventory.GetItem (itemid) == null)
+            if (MyInventory.GetItem(itemid) == null && !MySteamInventory.items.ContainsKey(itemid))
                 return false;
 
             var slot = NextTradeSlot ();
@@ -579,19 +588,29 @@ namespace SteamTrade
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
             ulong itemID = tradeEvent.assetid;
+            Inventory.Item item = new Inventory.Item();
+            Schema.Item schemaItem = new Schema.Item();
 
             if (OtherInventory != null)
             {
-                Inventory.Item item = OtherInventory.GetItem(itemID);
-                Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                OnUserAddItem(schemaItem, item);
+                schemaItem = CurrentSchema.GetItem(item.Defindex);
             }
             else
             {
-                var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
-                OnUserAddItem(schemaItem, null);
-                // todo: figure out what to send in with Inventory item.....
+                schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
             }
+
+            if (tradeEvent.appid == 440)
+            {
+                item = OtherInventory.GetItem(itemID);
+            }
+            else
+            {
+                item.Id = itemID;
+                item.appid = tradeEvent.appid;
+            }
+
+            OnUserAddItem(schemaItem, item);
         }
 
         private Schema.Item GetItemFromPrivateBp(TradeEvent tradeEvent, ulong itemID)
@@ -611,19 +630,30 @@ namespace SteamTrade
 
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            ulong itemID = (ulong) tradeEvent.assetid;
+            ulong itemID = tradeEvent.assetid;
+            Inventory.Item item = new Inventory.Item();
+            Schema.Item schemaItem = new Schema.Item();
 
             if (OtherInventory != null)
             {
-                Inventory.Item item = OtherInventory.GetItem(itemID);
-                Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                OnUserRemoveItem(schemaItem, item);
+                schemaItem = CurrentSchema.GetItem(item.Defindex);
             }
             else
             {
-                var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
-                OnUserRemoveItem(schemaItem, null);
+                schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
             }
+
+            if (tradeEvent.appid == 440)//TF2 Item
+            {
+                item = OtherInventory.GetItem(itemID);
+            }
+            else
+            {
+                item.Id = itemID;
+                item.appid = tradeEvent.appid;
+            }
+
+            OnUserRemoveItem(schemaItem, item);
         }
 
         internal void FireOnCloseEvent()
