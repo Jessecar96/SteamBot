@@ -226,7 +226,7 @@ namespace SteamTrade
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
         public bool AddItem (ulong itemid)
         {
-            if (MyInventory.GetItem(itemid) == null & !MySteamInventory.items.ContainsKey(itemid))
+            if (MyInventory.GetItem(itemid) == null && !MySteamInventory.items.ContainsKey(itemid))
                 return false;
 
             var slot = NextTradeSlot ();
