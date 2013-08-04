@@ -590,14 +590,14 @@ namespace SteamTrade
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
                     if (schemaItem == null)
                     {
-                        // TODO: Log this (counldn't find the item in CurrentSchema
+                        Console.WriteLine("User added an unknown item to the trade.");
                     }
 
                     OnUserAddItem(schemaItem, item);
                 }
                 else
                 {
-                    // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
+                    Console.WriteLine("User added an unknown item to the trade.");
                     OnUserAddItem(null, item);
                 }
             }
@@ -606,7 +606,7 @@ namespace SteamTrade
                 var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
                 if (schemaItem == null)
                 {
-                    // TODO: Log this (couldn't find item in CurrentSchema)
+                    Console.WriteLine("User added an unknown item to the trade.");
                 }
 
                 OnUserAddItem(schemaItem, null);
