@@ -77,20 +77,20 @@ namespace SteamTrade
         /// </summary>
         public Item GetItem (int defindex)
         {
-            if (defindex < Items.Length)
-            {
-                return Items[defindex];
-            }
-            /*
+            // if (defindex < Items.Length)
+          //  {
+             //   return Items[defindex];
+           // }
+           
             foreach (Item item in Items)
             {
                 if (item.Defindex == defindex)
                     return item;
-            } */
-            else
-            {
-            return null;
-            }
+            } 
+           // else
+           // {
+           return null;
+           // }
         }
 
         /// <summary>
@@ -109,6 +109,9 @@ namespace SteamTrade
 
         public class Item
         {
+            [JsonProperty("defindex")]
+            public ushort Defindex { get; set; }
+
             [JsonProperty("name")]
             public string Name { get; set; }
 

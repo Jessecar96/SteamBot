@@ -11,7 +11,8 @@ namespace SteamBot
 {
     public class Bot1UserHandler : UserHandler
     {
-        int botCardAdded, userCardAdded,isthisacard= 0;
+        int botCardAdded, userCardAdded, isthisacard, userRareAdded = 0;
+        bool acard = false;
        // string[] playerCardName = new string[85] { " Akke ", " Loda ", " AdmiralBulldog ", " EGM ", " S4 ", " universe ", " sneyking ", " Aui_2000 ", " Waytosexy ", " fogged ", " BurNIng ", " Super ", " rOtk ", " QQQ ", " X!! ", " Fly ", " N0tail ", " Era ", " H4nn1 ", " Trixi ", " ChuaN ", " Zhou ", " Ferrari_430 ", " YYF ", " Faith ", " xiao8 ", " DDC ", " Yao ", " Sylar ", " DD ", " Misery ", " Pajkatt ", " God ", " 1437 ", " Brax ", " ixmike88 ", " FLUFFNSTUFF ", " TC ", " Bulba ", " Korok ", " Black^ ", " syndereN ", " FATA ", " paS ", " qojqva ", " Winter ", " FzFz ", " TFG ", " Ling ", " dabeliuteef ", " Dendi ", " XBOCT ", " Puppey ", " Funn1k ", " KuroKy ", " Mushi ", " Xtinct ", " ohayo ", " ky.xy ", " net ", " 7ckngmad ", " Funzii ", " Sockshka ", " Silent ", " Goblak ", " Kabu ", " Lanm ", " Sag ", " Icy ", " Luo ", " Hao ", " Mu ", " Sansheng ", " KingJ ", " Banana ", " ARS-ART ", " NS ", " KSi ", " Crazy ", " Illidan ", " iceiceice ", " xFreedom ", " xy ", " Yamateh ", " Ice " };
         string[] playerCardName = new string[85] { " akke ", " loda ", " admiralbulldog ", " egm ", " s4 ", " universe ", " sneyking ", " aui_2000 ", " waytosexy ", " fogged ", " burning ", " super ", " rotk ", " qqq ", " x!! ", " fly ", " n0tail ", " era ", " h4nn1 ", " trixi ", " chuan ", " zhou ", " ferrari_430 ", " yyf ", " faith ", " xiao8 ", " ddc ", " yao ", " sylar ", " dd ", " misery ", " pajkatt ", " god ", " 1437 ", " brax ", " ixmike88 ", " fluffnstuff ", " tc ", " bulba ", " korok ", " black^ ", " synderen ", " fata ", " pas ", " qojqva ", " winter ", " fzfz ", " tfg ", " ling ", " dabeliuteef ", " dendi ", " xboct ", " puppey ", " funn1k ", " kuroky ", " mushi ", " xtinct ", " ohayo ", " ky.xy ", " net ", " 7ckngmad ", " funzii ", " sockshka ", " silent ", " goblak ", " kabu ", " lanm ", " sag ", " icy ", " luo ", " hao ", " mu ", " sansheng ", " kingj ", " banana ", " ars-art ", " ns ", " ksi ", " crazy ", " illidan ", " iceiceice ", " xfreedom ", " xy ", " yamateh ", " ice " };
         static int[] playerCardDefindex = new int[85] { 10217, 10218, 10263, 10264, 10265, 10231, 10272, 10273, 10274, 10275, 10234, 10235, 10236, 10237, 10238, 10266, 10267, 10268, 10269, 10270, 10196, 10207, 10208, 10209, 10210, 10246, 10247, 10248, 10249, 10250, 10239, 10240, 10241, 10242, 10282, 10205, 10219, 10220, 10221, 10271, 10244, 10245, 10288, 10289, 10290, 10243, 10283, 10284, 10285, 10286, 10197, 10222, 10223, 10224, 10225, 10215, 10216, 10260, 10261, 10262, 10252, 10253, 10254, 10255, 10256, 10257, 10258, 10291, 10292, 10293, 10211, 10212, 10213, 10214, 10259, 10233, 10276, 10277, 10278, 10279, 10226, 10227, 10228, 10229, 10251 };
@@ -178,111 +179,114 @@ namespace SteamBot
                 //Bot1Queue.requestTrade = true;
                 //if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0)
             long dttime =  DateTime.Now.ToFileTime();
-            if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0 && (dttime -Bot1Queue.requesttradefiletime) >500000000)
+            if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0 && (dttime - Bot1Queue.requesttradefiletime) > 500000000)
+            {
+
+                Bot1Queue.locked = true;
+                Bot1Queue.success = 0;
+                //DateTime dt =DateTime.Now;
+
+                Bot1Queue.requesttradefiletime = DateTime.Now.ToFileTime();
+                Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
+                Bot.OpenTrade(Bot1Queue.steamidInQueue[0]);
+               
+                /*
+                while (HandleCallback())
                 {
-                   
-                    Bot1Queue.locked = true;
-                    Bot1Queue.success = 0;
-                    //DateTime dt =DateTime.Now;
+                    HandleCallback();
+                }
+                CallbackMsg msg = Bot.SteamClient.GetCallback();
+                msg.Handle<SteamTrading.TradeResultCallback>(callback =>
+                {
+                    //Log.Warn("Trade Status: " + callback.Response);
 
-                    Bot1Queue.requesttradefiletime = DateTime.Now.ToFileTime();
-                    Bot.OpenTrade(Bot1Queue.steamidInQueue[0]);
-                    
-                    while (HandleCallback())
+                    if (callback.Response == EEconTradeResponse.Accepted)
                     {
-                        HandleCallback();
+                        Bot1Queue.success = 0;
+                        Bot.SteamClient.FreeLastCallback();
+                        Log.Success("Trade Accepted");
+                        Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
                     }
-                    CallbackMsg msg = Bot.SteamClient.GetCallback();
-                    msg.Handle<SteamTrading.TradeResultCallback>(callback =>
+                    if (callback.Response == EEconTradeResponse.InitiatorAlreadyTrading)
                     {
-                        //Log.Warn("Trade Status: " + callback.Response);
+                        Bot1Queue.success = 1;
+                        Bot.SteamClient.FreeLastCallback();
+                        Log.Warn("Bot already trading");
+                    }
 
-                        if (callback.Response == EEconTradeResponse.Accepted)
-                        {
-                            Bot1Queue.success = 0;
-                            Bot.SteamClient.FreeLastCallback();
-                            Log.Success("Trade Accepted");
-                            Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
-                        }
-                        if (callback.Response == EEconTradeResponse.InitiatorAlreadyTrading)
-                        {
-                            Bot1Queue.success = 1;
-                            Bot.SteamClient.FreeLastCallback();
-                            Log.Warn("Bot already trading");
-                        }
+                    if (callback.Response == EEconTradeResponse.TradeBannedTarget)
+                    {
+                        Bot1Queue.success = 2;
+                        Bot.SteamClient.FreeLastCallback();
+                        Log.Error("Trade Target Banned");
+                    }
+                    if (callback.Response == EEconTradeResponse.Cancel ||
+                        callback.Response == EEconTradeResponse.ConnectionFailed ||
+                        callback.Response == EEconTradeResponse.Declined ||
+                        callback.Response == EEconTradeResponse.Error ||
+                        callback.Response == EEconTradeResponse.TargetAlreadyTrading ||
+                        callback.Response == EEconTradeResponse.Timeout ||
+                        callback.Response == EEconTradeResponse.TooSoon ||
+                        callback.Response == EEconTradeResponse.TradeBannedInitiator ||
+                        callback.Response == EEconTradeResponse.TradeBannedTarget ||
+                        callback.Response == EEconTradeResponse.NotLoggedIn) // uh...
+                    {
+                        Bot1Queue.success = 2;
+                        Bot.SteamClient.FreeLastCallback();
+                        Log.Error("Trade Errored");
+                        //db.RemovefromQue(que[0]);
+                        //List<string> playerque = db.checkQueforPlayer(botID, que[2]);
 
-                        if (callback.Response == EEconTradeResponse.TradeBannedTarget)
+                        //Player still exists in que, don't remove from friendlist
+                        if (playerque.Count() > 0)
                         {
-                            Bot1Queue.success = 2;
-                            Bot.SteamClient.FreeLastCallback();
-                            Log.Error("Trade Target Banned");
+                            Bot.SteamFriends.SendChatMessage(player, EChatEntryType.ChatMsg, "Trade timed out, however you are still in que for another transaction so I will keep you as my friend");
                         }
-                        if (callback.Response == EEconTradeResponse.Cancel ||
-                            callback.Response == EEconTradeResponse.ConnectionFailed ||
-                            callback.Response == EEconTradeResponse.Declined ||
-                            callback.Response == EEconTradeResponse.Error ||
-                            callback.Response == EEconTradeResponse.TargetAlreadyTrading ||
-                            callback.Response == EEconTradeResponse.Timeout ||
-                            callback.Response == EEconTradeResponse.TooSoon ||
-                            callback.Response == EEconTradeResponse.TradeBannedInitiator ||
-                            callback.Response == EEconTradeResponse.TradeBannedTarget ||
-                            callback.Response == EEconTradeResponse.NotLoggedIn) // uh...
-                        {
-                            Bot1Queue.success = 2;
-                            Bot.SteamClient.FreeLastCallback();
-                            Log.Error("Trade Errored");
-                            //db.RemovefromQue(que[0]);
-                            //List<string> playerque = db.checkQueforPlayer(botID, que[2]);
-
-                            //Player still exists in que, don't remove from friendlist
-                            /*if (playerque.Count() > 0)
-                            {
-                                Bot.SteamFriends.SendChatMessage(player, EChatEntryType.ChatMsg, "Trade timed out, however you are still in que for another transaction so I will keep you as my friend");
-                            }
-                            //Player no longer in que table, get rid of them
-                            else
-                            {
-                                Bot.SteamFriends.SendChatMessage(player, EChatEntryType.ChatMsg, "Trade timed out you must re-add me and enter tradeID again");
-                                if (!IsAdmin)
-                                {
-                                    Bot.SteamFriends.RemoveFriend(player);
-                                }
-                            }*/
-                        } 
-                    });
-
-                    
-                    
-                        if (Bot1Queue.peopleInQueue > 1)
-                        {
-                            Bot.SteamFriends.SendChatMessage(Bot1Queue.steamidInQueue[1], EChatEntryType.ChatMsg, "这个交易完成之后,我将交易你,请做好准备 ");
-                        }
-                        
-                        if (Bot1Queue.peopleInQueue > 1)
-                        {
-                            for (int i = 0; i < Bot1Queue.peopleInQueue; i++)
-                            {
-                                Bot1Queue.steamidInQueue[i] = Bot1Queue.steamidInQueue[i + 1];
-                            }
-                            Bot1Queue.peopleInQueue--;
-                        }
+                        //Player no longer in que table, get rid of them
                         else
                         {
-                            Bot1Queue.peopleInQueue = 0;
+                            Bot.SteamFriends.SendChatMessage(player, EChatEntryType.ChatMsg, "Trade timed out you must re-add me and enter tradeID again");
+                            if (!IsAdmin)
+                            {
+                                Bot.SteamFriends.RemoveFriend(player);
+                            }
                         }
-                   
-                                      
-                    //Thread.Sleep(60000);
-                    Bot1Queue.locked =false;
-                   if (Bot1Queue.success == 2)
+                    } 
+                }); */
+
+
+
+                if (Bot1Queue.peopleInQueue > 1)
+                {
+                    Bot.SteamFriends.SendChatMessage(Bot1Queue.steamidInQueue[1], EChatEntryType.ChatMsg, "这个交易完成之后,我将交易你,请做好准备 ");
+                }
+
+                if (Bot1Queue.peopleInQueue > 1)
+                {
+                    for (int i = 0; i < Bot1Queue.peopleInQueue; i++)
                     {
-                       return false;
+                        Bot1Queue.steamidInQueue[i] = Bot1Queue.steamidInQueue[i + 1];
                     }
-                    else
-                    
-                        return true;
-                    }
-                
+                    Bot1Queue.peopleInQueue--;
+                }
+                else
+                {
+                    Bot1Queue.peopleInQueue = 0;
+                }
+
+
+                //Thread.Sleep(60000);
+                Bot1Queue.locked = false;
+                //  if (Bot1Queue.success == 2)
+                //{
+                //   return false;
+                // }
+                // else
+
+                return false;
+            }
+            //}
+
                // }
             //}
             else
@@ -314,6 +318,7 @@ namespace SteamBot
         {
             botCardAdded = 0;
             userCardAdded = 0;
+            userRareAdded = 0;
         }
 
 
@@ -433,22 +438,33 @@ namespace SteamBot
             
         }
 
-        public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
+        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
         {
             var item = Trade.CurrentSchema.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
+            // var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
+            /*if (Trade.Dota2Schema == null)
+            {
+                Trade.SendMessage("null ");
+            } */
             isthisacard = 0;
+            acard = false;
             for (int i = 0; i <= 84; i++) //做一个85次的循环检验物品是否属于卡片
             {
                 if (item.Defindex == playerCardDefindex[i])
                 {
+                    acard = true;
                     //userCardAdded++; //如果是卡片，Bot添加物品成功用户添加卡片记录加1
                     if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                     {
-                        userCardAdded = userCardAdded + 3;
+                        userCardAdded = userCardAdded + 4;
+                        Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                        break;
                     }
                     else if (i < 5 || i == 52 || i == 54 || (19 < i && i < 25))
                     {
                         userCardAdded = userCardAdded + 2;
+                        Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                        break;
                     }
                     else
                     {
@@ -456,65 +472,95 @@ namespace SteamBot
                         if (playerCardInventory[i] * 20 > totalPlayCardInventory)
                         {
                             Trade.SendMessage("因为这种卡片已超过卡片总数的5%,我现在不接受这种卡片 ");
+
+                            break;
                         }
                         else
                         {
 
                             userCardAdded++;
+                            Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                            break;
                         }
                     }
                 }
+
+            }
+            if (acard == false)
+            {
+                var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
+                if (dota2item.Item_rarity == "rare" && !(dota2item.Name.Contains("Taunt")) && !(dota2item.Name.Contains("Treasure")))
+                {
+                    userRareAdded++;
+                    Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                }
                 else
                 {
-                    isthisacard++;
+                    Trade.SendMessage("你添加了一件即不是卡片,又不是菠菜的物品 ");//不是卡片则提示用户，不做其他操作   
                 }
+                //Trade.SendMessage("You added a item which is not a player card , and if you'd like to donate something,i appreciate it. ");//不是卡片则提示用户，不做其他操作
             }
-            if (isthisacard == 85)
-            {
-                Trade.SendMessage("You added a item which is not a player card , and if you'd like to donate something,i appreciate it. ");//不是卡片则提示用户，不做其他操作
-            }
+            //Trade.SendMessage(  Trade.Dota2Schema.Items.Length.ToString );
+
         }
-        
-        public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
+
+        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
         {
+            acard = false;
             var item = Trade.CurrentSchema.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
             for (int i = 0; i <= 84; i++) //做一个85次的循环检验物品是否属于卡片
             {
+                
                 if (item.Defindex == playerCardDefindex[i])
                 {
+                    acard = true;
                     //userCardAdded--; //如果是卡片，用户添加卡片记录-1
                     if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                     {
-                        userCardAdded = userCardAdded - 3;
+                        userCardAdded = userCardAdded - 4;
+                        Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                        break;
                     }
                     else if (i < 5 || i == 52 || i == 54 || (19 < i && i < 25) || (15 < i && i < 19))
                     {
                         userCardAdded = userCardAdded - 2;
+                        Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                        break;
                     }
                     else
                     {
                         if (playerCardInventory[i] * 20 > totalPlayCardInventory)
                         {
                             Trade.SendMessage("你移除了我不接受的卡片 ");
+                            break;
                         }
                         else
                         {
                             userCardAdded--;
+                            Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                            break;
                         }
                     }
                 }
+
+            }
+            if (acard == false)
+            {
+                var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
+
+                if (dota2item.Item_rarity == "rare" && !(dota2item.Name.Contains("Taunt")) && !(dota2item.Name.Contains("Treasure")) && dota2item.Defindex != 10066)
+                {
+                    userRareAdded--;
+                    Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
+                }
                 else
                 {
-
-                    isthisacard++; 
+                    Trade.SendMessage("你移除了一件即不是卡片,又不是菠菜的物品 ");//不是卡片则提示用户，不做其他操作   
                 }
-            }
-            if (isthisacard == 85)
-            {
-                Trade.SendMessage("You remove a item which is not a player card.  ");//不是卡片则提示用户，不做其他操作
+
+                 
             }
         }
-        
          public override void OnTradeMessage(string message) //根据用户在交易窗口的指令添加及移除卡
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);
@@ -534,7 +580,7 @@ namespace SteamBot
                             //botCardAdded++;
                             if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                             {
-                                botCardAdded = botCardAdded + 3;
+                                botCardAdded = botCardAdded + 4;
                             }
                             else if (i < 5 || i == 52 || i == 54 || (19 < i && i < 25) || (15 < i && i < 19))
                             {
@@ -567,7 +613,7 @@ namespace SteamBot
                         //botCardAdded--;
                         if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                         {
-                            botCardAdded = botCardAdded - 3;
+                            botCardAdded = botCardAdded - 4;
                         }
                         else if (i < 5 || i == 52 || i == 54 || (19 < i && i < 25) || (15 < i && i < 19))
                         {
@@ -659,7 +705,7 @@ namespace SteamBot
         public bool Validate ()
         {
 
-            if (IsAdmin || (userCardAdded > 0 && botCardAdded < userCardAdded))
+            if (IsAdmin || ((userCardAdded > 0 && botCardAdded < userCardAdded + userRareAdded * 5)) || (userCardAdded == 0 && botCardAdded <= userRareAdded * 5))
             {
                 return true;
             }
