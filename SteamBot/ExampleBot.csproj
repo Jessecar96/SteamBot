@@ -112,6 +112,7 @@
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
+    <Compile Include="UncommonUserHandler.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>

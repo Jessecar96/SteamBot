@@ -354,6 +354,7 @@ namespace SteamBot
                 {
                     log.Info ("Downloading Schema...");
                     Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                    Trade.CurrentSchemazh = Schemazh.FetchSchema(apiKey);
                     Trade.Dota2Schema = Dota2.FetchSchema();
                     log.Success ("Schema Downloaded!");
                 }

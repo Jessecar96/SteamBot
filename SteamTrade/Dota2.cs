@@ -118,6 +118,9 @@ namespace SteamTrade
             [JsonProperty("item_rarity")]
             public string Item_rarity { get; set; }
 
+            [JsonProperty("prefab")]
+            public string Prefab { get; set; }
+
             
         }
 

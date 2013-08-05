@@ -12,6 +12,7 @@ namespace SteamTrade
     {
         #region Static Public data
         public static Schema CurrentSchema = null;
+        public static Schemazh CurrentSchemazh = null;
         public static Dota2 Dota2Schema = null;
         #endregion
 
