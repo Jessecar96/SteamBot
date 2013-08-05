@@ -6,5 +6,11 @@ function ExitIfNonZero {
 	fi
 }
 
+wget -P .ci https://nuget.org/nuget.exe 
+ExitIfNonZero $?
+
+mv .ci/nuget.exe .ci/NuGet.exe
+ExitIfNonZero $?
+
 xbuild /p:NoWarn=1584 /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln 
 ExitIfNonZero $?
