@@ -124,6 +124,10 @@ namespace SteamTrade
             [JsonProperty("item_set")]
             public string Item_set { get; set; }
 
+            [JsonProperty("model_player")]
+            public string Model_player { get; set; }
+
+
             
         }
 
