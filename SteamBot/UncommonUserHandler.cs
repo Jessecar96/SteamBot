@@ -90,8 +90,8 @@ namespace SteamBot
         public override void OnTradeInit() 
         {
             ReInit();
-            TradeCountInventory(true);
-            Trade.SendMessage ("Success. Please put up your items.And type add xxx yyy or remove xxx yyy to ask bot to add or remove player card");
+            //TradeCountInventory(true);
+            Trade.SendMessage("初始化成功.请用 add+空格+物品名称 来添加物品， remove+空格+物品名称 来移除物品");
         }
         
         public bool  TradeCountInventory(bool ok)
@@ -131,15 +131,32 @@ namespace SteamBot
         {
             var item = Trade.CurrentSchema.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
             var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
-
-            if (dota2item.Item_rarity == "uncommon" && dota2item.Prefab == "wearable")
+            /*if (dota2item.Item_set == null)
+            {
+                Trade.SendMessage("null");
+            }
+            else if (dota2item.Item_set == "")
+            {
+                Trade.SendMessage("空字符串");
+            }
+            else
+            {
+                Trade.SendMessage(dota2item.Item_set);
+            }
+            */
+            if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable"  && dota2item.Item_set != null) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserUncommonAdded++;
                 Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + userRareAdded);
             }
+            else if (dota2item.Item_rarity == "rare" && !(dota2item.Name.Contains("Taunt")) && !(dota2item.Name.Contains("Treasure")) && dota2item.Defindex !=10066)
+            {
+                userRareAdded++;
+                Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + userRareAdded);
+            }
             else
             {
-                Trade.SendMessage("你移除了一件我不支持的物品 ");//不是卡片则提示用户，不做其他操作   
+                Trade.SendMessage("你添加了一件我不支持的物品 ");//不是卡片则提示用户，不做其他操作   
             }
             
         }
@@ -150,9 +167,14 @@ namespace SteamBot
             var item = Trade.CurrentSchemazh.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
             var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
 
-                if (dota2item.Item_rarity == "uncommon" && dota2item.Prefab =="wearable")
-                {
+            if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            {
                     UserUncommonAdded --;
+                    Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + userRareAdded);
+                }
+                else if (dota2item.Item_rarity == "rare" && !(dota2item.Name.Contains("Taunt")) && !(dota2item.Name.Contains("Treasure")) && dota2item.Defindex != 10066)
+                {
+                    userRareAdded--;
                     Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + userRareAdded);
                 }
                 else
@@ -175,21 +197,28 @@ namespace SteamBot
                 msg = msg.Trim();
                 var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
                 var dota2item = Trade.Dota2Schema.GetItem(item.Defindex );
-                if (dota2item.Item_rarity == "uncommon")
+                if (item == null)
                 {
-
-                    if (Trade.AddItemByDefindex(item.Defindex))
-                    {
-                        BotUncommonAdded++;
-                    }
-                    else
-                    {
-                        Trade.SendMessage("我没有 " + msg);
-                    }
+                    Trade.SendMessage("错误的物品名称");
                 }
                 else
                 {
-                    Trade.SendMessage("这个机器人只支持交换罕见物品");
+                    if (dota2item.Item_rarity == "uncommon" && dota2item.Prefab == "wearable")
+                    {
+
+                        if (Trade.AddItemByDefindex(item.Defindex))
+                        {
+                            BotUncommonAdded++;
+                        }
+                        else
+                        {
+                            Trade.SendMessage("我没有 " + msg);
+                        }
+                    }
+                    else
+                    {
+                        Trade.SendMessage("这个机器人只支持交换罕见物品");
+                    }
                 }
 
             }
@@ -199,15 +228,21 @@ namespace SteamBot
                 msg = msg.Remove(0, 6);
                 msg = msg.Trim();
                 var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
-               
-                
-                if (Trade.RemoveItemByDefindex(item.Defindex))
+                if (item == null)
                 {
-                    BotUncommonAdded--;
+                    Trade.SendMessage("错误的物品名称");
                 }
                 else
                 {
-                    Trade.SendMessage("机器人没有添加 " + msg);
+
+                    if (Trade.RemoveItemByDefindex(item.Defindex))
+                    {
+                        BotUncommonAdded--;
+                    }
+                    else
+                    {
+                        Trade.SendMessage("机器人没有添加 " + msg);
+                    }
                 }
 
             }
@@ -234,7 +269,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    Trade.SendMessage("你添加的卡片必须大于机器人添加的卡片");
+                    Trade.SendMessage("你添加的罕见必须大于或者机器人添加的罕见的2倍");
                     Trade.SetReady(false);
                 }
 
@@ -273,14 +308,14 @@ namespace SteamBot
         public override void OnTradeClose()
         {
             Bot.SteamFriends.SetPersonaState(EPersonaState.Online);
-            Bot.log.Warn("[USERHANDLER] TRADE CLOSED");
+            //Bot.log.Warn("[USERHANDLER] TRADE CLOSED");
             base.OnTradeClose();
         }
 
         public bool Validate ()
         {
 
-            if (IsAdmin || ((userCardAdded > 0 && botCardAdded < (userCardAdded  + userRareAdded * 5))) || (userCardAdded == 0 && botCardAdded <= (userRareAdded * 5)))
+            if (IsAdmin || (BotUncommonAdded *2 <= UserUncommonAdded + userRareAdded *5))
             {
                 return true;
             }

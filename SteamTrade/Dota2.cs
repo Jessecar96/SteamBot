@@ -121,6 +121,9 @@ namespace SteamTrade
             [JsonProperty("prefab")]
             public string Prefab { get; set; }
 
+            [JsonProperty("item_set")]
+            public string Item_set { get; set; }
+
             
         }
 

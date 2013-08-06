@@ -143,7 +143,7 @@ namespace SteamBot
                     //userCardAdded++; //如果是卡片，Bot添加物品成功用户添加卡片记录加1
                     if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                     {
-                        userCardAdded = userCardAdded + 4;
+                        userCardAdded = userCardAdded + 5;
                         Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
                         break;
                     }
@@ -204,7 +204,7 @@ namespace SteamBot
                     //userCardAdded--; //如果是卡片，用户添加卡片记录-1
                     if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                     {
-                        userCardAdded = userCardAdded - 4;
+                        userCardAdded = userCardAdded - 5;
                         Trade.SendMessage("机器人添加:" + "卡片 " + botCardAdded + " 用户添加:" + "卡片 " + userCardAdded + " 稀有 " + userRareAdded);
                         break;
                     }
@@ -268,7 +268,7 @@ namespace SteamBot
                             //botCardAdded++;
                             if (i == 1 || i == 50 || i == 51 || i == 53 || i == 26 || i == 27 || i == 28)
                             {
-                                botCardAdded = botCardAdded + 4;
+                                botCardAdded = botCardAdded + 5;
                             }
                             else if (i < 5 || i == 52 || i == 54 || (19 < i && i < 25) || (15 < i && i < 19))
                             {
@@ -391,7 +391,7 @@ namespace SteamBot
         public bool Validate ()
         {
 
-            if (IsAdmin || ((userCardAdded > 0 && botCardAdded < (userCardAdded  + userRareAdded * 5))) || (userCardAdded == 0 && botCardAdded <= (userRareAdded * 5)))
+            if (IsAdmin || ((userCardAdded > 0 && botCardAdded < (userCardAdded  + userRareAdded * 6))) || (userCardAdded == 0 && botCardAdded <= (userRareAdded * 6)))
             {
                 return true;
             }
