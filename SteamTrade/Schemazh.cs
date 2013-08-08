@@ -99,6 +99,10 @@ namespace SteamTrade
         [JsonProperty("originNames")]
         public ItemOrigin[] OriginNames { get; set; }
 
+        [JsonProperty("item_sets")]
+        public Item_set[] Item_sets { get; set; }
+
+
         /// <summary>
         /// Find an SchemaItem by it's defindex.
         /// </summary>
@@ -179,6 +183,33 @@ namespace SteamTrade
             [JsonProperty("item_quality")]
             public int ItemQuality { get; set; }
         }
+
+        
+
+        public class Item_set
+        {
+             
+            [JsonProperty("item_set")]
+            public string Item_setname { get; set; }
+
+            [JsonProperty("name")]
+            public string Name { get; set; }
+
+            [JsonProperty("items")]
+            public string[] Setsinclude{ get; set; }
+           
+        }
+
+        public Item_set GetItemBySet(string setname)
+        {
+            foreach (Item_set set in Item_sets)
+            {
+                if (set.Name  == setname)
+                    return set;
+            }
+            return null;
+        }
+        
 
         protected class SchemaResult
         {
