@@ -64,22 +64,49 @@ namespace SteamBot
             catch (Newtonsoft.Json.JsonReaderException)
             {
                 // handle basic json formatting screwups
-                Console.WriteLine("settings.json file is currupt or improperly formatted.");
+                Console.WriteLine("settings.json file is corrupt or improperly formatted.");
                 return;
             }
 
-            if (configObject.Bots.Length > botIndex)
+            if (botIndex >= configObject.Bots.Length)
             {
-                Bot b = new Bot(configObject.Bots[botIndex], configObject.ApiKey, BotManager.UserHandlerCreator, true, true);
-                Console.Title = configObject.Bots[botIndex].DisplayName;
-                b.StartBot(); // never returns from this.
+                Console.WriteLine("Invalid bot index.");
+                return;
             }
 
+            Bot b = new Bot(configObject.Bots[botIndex], configObject.ApiKey, BotManager.UserHandlerCreator, true, true);
+            Console.Title = "Bot Manager";
+            b.StartBot();
+
+            string AuthSet = "auth";
+            string ExecCommand = "exec";
+
             // this loop is needed to keep the botmode console alive.
-            // the sleep keeps the cpu usage low.
+            // instead of just sleeping, this loop will handle console input
             while (true)
             {
-                System.Threading.Thread.Sleep(1000);
+                string inputText = Console.ReadLine();
+
+                if (String.IsNullOrEmpty(inputText))
+                    continue;
+
+                // Small parse for console input
+                var c = inputText.Trim();
+
+                var cs = c.Split(' ');
+
+                if (cs.Length > 1)
+                {
+                    if (cs[0].Equals(AuthSet, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        b.AuthCode = cs[1].Trim();
+                    }
+                    else if (cs[0].Equals(ExecCommand, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        var CommandThread = new System.Threading.Thread(() => b.HandleBotCommand(c.Remove(0, cs[0].Length + 1)));
+                        CommandThread.Start();
+                    }
+                }
             }
         }
 
@@ -141,7 +168,8 @@ namespace SteamBot
                     if (String.IsNullOrEmpty(inputText))
                         continue;
 
-                    bmi.CommandInterpreter(inputText);
+                    var CommandThread = new System.Threading.Thread(() => bmi.CommandInterpreter(inputText));
+                    CommandThread.Start();
 
                     Console.Write("botmgr > ");
 

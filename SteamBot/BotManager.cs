@@ -180,9 +180,45 @@ namespace SteamBot
                     //  Write out auth code to the bot process' stdin
                     StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
 
-                    BotStdIn.WriteLine(AuthCode);
+                    BotStdIn.WriteLine("auth " + AuthCode);
                     BotStdIn.Flush();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Sends the BotManager command to the target Bot
+        /// </summary>
+        /// <param name="index">The target bot's index</param>
+        /// <param name="command">The command to be executed</param>
+        public void SendCommand(int index, string command)
+        {
+            mainLog.Debug(String.Format("Sending command \"{0}\" to Bot at index {1}", command, index));
+            if (index < botProcs.Count)
+            {
+                if (botProcs[index].IsRunning)
+                {
+                    if (!botProcs[index].UsingProcesses)
+                    {
+                        botProcs[index].TheBot.HandleBotCommand(command);
+                    }
+                    else
+                    {
+                        //  Write out exec code to the bot process' stdin
+                        StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
+
+                        BotStdIn.WriteLine("exec " + command);
+                        BotStdIn.Flush();
+                    }
+                }
+                else
+                {
+                    mainLog.Warn(String.Format("Bot at index {0} is not running. Use the 'Start' command first", index));
+                }
+            }
+            else
+            {
+                mainLog.Warn(String.Format("Invalid Bot index: {0}", index));
             }
         }
 
