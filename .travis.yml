@@ -4,9 +4,6 @@ env:
   - EnableNuGetPackageRestore=true
 
 before_install:
-  # update root certs for nuget
-  - mozroots --import --sync
-  
   # Make sure mono is installed,
   # pipe stdout to dev/null because qq is still too chatty
   # Adding the mono-testing PPA, because Ubuntu 12.04 uses mono 2.10,
@@ -16,6 +13,8 @@ before_install:
   - sudo add-apt-repository -y ppa:v-kukol/mono-testing
   - sudo apt-get update -qq > /dev/null
   - sudo apt-get install -qq mono-complete mono-gmcs > /dev/null
+  # update root certs for nuget
+  - mozroots --import --sync
   - chmod a+x .ci/build.sh
 
 script:
