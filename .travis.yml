@@ -12,9 +12,9 @@ before_install:
   - sudo apt-get install -qq python-software-properties
   - sudo add-apt-repository -y ppa:v-kukol/mono-testing
   - sudo apt-get update -qq > /dev/null
-  - sudo apt-get install -qq mono-complete mono-gmcs > /dev/null
   # update root certs for nuget
   - mozroots --import --sync
+  - sudo apt-get install -qq mono-complete mono-gmcs > /dev/null
   - chmod a+x .ci/build.sh
 
 script:
