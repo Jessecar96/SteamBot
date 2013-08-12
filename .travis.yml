@@ -6,8 +6,13 @@ env:
 before_install:
   # Make sure mono is installed,
   # pipe stdout to dev/null because qq is still too chatty
+  # Adding the mono-testing PPA, because Ubuntu 12.04 uses mono 2.10,
+  # which doesn't include Microsoft.Build.dll, which is needed
+  # for NuGet.exe to function properly.
+  - sudo apt-get install python-software-properties
+  - sudo add-apt-repository ppa:v-kukol/mono-testing
   - sudo apt-get update -qq > /dev/null
-  - sudo apt-get install -qq mono-devel mono-gmcs > /dev/null
+  - sudo apt-get install -qq mono-complete mono-gmcs > /dev/null
   # update root certs for nuget
   - mozroots --import --sync
   - chmod a+x .ci/build.sh

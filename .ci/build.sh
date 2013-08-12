@@ -12,5 +12,8 @@ ExitIfNonZero $?
 mv .nuget/nuget.exe .nuget/NuGet.exe
 ExitIfNonZero $?
 
+cp /usr/lib/mono/4.0/Microsoft.Build.dll .nuget/Microsoft.Build.dll
+ExitIfNonZero $?
+
 xbuild /p:NoWarn=1584 /property:Configuration=Debug /property:Platform="Any CPU" SteamBot.sln 
 ExitIfNonZero $?
