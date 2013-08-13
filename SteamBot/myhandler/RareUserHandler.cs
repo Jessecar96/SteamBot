@@ -6,15 +6,15 @@ using System.Timers;
 
 namespace SteamBot
 {
-    public class CommonUserHandler : UserHandler
+    public class RareUserHandler : UserHandler
     {
-        int   UserUncommonAdded, UserRareAdded , UserCommonAdded , BotCommonAdded= 0;
-        static int Commonvalue = 1;
-        static int Uncommonvalue = 5;
-        static int Rarevalue = 25;
-        static int CommonExangeRate = 3;
+        int    UserRareAdded  , BotRareAdded= 0;
+        //static int Commonvalue = 1;
+      //  static int Uncommonvalue = 5;
+       // static int Rarevalue = 25;
+        static int CommonExangeRate = 2;
     
-        public CommonUserHandler(Bot bot, SteamID sid)
+        public RareUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
         }
@@ -28,9 +28,9 @@ namespace SteamBot
         }
         public void ReInit()
         {
-            BotCommonAdded = 0;
-            UserCommonAdded = 0;
-            UserUncommonAdded = 0;
+            BotRareAdded = 0;
+            //UserCommonAdded = 0;
+            //UserUncommonAdded = 0;
             UserRareAdded = 0;
         }
 
@@ -110,20 +110,11 @@ namespace SteamBot
             }
             */
             //if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity ==null )&& ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-             if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "wearable"  || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-            {
-                UserCommonAdded++;
-                Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-            }
-             else if ((dota2item.Item_rarity == "uncommon" ) && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin" ))
-            {
-                 UserUncommonAdded++;
-                 Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-             }
-             else if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+           
+            if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserRareAdded++;
-                Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+                Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
             }
             else
             {
@@ -138,20 +129,11 @@ namespace SteamBot
             var item = Trade.CurrentSchemazh.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
             var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
 
-            if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-            {
-                UserCommonAdded--;
-                Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-            }
-            else if ((dota2item.Item_rarity == "uncommon") && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-            {
-                UserUncommonAdded--;
-                Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-            }
-            else if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+          
+            if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserRareAdded--;
-                Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+                Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
             }
             else
             {
@@ -179,12 +161,13 @@ namespace SteamBot
                 }
                 else
                 {
-                    if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity ==null )&& dota2item.Prefab == "wearable")
+                    if ( dota2item.Item_rarity == "rare"  && dota2item.Prefab == "wearable")
                     {
 
                         if (Trade.AddItemByDefindex(item.Defindex))
                         {
-                            BotCommonAdded++;
+                            Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
+                            BotRareAdded++;
                         }
                         else
                         {
@@ -213,7 +196,8 @@ namespace SteamBot
 
                     if (Trade.RemoveItemByDefindex(item.Defindex))
                     {
-                        BotCommonAdded--;
+                        BotRareAdded--;
+                        Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
                     }
                     else
                     {
@@ -245,7 +229,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    Trade.SendMessage("你添加的普通必须大于等于机器人添加的普通的" + CommonExangeRate + "倍");
+                    Trade.SendMessage("你添加的稀有必须大于等于机器人添加的稀有的" + CommonExangeRate + "倍");
                     Trade.SetReady(false);
                 }
 
@@ -291,7 +275,7 @@ namespace SteamBot
         public bool Validate ()
         {
 
-            if (IsAdmin || ((BotCommonAdded * Commonvalue* CommonExangeRate ) <= (UserCommonAdded * Commonvalue + UserUncommonAdded * Uncommonvalue + UserRareAdded * Rarevalue)))
+            if (IsAdmin || ((BotRareAdded  * CommonExangeRate ) <= UserRareAdded))
             {
                 return true;
             }

@@ -114,6 +114,7 @@ namespace SteamBot
                 Trade.SendMessage(dota2item.Item_set);
             }
             */
+            Trade.SendMessage(dota2item.Item_rarity + "   " + item.Defindex + "   " + dota2item.Prefab );
             if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserUncommonAdded++;

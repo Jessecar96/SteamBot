@@ -108,7 +108,7 @@ namespace SteamBot
                 Trade.SendMessage(dota2item.Item_set);
             }
             */
-            if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            if (dota2item.Item_rarity == "uncommon" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserUncommonAdded++;
                 Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
@@ -174,6 +174,7 @@ namespace SteamBot
 
                         if (Trade.AddItemByDefindex(item.Defindex))
                         {
+                            Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
                             BotUncommonAdded++;
                         }
                         else
@@ -204,6 +205,7 @@ namespace SteamBot
                     if (Trade.RemoveItemByDefindex(item.Defindex))
                     {
                         BotUncommonAdded--;
+                        Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
                     }
                     else
                     {
@@ -235,7 +237,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    Trade.SendMessage("你添加的罕见必须大于或者机器人添加的罕见的2倍");
+                    Trade.SendMessage("你添加的罕见必须大于等于机器人添加的罕见的"+ UncommonExangeRate + "倍");
                     Trade.SetReady(false);
                 }
 
