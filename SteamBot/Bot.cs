@@ -61,7 +61,7 @@ namespace SteamBot
         public int CurrentGame = 0;
 
         // The Steam Web API key.
-        string apiKey;
+        public string apiKey;
 
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;

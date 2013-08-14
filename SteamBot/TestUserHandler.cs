@@ -62,8 +62,38 @@ namespace SteamBot
                     Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg,
                                               x + "          ");
                 }
-            }  
-            
+            }
+            else if (message.Contains("stock"))
+            {
+                string strmessage = message;
+                msg = msg.Remove(0, 5);
+                msg = msg.Trim();
+                var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
+                //var dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+                if (item == null)
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "错误的物品名称");
+                }
+                else
+                {
+                    Inventory messageInventory = Inventory.FetchInventory(Bot.SteamUser.SteamID.ConvertToUInt64(), Bot.apiKey);
+                    List<Inventory.Item> items = messageInventory.GetItemsByDefindex(item.Defindex);
+                    if (items.Count != 0)
+                    {
+                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "机器人库存有 " + strmessage);
+                    }
+
+                    else
+                    {
+                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "机器人库存没有 " + strmessage);
+                    }
+                }
+
+            }
+            else
+            {
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
+            }
         }
 
         public override bool OnTradeRequest() 

@@ -58,6 +58,23 @@ namespace SteamBot
               // Bot.SteamFriends.RemoveAllFriends();
                // Bot.log.Warn("Removed all friends from my friends list.");
            // }
+            if (message.Contains ("stock"))
+            {
+                string strmessage = message;
+                strmessage = strmessage.Remove(0, 5);
+                strmessage = strmessage.Trim();
+                var item = Trade.CurrentSchemazh.GetItemByZhname(strmessage);
+                //var dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+                bool ok = Trade.StockByDefindex(item.Defindex);
+                if (ok)
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "机器人库存有 " + strmessage);
+                }
+                else
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "机器人库存没有 " + strmessage);
+                }
+            }
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
 

@@ -179,7 +179,7 @@ namespace SteamBot
                 //Bot1Queue.requestTrade = true;
                 //if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0)
             long dttime =  DateTime.Now.ToFileTime();
-            if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0 && (dttime - Bot1Queue.requesttradefiletime) > 500000000)
+            if (Bot.CurrentTrade == null && Bot1Queue.peopleInQueue != 0 && (dttime - Bot1Queue.requesttradefiletime) > 300000000)
             {
 
                 Bot1Queue.locked = true;

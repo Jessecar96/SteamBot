@@ -91,6 +91,8 @@ namespace SteamTrade
             return items;
         }
 
+        
+
         public class Item
         {
             [JsonProperty("id")]
