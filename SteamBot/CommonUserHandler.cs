@@ -185,6 +185,8 @@ namespace SteamBot
                         if (Trade.AddItemByDefindex(item.Defindex))
                         {
                             BotCommonAdded++;
+                            Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+
                         }
                         else
                         {
@@ -214,6 +216,8 @@ namespace SteamBot
                     if (Trade.RemoveItemByDefindex(item.Defindex))
                     {
                         BotCommonAdded--;
+                        Trade.SendMessage("机器人添加:" + "普通 " + BotCommonAdded + " 用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+
                     }
                     else
                     {

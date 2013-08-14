@@ -166,8 +166,9 @@ namespace SteamBot
 
                         if (Trade.AddItemByDefindex(item.Defindex))
                         {
-                            Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
+                           
                             BotRareAdded++;
+                            Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
                         }
                         else
                         {
