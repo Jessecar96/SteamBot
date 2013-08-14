@@ -12,7 +12,7 @@ namespace SteamBot
         static int Commonvalue = 1;
         static int Uncommonvalue = 5;
         static int Rarevalue = 25;
-        static int UncommonExangeRate = 3;
+        static int UncommonExangeRate = 2;
     
         public UncommonUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
@@ -108,7 +108,7 @@ namespace SteamBot
                 Trade.SendMessage(dota2item.Item_set);
             }
             */
-            if (dota2item.Item_rarity == "uncommon" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight") && !dota2item.Model_player.Contains("morphling")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserUncommonAdded++;
                 Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
@@ -132,7 +132,7 @@ namespace SteamBot
             var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
 
             //if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-            if (dota2item.Item_rarity == "uncommon" && (dota2item.Prefab == "wearable"  || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            if (dota2item.Item_rarity == "uncommon" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight") && !dota2item.Model_player.Contains("morphling")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
 
             {
                     UserUncommonAdded --;

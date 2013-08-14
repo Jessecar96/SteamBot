@@ -100,6 +100,7 @@
     <Compile Include="CardforkeyUserHandler.cs" />
     <Compile Include="CommonUserHandler.cs" />
     <Compile Include="myhandler\RareUserHandler.cs" />
+    <Compile Include="myhandler\WardUserHandler.cs" />
     <Compile Include="TestUserHandler.cs" />
     <Compile Include="TF2GC\Crafting.cs" />
     <Compile Include="TF2GC\Items.cs" />

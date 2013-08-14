@@ -6,15 +6,18 @@ using System.Timers;
 
 namespace SteamBot
 {
-    public class RareUserHandler : UserHandler
+    public class WardUserHandler : UserHandler
     {
         int    UserRareAdded  , BotRareAdded= 0;
         //static int Commonvalue = 1;
       //  static int Uncommonvalue = 5;
        // static int Rarevalue = 25;
         static int CommonExangeRate = 2;
-    
-        public RareUserHandler(Bot bot, SteamID sid)
+        int UserItemAdded = 0;
+        int[] UserItem = new int[10];
+        string[] UserItemRarity = new string[10];
+        string[] WardResult = new string[10];
+        public WardUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
         }
@@ -113,9 +116,10 @@ namespace SteamBot
             */
             //if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity ==null )&& ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
 
-            if (dota2item.Item_rarity == "rare" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight") && !dota2item.Model_player.Contains("morphling")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            if (dota2item.Item_rarity == "rare" && ( dota2item.Prefab == "wearable"  || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin") )
             {
                 UserRareAdded++;
+                
                 Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
             }
             else
@@ -259,6 +263,7 @@ namespace SteamBot
                     Log.Warn("The trade might have failed, but we can't be sure.");
                 }
                 Log.Success("Trade Complete!");
+                
             }
             else
             {
@@ -267,7 +272,36 @@ namespace SteamBot
            
 
             OnTradeClose ();
+            Ward();
         }
+
+        public  void Ward()
+        {
+            Random ro =new Random() ;
+            
+            for (int i = 0; i < UserRareAdded; i++)
+            {
+                int x=ro.Next (0,10000);
+                if (x == 0)
+                {
+                    WardResult[i] = "dchook";
+                }
+                else
+                {
+                    WardResult[i] = "no";
+                }
+            }
+            UInt64 xxx = OtherSID.ConvertToUInt64();
+            string logx = xxx.ToString();
+            for (int i = 0; i < UserRareAdded; i++)
+            {
+                logx = logx + "   "+ WardResult[i];
+            }
+            Log.Success(logx);
+            Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, logx);
+        }
+
+
         public override void OnTradeClose()
         {
             Bot.SteamFriends.SetPersonaState(EPersonaState.Online);
