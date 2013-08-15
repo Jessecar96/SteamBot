@@ -34,13 +34,12 @@ namespace SteamBot
         }
         public void ReInit()
         {
+            
             if (Warding == true)
             {
+                
                 Warding = false;
-                for (int i = 0; i < RareWardNum; i++)
-                {
-                    Add2Rare(RareWardNum );
-                }
+                Add2Rare(RareWardNum );
                 RareWardNum = 0;
                 BotRareAdded = 0;
                 //UserCommonAdded = 0;
@@ -57,6 +56,7 @@ namespace SteamBot
                 UserRareAdded = 0;
                 Warding = false;
             }
+             
         }
 
 
@@ -150,14 +150,8 @@ namespace SteamBot
                     if (dota2item != null && dota2item.Item_rarity == "rare")
                     {
                         i++;
-                        Bot.log.Success("T1");
-                        Bot.log.Success(Trade.myOfferedItems.Count.ToString());
-                        Bot.log.Success(i);
-                        Bot.log.Success(item.Id.ToString());
                         Trade.AddItem(item.Id);
-                        Bot.log.Success("T2");
-                        Bot.log.Success(Trade.myOfferedItems.Count.ToString());
-
+                        
                     }
                 }
                 
@@ -207,7 +201,7 @@ namespace SteamBot
             var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
 
 
-            if (dota2item.Item_rarity == "rare" && ((dota2item.Prefab == "wearable" && dota2item.Item_set != null && !dota2item.Model_player.Contains("axe") && !dota2item.Model_player.Contains("witchdoctor") && !dota2item.Model_player.Contains("omniknight") && !dota2item.Model_player.Contains("morphling")) || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            if (dota2item.Item_rarity == "rare" &&  (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin")  )
             {
                 UserRareAdded--;
                 Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
@@ -240,16 +234,13 @@ namespace SteamBot
             }
             else 
             {
-                Bot.log.Success("X1");
-                Bot.log.Success(Trade.myOfferedItems.Count.ToString() );
-                Bot.log.Success(Trade.steamMyOfferedItems.Count.ToString());
-                Bot.log.Success("X2");
+                
                 if (Validate())
                 {
-                    Bot.log.Success("6");
+                    
                     Bot.log.Success("User is ready to trade!");
                     Trade.SetReady(true);
-                    Bot.log.Success("7");
+                    
                 }
                 else
                 {
@@ -304,7 +295,7 @@ namespace SteamBot
                 {
                     int x = ro.Next(0, 100);
                     
-                    if (0<=x && x<=100)
+                    if (0<=x && x<=39)
                     {
                         WardResult[i] = "2rare";
                         RareWardNum++;
@@ -349,17 +340,17 @@ namespace SteamBot
 
             if (UserRareAdded > 0)
             {
-                Bot.log.Success("1");
+                
                 Warding = true;
-                Bot.log.Success("2");
+               
             }
             else
             {
-                Bot.log.Success("3");
+                
                 Warding = false;
-                Bot.log.Success("4");
+               
             }
-            Bot.log.Success("5");
+            
                 return true;
             
         }

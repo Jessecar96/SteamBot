@@ -31,8 +31,8 @@ namespace SteamTrade
         // Whether or not the trade actually started.
         bool tradeStarted = false;
 
-       public  Dictionary<int, ulong> myOfferedItems;
-        public List<ulong> steamMyOfferedItems;
+       Dictionary<int, ulong> myOfferedItems;
+       List<ulong> steamMyOfferedItems;
 
         // Internal properties needed for Steam API.
         int numEvents;
