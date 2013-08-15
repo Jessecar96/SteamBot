@@ -97,6 +97,7 @@ namespace SteamBot
             }
             if (Warding == true)
             {
+                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg , "其他人正在操作,30s后重试");
                 return false;
             }
             else
@@ -136,21 +137,29 @@ namespace SteamBot
             var dota2item = Trade.Dota2Schema.GetItem(0);
             int i = 0;
             foreach (Inventory.Item item in Trade.MyInventory.Items)
-            { 
-                if (i >= num*2)
+            {
+                if (i >= num)
                 {
-                    
-                    return ;
-                }
-                
-                dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
 
-                if (dota2item!=null && dota2item.Item_rarity == "rare")
+                    break;
+                }
+                else
                 {
-                    i++;
-                    Trade.AddItem(item.Id);
-                    
-                } 
+                    dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+
+                    if (dota2item != null && dota2item.Item_rarity == "rare")
+                    {
+                        i++;
+                        Bot.log.Success("T1");
+                        Bot.log.Success(Trade.myOfferedItems.Count.ToString());
+                        Bot.log.Success(i);
+                        Bot.log.Success(item.Id.ToString());
+                        Trade.AddItem(item.Id);
+                        Bot.log.Success("T2");
+                        Bot.log.Success(Trade.myOfferedItems.Count.ToString());
+
+                    }
+                }
                 
                 
             }
@@ -231,10 +240,16 @@ namespace SteamBot
             }
             else 
             {
-                Bot.log.Success("User is ready to trade!");
+                Bot.log.Success("X1");
+                Bot.log.Success(Trade.myOfferedItems.Count.ToString() );
+                Bot.log.Success(Trade.steamMyOfferedItems.Count.ToString());
+                Bot.log.Success("X2");
                 if (Validate())
                 {
+                    Bot.log.Success("6");
+                    Bot.log.Success("User is ready to trade!");
                     Trade.SetReady(true);
+                    Bot.log.Success("7");
                 }
                 else
                 {
@@ -282,15 +297,17 @@ namespace SteamBot
         {
             if (Warding == true)
             {
+                RareWardNum = 0;
                 Random ro = new Random();
 
                 for (int i = 0; i < UserRareAdded; i++)
                 {
-                    //int x = ro.Next(0, 10000);
-                    int x = 0;
-                    if (x == 0)
+                    int x = ro.Next(0, 100);
+                    
+                    if (0<=x && x<=100)
                     {
                         WardResult[i] = "2rare";
+                        RareWardNum++;
                         RareWardNum++;
                     }
                     else
@@ -332,12 +349,17 @@ namespace SteamBot
 
             if (UserRareAdded > 0)
             {
+                Bot.log.Success("1");
                 Warding = true;
+                Bot.log.Success("2");
             }
             else
             {
+                Bot.log.Success("3");
                 Warding = false;
+                Bot.log.Success("4");
             }
+            Bot.log.Success("5");
                 return true;
             
         }

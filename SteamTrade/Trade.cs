@@ -31,8 +31,8 @@ namespace SteamTrade
         // Whether or not the trade actually started.
         bool tradeStarted = false;
 
-        Dictionary<int, ulong> myOfferedItems;
-        List<ulong> steamMyOfferedItems;
+       public  Dictionary<int, ulong> myOfferedItems;
+        public List<ulong> steamMyOfferedItems;
 
         // Internal properties needed for Steam API.
         int numEvents;
@@ -677,6 +677,7 @@ namespace SteamTrade
 
         void ValidateLocalTradeItems ()
         {
+           
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
                 throw new TradeException ("Error validating local copy of items in the trade: Count mismatch");
