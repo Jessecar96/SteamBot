@@ -12,11 +12,14 @@ namespace SteamBot
         //static int Commonvalue = 1;
       //  static int Uncommonvalue = 5;
        // static int Rarevalue = 25;
-        static int CommonExangeRate = 2;
+        //static int CommonExangeRate = 2;
         int UserItemAdded = 0;
         int[] UserItem = new int[10];
+        int RareWardNum = 0;
+        static long filetime;
         string[] UserItemRarity = new string[10];
         string[] WardResult = new string[10];
+        static bool Warding = false;
         public WardUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
@@ -31,10 +34,29 @@ namespace SteamBot
         }
         public void ReInit()
         {
-            BotRareAdded = 0;
-            //UserCommonAdded = 0;
-            //UserUncommonAdded = 0;
-            UserRareAdded = 0;
+            if (Warding == true)
+            {
+                Warding = false;
+                for (int i = 0; i < RareWardNum; i++)
+                {
+                    Add2Rare(RareWardNum );
+                }
+                RareWardNum = 0;
+                BotRareAdded = 0;
+                //UserCommonAdded = 0;
+                //UserUncommonAdded = 0;
+                UserRareAdded = 0;
+                Warding = false;
+            }
+            else
+            {
+                BotRareAdded = 0;
+                //UserCommonAdded = 0;
+                //UserUncommonAdded = 0;
+                RareWardNum = 0;
+                UserRareAdded = 0;
+                Warding = false;
+            }
         }
 
 
@@ -68,8 +90,20 @@ namespace SteamBot
 
         public override bool OnTradeRequest() 
         {
-            Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
-            return true;
+            long timecheck = DateTime.Now.ToFileTime();
+            if ((timecheck - filetime )>350000000)
+            {
+                Warding=false;
+            }
+            if (Warding == true)
+            {
+                return false;
+            }
+            else
+            {
+                Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
+                return true;
+            }
         }
         
         public override void OnTradeError (string error) 
@@ -92,9 +126,37 @@ namespace SteamBot
         {
             ReInit();
             //TradeCountInventory(true);
-            Trade.SendMessage("初始化成功.请用 add+空格+物品名称 来添加物品， remove+空格+物品名称 来移除物品");
+            Trade.SendMessage("初始化成功.");
         }
-        
+
+        public void Add2Rare(int num)
+        {
+            
+            var items = new List<Inventory.Item>();
+            var dota2item = Trade.Dota2Schema.GetItem(0);
+            int i = 0;
+            foreach (Inventory.Item item in Trade.MyInventory.Items)
+            { 
+                if (i >= num*2)
+                {
+                    
+                    return ;
+                }
+                
+                dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+
+                if (dota2item!=null && dota2item.Item_rarity == "rare")
+                {
+                    i++;
+                    Trade.AddItem(item.Id);
+                    
+                } 
+                
+                
+            }
+           
+            
+        }
         
           
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
@@ -154,69 +216,9 @@ namespace SteamBot
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);
             //message = message.ToLower();
-            string msg = message;
-            if (message.Contains("add"))
-            {
-                msg = msg.Remove(0, 3);
-                msg = msg.Trim();
-                var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
-                var dota2item = Trade.Dota2Schema.GetItem(item.Defindex );
-                if (item == null)
-                {
-                    Trade.SendMessage("错误的物品名称");
-                }
-                else
-                {
-                    if ( dota2item.Item_rarity == "rare"  && dota2item.Prefab == "wearable")
-                    {
+            
 
-                        if (Trade.AddItemByDefindex(item.Defindex))
-                        {
-                           
-                            BotRareAdded++;
-                            Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
-                        }
-                        else
-                        {
-                            Trade.SendMessage("我没有 " + msg);
-                        }
-                    }
-                    else
-                    {
-                        Trade.SendMessage("这个机器人只支持交换普通装备");
-                    }
-                }
-
-            }
-
-            else if (message.Contains("remove"))
-            {
-                msg = msg.Remove(0, 6);
-                msg = msg.Trim();
-                var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
-                if (item == null)
-                {
-                    Trade.SendMessage("错误的物品名称");
-                }
-                else
-                {
-
-                    if (Trade.RemoveItemByDefindex(item.Defindex))
-                    {
-                        BotRareAdded--;
-                        Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
-                    }
-                    else
-                    {
-                        Trade.SendMessage("机器人没有添加 " + msg);
-                    }
-                }
-
-            }
-            else
-            {
-                Trade.SendMessage("请用 add+空格+物品名称 来添加物品， remove+空格+物品名称 来移除物品");
-            }
+           
         }
         
         public override void OnTradeReady (bool ready) 
@@ -236,7 +238,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    Trade.SendMessage("你添加的稀有必须大于等于机器人添加的稀有的" + CommonExangeRate + "倍");
+                    Trade.SendMessage("你添加的稀有必须大于等于机器人添加的稀有的"  + "倍");
                     Trade.SetReady(false);
                 }
 
@@ -263,42 +265,58 @@ namespace SteamBot
                     Log.Warn("The trade might have failed, but we can't be sure.");
                 }
                 Log.Success("Trade Complete!");
+                OnTradeClose();
+                Ward();
+                
                 
             }
             else
             {
                 Trade.SetReady(false);
             }
-           
-
-            OnTradeClose ();
-            Ward();
+            
+            
         }
 
         public  void Ward()
         {
-            Random ro =new Random() ;
-            
-            for (int i = 0; i < UserRareAdded; i++)
+            if (Warding == true)
             {
-                int x=ro.Next (0,10000);
-                if (x == 0)
+                Random ro = new Random();
+
+                for (int i = 0; i < UserRareAdded; i++)
                 {
-                    WardResult[i] = "dchook";
+                    //int x = ro.Next(0, 10000);
+                    int x = 0;
+                    if (x == 0)
+                    {
+                        WardResult[i] = "2rare";
+                        RareWardNum++;
+                    }
+                    else
+                    {
+                        WardResult[i] = "no";
+                    }
+                }
+                UInt64 xxx = OtherSID.ConvertToUInt64();
+                string logx = xxx.ToString();
+                for (int i = 0; i < UserRareAdded; i++)
+                {
+                    logx = logx + "   " + WardResult[i];
+                }
+                Log.Success(logx);
+                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, logx);
+                if (RareWardNum > 0)
+                {
+                    Warding  = true;
+                    filetime = DateTime.Now.ToFileTime();
+                    Bot.OpenTrade(OtherSID);
                 }
                 else
                 {
-                    WardResult[i] = "no";
+                    Warding = false;
                 }
             }
-            UInt64 xxx = OtherSID.ConvertToUInt64();
-            string logx = xxx.ToString();
-            for (int i = 0; i < UserRareAdded; i++)
-            {
-                logx = logx + "   "+ WardResult[i];
-            }
-            Log.Success(logx);
-            Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, logx);
         }
 
 
@@ -312,14 +330,16 @@ namespace SteamBot
         public bool Validate ()
         {
 
-            if (IsAdmin || ((BotRareAdded  * CommonExangeRate ) <= UserRareAdded))
+            if (UserRareAdded > 0)
             {
-                return true;
+                Warding = true;
             }
             else
             {
-                return false;
+                Warding = false;
             }
+                return true;
+            
         }
         
     }

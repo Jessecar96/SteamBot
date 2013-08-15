@@ -254,6 +254,8 @@ namespace SteamTrade
         }
 
 
+
+
         /// <summary>
         /// Adds an entire set of items by Defindex to each successive
         /// slot in the trade.
