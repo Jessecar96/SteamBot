@@ -21,3 +21,5 @@ Ankh.NoLoad
 
 *.userprefs
 *.pidb
+settings.json
+*.rar

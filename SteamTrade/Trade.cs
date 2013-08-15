@@ -12,6 +12,8 @@ namespace SteamTrade
     {
         #region Static Public data
         public static Schema CurrentSchema = null;
+        public static Schemazh CurrentSchemazh = null;
+        public static Dota2 Dota2Schema = null;
         #endregion
 
         // list to store all trade events already processed
@@ -29,8 +31,8 @@ namespace SteamTrade
         // Whether or not the trade actually started.
         bool tradeStarted = false;
 
-        Dictionary<int, ulong> myOfferedItems;
-        List<ulong> steamMyOfferedItems;
+       Dictionary<int, ulong> myOfferedItems;
+       List<ulong> steamMyOfferedItems;
 
         // Internal properties needed for Steam API.
         int numEvents;
@@ -41,7 +43,7 @@ namespace SteamTrade
         {
             mySteamId = me;
             OtherSID = other;
-            session = new TradeSession(sessionId, token, other, "440");
+            session = new TradeSession(sessionId, token, other, "570");
 
             this.eventList = new List<TradeEvent>();
 
@@ -250,6 +252,9 @@ namespace SteamTrade
             }
             return false;
         }
+
+
+
 
         /// <summary>
         /// Adds an entire set of items by Defindex to each successive
@@ -720,6 +725,7 @@ namespace SteamTrade
 
         void ValidateLocalTradeItems ()
         {
+           
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
                 throw new TradeException ("Error validating local copy of items in the trade: Count mismatch");

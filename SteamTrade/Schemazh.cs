@@ -12,11 +12,11 @@ namespace SteamTrade
     /// This class represents the TF2 Item schema as deserialized from its
     /// JSON representation.
     /// </summary>
-    public class Schema
+    public class Schemazh
     {
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
-        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_570/GetSchema/v0001/?key=";
-        private const string cachefile = "tf_schema.cache";
+        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_570/GetSchema/v0001/?language=zh&key=";
+        private const string cachefile = "dota2_schema_zh.cache";
 
         /// <summary>
         /// Fetches the Tf2 Item schema.
@@ -26,7 +26,7 @@ namespace SteamTrade
         /// <remarks>
         /// The schema will be cached for future use if it is updated.
         /// </remarks>
-        public static Schema FetchSchema (string apiKey)
+        public static Schemazh FetchSchema (string apiKey)
         {   
             var url = SchemaApiUrlBase + apiKey;
 
@@ -99,6 +99,10 @@ namespace SteamTrade
         [JsonProperty("originNames")]
         public ItemOrigin[] OriginNames { get; set; }
 
+        [JsonProperty("item_sets")]
+        public Item_set[] Item_sets { get; set; }
+
+
         /// <summary>
         /// Find an SchemaItem by it's defindex.
         /// </summary>
@@ -107,6 +111,17 @@ namespace SteamTrade
             foreach (Item item in Items)
             {
                 if (item.Defindex == defindex)
+                    return item;
+            }
+            return null;
+        }
+
+        
+        public Item GetItemByZhname(string zhname)
+        {
+            foreach (Item item in Items)
+            {
+                if (item.ItemName == zhname)
                     return item;
             }
             return null;
@@ -169,9 +184,36 @@ namespace SteamTrade
             public int ItemQuality { get; set; }
         }
 
+        
+
+        public class Item_set
+        {
+             
+            [JsonProperty("item_set")]
+            public string Item_setname { get; set; }
+
+            [JsonProperty("name")]
+            public string Name { get; set; }
+
+            [JsonProperty("items")]
+            public string[] Setsinclude{ get; set; }
+           
+        }
+
+        public Item_set GetItemBySet(string setname)
+        {
+            foreach (Item_set set in Item_sets)
+            {
+                if (set.Name  == setname)
+                    return set;
+            }
+            return null;
+        }
+        
+
         protected class SchemaResult
         {
-            public Schema result { get; set; }
+            public Schemazh result { get; set; }
         }
 
     }
