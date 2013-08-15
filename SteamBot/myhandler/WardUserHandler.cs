@@ -16,6 +16,7 @@ namespace SteamBot
         int UserItemAdded = 0;
         int[] UserItem = new int[10];
         int RareWardNum = 0;
+        int fakeitem = 0;
         static long filetime;
         string[] UserItemRarity = new string[10];
         string[] WardResult = new string[10];
@@ -34,17 +35,23 @@ namespace SteamBot
         }
         public void ReInit()
         {
-            
+            if (IsAdmin)
+            {
+                Warding = true;
+                RareWardNum = 1;
+            }
             if (Warding == true)
             {
-                
+                Trade.SendMessage("添加物品中");
                 Warding = false;
+                //RareWardNum = 1;
                 Add2Rare(RareWardNum );
                 RareWardNum = 0;
                 BotRareAdded = 0;
                 //UserCommonAdded = 0;
                 //UserUncommonAdded = 0;
                 UserRareAdded = 0;
+                fakeitem = 0;
                 Warding = false;
             }
             else
@@ -55,6 +62,8 @@ namespace SteamBot
                 RareWardNum = 0;
                 UserRareAdded = 0;
                 Warding = false;
+                fakeitem = 0;
+
             }
              
         }
@@ -136,22 +145,31 @@ namespace SteamBot
             var items = new List<Inventory.Item>();
             var dota2item = Trade.Dota2Schema.GetItem(0);
             int i = 0;
+          
             foreach (Inventory.Item item in Trade.MyInventory.Items)
             {
+                  
                 if (i >= num)
                 {
 
                     break;
                 }
+                 
                 else
                 {
+                     
                     dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
-
-                    if (dota2item != null && dota2item.Item_rarity == "rare")
+                    if (dota2item != null)
                     {
-                        i++;
-                        Trade.AddItem(item.Id);
                         
+                        if (dota2item != null && dota2item.Item_rarity == "rare" && dota2item.Prefab == "wearable")
+                        {
+
+                          i++;
+                            Trade.AddItem(item.Id);
+                            
+
+                        }
                     }
                 }
                 
@@ -189,6 +207,7 @@ namespace SteamBot
             }
             else
             {
+                fakeitem++;
                 Trade.SendMessage("你添加了一件我不支持的物品");//不是卡片则提示用户，不做其他操作   
             }
             
@@ -208,6 +227,7 @@ namespace SteamBot
             }
             else
             {
+                fakeitem--;
                 Trade.SendMessage("你移除了一件我不支持的物品");//不是卡片则提示用户，不做其他操作   
             }
                 
@@ -244,7 +264,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    Trade.SendMessage("你添加的稀有必须大于等于机器人添加的稀有的"  + "倍");
+                    Trade.SendMessage("你提供的有我不支持的物品");
                     Trade.SetReady(false);
                 }
 
@@ -337,21 +357,28 @@ namespace SteamBot
 
         public bool Validate ()
         {
-
-            if (UserRareAdded > 0)
+            if (fakeitem > 0)
             {
-                
-                Warding = true;
-               
+
+                return false;
             }
             else
             {
-                
-                Warding = false;
-               
-            }
-            
+                if (UserRareAdded > 0)
+                {
+
+                    Warding = true;
+
+                }
+                else
+                {
+
+                    Warding = false;
+
+                }
+
                 return true;
+            }
             
         }
         
