@@ -576,6 +576,12 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Gets an item from a TradeEvent, and passes it into the UserHandler's implemented OnUserAddItem([...]) routine.
+        /// Passes in null items if something went wrong.
+        /// </summary>
+        /// <param name="tradeEvent">TradeEvent to get item from</param>
+        /// <returns></returns>
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
             ulong itemID = tradeEvent.assetid;
@@ -583,12 +589,30 @@ namespace SteamTrade
             if (OtherInventory != null)
             {
                 Inventory.Item item = OtherInventory.GetItem(itemID);
-                Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                OnUserAddItem(schemaItem, item);
+                if (item != null)
+                {
+                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                    if (schemaItem == null)
+                    {
+                        Console.WriteLine("User added an unknown item to the trade.");
+                    }
+
+                    OnUserAddItem(schemaItem, item);
+                }
+                else
+                {
+                    Console.WriteLine("User added an unknown item to the trade.");
+                    OnUserAddItem(null, item);
+                }
             }
             else
             {
                 var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
+                if (schemaItem == null)
+                {
+                    Console.WriteLine("User added an unknown item to the trade.");
+                }
+
                 OnUserAddItem(schemaItem, null);
                 // todo: figure out what to send in with Inventory item.....
             }
@@ -609,6 +633,12 @@ namespace SteamTrade
             return schemaItem;
         }
 
+        /// <summary>
+        /// Gets an item from a TradeEvent, and passes it into the UserHandler's implemented OnUserRemoveItem([...]) routine.
+        /// Passes in null items if something went wrong.
+        /// </summary>
+        /// <param name="tradeEvent">TradeEvent to get item from</param>
+        /// <returns></returns>
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
             ulong itemID = (ulong) tradeEvent.assetid;
@@ -616,12 +646,30 @@ namespace SteamTrade
             if (OtherInventory != null)
             {
                 Inventory.Item item = OtherInventory.GetItem(itemID);
-                Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
-                OnUserRemoveItem(schemaItem, item);
+                if (item != null)
+                {
+                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                    if (schemaItem == null)
+                    {
+                        // TODO: Add log (counldn't find item in CurrentSchema)
+                    }
+
+                    OnUserRemoveItem(schemaItem, item);
+                }
+                else
+                {
+                    // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
+                    OnUserRemoveItem(null, item);
+                }
             }
             else
             {
                 var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
+                if (schemaItem == null)
+                {
+                    // TODO: Add log (counldn't find item in CurrentSchema)
+                }
+
                 OnUserRemoveItem(schemaItem, null);
             }
         }
@@ -685,4 +733,3 @@ namespace SteamTrade
         }
     }
 }
-
