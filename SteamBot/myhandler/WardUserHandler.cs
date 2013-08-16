@@ -152,6 +152,7 @@ namespace SteamBot
           
             foreach (Inventory.Item item in Trade.MyInventory.Items)
             {
+                
                   
                 if (i >= num)
                 {
@@ -161,18 +162,19 @@ namespace SteamBot
                  
                 else
                 {
-                     
+                   
                     dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+                    
+                   
                     if (dota2item != null)
                     {
                         
                         if (dota2item != null && dota2item.Item_rarity == "rare" && dota2item.Prefab == "wearable")
                         {
 
-                          i++;
+                            i++;
                             Trade.AddItem(item.Id);
-                            
-
+ 
                         }
                     }
                 }
@@ -231,10 +233,10 @@ namespace SteamBot
             var items = new List<Inventory.Item>();
             var dota2item = Trade.Dota2Schema.GetItem(0);
             int i = 0;
-
+            Bot.log.Warn("XXX");
             foreach (Inventory.Item item in Trade.MyInventory.Items)
             {
-
+                Bot.log.Warn(item.Defindex.ToString());
                 if (i >= num)
                 {
 
@@ -243,12 +245,13 @@ namespace SteamBot
 
                 else
                 {
-
+                    Bot.log.Warn(item.Defindex.ToString());
                     dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+                    Bot.log.Warn("2" + item.Defindex.ToString());
                     if (dota2item != null)
                     {
 
-                        if (dota2item != null && (dota2item.Item_rarity == "uncommon" || dota2item.Item_rarity==null ) && dota2item.Prefab == "wearable")
+                        if (dota2item != null && (dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item" || dota2item.Prefab == "wearable"))
                         {
 
                             i++;
@@ -290,7 +293,7 @@ namespace SteamBot
 
                 Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
             }
-            else if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            else if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item" ||dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserCommonAdded++;
                 Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
@@ -320,7 +323,7 @@ namespace SteamBot
                 UserRareAdded--;
                 Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
             }
-            else if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            else if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item"|| dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserCommonAdded--;
                 Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
@@ -343,7 +346,7 @@ namespace SteamBot
          public override void OnTradeMessage(string message) //根据用户在交易窗口的指令添加及移除卡
         {
            Bot.log.Info("[TRADE MESSAGE] " + message);
-            //message = message.ToLower();
+           message = message.ToLower();
            if (IsAdmin)
            {
 
