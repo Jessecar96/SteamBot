@@ -233,10 +233,10 @@ namespace SteamBot
             var items = new List<Inventory.Item>();
             var dota2item = Trade.Dota2Schema.GetItem(0);
             int i = 0;
-            Bot.log.Warn("XXX");
+             
             foreach (Inventory.Item item in Trade.MyInventory.Items)
             {
-                Bot.log.Warn(item.Defindex.ToString());
+                 
                 if (i >= num)
                 {
 
@@ -245,18 +245,18 @@ namespace SteamBot
 
                 else
                 {
-                    Bot.log.Warn(item.Defindex.ToString());
+                     
                     dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
-                    Bot.log.Warn("2" + item.Defindex.ToString());
+                     
                     if (dota2item != null)
                     {
 
                         if (dota2item != null && (dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item" || dota2item.Prefab == "wearable"))
                         {
-
+                             
                             i++;
                             Trade.AddItem(item.Id);
-
+                            
 
                         }
                     }
