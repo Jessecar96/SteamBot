@@ -376,6 +376,33 @@ namespace SteamBot
                    AddCommon(num);
 
                }
+               else if (message.Contains("additem"))
+               {
+                   msg = msg.Remove(0, 7);
+                   msg = msg.Trim();
+                   var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
+                   if (item == null)
+                   {
+                       Trade.SendMessage("错误的物品名称");
+                   }
+                   else
+                   {
+                       
+                           if (Trade.AddItemByDefindex(item.Defindex))
+                           {
+
+                               BotRareAdded++;
+                               Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded);
+                           }
+                           else
+                           {
+                               Trade.SendMessage("我没有 " + msg);
+                           }
+                       }
+                      
+                   }
+
+               }
                else
                {
                    Trade.SendMessage("错误的命令");
