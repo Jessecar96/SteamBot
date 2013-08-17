@@ -61,7 +61,7 @@ namespace SteamBot
                 {
                     for (index = 0; index < manager.ConfigObject.Bots.Length; index++)
                     {
-                        if (manager.ConfigObject.Bots[index].Username == xy[0])
+                        if (manager.ConfigObject.Bots[index].Username.Equals(xy[0], StringComparison.CurrentCultureIgnoreCase))
                         {
                             Console.WriteLine("Authing bot with '" + code + "'");
                             manager.AuthBot(index, code);
@@ -187,7 +187,7 @@ namespace SteamBot
             {
                 for (index = 0; index < manager.ConfigObject.Bots.Length; index++)
                 {
-                    if (manager.ConfigObject.Bots[index].Username == cs[0])
+                    if (manager.ConfigObject.Bots[index].Username.Equals(cs[0], StringComparison.CurrentCultureIgnoreCase))
                     {
                         manager.SendCommand(index, command);
                         return;

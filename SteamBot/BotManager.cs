@@ -122,7 +122,7 @@ namespace SteamBot
             mainLog.Debug(String.Format("Killing bot with username {0}.", botUserName));
 
             var res = from b in botProcs
-                      where b.BotConfig.Username == botUserName
+                      where b.BotConfig.Username.Equals(botUserName, StringComparison.CurrentCultureIgnoreCase)
                       select b;
 
             foreach (var bot in res)
@@ -154,7 +154,7 @@ namespace SteamBot
             mainLog.Debug(String.Format("Starting bot with username {0}.", botUserName));
 
             var res = from b in botProcs
-                      where b.BotConfig.Username == botUserName
+                      where b.BotConfig.Username.Equals(botUserName, StringComparison.CurrentCultureIgnoreCase)
                       select b;
 
             foreach (var bot in res)
@@ -173,15 +173,17 @@ namespace SteamBot
         {
             if (index < botProcs.Count)
             {
-                if (!botProcs[index].UsingProcesses)
-                    botProcs[index].TheBot.AuthCode = AuthCode;
-                else
+                if (botProcs[index].UsingProcesses)
                 {
                     //  Write out auth code to the bot process' stdin
                     StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
 
                     BotStdIn.WriteLine("auth " + AuthCode);
                     BotStdIn.Flush();
+                }
+                else
+                {
+                    botProcs[index].TheBot.AuthCode = AuthCode;
                 }
             }
         }
@@ -198,17 +200,17 @@ namespace SteamBot
             {
                 if (botProcs[index].IsRunning)
                 {
-                    if (!botProcs[index].UsingProcesses)
+                    if (botProcs[index].UsingProcesses)
                     {
-                        botProcs[index].TheBot.HandleBotCommand(command);
-                    }
-                    else
-                    {
-                        //  Write out exec code to the bot process' stdin
+                        //  Write out the exec command to the bot process' stdin
                         StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
 
                         BotStdIn.WriteLine("exec " + command);
                         BotStdIn.Flush();
+                    }
+                    else
+                    {
+                        botProcs[index].TheBot.HandleBotCommand(command);
                     }
                 }
                 else

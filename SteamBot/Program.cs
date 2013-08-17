@@ -103,8 +103,7 @@ namespace SteamBot
                     }
                     else if (cs[0].Equals(ExecCommand, StringComparison.CurrentCultureIgnoreCase))
                     {
-                        var CommandThread = new System.Threading.Thread(() => b.HandleBotCommand(c.Remove(0, cs[0].Length + 1)));
-                        CommandThread.Start();
+                        b.HandleBotCommand(c.Remove(0, cs[0].Length + 1));
                     }
                 }
             }
@@ -168,8 +167,7 @@ namespace SteamBot
                     if (String.IsNullOrEmpty(inputText))
                         continue;
 
-                    var CommandThread = new System.Threading.Thread(() => bmi.CommandInterpreter(inputText));
-                    CommandThread.Start();
+                    bmi.CommandInterpreter(inputText);
 
                     Console.Write("botmgr > ");
 
