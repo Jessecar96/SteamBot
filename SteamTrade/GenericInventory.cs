@@ -31,8 +31,8 @@ namespace SteamTrade
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                return null;
+                Console.WriteLine(e.Message);//TODO: How to log this?
+                return new ItemDescription();
             }
         }
 
@@ -43,8 +43,6 @@ namespace SteamTrade
             ItemDescription tmpDescription;
 
             loaded = false;
-            /*items = new Dictionary<ulong, Item>();
-            descriptions = new Dictionary<ulong, ItemDescription>();*/
 
             try
             {
@@ -57,41 +55,38 @@ namespace SteamTrade
                     {
                         return false;
                     }
-                    
+
+                    //rgInventory = Items on Steam Inventory 
                     foreach (var item in invResponse.rgInventory)
                     {
 
-                        foreach (var noidea in item)
+                        foreach (var itemId in item)
                         {
                             tmpItemData = new Item();
-                            tmpItemData.id = noidea.id;
-                            tmpItemData.classid = noidea.classid;
+                            tmpItemData.id = itemId.id;
+                            tmpItemData.classid = itemId.classid;
 
-                            //Console.WriteLine(string.Format("ID: {0} - Class: {1}",noidea.id,noidea.classid));
-
-                            items.Add((ulong)noidea.id, tmpItemData);
+                            items.Add((ulong)itemId.id, tmpItemData);
                             break;
                         }
                     }
-                    
+
+                    // rgDescriptions = Item Schema (sort of)
                     foreach (var description in invResponse.rgDescriptions)
                     {
-                        foreach (var noidea in description)
+                        foreach (var classid_instanceid in description)// classid + '_' + instenceid 
                         {
                             tmpDescription = new ItemDescription();
-                            tmpDescription.name = noidea.name;
-                            tmpDescription.type = noidea.type;
+                            tmpDescription.name = classid_instanceid.name;
+                            tmpDescription.type = classid_instanceid.type;
 
-                            //Console.WriteLine(string.Format("Class: {0} - Name: {1} - Type: {2}", noidea.classid,noidea.name,noidea.type));
-
-                            descriptions.Add((ulong)noidea.classid, tmpDescription);
+                            descriptions.Add((ulong)classid_instanceid.classid, tmpDescription);
                             break;
                         }
                     }
                     
                     
-
-                }//end for
+                }//end for (inventory type)
             }//end try
             catch (Exception e)
             {

@@ -93,7 +93,7 @@ namespace SteamTrade
 
         public class Item
         {
-            public int appid = 440;
+            public int AppId = 440;
 
             [JsonProperty("id")]
             public ulong Id { get; set; }

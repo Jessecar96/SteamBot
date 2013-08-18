@@ -606,7 +606,7 @@ namespace SteamTrade
                 {
                     item = new Inventory.Item();
                     item.Id = itemID;
-                    item.appid = tradeEvent.appid;
+                    item.AppId = tradeEvent.appid;
                     //Console.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
@@ -668,7 +668,7 @@ namespace SteamTrade
                     // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
                     item = new Inventory.Item();
                     item.Id = itemID;
-                    item.appid = tradeEvent.appid;
+                    item.AppId = tradeEvent.appid;
                     OnUserRemoveItem(null, item);
                 }
             }

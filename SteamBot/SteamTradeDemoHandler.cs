@@ -6,8 +6,10 @@ namespace SteamBot
 {
     public class SteamTradeDemoHandler : UserHandler
     {
+        // NEW ------------------------------------------------------------------
         private GenericInventory mySteamInventory = new GenericInventory();
         private GenericInventory OtherSteamInventory = new GenericInventory();
+        // ----------------------------------------------------------------------
 
         public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
@@ -40,9 +42,6 @@ namespace SteamBot
         
         public override void OnTradeError (string error) 
         {
-            if (error == "Trade was cancelled by other user.")
-                return;
-
             Bot.SteamFriends.SendChatMessage (OtherSID, 
                                               EChatEntryType.ChatMsg,
                                               "Oh, there was an error: " + error + "."
@@ -60,29 +59,42 @@ namespace SteamBot
         
         public override void OnTradeInit() 
         {
+            // NEW -------------------------------------------------------------------------------
             List<uint> InvType = new List<uint>();
 
-            InvType.Add(1);//Games
-            InvType.Add(6);//Trading Cards
+            /*************************************************************************************
+             * NOTE: Inventory type changes according to the AppId item schema, so it's up to you
+             * find it out...
+             *
+             * SteamInventory AppId = 753 
+             * 
+             * Inventory types:
+             *  1 = Gifts (Games), must be public on steam profile in order to work.
+             *  6 = Trading Cards, Emoticons & Backgrounds. 
+             *  
+             ************************************************************************************/
+
+            InvType.Add(1);
+            InvType.Add(6);
 
             mySteamInventory.load(753, InvType, Bot.SteamClient.SteamID);
             OtherSteamInventory.load(753, InvType, OtherSID);
+
+            // -----------------------------------------------------------------------------------
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
-            
-            Trade.SendMessage("Object AppID:"+inventoryItem.appid);
-            
-            switch (inventoryItem.appid)
+            // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
+            Trade.SendMessage("Object AppID:" + inventoryItem.AppId);
+
+            switch (inventoryItem.AppId)
             {
                 case 440:
                     Trade.SendMessage("TF2 Item");
                     break;
 
                 case 753:
-                    GenericInventory.Item tmpItem = OtherSteamInventory.items[inventoryItem.Id];
-                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.descriptions[tmpItem.classid];
-
+                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getInfo(inventoryItem.Id);
                     Trade.SendMessage("Object type: " + tmpDescription.type);
                     break;
 
@@ -90,6 +102,7 @@ namespace SteamBot
                     Trade.SendMessage("Unknown item");
                     break;
             }
+            // ------------------------------------------------------------------------------------------------------
         }
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
