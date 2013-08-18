@@ -41,6 +41,8 @@ namespace SteamTrade
         {
             mySteamId = me;
             OtherSID = other;
+            List<uint> InvType = new List<uint>();
+
             session = new TradeSession(sessionId, token, other, "440");
 
             this.eventList = new List<TradeEvent>();
@@ -585,10 +587,11 @@ namespace SteamTrade
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
             ulong itemID = tradeEvent.assetid;
+            Inventory.Item item;
 
             if (OtherInventory != null)
             {
-                Inventory.Item item = OtherInventory.GetItem(itemID);
+                item = OtherInventory.GetItem(itemID);
                 if (item != null)
                 {
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
@@ -601,7 +604,10 @@ namespace SteamTrade
                 }
                 else
                 {
-                    Console.WriteLine("User added an unknown item to the trade.");
+                    item = new Inventory.Item();
+                    item.Id = itemID;
+                    item.appid = tradeEvent.appid;
+                    //Console.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
             }
@@ -642,10 +648,11 @@ namespace SteamTrade
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
             ulong itemID = (ulong) tradeEvent.assetid;
+            Inventory.Item item = new Inventory.Item();
 
             if (OtherInventory != null)
             {
-                Inventory.Item item = OtherInventory.GetItem(itemID);
+                item = OtherInventory.GetItem(itemID);
                 if (item != null)
                 {
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
@@ -659,6 +666,9 @@ namespace SteamTrade
                 else
                 {
                     // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
+                    item = new Inventory.Item();
+                    item.Id = itemID;
+                    item.appid = tradeEvent.appid;
                     OnUserRemoveItem(null, item);
                 }
             }
