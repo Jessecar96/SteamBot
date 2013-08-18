@@ -63,9 +63,7 @@ namespace SteamBot
             List<uint> InvType = new List<uint>();
 
             /*************************************************************************************
-             * NOTE: Inventory type changes according to the AppId item schema, so it's up to you
-             * find it out...
-             *
+             * 
              * SteamInventory AppId = 753 
              * 
              * Inventory types:
