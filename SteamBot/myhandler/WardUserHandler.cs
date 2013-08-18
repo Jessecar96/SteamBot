@@ -14,12 +14,9 @@ namespace SteamBot
        // static int Rarevalue = 25;
         //static int CommonExangeRate = 2;
         int UserItemAdded = 0;
-        int[] UserItem = new int[10];
         int RareWardNum, UncommonWardNum  = 0;
         int fakeitem = 0;
         static long filetime;
-        string[] UserItemRarity = new string[10];
-        string[] WardResult = new string[10];
         static bool Warding = false;
         public WardUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
@@ -181,7 +178,7 @@ namespace SteamBot
                 
                 
             }
-           
+            Trade.SendMessage("添加稀有" + i + "件");
             
         }
 
@@ -221,7 +218,7 @@ namespace SteamBot
 
 
             }
-
+             Trade.SendMessage("添加罕见" + i + "件");
 
         }
 
@@ -253,19 +250,13 @@ namespace SteamBot
 
                         if (dota2item != null && (dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item" || dota2item.Prefab == "wearable"))
                         {
-                             
                             i++;
                             Trade.AddItem(item.Id);
-                            
-
                         }
                     }
                 }
-
-
             }
-
-
+             Trade.SendMessage("添加普通" + i + "件");
         }
           
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
@@ -357,8 +348,6 @@ namespace SteamBot
                    msg = msg.Trim();
                    int num = Convert.ToInt32(msg);
                    AddRare(num);
-                   
-
                }
                else if (message.Contains("adduncommon"))
                {
@@ -391,8 +380,6 @@ namespace SteamBot
                            if (Trade.AddItemByDefindex(item.Defindex))
                            {
 
-                               BotRareAdded++;
-                               Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded);
                            }
                            else
                            {
@@ -402,16 +389,13 @@ namespace SteamBot
                       
                    }
 
-               }
+             
                else
                {
                    Trade.SendMessage("错误的命令");
                }
 
            }
-            
-
-           
         }
         
         public override void OnTradeReady (bool ready) 
