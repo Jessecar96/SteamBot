@@ -325,6 +325,19 @@ namespace SteamTrade
             return false;
         }
 
+        public bool RemoveItemByNotDefindex(int defindex)
+        {
+            foreach (ulong id in myOfferedItems.Values)
+            {
+                Inventory.Item item = MyInventory.GetItem(id);
+                if (item.Defindex != defindex)
+                {
+                    return RemoveItem(item.Id);
+                }
+            }
+            return false;
+        }
+
         /// <summary>
         /// Removes an entire set of items by Defindex.
         /// </summary>

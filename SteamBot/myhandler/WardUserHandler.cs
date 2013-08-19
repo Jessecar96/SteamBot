@@ -146,7 +146,6 @@ namespace SteamBot
             var items = new List<Inventory.Item>();
             var dota2item = Trade.Dota2Schema.GetItem(0);
             int i = 0;
-          
             foreach (Inventory.Item item in Trade.MyInventory.Items)
             {
                 
