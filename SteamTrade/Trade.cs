@@ -233,6 +233,22 @@ namespace SteamTrade
             return true;
         }
 
+        public bool AddByItem(ulong itemid)
+        {
+            if (MyInventory.GetItem(itemid) == null || myOfferedItems.ContainsValue(itemid) )
+                return false;
+
+            var slot = NextTradeSlot();
+            bool ok = session.AddItemWebCmd(itemid, slot);
+
+            if (!ok)
+                throw new TradeException("The Web command to add the Item failed");
+
+            myOfferedItems[slot] = itemid;
+
+            return true;
+        }
+
         /// <summary>
         /// Adds a single item by its Defindex.
         /// </summary>

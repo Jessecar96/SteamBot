@@ -11,7 +11,7 @@ namespace SteamBot
         int    UserRareAdded  , BotRareAdded, UserKeyAdded , BotKeyAdded ,FakeItem= 0;
         static int BuyPricePerKey = 5;
         static int SellPricePerKey = 6;
-        static int CommonExangeRate = 2;
+        
     
         public RareKeyUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
@@ -82,7 +82,7 @@ namespace SteamBot
         {
             ReInit();
             
-            Trade.SendMessage("初始化成功.请用 add+空格+物品名称 来添加物品， remove+空格+物品名称 来移除物品");
+            Trade.SendMessage("初始化成功.请用添加钥匙或者稀有物品。我只支持旧钥匙");
         }
         
         
@@ -120,7 +120,7 @@ namespace SteamBot
                 }
                 Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "钥匙 " + UserKeyAdded);
             }
-            if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable"  || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            else if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable"  || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserRareAdded++;
                 
@@ -174,8 +174,11 @@ namespace SteamBot
                         if (dota2item != null && dota2item.Item_rarity == "rare" && dota2item.Prefab == "wearable")
                         {
 
-                            i++;
-                            Trade.AddItem(item.Id);
+                            
+                            if (Trade.AddByItem(item.Id))
+                            {
+                                i++;
+                            }
 
                         }
                     }
@@ -206,7 +209,7 @@ namespace SteamBot
                 }
                 Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "钥匙 " + UserKeyAdded);
             }
-            if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+            else if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
             {
                 UserRareAdded--;
                 
@@ -236,7 +239,50 @@ namespace SteamBot
          public override void OnTradeMessage(string message) //根据用户在交易窗口的指令添加及移除卡
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);
-            
+            message = message.ToLower();
+            if (IsAdmin)
+            {
+
+                string msg = message;
+                if (message.Contains("addrare"))
+                {
+                    msg = msg.Remove(0, 7);
+                    msg = msg.Trim();
+                    int num = Convert.ToInt32(msg);
+                    AddRare(num);
+                }
+                else if (message.Contains("additem"))
+                {
+                    msg = msg.Remove(0, 7);
+                    msg = msg.Trim();
+                    var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
+                    var dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+                    if (item == null)
+                    {
+                        Trade.SendMessage("错误的物品名称");
+                    }
+                    else
+                    {
+                        
+
+                            if (Trade.AddItemByDefindex(item.Defindex))
+                            {
+
+                            }
+                            else
+                            {
+                                Trade.SendMessage("我没有 " + msg);
+                            }
+                        
+                        
+                    }
+                }
+                else
+                {
+                    Trade.SendMessage("错误的命令");
+                }
+
+            }
         }
         
         public override void OnTradeReady (bool ready) 
@@ -301,7 +347,7 @@ namespace SteamBot
 
         public bool Validate ()
         {
-            if (BotKeyAdded < (UserRareAdded / SellPricePerKey))
+            if ((BotKeyAdded*SellPricePerKey)  < UserRareAdded )
             {
                 int x = UserRareAdded - BotKeyAdded * SellPricePerKey;
                 Trade.SendMessage("你放的稀有超过所需的稀有数量,你可以移除"+x+"个稀有");
@@ -319,7 +365,7 @@ namespace SteamBot
               //  }
                 Trade.SendMessage("机器人稀有不够,你可以移除" + x + "个key");
             }
-            if (IsAdmin || ((BotKeyAdded <=(UserRareAdded /SellPricePerKey ))&&(BotRareAdded <=(UserKeyAdded *BuyPricePerKey))))
+            if (IsAdmin || (((BotKeyAdded*SellPricePerKey ) <=UserRareAdded  )&&(BotRareAdded <=(UserKeyAdded *BuyPricePerKey)))&& FakeItem ==0)
             {
                 return true;
             }
