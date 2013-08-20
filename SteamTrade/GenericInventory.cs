@@ -7,9 +7,11 @@ namespace SteamTrade
 {
     public class GenericInventory
     {
-        public Dictionary<ulong,ItemDescription> descriptions = new Dictionary<ulong,ItemDescription>();
         public Dictionary<ulong, Item> items = new Dictionary<ulong, Item>();
+        public Dictionary<ulong, ItemDescription> descriptions = new Dictionary<ulong, ItemDescription>();
+
         public bool loaded = false;
+        public List<string> errors = new List<string>();
 
         public class Item
         {
@@ -17,10 +19,15 @@ namespace SteamTrade
             public ulong classid { get; set; }
         }
 
+
         public class ItemDescription
         {
             public string name { get; set; }
             public string type { get; set; }
+            public bool tradable { get; set; }
+            public bool marketable { get; set; }
+
+            public dynamic metadata { get; set; }
         }
 
         public ItemDescription getInfo(ulong id)
@@ -31,7 +38,8 @@ namespace SteamTrade
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);//TODO: How to log this?
+                Console.WriteLine(e.Message);
+                errors.Add("getInfo(" + id + ")" + e.Message);
                 return new ItemDescription();
             }
         }
@@ -49,10 +57,12 @@ namespace SteamTrade
                 for (int i = 0; i < types.Count; i++)
                 {
                     string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(),appid, types[i]), "GET", null, null, true);
+
                     invResponse = JsonConvert.DeserializeObject(response);
 
                     if (invResponse.success == false)
                     {
+                        errors.Add("Fail to open backpack: " + invResponse.Error);
                         return false;
                     }
 
@@ -79,6 +89,10 @@ namespace SteamTrade
                             tmpDescription = new ItemDescription();
                             tmpDescription.name = classid_instanceid.name;
                             tmpDescription.type = classid_instanceid.type;
+                            tmpDescription.marketable = (bool) classid_instanceid.marketable;
+                            tmpDescription.tradable = (bool) classid_instanceid.marketable;
+
+                            tmpDescription.metadata = classid_instanceid.descriptions;
 
                             descriptions.Add((ulong)classid_instanceid.classid, tmpDescription);
                             break;
@@ -91,6 +105,7 @@ namespace SteamTrade
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                errors.Add("Exception: " + e.Message);
                 return false;
             }
             loaded = true;

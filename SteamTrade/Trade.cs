@@ -648,7 +648,7 @@ namespace SteamTrade
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
             ulong itemID = (ulong) tradeEvent.assetid;
-            Inventory.Item item = new Inventory.Item();
+            Inventory.Item item;
 
             if (OtherInventory != null)
             {

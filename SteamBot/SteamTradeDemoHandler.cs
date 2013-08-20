@@ -78,6 +78,11 @@ namespace SteamBot
             mySteamInventory.load(753, InvType, Bot.SteamClient.SteamID);
             OtherSteamInventory.load(753, InvType, OtherSID);
 
+            if (!OtherSteamInventory.loaded)
+            {
+                Trade.SendMessage("Couldn't open your inventory, type 'errors' for more info.");
+            }
+            
             // -----------------------------------------------------------------------------------
         }
         
@@ -94,6 +99,7 @@ namespace SteamBot
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getInfo(inventoryItem.Id);
                     Trade.SendMessage("Object type: " + tmpDescription.type);
+                    Trade.SendMessage("Marketable: " + tmpDescription.marketable);
                     break;
 
                 default:
@@ -105,7 +111,15 @@ namespace SteamBot
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
-        public override void OnTradeMessage (string message) {}
+        public override void OnTradeMessage (string message) {
+            if (message.ToLower() == "errors")
+            {
+                foreach (string error in OtherSteamInventory.errors)
+                {
+                    Trade.SendMessage(" * " + error);
+                }
+            }
+        }
         
         public override void OnTradeReady (bool ready) 
         {
