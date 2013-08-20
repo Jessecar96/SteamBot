@@ -151,73 +151,264 @@ namespace SteamBot
                  
             
         }
-        
+
+        public int AddRare(int num)
+        {
+
+            var items = new List<Inventory.Item>();
+            var dota2item = Trade.Dota2Schema.GetItem(0);
+            int i = 0;
+            foreach (Inventory.Item item in Trade.MyInventory.Items)
+            {
+
+
+                if (i >= num)
+                {
+
+                    break;
+                }
+
+                else
+                {
+
+                    dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+
+
+                    if (dota2item != null)
+                    {
+
+                        if (dota2item != null && dota2item.Item_rarity == "rare" && dota2item.Prefab == "wearable")
+                        {
+
+
+                            if (Trade.AddByItem(item.Id))
+                            {
+                                i++;
+                            }
+
+                        }
+                    }
+                }
+
+
+            }
+            return i;
+
+        }
+        public int AddUncommon(int num)
+        {
+
+            var items = new List<Inventory.Item>();
+            var dota2item = Trade.Dota2Schema.GetItem(0);
+            int i = 0;
+            foreach (Inventory.Item item in Trade.MyInventory.Items)
+            {
+
+
+                if (i >= num)
+                {
+
+                    break;
+                }
+
+                else
+                {
+
+                    dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+
+
+                    if (dota2item != null)
+                    {
+
+                        if (dota2item != null && dota2item.Item_rarity == "uncommon" && dota2item.Prefab == "wearable")
+                        {
+
+
+                            if (Trade.AddByItem(item.Id))
+                            {
+                                i++;
+                            }
+
+                        }
+                    }
+                }
+
+
+            }
+            return i;
+
+        }
+        public int AddCommon(int num)
+        {
+
+            var items = new List<Inventory.Item>();
+            var dota2item = Trade.Dota2Schema.GetItem(0);
+            int i = 0;
+            foreach (Inventory.Item item in Trade.MyInventory.Items)
+            {
+
+
+                if (i >= num)
+                {
+
+                    break;
+                }
+
+                else
+                {
+
+                    dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+
+
+                    if (dota2item != null)
+                    {
+
+                        if (dota2item != null && (dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item" || dota2item.Prefab == "wearable"))
+                        {
+
+
+                            if (Trade.AddByItem(item.Id))
+                            {
+                                i++;
+                            }
+
+                        }
+                    }
+                }
+
+
+            }
+            return i;
+
+        }
+
          public override void OnTradeMessage(string message) //根据用户在交易窗口的指令添加及移除卡
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);
             //message = message.ToLower();
             string msg = message;
-            if (message.Contains("add"))
+            if (IsAdmin)
             {
-                msg = msg.Remove(0, 3);
-                msg = msg.Trim();
-                var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
-                var dota2item = Trade.Dota2Schema.GetItem(item.Defindex );
-                if (item == null)
+
+
+                if (message.Contains("addrare"))
                 {
-                    Trade.SendMessage("错误的物品名称");
+                    msg = msg.Remove(0, 7);
+                    msg = msg.Trim();
+                    int num = Convert.ToInt32(msg);
+                    AddRare(num);
                 }
-                else
+                else if (message.Contains("adduncommon"))
                 {
-                    if (dota2item.Item_rarity == "uncommon" && dota2item.Prefab == "wearable")
+                    msg = msg.Remove(0, 11);
+                    msg = msg.Trim();
+                    int num = Convert.ToInt32(msg);
+                    AddUncommon(num);
+
+                }
+                else if (message.Contains("addcommon"))
+                {
+                    msg = msg.Remove(0, 9);
+                    msg = msg.Trim();
+                    int num = Convert.ToInt32(msg);
+                    AddCommon(num);
+
+                }
+                else if (message.Contains("additem"))
+                {
+                    msg = msg.Remove(0, 7);
+                    msg = msg.Trim();
+                    var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
+                    if (item == null)
+                    {
+                        Trade.SendMessage("错误的物品名称");
+                    }
+                    else
                     {
 
                         if (Trade.AddItemByDefindex(item.Defindex))
                         {
-                            
-                            BotUncommonAdded++;
-                            Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+
                         }
                         else
                         {
                             Trade.SendMessage("我没有 " + msg);
                         }
                     }
-                    else
-                    {
-                        Trade.SendMessage("这个机器人只支持交换罕见物品");
-                    }
+
                 }
 
-            }
 
-            else if (message.Contains("remove"))
-            {
-                msg = msg.Remove(0, 6);
-                msg = msg.Trim();
-                var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
-                if (item == null)
-                {
-                    Trade.SendMessage("错误的物品名称");
-                }
                 else
                 {
-
-                    if (Trade.RemoveItemByDefindex(item.Defindex))
-                    {
-                        BotUncommonAdded--;
-                        Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-                    }
-                    else
-                    {
-                        Trade.SendMessage("机器人没有添加 " + msg);
-                    }
+                    Trade.SendMessage("错误的命令");
                 }
 
             }
             else
             {
-                Trade.SendMessage("请用 add+空格+物品名称 来添加物品， remove+空格+物品名称 来移除物品");
+                if (message.Contains("add"))
+                {
+                    msg = msg.Remove(0, 3);
+                    msg = msg.Trim();
+                    var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
+                    var dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+                    if (item == null)
+                    {
+                        Trade.SendMessage("错误的物品名称");
+                    }
+                    else
+                    {
+                        if (dota2item.Item_rarity == "uncommon" && dota2item.Prefab == "wearable")
+                        {
+
+                            if (Trade.AddItemByDefindex(item.Defindex))
+                            {
+
+                                BotUncommonAdded++;
+                                Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+                            }
+                            else
+                            {
+                                Trade.SendMessage("我没有 " + msg);
+                            }
+                        }
+                        else
+                        {
+                            Trade.SendMessage("这个机器人只支持交换罕见物品");
+                        }
+                    }
+
+                }
+
+                else if (message.Contains("remove"))
+                {
+                    msg = msg.Remove(0, 6);
+                    msg = msg.Trim();
+                    var item = Trade.CurrentSchemazh.GetItemByZhname(msg);
+                    if (item == null)
+                    {
+                        Trade.SendMessage("错误的物品名称");
+                    }
+                    else
+                    {
+
+                        if (Trade.RemoveItemByDefindex(item.Defindex))
+                        {
+                            BotUncommonAdded--;
+                            Trade.SendMessage("机器人添加:" + "罕见 " + BotUncommonAdded + " 用户添加:" + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+                        }
+                        else
+                        {
+                            Trade.SendMessage("机器人没有添加 " + msg);
+                        }
+                    }
+
+                }
+                else
+                {
+                    Trade.SendMessage("请用 add+空格+物品名称 来添加物品， remove+空格+物品名称 来移除物品");
+                }
             }
         }
         
