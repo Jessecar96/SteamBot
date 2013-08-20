@@ -6,6 +6,16 @@ using SteamKit2.GC;
 
 namespace SteamBot.TF2GC
 {
+    public enum ECraftingRecipe : short
+    {
+        BestFit = -2,
+        SmeltClassWeapons = 3,
+        CombineScrap = 4,
+        CombineReclaimed = 5,
+        SmeltReclaimed = 22,
+        SmeltRefined = 23
+    }
+
     public static class Crafting
     {
         /// <summary>
@@ -44,7 +54,7 @@ namespace SteamBot.TF2GC
         /// <remarks>
         /// You must have set the current game to 440 for this to do anything.
         /// </remarks>
-        public static void CraftItems(Bot bot, short recipe, params ulong[] items)
+        public static void CraftItems(Bot bot, ECraftingRecipe recipe, params ulong[] items)
         {
             if (bot.CurrentGame != 440)
                 throw new Exception("SteamBot is not ingame with AppID 440; current AppID is " + bot.CurrentGame);
@@ -52,7 +62,7 @@ namespace SteamBot.TF2GC
             var craftMsg = new ClientGCMsg<MsgCraft>();
 
             craftMsg.Body.NumItems = (short)items.Length;
-            craftMsg.Body.Recipe = recipe;
+            craftMsg.Body.Recipe = (short) recipe;
 
             foreach (ulong id in items)
                 craftMsg.Write(id);
