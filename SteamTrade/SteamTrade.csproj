@@ -55,6 +55,7 @@
     <Compile Include="TradeWebAPI\TradeSession.cs" />
     <Compile Include="TradeManager.cs" />
     <Compile Include="Exceptions\InventoryFetchException.cs" />
+    <Compile Include="UserItem.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
