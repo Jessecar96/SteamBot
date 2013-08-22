@@ -61,7 +61,7 @@ namespace SteamBot
             item.Pricekey = 0;
             item.Pricerr = 0;
             item.Status = 0;
-
+            item.Item_name = "";
         }
 
 
@@ -114,7 +114,7 @@ namespace SteamBot
                 {
                     x = "没有找到 " + msg;
                 }
-                string x ="物品名称" + yyy.Item_name +   "id   " + yyy.Id +"  "+ yyy.Pricekey + "key   " + yyy.Pricerr + "RR";
+                x ="物品名称 " + yyy.Item_name +   " id " + yyy.Id +"  "+ yyy.Pricekey + "key   " + yyy.Pricerr + "RR";
                 Bot.SteamFriends.SendChatMessage(OtherSID, type, x);
             }
                   
@@ -283,6 +283,8 @@ namespace SteamBot
           
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
         {
+            if (TradeType == 0)
+            { TradeType = 2; }
             if (inventoryItem == null)
             {
                 
@@ -290,11 +292,12 @@ namespace SteamBot
             }
             else
             {
-
+                var zhitem = Trade.CurrentSchemazh.GetItem(inventoryItem.Defindex);
                 ReInititem();
                 SetingPrice = true;
                 item.Id = inventoryItem.Id;
                 item.Defindex = inventoryItem.Defindex;
+                item.Item_name = zhitem.ItemName;
                 Trade.SendMessage("请设置物品价格");               
                 
             }
