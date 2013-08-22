@@ -8,7 +8,7 @@ namespace SteamBot
 {
     public class UserItemSellHandler : UserHandler
     {
-        int    UserRareAdded  , BotRareAdded, UserUncommonAdded , UserCommonAdded = 0;
+        int    UserRareAdded  , BotRareAdded, BotKeyAdded , UserKeyAdded = 0;
         //static int Commonvalue = 1;
       //  static int Uncommonvalue = 5;
        // static int Rarevalue = 25;
@@ -70,6 +70,7 @@ namespace SteamBot
             if (currentuseritem == null)
             {
                 currentuseritem =UserItem.FetchSchema();
+                Bot.log.Success("useritem 读取完成");
             }
             
         }
@@ -163,45 +164,70 @@ namespace SteamBot
             Trade.SendMessage("初始化成功.");
         }
 
-        public void AddRare(int num)
+        public  int AddRare(int num)
         {
             
-            var items = new List<Inventory.Item>();
-            var dota2item = Trade.Dota2Schema.GetItem(0);
+           // var items = new List<Inventory.Item>();
             int i = 0;
             foreach (Inventory.Item item in Trade.MyInventory.Items)
             {
-                
-                  
+
+                bool incurrentitem = false;
                 if (i >= num)
                 {
 
                     break;
                 }
-                 
+
                 else
                 {
-                   
-                    dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
-                    
-                   
-                    if (dota2item != null)
+                    foreach (var xxx in currentuseritem.Items)
                     {
-                        
-                        if (dota2item != null && dota2item.Item_rarity == "rare" && dota2item.Prefab == "wearable")
+                        if (xxx.Id == item.OriginalId)
+                        {
+                            incurrentitem = true;
+                            break;
+                        }
+                    }
+                    if (incurrentitem == false)
+                    {
+                        var dota2item = Trade.Dota2Schema.GetItem(item.Defindex);
+
+                        if (dota2item != null)
                         {
 
-                            i++;
-                            Trade.AddItem(item.Id);
- 
+                            if (dota2item != null && dota2item.Item_rarity == "rare" && dota2item.Prefab == "wearable")
+                            {
+
+                                i++;
+                                Trade.AddItem(item.Id);
+
+                            }
                         }
                     }
                 }
                 
-                
             }
-            Trade.SendMessage("添加稀有" + i + "件");
+            return i;
             
+        }
+        public int AddKey(int num)
+        {
+
+            int x = 0;
+            for (int i = 0; i < num; i++)
+            {
+                if (Trade.AddItemByDefindex(15003))
+                {
+                    x++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return x;
+
         }
 
         public void AddUncommon(int num)
@@ -285,21 +311,54 @@ namespace SteamBot
         {
             if (TradeType == 0)
             { TradeType = 2; }
-            if (inventoryItem == null)
+            if (TradeType == 2)
             {
-                
-                Trade.SendMessage("无法识别物品，请打开仓库显示");
+                if (inventoryItem == null)
+                {
+
+                    Trade.SendMessage("无法识别物品，请打开仓库显示,交易即将取消");
+                    Trade.CancelTrade();
+                    Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg,
+                                              "无法识别物品，请打开仓库显示,交易取消，请打开库存显示后重试");
+
+                }
+                else
+                {
+                    var zhitem = Trade.CurrentSchemazh.GetItem(inventoryItem.Defindex);
+                    ReInititem();
+                    SetingPrice = true;
+                    item.Id = inventoryItem.Id;
+                    item.Defindex = inventoryItem.Defindex;
+                    item.Item_name = zhitem.ItemName;
+                    Trade.SendMessage("请设置物品价格");
+                    
+                }
             }
+            else if (TradeType == 4 || TradeType == 1)
+            {
+                var item = Trade.CurrentSchemazh.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
+                var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
+                if (item.Defindex == 15003)
+                {
+                    UserKeyAdded++;
+                }
+                else if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+                {
+                    UserRareAdded++;
+                    Trade.SendMessage("用户添加:" + "key " + UserKeyAdded + "稀有 " + UserRareAdded);
+                }
+               
+                else
+                {
+                    fakeitem++;
+                    Trade.SendMessage("你添加了一件我不支持的物品，移除它，否则无法交易");//不是卡片则提示用户，不做其他操作   
+                }
+
+            }
+            
             else
             {
-                var zhitem = Trade.CurrentSchemazh.GetItem(inventoryItem.Defindex);
-                ReInititem();
-                SetingPrice = true;
-                item.Id = inventoryItem.Id;
-                item.Defindex = inventoryItem.Defindex;
-                item.Item_name = zhitem.ItemName;
-                Trade.SendMessage("请设置物品价格");               
-                
+                Trade.SendMessage("当前模式为返还物品，无需添加物品");
             }
 
             
@@ -307,33 +366,32 @@ namespace SteamBot
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) 
         {
-            Trade.CancelTrade();
-            
-            var item = Trade.CurrentSchemazh.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
-            var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
-
-
-            if (dota2item.Item_rarity == "rare" &&  (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin")  )
+            if (TradeType == 2)
             {
-                UserRareAdded--;
-                Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-            }
-            else if ((dota2item.Item_rarity == "common" || dota2item.Item_rarity == null) && (dota2item.Prefab == "default_item"|| dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-            {
-                UserCommonAdded--;
-                Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
-            }
-            else if ((dota2item.Item_rarity == "uncommon") && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
-            {
-                UserUncommonAdded--;
-                Trade.SendMessage("用户添加:" + "普通 " + UserCommonAdded + "罕见 " + UserUncommonAdded + " 稀有 " + UserRareAdded);
+                Trade.CancelTrade();
             }
             else
             {
-                fakeitem--;
-                Trade.SendMessage("你移除了一件我不支持的物品");//不是卡片则提示用户，不做其他操作   
+                var item = Trade.CurrentSchemazh.GetItem(schemaItem.Defindex);//获取添加物品信息并赋予变量item
+                var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
+
+                if (item.Defindex == 15003)
+                {
+                    UserKeyAdded--;
+                    Trade.SendMessage("用户添加:" + "key " + UserKeyAdded + "稀有 " + UserRareAdded);
+                }
+                else if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
+                {
+                    UserRareAdded--;
+                    Trade.SendMessage("用户添加:" + "key " + UserKeyAdded + "稀有 " + UserRareAdded);
+                }
+
+                else
+                {
+                    fakeitem--;
+                    Trade.SendMessage("你添加了一件我不支持的物品，移除它，否则无法交易");//不是卡片则提示用户，不做其他操作   
+                }
             }
-                
                  
             
         }
@@ -374,6 +432,48 @@ namespace SteamBot
                    Trade.SendMessage("当前处于其他模式，不能取回物品，请重新交易");
                }
            }
+           else if (msg.Contains("getmoney"))
+           {
+               if (TradeType == 0)
+               {
+                   TradeType = 4;
+                   Trade.SendMessage("交易模式已经设定为取钱模式");
+               }
+               if (TradeType == 4)
+               {
+                   {
+                       foreach (var xxx in currentuseritem.Items)
+                       {
+                           if (xxx.Steam64id == OtherSID.ConvertToUInt64() && xxx.Status == 1)
+                           {
+                               item = xxx;
+                               item.Status = 2;
+                               UserItemToAdded.Add(item);
+                               Trade.SendMessage(item.Item_name+" "+"id:"+ item.Id +" 已卖出，价格是 " +item.Pricekey +"key "+item.Pricerr +"RR"  );
+                               BotKeyAdded = BotKeyAdded + item.Pricekey;
+                               int keyadded = AddKey(item.Pricekey);
+                               if (keyadded < item.Pricekey)
+                               {
+                                   Trade.SendMessage("机器人key不够，请通知管理员");
+                               }
+                               BotRareAdded = BotRareAdded + item.Pricerr;
+                               int rradded = AddRare(item.Pricerr);
+                               if (rradded < item.Pricerr)
+                               {
+                                   Trade.SendMessage("机器人RR不够，请通知管理员");
+                               }
+                               Trade.SendMessage("机器人已添加:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
+                           }
+                       }
+                   }
+               }
+               else
+               {
+                   Trade.SendMessage("当前处于其他模式，不能取钱，请重新交易");
+               }
+
+ 
+           }
            else if (msg.Contains("additem"))
            {
                if (TradeType == 0)
@@ -381,29 +481,92 @@ namespace SteamBot
                    TradeType = 1;
                    Trade.SendMessage("交易模式已经设定为购买模式");
                }
- 
+               if (TradeType == 1)
+               {
+                   msg = msg.Remove(0, 7);
+                   msg = msg.Trim();
+                   UserItem.Useritem yyy = new UserItem.Useritem();
+                   int pricexxx = int.MaxValue;
+                   foreach (var xxx in currentuseritem.Items)
+                   {
+                       if (xxx.Item_name == msg && xxx.Status == 0 && (xxx.Pricekey * RateOfKeyAndRare + xxx.Pricerr) < pricexxx)
+                       {
+                           yyy = xxx;
+
+                       }
+                   }
+
+                   if (yyy == null)
+                   {
+                       Trade.SendMessage("没有找到 " + msg);
+                   }
+                   else
+                   {
+                       Trade.SendMessage("物品名称:" + yyy.Item_name + " id：" + yyy.Id + " " + yyy.Pricekey + "key " + yyy.Pricerr + "RR");
+                       Trade.AddItemByOriginal_id(yyy.Id);
+                       BotKeyAdded = BotKeyAdded + yyy.Pricekey;
+                       BotRareAdded = BotRareAdded + yyy.Pricerr;
+                       Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
+                   }
+
+
+
+               }
+
            }
-           else if (msg.Contains("additembyid"))
+           else if (msg.Contains("addbyid"))
            {
                if (TradeType == 0)
                {
                    TradeType = 1;
                    Trade.SendMessage("交易模式已经设定为购买模式");
                }
+               if (TradeType == 1)
+               {
+                   msg = msg.Remove(0, 7);
+                   msg = msg.Trim();
+                   ulong aid = Convert.ToUInt64(msg);
+                   UserItem.Useritem yyy = new UserItem.Useritem();
+                   int pricexxx = int.MaxValue;
+                   foreach (var xxx in currentuseritem.Items)
+                   {
+                       if (xxx.Id == aid && xxx.Status == 0 && (xxx.Pricekey * RateOfKeyAndRare + xxx.Pricerr) < pricexxx)
+                       {
+                           yyy = xxx;
+
+                       }
+                   }
+
+                   if (yyy == null)
+                   {
+                       Trade.SendMessage("没有找到 " + msg);
+                   }
+                   else
+                   {
+                       Trade.SendMessage("物品名称:" + yyy.Item_name + " id：" + yyy.Id + " " + yyy.Pricekey + "key " + yyy.Pricerr + "RR");
+                       Trade.AddItemByOriginal_id(yyy.Id);
+                       BotKeyAdded = BotKeyAdded + yyy.Pricekey;
+                       BotRareAdded = BotRareAdded + yyy.Pricerr;
+                       Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
+                   }
+
+
+
+               }
            }
            else if (TradeType == 2 && SetingPrice == true)
            {
-               if (msg.Contains("setpricekey"))
+               if (msg.Contains("key"))
                {
-                   msg = msg.Remove(0, 11);
+                   msg = msg.Remove(0, 3);
                    msg = msg.Trim();
                    PriceKey = Convert.ToInt32(msg);
                    Trade.SendMessage(PriceKey + "key " + PriceRr + "RR");
 
                }
-               else if (msg.Contains("setpricerr"))
+               else if (msg.Contains("rr"))
                {
-                   msg = msg.Remove(0, 10);
+                   msg = msg.Remove(0, 2);
                    msg = msg.Trim();
                    PriceRr = Convert.ToInt32(msg);
                    Trade.SendMessage(PriceKey + "key " + PriceRr + "RR");
@@ -412,7 +575,7 @@ namespace SteamBot
                {
                    item.Pricekey = PriceKey;
                    item.Pricerr = PriceRr;
-                   Trade.SendMessage(item.Id + " 价格 " + PriceKey + "key " + PriceRr + "RR" + " 已保存");
+                   Trade.SendMessage("物品名称：" + item.Item_name + " Id:" + item.Id + " 价格:" + PriceKey + "key " + PriceRr + "RR" + " 已保存");
                    UserItemToAdded.Add(item);
                    SetingPrice = false;
                }
@@ -466,6 +629,7 @@ namespace SteamBot
                 //trades with a lot of items so we use a try-catch
             if (Validate())
             {
+                Warding = true;
                 try
                 {
                     Trade.AcceptTrade();
@@ -490,11 +654,15 @@ namespace SteamBot
                 {
                     ToRemoveitemsfromfile();
                 }
+                else if (TradeType == 4)
+                {
+                    Moneygiveditemsfromfile();
+                }
                 else
                 {
                     Bot.log.Warn("Tradetype is 0");
                 }
-
+                Warding = false;
 
                 
                 
@@ -523,7 +691,7 @@ namespace SteamBot
                 int x = 0;
                     foreach (var yyy in currentuseritem.Items )
                     {
-                        if (yyy.Id ==xxx.Id && yyy.Steam64id ==xxx.Steam64id && yyy.Defindex ==xxx.Defindex  &&yyy.Status !=3)
+                        if (yyy.Id ==xxx.Id && yyy.Steam64id ==xxx.Steam64id && yyy.Defindex ==xxx.Defindex  &&yyy.Status== 0)
                         {
                             x = currentuseritem.Items.IndexOf(yyy);
                             currentuseritem.Items[x].Status = 1;
@@ -552,6 +720,24 @@ namespace SteamBot
 
         }
 
+        public void Moneygiveditemsfromfile()
+        {
+            foreach (var xxx in UserItemToAdded)
+            {
+                int x = 0;
+                foreach (var yyy in currentuseritem.Items)
+                {
+                    if (yyy.Id == xxx.Id && yyy.Steam64id == xxx.Steam64id && yyy.Defindex == xxx.Defindex && yyy.Status == 1)
+                    {
+                        x = currentuseritem.Items.IndexOf(yyy);
+                        currentuseritem.Items[x].Status = 2;
+                    }
+                }
+            }
+            // 写入文件；
+
+        }
+
 
         public override void OnTradeClose()
         {
@@ -562,9 +748,32 @@ namespace SteamBot
 
         public bool Validate ()
         {
-           
 
+            if (TradeType == 2 || TradeType == 3)
+            {
                 return true;
+            }
+            else if (TradeType == 1 /*|| TradeType == 4 */)
+            {
+                if (BotKeyAdded <= UserKeyAdded && BotRareAdded <= UserKeyAdded)
+                {
+                    return true;
+                }
+                else
+                {
+                    Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded+" |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
+                    Trade.SendMessage("你添加的key必须大于等于需支付的key，你添加的RR必须大于等于你支付的RR");
+                    return false;
+                }
+            }
+            else if (TradeType == 4)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
           
             
         }
