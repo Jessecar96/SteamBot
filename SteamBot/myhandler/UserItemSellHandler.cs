@@ -18,9 +18,12 @@ namespace SteamBot
         int fakeitem = 0;
         //UserItem.Useritem item = null;
         UserItem.Useritem item = new UserItem.Useritem();
-        List<UserItem.Useritem> UserItemToAdded;
+        List<UserItem.Useritem> UserItemToAdded = new List<UserItem.Useritem>();
         int PriceKey, PriceRr = 0;
         bool SetingPrice = false;
+        int TradeType = 0;
+        bool TradeErroe = false;
+        static int RateOfKeyAndRare = 5;
         static UserItem currentuseritem = null;
         static long filetime;
         static bool Warding = false;
@@ -38,17 +41,27 @@ namespace SteamBot
         }
         public void ReInit()
         {
-            Bot.log.Warn("1");
+          
            PriceKey = 0;
-           Bot.log.Warn("2");
+           TradeErroe = false;
            PriceRr = 0;
-           Bot.log.Warn("3");
-           item = null;
-           Bot.log.Warn("4");
+           TradeType = 0;
+           //item = null;
+           
            UserItemToAdded.Clear();
-           Bot.log.Warn("5");
+           ReInititem();
+           item.Steam64id = OtherSID.ConvertToUInt64();
             
              
+        }
+        public void ReInititem()
+        {
+            item.Id = 0;
+            item.Defindex = 0;
+            item.Pricekey = 0;
+            item.Pricerr = 0;
+            item.Status = 0;
+
         }
 
 
@@ -82,17 +95,26 @@ namespace SteamBot
            // }
             if (message.Contains("price"))
             {
-                message = message.Remove(0, 5);
-                message = message.Trim();
-                ulong xid = Convert.ToUInt64(message);
-                UserItem.Useritem yyy = null ;
+                string msg = message;
+                msg = msg.Remove(0, 5);
+                msg = msg.Trim();
                 
+                UserItem.Useritem yyy = new UserItem.Useritem () ;
+                int pricexxx = int.MaxValue ;
                 foreach (var xxx in currentuseritem.Items)
                 {
-                    if (xxx.Id == xid)
-                        yyy=xxx;
+                    if (xxx.Item_name == msg && xxx.Status ==0 && (xxx.Pricekey *RateOfKeyAndRare + xxx.Pricerr )<pricexxx )
+                    {
+                        yyy = xxx;
+                        
+                    }
                 }
-                string x = "steamid   " + yyy.Id +"  "+ yyy.Pricekey + "key   " + yyy.Pricerr + "RR";
+                string x;
+                if (yyy == null)
+                {
+                    x = "没有找到 " + msg;
+                }
+                string x ="物品名称" + yyy.Item_name +   "id   " + yyy.Id +"  "+ yyy.Pricekey + "key   " + yyy.Pricerr + "RR";
                 Bot.SteamFriends.SendChatMessage(OtherSID, type, x);
             }
                   
@@ -268,14 +290,12 @@ namespace SteamBot
             }
             else
             {
-                Trade.SendMessage("请设置物品价格");
 
+                ReInititem();
                 SetingPrice = true;
-                UInt64 xxxx = OtherSID.ConvertToUInt64();
-
                 item.Id = inventoryItem.Id;
-                
-                Bot.log.Warn("4");
+                item.Defindex = inventoryItem.Defindex;
+                Trade.SendMessage("请设置物品价格");               
                 
             }
 
@@ -319,13 +339,63 @@ namespace SteamBot
         {
            Bot.log.Info("[TRADE MESSAGE] " + message);
            string msg = message.ToLower();
-           if (SetingPrice == true)
+           if (msg.Contains("getbackmyitems"))
+           {
+               if (TradeType == 0)
+               {
+                   TradeType = 3;
+                   Trade.SendMessage("交易模式已经设定为取回物品模式");
+               }
+               if (TradeType == 3)
+               {
+                   {
+                       foreach (var xxx in currentuseritem.Items)
+                       {
+                           if (xxx.Steam64id == OtherSID.ConvertToUInt64() && xxx.Status == 0)
+                           {
+                               ReInititem();
+                               Trade.SendMessage("添加物品 original_id = " + xxx.Id);
+                               if (!Trade.AddItemByOriginal_id(xxx.Id))
+                               {
+                                   Trade.SendMessage("添加物品 original_id = " + xxx.Id +" 物品失败，请向管理员提交bug");
+                               }
+                               item = xxx;
+                               item.Status = 3;
+                               UserItemToAdded.Add(item);
+                           }
+                       }
+                   }
+               }
+               else
+               {
+                   Trade.SendMessage("当前处于其他模式，不能取回物品，请重新交易");
+               }
+           }
+           else if (msg.Contains("additem"))
+           {
+               if (TradeType == 0)
+               {
+                   TradeType = 1;
+                   Trade.SendMessage("交易模式已经设定为购买模式");
+               }
+ 
+           }
+           else if (msg.Contains("additembyid"))
+           {
+               if (TradeType == 0)
+               {
+                   TradeType = 1;
+                   Trade.SendMessage("交易模式已经设定为购买模式");
+               }
+           }
+           else if (TradeType == 2 && SetingPrice == true)
            {
                if (msg.Contains("setpricekey"))
                {
                    msg = msg.Remove(0, 11);
                    msg = msg.Trim();
                    PriceKey = Convert.ToInt32(msg);
+                   Trade.SendMessage(PriceKey + "key " + PriceRr + "RR");
 
                }
                else if (msg.Contains("setpricerr"))
@@ -333,11 +403,13 @@ namespace SteamBot
                    msg = msg.Remove(0, 10);
                    msg = msg.Trim();
                    PriceRr = Convert.ToInt32(msg);
+                   Trade.SendMessage(PriceKey + "key " + PriceRr + "RR");
                }
                else if (msg.Contains("save"))
                {
                    item.Pricekey = PriceKey;
                    item.Pricerr = PriceRr;
+                   Trade.SendMessage(item.Id + " 价格 " + PriceKey + "key " + PriceRr + "RR" + " 已保存");
                    UserItemToAdded.Add(item);
                    SetingPrice = false;
                }
@@ -345,6 +417,10 @@ namespace SteamBot
                {
                    Trade.SendMessage("错误的指令");
                }
+           }
+           else
+           {
+               Trade.SendMessage("错误的指令或者未设定交易模式");
            }
            
         }
@@ -394,10 +470,29 @@ namespace SteamBot
                 catch
                 {
                     Log.Warn("The trade might have failed, but we can't be sure.");
+                    TradeErroe = true;
+                    //准备检查库存
                 }
                 Log.Success("Trade Complete!");
                 OnTradeClose();
-                Additemstofile();
+                if (TradeType == 2)
+                {
+                    Additemstofile();
+                }
+                else if (TradeType == 1)
+                {
+                    Sellitemsfromfile();
+                }
+                else if (TradeType == 3)
+                {
+                    ToRemoveitemsfromfile();
+                }
+                else
+                {
+                    Bot.log.Warn("Tradetype is 0");
+                }
+
+
                 
                 
             }
@@ -414,6 +509,41 @@ namespace SteamBot
             foreach (var xxx in UserItemToAdded)
             {
                 currentuseritem.Items.Add(xxx);
+            }
+            // 写入文件；
+
+        }
+        public void Sellitemsfromfile()
+        {
+            foreach (var xxx in UserItemToAdded)
+            {
+                int x = 0;
+                    foreach (var yyy in currentuseritem.Items )
+                    {
+                        if (yyy.Id ==xxx.Id && yyy.Steam64id ==xxx.Steam64id && yyy.Defindex ==xxx.Defindex  &&yyy.Status !=3)
+                        {
+                            x = currentuseritem.Items.IndexOf(yyy);
+                            currentuseritem.Items[x].Status = 1;
+                        }
+                    }
+            }
+            // 写入文件；
+
+        }
+
+        public void ToRemoveitemsfromfile()
+        {
+            foreach (var xxx in UserItemToAdded)
+            {
+                int x = 0;
+                foreach (var yyy in currentuseritem.Items)
+                {
+                    if (yyy.Id == xxx.Id && yyy.Steam64id == xxx.Steam64id && yyy.Defindex == xxx.Defindex &&   yyy.Status==0 )
+                    {
+                        x = currentuseritem.Items.IndexOf(yyy);
+                        currentuseritem.Items[x].Status = 3;
+                    }
+                }
             }
             // 写入文件；
 

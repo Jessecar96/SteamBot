@@ -268,6 +268,18 @@ namespace SteamTrade
             }
             return false;
         }
+        public bool AddItemByOriginal_id(ulong  original_id)
+        {
+            List<Inventory.Item> items = MyInventory.GetItemsByOriginal_id(original_id);
+            foreach (Inventory.Item item in items)
+            {
+                if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
+                {
+                    return AddItem(item.Id);
+                }
+            }
+            return false;
+        }
 
 
 

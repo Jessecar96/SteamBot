@@ -116,20 +116,17 @@ namespace SteamTrade
             [JsonProperty("id")]
             public ulong Id { get; set; }
 
-            [JsonProperty("original_id")]
-            public ulong OriginalId { get; set; }
+
 
             [JsonProperty("defindex")]
             public ushort Defindex { get; set; }
 
-            [JsonProperty("level")]
-            public byte Level { get; set; }
+            [JsonProperty("item_name")]
+            public string  Item_name { get; set; }
+            
 
-            [JsonProperty("quality")]
-            public string Quality { get; set; }
-
-            [JsonProperty("quantity")]
-            public int RemainingUses { get; set; }
+            [JsonProperty("status")]
+            public int Status { get; set; }
 
             [JsonProperty("pricekey")]
             public int Pricekey { get; set; }

@@ -78,9 +78,22 @@ namespace SteamTrade
             return null;
         }
 
-        public List<Item> GetItemsByDefindex (int defindex)
+        public List<Item> GetItemsByOriginal_id(ulong original_id)
         {
             var items = new List<Item> ();
+            foreach (Item item in Items)
+            {
+                if (item.OriginalId == original_id)
+                {
+                    items.Add(item);
+                }
+            }
+            return items;
+        }
+
+        public List<Item> GetItemsByDefindex(int defindex)
+        {
+            var items = new List<Item>();
             foreach (Item item in Items)
             {
                 if (item.Defindex == defindex)
