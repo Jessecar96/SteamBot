@@ -44,6 +44,20 @@ namespace SteamTrade
             }
         }
 
+        public bool itemExists(ulong id)
+        {
+            try
+            {
+                GenericInventory.Item tmpItem = items[id];
+                return true;
+            }
+            catch (Exception e)
+            {
+                errors.Add(e.Message);
+                return false;
+            }
+        }
+
         public bool load(ulong appid,List<uint> types, SteamID steamid)
         {
             dynamic invResponse;
@@ -63,7 +77,7 @@ namespace SteamTrade
                     if (invResponse.success == false)
                     {
                         errors.Add("Fail to open backpack: " + invResponse.Error);
-                        return false;
+                        break;
                     }
 
                     //rgInventory = Items on Steam Inventory 
@@ -98,7 +112,9 @@ namespace SteamTrade
                             break;
                         }
                     }
-                    
+
+                    if (errors.Count > 0)
+                        return false;
                     
                 }//end for (inventory type)
             }//end try
