@@ -29,8 +29,10 @@ namespace SteamTrade
         {
             
             string result = GetSchemaString();
-            UserItemResult schemaResult = JsonConvert.DeserializeObject<UserItemResult>(result);
-            return schemaResult.result ?? null;
+          //  UserItemResult schemaResult = JsonConvert.DeserializeObject<UserItemResult>(result);
+          //  return schemaResult.result  ?? null;
+            UserItem schemaResult = JsonConvert.DeserializeObject<UserItem>(result);
+            return schemaResult ?? null;
            // return schemaResult.result;
             /*
             var url = SchemaApiUrlBase + apiKey;
@@ -123,7 +125,9 @@ namespace SteamTrade
 
             [JsonProperty("item_name")]
             public string  Item_name { get; set; }
-            
+
+            [JsonProperty("error")]
+            public bool Error { get; set; }
 
             [JsonProperty("status")]
             public int Status { get; set; }
@@ -135,11 +139,12 @@ namespace SteamTrade
             public int Pricerr { get; set; }
             
         }
-
+        /*
         protected class UserItemResult
         {
             public UserItem result { get; set; }
         }
+         * */
 
     }
 }

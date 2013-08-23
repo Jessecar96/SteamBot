@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SteamTrade;
 using System;
 using System.Timers;
+using Newtonsoft.Json;
 
 namespace SteamBot
 {
@@ -681,6 +682,8 @@ namespace SteamBot
             {
                 currentuseritem.Items.Add(xxx);
             }
+            string json = JsonConvert.SerializeObject(currentuseritem);
+            Bot.log.Warn(json);
             // Ð´ÈëÎÄ¼þ£»
 
         }
