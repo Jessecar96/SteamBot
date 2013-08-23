@@ -117,9 +117,7 @@ namespace SteamTrade
 
             [JsonProperty("id")]
             public ulong Id { get; set; }
-
-
-
+                        
             [JsonProperty("defindex")]
             public ushort Defindex { get; set; }
 

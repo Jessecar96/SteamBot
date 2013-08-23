@@ -4,6 +4,7 @@ using SteamTrade;
 using System;
 using System.Timers;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace SteamBot
 {
@@ -20,10 +21,13 @@ namespace SteamBot
         //UserItem.Useritem item = null;
         UserItem.Useritem item = new UserItem.Useritem();
         List<UserItem.Useritem> UserItemToAdded = new List<UserItem.Useritem>();
+        List <int> IndexOfItems = new List <int>();
+        List <ulong> ItemIdAdded = new List <ulong>();
+        int index = 0;
         int PriceKey, PriceRr = 0;
         bool SetingPrice = false;
         int TradeType = 0;
-        bool TradeErroe = false;
+        bool TradeError = false;
         static int RateOfKeyAndRare = 5;
         static UserItem currentuseritem = null;
         static long filetime;
@@ -44,7 +48,7 @@ namespace SteamBot
         {
           
            PriceKey = 0;
-           TradeErroe = false;
+           TradeError = false;
            PriceRr = 0;
            TradeType = 0;
            //item = null;
@@ -105,18 +109,21 @@ namespace SteamBot
                 int pricexxx = int.MaxValue ;
                 foreach (var xxx in currentuseritem.Items)
                 {
-                    if (xxx.Item_name == msg && xxx.Status ==0 && (xxx.Pricekey *RateOfKeyAndRare + xxx.Pricerr )<pricexxx )
+                    if (xxx.Item_name == msg && xxx.Status ==0 && xxx.Error ==false && (xxx.Pricekey *RateOfKeyAndRare + xxx.Pricerr )<pricexxx )
                     {
                         yyy = xxx;
                         
                     }
                 }
                 string x;
-                if (yyy == null)
+                if (yyy.Id==0)
                 {
                     x = "没有找到 " + msg;
                 }
-                x ="物品名称 " + yyy.Item_name +   " id " + yyy.Id +"  "+ yyy.Pricekey + "key   " + yyy.Pricerr + "RR";
+                else
+                {
+                    x = "物品名称:" + yyy.Item_name + "  id:" + yyy.Id + "  " + yyy.Pricekey + "key " + yyy.Pricerr + "RR";
+                }
                 Bot.SteamFriends.SendChatMessage(OtherSID, type, x);
             }
                   
@@ -124,15 +131,15 @@ namespace SteamBot
         }
 
         public override bool OnTradeRequest() 
-        {
+        { /*
             long timecheck = DateTime.Now.ToFileTime();
             if ((timecheck - filetime )>350000000)
             {
                 Warding=false;
-            }
+            } */
             if (Warding == true)
             {
-                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg , "其他人正在操作,30s后重试");
+                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg , "其他人正在操作,请稍后再试");
                 return false;
             }
             else
@@ -390,14 +397,14 @@ namespace SteamBot
                 else
                 {
                     fakeitem--;
-                    Trade.SendMessage("你添加了一件我不支持的物品，移除它，否则无法交易");//不是卡片则提示用户，不做其他操作   
+                    Trade.SendMessage("你添加了一件我不支持的物品，移除它，否则无法交易");  
                 }
             }
                  
             
         }
         
-         public override void OnTradeMessage(string message) //根据用户在交易窗口的指令添加及移除卡
+         public override void OnTradeMessage(string message) 
         {
            Bot.log.Info("[TRADE MESSAGE] " + message);
            string msg = message.ToLower();
@@ -416,14 +423,24 @@ namespace SteamBot
                            if (xxx.Steam64id == OtherSID.ConvertToUInt64() && xxx.Status == 0)
                            {
                                ReInititem();
-                               Trade.SendMessage("添加物品 original_id = " + xxx.Id);
-                               if (!Trade.AddItemByOriginal_id(xxx.Id))
+                               if (xxx.Error == false || xxx.Error == null)
                                {
-                                   Trade.SendMessage("添加物品 original_id = " + xxx.Id +" 物品失败，请向管理员提交bug");
+                                   Trade.SendMessage("添加物品 original_id = " + xxx.Id);
+                                   if (!Trade.AddItemByOriginal_id(xxx.Id))
+                                   {
+                                       Trade.SendMessage("物品已经全部添加，请不要重复输入指令。如有问题请联系管理员");
+                                   }
+                                   item = xxx;
+                                   IndexOfItems.Add(currentuseritem.Items.IndexOf(xxx));
+                                   item.Status = 3;
+                                   UserItemToAdded.Add(item);
                                }
-                               item = xxx;
-                               item.Status = 3;
-                               UserItemToAdded.Add(item);
+                               else
+                               {
+                                   Trade.SendMessage("物品 original_id = " + xxx.Id+" 的状态错误，无法添加，请联系管理员");
+                               }
+                               
+                               
                            }
                        }
                    }
@@ -447,23 +464,33 @@ namespace SteamBot
                        {
                            if (xxx.Steam64id == OtherSID.ConvertToUInt64() && xxx.Status == 1)
                            {
-                               item = xxx;
-                               item.Status = 2;
-                               UserItemToAdded.Add(item);
-                               Trade.SendMessage(item.Item_name+" "+"id:"+ item.Id +" 已卖出，价格是 " +item.Pricekey +"key "+item.Pricerr +"RR"  );
-                               BotKeyAdded = BotKeyAdded + item.Pricekey;
-                               int keyadded = AddKey(item.Pricekey);
-                               if (keyadded < item.Pricekey)
+                               if (xxx.Error == false || xxx.Error == null)
                                {
-                                   Trade.SendMessage("机器人key不够，请通知管理员");
+                                   item = xxx;
+                                   IndexOfItems.Add(currentuseritem.Items.IndexOf(xxx));
+                                   item.Status = 2;
+                                   UserItemToAdded.Add(item);
+                                   Trade.SendMessage(item.Item_name + " " + "id:" + item.Id + " 已卖出，价格是 " + item.Pricekey + "key " + item.Pricerr + "RR");
+                                   BotKeyAdded = BotKeyAdded + item.Pricekey;
+                                   int keyadded = AddKey(item.Pricekey);
+                                   if (keyadded < item.Pricekey)
+                                   {
+                                       Trade.SendMessage("机器人key不够，请通知管理员");
+                                   }
+                                   BotRareAdded = BotRareAdded + item.Pricerr;
+                                   int rradded = AddRare(item.Pricerr);
+                                   if (rradded < item.Pricerr)
+                                   {
+                                       Trade.SendMessage("机器人RR不够，请通知管理员");
+                                   }
+                                   Trade.SendMessage("机器人已添加:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
                                }
-                               BotRareAdded = BotRareAdded + item.Pricerr;
-                               int rradded = AddRare(item.Pricerr);
-                               if (rradded < item.Pricerr)
+                               else
                                {
-                                   Trade.SendMessage("机器人RR不够，请通知管理员");
+
+                                   Trade.SendMessage("物品名称：" + xxx.Item_name  + " 物品original_id = " + xxx.Id + " 的状态错误，无法，请联系管理员");
+                               
                                }
-                               Trade.SendMessage("机器人已添加:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
                            }
                        }
                    }
@@ -490,21 +517,25 @@ namespace SteamBot
                    int pricexxx = int.MaxValue;
                    foreach (var xxx in currentuseritem.Items)
                    {
-                       if (xxx.Item_name == msg && xxx.Status == 0 && (xxx.Pricekey * RateOfKeyAndRare + xxx.Pricerr) < pricexxx)
+                       if (xxx.Item_name == msg && !ItemIdAdded.Contains (xxx.Id ) &&( xxx.Error ==false||xxx.Error ==null )&& xxx.Status == 0 && (xxx.Pricekey * RateOfKeyAndRare + xxx.Pricerr) < pricexxx)
                        {
                            yyy = xxx;
-
+                           
                        }
                    }
 
-                   if (yyy == null)
+                   if (yyy.Id  == 0 || yyy==null)
                    {
                        Trade.SendMessage("没有找到 " + msg);
                    }
                    else
                    {
                        Trade.SendMessage("物品名称:" + yyy.Item_name + " id：" + yyy.Id + " " + yyy.Pricekey + "key " + yyy.Pricerr + "RR");
+                       
                        Trade.AddItemByOriginal_id(yyy.Id);
+                       IndexOfItems.Add(currentuseritem.Items.IndexOf(yyy));
+                       yyy.Status = 1;
+                       UserItemToAdded.Add(yyy);
                        BotKeyAdded = BotKeyAdded + yyy.Pricekey;
                        BotRareAdded = BotRareAdded + yyy.Pricerr;
                        Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
@@ -529,26 +560,49 @@ namespace SteamBot
                    ulong aid = Convert.ToUInt64(msg);
                    UserItem.Useritem yyy = new UserItem.Useritem();
                    int pricexxx = int.MaxValue;
-                   foreach (var xxx in currentuseritem.Items)
+                   
+                   if (!ItemIdAdded.Contains(aid))
                    {
-                       if (xxx.Id == aid && xxx.Status == 0 && (xxx.Pricekey * RateOfKeyAndRare + xxx.Pricerr) < pricexxx)
+
+                       foreach (var xxx in currentuseritem.Items)
                        {
-                           yyy = xxx;
+                           if (xxx.Id == aid && xxx.Status == 0 && (xxx.Pricekey * RateOfKeyAndRare + xxx.Pricerr) < pricexxx)
+                           {
+                               yyy = xxx;
 
+                           }
                        }
-                   }
 
-                   if (yyy == null)
-                   {
-                       Trade.SendMessage("没有找到 " + msg);
+
+
+                       if (yyy == null || yyy.Id == 0)
+                       {
+                           Trade.SendMessage("没有找到 " + msg);
+                       }
+                       else
+                       {
+                           if (yyy.Error != true)
+                           {
+                               Trade.SendMessage("物品名称:" + yyy.Item_name + " id：" + yyy.Id + " " + yyy.Pricekey + "key " + yyy.Pricerr + "RR");
+                               ItemIdAdded.Add(yyy.Id);
+                               Trade.AddItemByOriginal_id(yyy.Id);
+                               IndexOfItems.Add(currentuseritem.Items.IndexOf(yyy));
+                               yyy.Status = 1;
+                               UserItemToAdded.Add(yyy);
+                               BotKeyAdded = BotKeyAdded + yyy.Pricekey;
+                               BotRareAdded = BotRareAdded + yyy.Pricerr;
+                               Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
+                           }
+                           else
+                           {
+                               Trade.SendMessage("物品 original_id = " + yyy.Id + " 的状态错误，无法添加，请联系管理员");
+                           }
+
+                         }
                    }
                    else
                    {
-                       Trade.SendMessage("物品名称:" + yyy.Item_name + " id：" + yyy.Id + " " + yyy.Pricekey + "key " + yyy.Pricerr + "RR");
-                       Trade.AddItemByOriginal_id(yyy.Id);
-                       BotKeyAdded = BotKeyAdded + yyy.Pricekey;
-                       BotRareAdded = BotRareAdded + yyy.Pricerr;
-                       Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded + " |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
+                       Trade.SendMessage("Id=" + msg +"的物品已添加，请不要重复输入");
                    }
 
 
@@ -630,6 +684,7 @@ namespace SteamBot
                 //trades with a lot of items so we use a try-catch
             if (Validate())
             {
+                var ooo = Trade.
                 Warding = true;
                 try
                 {
@@ -638,25 +693,71 @@ namespace SteamBot
                 catch
                 {
                     Log.Warn("The trade might have failed, but we can't be sure.");
-                    TradeErroe = true;
+                    TradeError = true;
                     //准备检查库存
                 }
                 Log.Success("Trade Complete!");
                 OnTradeClose();
+                 bool checkresult = false;
+                if (TradeError == true)
+                {
+                    Inventory newInventory = Inventory.FetchInventory(Bot.SteamUser.SteamID.ConvertToUInt64(), Bot.apiKey);
+                   
+                    List<Inventory.Item> items = newInventory.GetItemsByOriginal_id(UserItemToAdded [0].Id);
+                    if (items.Count != 0)
+                    {
+                        checkresult = true;
+                    }
+
+                    else
+                    {
+                        checkresult = false;
+                    }
+
+                }
                 if (TradeType == 2)
                 {
+                    if (TradeError == true)
+                    {
+                        if (checkresult == true)
+                        {
+                            TradeError = false;
+                        }
+                    }
+
                     Additemstofile();
                 }
                 else if (TradeType == 1)
                 {
+                    if (TradeError == true)
+                    {
+                        if (checkresult == false)
+                        {
+                            TradeError = false;
+                        }
+                    }
                     Sellitemsfromfile();
                 }
                 else if (TradeType == 3)
                 {
+                    if (TradeError == true)
+                    {
+                        if (checkresult == false)
+                        {
+                            TradeError = false;
+                        }
+                    }
                     ToRemoveitemsfromfile();
                 }
                 else if (TradeType == 4)
                 {
+                    if (TradeError == true)
+                    {
+                        if (checkresult == false)
+                        {
+                            TradeError = false;
+                        }
+                    }
                     Moneygiveditemsfromfile();
                 }
                 else
@@ -676,20 +777,43 @@ namespace SteamBot
             
         }
 
+        public void Writejson()
+        {
+            
+            string json = JsonConvert.SerializeObject(currentuseritem);
+            string path= @"useritem.json";
+            StreamWriter sw = new StreamWriter(path, false);
+            sw.WriteLine(json);
+            sw.Close();
+            // 写入文件；
+
+        }
+
         public  void Additemstofile()
         {
-            foreach (var xxx in UserItemToAdded)
+            if (TradeError == true)
             {
-                currentuseritem.Items.Add(xxx);
+                for (int i = 0; i < UserItemToAdded.Count; i++)
+                {
+                    UserItemToAdded[i].Error = true;
+                }
             }
-            string json = JsonConvert.SerializeObject(currentuseritem);
-            Bot.log.Warn(json);
+
+
+
+                foreach (var xxx in UserItemToAdded)
+                {
+                    currentuseritem.Items.Add(xxx);
+
+                }
+            Writejson();
+            
             // 写入文件；
 
         }
         public void Sellitemsfromfile()
         {
-            foreach (var xxx in UserItemToAdded)
+            /*foreach (var xxx in UserItemToAdded)
             {
                 int x = 0;
                     foreach (var yyy in currentuseritem.Items )
@@ -700,13 +824,21 @@ namespace SteamBot
                             currentuseritem.Items[x].Status = 1;
                         }
                     }
+            } */
+            foreach (var xxx in IndexOfItems )
+            {
+                currentuseritem.Items[xxx].Status = 1;
+                if (TradeError == true)
+                {
+                    currentuseritem.Items[xxx].Error = true;
+                }
             }
-            // 写入文件；
+            Writejson();// 写入文件；
 
         }
 
         public void ToRemoveitemsfromfile()
-        {
+        {   /*
             foreach (var xxx in UserItemToAdded)
             {
                 int x = 0;
@@ -718,13 +850,21 @@ namespace SteamBot
                         currentuseritem.Items[x].Status = 3;
                     }
                 }
+            } */
+            foreach (var xxx in IndexOfItems)
+            {
+                currentuseritem.Items[xxx].Status = 3;
+                if (TradeError == true)
+                {
+                    currentuseritem.Items[xxx].Error = true;
+                }
             }
-            // 写入文件；
+            Writejson(); // 写入文件；
 
         }
 
         public void Moneygiveditemsfromfile()
-        {
+        { /*
             foreach (var xxx in UserItemToAdded)
             {
                 int x = 0;
@@ -736,8 +876,16 @@ namespace SteamBot
                         currentuseritem.Items[x].Status = 2;
                     }
                 }
+            } */
+            foreach (var xxx in IndexOfItems)
+            {
+                currentuseritem.Items[xxx].Status = 2;
+                if (TradeError == true)
+                {
+                    currentuseritem.Items[xxx].Error = true;
+                }
             }
-            // 写入文件；
+            Writejson(); // 写入文件；
 
         }
 
