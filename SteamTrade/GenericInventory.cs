@@ -11,14 +11,15 @@ namespace SteamTrade
         public Dictionary<ulong, ItemDescription> descriptions = new Dictionary<ulong, ItemDescription>();
 
         public bool loaded = false;
+        public string appId;
         public List<string> errors = new List<string>();
 
         public class Item
         {
             public ulong id{get;set;}
             public ulong classid { get; set; }
+            public string contextid { get; set; }
         }
-
 
         public class ItemDescription
         {
@@ -65,6 +66,7 @@ namespace SteamTrade
             ItemDescription tmpDescription;
 
             loaded = false;
+            appId = appid.ToString();
 
             try
             {
@@ -89,6 +91,7 @@ namespace SteamTrade
                             tmpItemData = new Item();
                             tmpItemData.id = itemId.id;
                             tmpItemData.classid = itemId.classid;
+                            tmpItemData.contextid = types[i].ToString();
 
                             items.Add((ulong)itemId.id, tmpItemData);
                             break;

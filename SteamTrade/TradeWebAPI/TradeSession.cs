@@ -140,13 +140,13 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot)
+        internal bool AddItemWebCmd(ulong itemid, int slot,string appid="",string contextid ="")
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add ("appid", appIdValue);
-            data.Add ("contextid", "2");
+            data.Add ("appid", appid==""?appIdValue:appid);
+            data.Add ("contextid", contextid==""?"2":contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
@@ -167,13 +167,13 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot)
+        internal bool RemoveItemWebCmd(ulong itemid, int slot, string appid = "", string contextid = "")
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add ("appid", appIdValue);
-            data.Add ("contextid", "2");
+            data.Add("appid", appid == "" ? appIdValue : appid);
+            data.Add("contextid", contextid == "" ? "2" : contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 

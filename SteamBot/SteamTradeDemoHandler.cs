@@ -78,11 +78,12 @@ namespace SteamBot
             mySteamInventory.load(753, InvType, Bot.SteamClient.SteamID);
             OtherSteamInventory.load(753, InvType, OtherSID);
 
-            if (!OtherSteamInventory.loaded)
+            if (!mySteamInventory.loaded)
             {
                 Trade.SendMessage("Couldn't open your inventory, type 'errors' for more info.");
             }
-            
+
+            Trade.SendMessage("Type 'test' to start.");
             // -----------------------------------------------------------------------------------
         }
         
@@ -112,12 +113,29 @@ namespace SteamBot
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
         public override void OnTradeMessage (string message) {
-            if (message.ToLower() == "errors")
+            switch (message.ToLower())
             {
-                foreach (string error in OtherSteamInventory.errors)
-                {
-                    Trade.SendMessage(" * " + error);
-                }
+                case "errors":
+                    foreach (string error in OtherSteamInventory.errors)
+                    {
+                        Trade.SendMessage(" * " + error);
+                    }
+                break;
+
+                case "test":
+                    Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
+                    foreach(var item in mySteamInventory.items)
+                    {
+                        Trade.AddItem(item.Value.id,mySteamInventory.appId,item.Value.contextid);
+                    }
+                break;
+
+                case "remove":
+                    foreach (var item in mySteamInventory.items)
+                    {
+                        Trade.RemoveItem(item.Value.id, mySteamInventory.appId, item.Value.contextid);
+                    }
+                break;
             }
         }
         

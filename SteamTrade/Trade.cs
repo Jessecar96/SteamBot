@@ -217,19 +217,19 @@ namespace SteamTrade
         /// Adds a specified item by its itemid.
         /// </summary>
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
-        public bool AddItem (ulong itemid)
+        public bool AddItem (ulong itemid,string appid = "",string contextid ="")
         {
-            if (MyInventory.GetItem (itemid) == null)
+            if (appid =="" & MyInventory.GetItem(itemid) == null)
                 return false;
 
-            var slot = NextTradeSlot ();
-            bool ok = session.AddItemWebCmd (itemid, slot);
+            var slot = NextTradeSlot();
+            bool ok = session.AddItemWebCmd(itemid, slot,appid,contextid);
 
             if (!ok)
-                throw new TradeException ("The Web command to add the Item failed");
+                throw new TradeException("The Web command to add the Item failed");
 
-            myOfferedItems [slot] = itemid;
-
+            myOfferedItems[slot] = itemid;
+            
             return true;
         }
 
@@ -287,13 +287,13 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem (ulong itemid)
+        public bool RemoveItem (ulong itemid,string appid = "",string contextid ="")
         {
             int? slot = GetItemSlot (itemid);
             if (!slot.HasValue)
                 return false;
 
-            bool ok = session.RemoveItemWebCmd(itemid, slot.Value);
+            bool ok = session.RemoveItemWebCmd(itemid, slot.Value,appid,contextid);
 
             if (!ok)
                 throw new TradeException ("The web command to remove the item failed.");
