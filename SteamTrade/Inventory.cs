@@ -78,17 +78,17 @@ namespace SteamTrade
             return null;
         }
 
-        public List<Item> GetItemsByOriginal_id(ulong original_id)
+        public Item GetItemsByOriginal_id(ulong original_id)
         {
-            var items = new List<Item> ();
+            
             foreach (Item item in Items)
             {
                 if (item.OriginalId == original_id)
                 {
-                    items.Add(item);
+                    return item;
                 }
             }
-            return items;
+            return null;
         }
 
         public List<Item> GetItemsByDefindex(int defindex)

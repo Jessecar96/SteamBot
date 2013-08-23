@@ -32,7 +32,7 @@ namespace SteamTrade
         bool tradeStarted = false;
 
        Dictionary<int, ulong> myOfferedItems;
-       List<ulong> steamMyOfferedItems;
+       public List<ulong> steamMyOfferedItems;
 
         // Internal properties needed for Steam API.
         int numEvents;
@@ -270,15 +270,19 @@ namespace SteamTrade
         }
         public bool AddItemByOriginal_id(ulong  original_id)
         {
-            List<Inventory.Item> items = MyInventory.GetItemsByOriginal_id(original_id);
-            foreach (Inventory.Item item in items)
+            var item = MyInventory.GetItemsByOriginal_id(original_id);
+            //foreach (Inventory.Item item in items)
+            //{
+            if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
             {
-                if (item != null && !myOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
-                {
-                    return AddItem(item.Id);
-                }
+                return AddItem(item.Id);
             }
-            return false;
+            else
+            {
+
+                // }
+                return false;
+            }
         }
 
 
