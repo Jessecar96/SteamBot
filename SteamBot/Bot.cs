@@ -220,7 +220,28 @@ namespace SteamBot
         void OnTradeEnded (object sender, EventArgs e)
         {
             CloseTrade();
-        }        
+        }
+
+        public void HandleBotCommand(string command)
+        {
+            try
+            {
+                GetUserHandler(SteamClient.SteamID).OnBotCommand(command);
+            }
+            catch (ObjectDisposedException e)
+            {
+                // Writing to console because odds are the error was caused by a disposed log.
+                Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
+                if (!this.IsRunning)
+                {
+                    Console.WriteLine("The Bot is no longer running and could not write to the log. Try Starting this bot first.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
+            }
+        }
 
         bool HandleTradeSessionStart (SteamID other)
         {
@@ -691,24 +712,15 @@ namespace SteamBot
                 handler(this, e);
             else
             {
-                if (!this.isprocess)
+                while (true)
                 {
-                    while (true)
+                    if (this.AuthCode != null)
                     {
-                        if (this.AuthCode != null)
-                        {
-                            e.SteamGuard = this.AuthCode;
-                            break;
-                        }
-
-                        Thread.Sleep(5);
+                        e.SteamGuard = this.AuthCode;
+                        break;
                     }
-                }
-                else
-                {
-                    // Apparently we're a process. So read in the code from stdin.
-                    this.AuthCode = Console.ReadLine();
-                    e.SteamGuard = this.AuthCode;
+
+                    Thread.Sleep(5);
                 }
             }
         }
