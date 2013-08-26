@@ -54,8 +54,8 @@ namespace SteamBot
            //item = null;
            SetingPrice = false;
            UserItemToAdded.Clear();
-           ReInititem();
-           item.Steam64id = OtherSID.ConvertToUInt64();
+           
+           
             
              
         }
@@ -68,6 +68,7 @@ namespace SteamBot
             item.Status = 0;
             item.Error = false;
             item.Item_name = "";
+            item.Steam64id = OtherSID.ConvertToUInt64();
         }
 
 
@@ -191,6 +192,8 @@ namespace SteamBot
             else
             {
                 Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
+                UInt64  xxid = OtherSID.ConvertToUInt64();
+                Bot.log.Warn( xxid.ToString()  );
                 return true;
             }
         }
@@ -378,9 +381,8 @@ namespace SteamBot
                 }
                 else
                 {
-                    string j1on = JsonConvert.SerializeObject(UserItemToAdded);
-                    Bot.log.Warn("x0");
-                    Bot.log.Warn(j1on);
+                    item =new UserItem.Useritem() ;
+
                     var zhitem = Trade.CurrentSchemazh.GetItem(inventoryItem.Defindex);
                     ReInititem();
                     SetingPrice = true;
@@ -388,9 +390,7 @@ namespace SteamBot
                     item.Defindex = inventoryItem.Defindex;
                     item.Item_name = zhitem.ItemName;
                     Trade.SendMessage("请设置物品价格");
-                    string j2on = JsonConvert.SerializeObject(UserItemToAdded);
-                    Bot.log.Warn("x01");
-                    Bot.log.Warn(j2on);
+
                     
                 }
             }
@@ -459,8 +459,8 @@ namespace SteamBot
          public override void OnTradeMessage(string message) 
         {
            Bot.log.Info("[TRADE MESSAGE] " + message);
-           string msg = message.ToLower();
-           if (msg.Contains("getbackmyitems"))
+           string msg = message;
+           if (msg.Contains("getback"))
            {
                if (TradeType == 0)
                {
@@ -470,16 +470,16 @@ namespace SteamBot
                if (TradeType == 3)
                {
                    {
-                       string json = JsonConvert.SerializeObject(currentuseritem);
-                       Bot.log.Warn(json);
+
                        foreach (var xxx in currentuseritem.Items)
                        {
-                           if (xxx.Steam64id == OtherSID.ConvertToUInt64() && xxx.Status == 0)
+                           if (xxx.Steam64id == OtherSID.ConvertToUInt64() && xxx.Status == 0 &&xxx.Id !=0)
                            {
-                               ReInititem();
+                               item = new UserItem.Useritem();
+                            //   ReInititem();
                                if (xxx.Error == false)
                                {
-                                   Trade.SendMessage("添加物品 original_id = " + xxx.Id);
+                                   
                                    if (Trade.AddItemByOriginal_id(xxx.Id))
                                    {
                                        Trade.SendMessage("添加物品 original_id = " + xxx.Id);
@@ -488,11 +488,13 @@ namespace SteamBot
                                    {
                                        Trade.SendMessage("物品已经全部添加，请不要重复输入指令。如有问题请联系管理员");
                                    }
-
+                                   
                                    item = xxx;
-                                   IndexOfItems.Add(currentuseritem.Items.IndexOf(xxx));
-                                   item.Status = 3;
+                                   //IndexOfItems.Add(currentuseritem.Items.IndexOf(xxx));
+                                  // item.Status = 3;
                                    UserItemToAdded.Add(item);
+                                  // string jsonadd = JsonConvert.SerializeObject(UserItemToAdded);
+                                  // Bot.log.Warn(jsonadd);
                                }
                                else
                                {
@@ -525,9 +527,10 @@ namespace SteamBot
                            {
                                if (xxx.Error == false)
                                {
+                                   item = new UserItem.Useritem();
                                    item = xxx;
-                                   IndexOfItems.Add(currentuseritem.Items.IndexOf(xxx));
-                                   item.Status = 2;
+                                   //IndexOfItems.Add(currentuseritem.Items.IndexOf(xxx));
+                                 //  item.Status = 2;
                                    UserItemToAdded.Add(item);
                                    Trade.SendMessage(item.Item_name + " " + "id:" + item.Id + " 已卖出，价格是 " + item.Pricekey + "key " + item.Pricerr + "RR");
                                    BotKeyAdded = BotKeyAdded + item.Pricekey;
@@ -590,10 +593,10 @@ namespace SteamBot
                    else
                    {
                        Trade.SendMessage("物品名称:" + yyy.Item_name + " id：" + yyy.Id + " " + yyy.Pricekey + "key " + yyy.Pricerr + "RR");
-                       
+                       //maybetocheck
                        Trade.AddItemByOriginal_id(yyy.Id);
-                       IndexOfItems.Add(currentuseritem.Items.IndexOf(yyy));
-                       yyy.Status = 1;
+                     //  IndexOfItems.Add(currentuseritem.Items.IndexOf(yyy));
+                      // yyy.Status = 1;
                        UserItemToAdded.Add(yyy);
                        BotKeyAdded = BotKeyAdded + yyy.Pricekey;
                        BotRareAdded = BotRareAdded + yyy.Pricerr;
@@ -706,13 +709,11 @@ namespace SteamBot
                    item.Pricekey = PriceKey;
                    item.Pricerr = PriceRr;
                    Trade.SendMessage("物品名称：" + item.Item_name + " Id:" + item.Id + " 价格:" + PriceKey + "key " + PriceRr + "RR" + " 已保存");
-                   string j1on = JsonConvert.SerializeObject(UserItemToAdded);
-                   Bot.log.Warn("x1");
-                   Bot.log.Warn(j1on);
-                       UserItemToAdded.Add(item);
-                   string jon = JsonConvert.SerializeObject(UserItemToAdded);
-                   Bot.log.Warn("x");
-                   Bot.log.Warn(jon);
+
+                  // UserItem.Useritem xitem = new UserItem.Useritem() ;
+                 //  xitem = item;
+                   UserItemToAdded.Add(item);
+
                    SetingPrice = false;
                    }
                    else
@@ -747,9 +748,7 @@ namespace SteamBot
                 {
                     
                     Bot.log.Success("User is ready to trade!");
-                    string json = JsonConvert.SerializeObject(currentuseritem);
-                    Bot.log.Warn("0");
-                    Bot.log.Warn(json);
+
                     Trade.SetReady(true);
                     
                 }
@@ -821,9 +820,7 @@ namespace SteamBot
                             TradeError = false;
                         }
                     }
-                    string json = JsonConvert.SerializeObject(currentuseritem);
-                    Bot.log.Warn("0");
-                    Bot.log.Warn(json);
+
                     Additemstofile();
                 }
                 else if (TradeType == 1)
@@ -881,8 +878,8 @@ namespace SteamBot
             
             string json = JsonConvert.SerializeObject(currentuseritem);
             string path= @"useritem.json";
-            Bot.log.Warn("3");
-            Bot.log.Warn(json);
+            string jsonadd = JsonConvert.SerializeObject(UserItemToAdded );
+            Bot.log.Warn(jsonadd);
             StreamWriter sw = new StreamWriter(path, false);
             sw.WriteLine(json);
             sw.Close();
@@ -899,17 +896,13 @@ namespace SteamBot
                     UserItemToAdded[i].Error = true;
                 }
             }
-            string json = JsonConvert.SerializeObject(currentuseritem);
-            Bot.log.Warn("1");
-            Bot.log.Warn(json);
-            Bot.log.Warn("2");
+
 
 
             foreach (var xxx in UserItemToAdded)
                 {
                     currentuseritem.Items.Add(xxx);
-                    Bot.log.Warn( UserItemToAdded.Count.ToString()  );
-
+                    
                 }
             Writejson();
             
@@ -929,13 +922,22 @@ namespace SteamBot
                             currentuseritem.Items[x].Status = 1;
                         }
                     }
-            } */
+            } */ 
+            /*
             foreach (var xxx in IndexOfItems )
             {
                 currentuseritem.Items[xxx].Status = 1;
                 if (TradeError == true)
                 {
                     currentuseritem.Items[xxx].Error = true;
+                }
+            }  */
+            foreach (var xxx in UserItemToAdded )
+            {
+                xxx.Status = 1;
+                if (TradeError == true)
+                {
+                    xxx.Error = true;
                 }
             }
             Writejson();// 写入文件；
@@ -956,12 +958,21 @@ namespace SteamBot
                     }
                 }
             } */
+            /*
             foreach (var xxx in IndexOfItems)
             {
                 currentuseritem.Items[xxx].Status = 3;
                 if (TradeError == true)
                 {
                     currentuseritem.Items[xxx].Error = true;
+                }
+            } */
+            foreach (var xxx in UserItemToAdded)
+            {
+                xxx.Status = 3;
+                if (TradeError == true)
+                {
+                    xxx.Error = true;
                 }
             }
             Writejson(); // 写入文件；
@@ -981,13 +992,22 @@ namespace SteamBot
                         currentuseritem.Items[x].Status = 2;
                     }
                 }
-            } */
+            } */ /*
             foreach (var xxx in IndexOfItems)
             {
                 currentuseritem.Items[xxx].Status = 2;
                 if (TradeError == true)
                 {
                     currentuseritem.Items[xxx].Error = true;
+                }
+            } */
+
+            foreach (var xxx in UserItemToAdded)
+            {
+                xxx.Status = 2;
+                if (TradeError == true)
+                {
+                    xxx.Error = true;
                 }
             }
             Writejson(); // 写入文件；
@@ -1011,14 +1031,14 @@ namespace SteamBot
             }
             else if (TradeType == 1 /*|| TradeType == 4 */)
             {
-                if (BotKeyAdded <= UserKeyAdded && BotRareAdded <= UserKeyAdded)
+               if (BotKeyAdded <= UserKeyAdded && BotRareAdded <= UserKeyAdded)
                 {
                     return true;
-                }
+               }
                 else
-                {
+               {
                     Trade.SendMessage("你需要支付的:" + "key " + BotKeyAdded + " RR " + BotRareAdded+" |用户添加:" + "key " + UserKeyAdded + " RR " + UserRareAdded);
-                    Trade.SendMessage("你添加的key必须大于等于需支付的key，你添加的RR必须大于等于你支付的RR");
+                  Trade.SendMessage("你添加的key必须大于等于需支付的key，你添加的RR必须大于等于你支付的RR");
                     return false;
                 }
             }
