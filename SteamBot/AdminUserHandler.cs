@@ -34,7 +34,10 @@ namespace SteamBot
         public override void OnLoginCompleted()
         {
         }
+        public override void OnTradeSuccess()
+        {
 
+        }
         /// <summary>
         /// Called when a the user adds the bot as a friend.
         /// </summary>

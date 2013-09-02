@@ -36,7 +36,10 @@ namespace SteamBot
             : base(bot, sid) 
         {
         }
-       
+        public override void OnTradeSuccess()
+        {
+
+        }
         public override bool OnFriendAdd () 
         {
             Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ToString() + ") added me!");
@@ -411,7 +414,7 @@ namespace SteamBot
                 else
                 {
                     fakeitem++;
-                    Trade.SendMessage("你添加了一件我不支持的物品，移除它，否则无法交易");//不是卡片则提示用户，不做其他操作   
+                    Trade.SendMessage("你添加了一件我不支持的物品，移除它，否则无法交易");
                 }
 
             }

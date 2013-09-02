@@ -83,7 +83,7 @@ namespace SteamBot
         /// Whether to accept the request.
         /// </returns>
         public abstract bool OnTradeRequest ();
-
+        public abstract void OnTradeSuccess();
         /// <summary>
         /// Called when a chat message is sent in a chatroom
         /// </summary>

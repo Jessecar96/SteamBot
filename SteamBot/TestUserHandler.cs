@@ -14,7 +14,10 @@ namespace SteamBot
             : base(bot, sid) 
         {
         }
-       
+        public override void OnTradeSuccess()
+        {
+
+        }
         public override bool OnFriendAdd () 
         {
             Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ToString() + ") added me!");

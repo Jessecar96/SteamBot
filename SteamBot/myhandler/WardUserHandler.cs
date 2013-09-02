@@ -33,7 +33,9 @@ namespace SteamBot
         public void ReInit()
         {
             
-            if (Warding == true)
+            Bot.log.Warn( Convert.ToString ( RareWardNum ) );
+           // if (Warding == true)
+            if (RareWardNum > 0 || UncommonWardNum>0)
             {
                 Trade.SendMessage("添加物品中");
                 Warding = false;
@@ -42,9 +44,9 @@ namespace SteamBot
                 UserRareAdded = 0;
                 //RareWardNum = 1;
                 AddRare(RareWardNum );
-                RareWardNum = 0;
+               // RareWardNum = 0;
                 AddUncommon(UncommonWardNum);
-                UncommonWardNum = 0;
+              //  UncommonWardNum = 0;
                 BotRareAdded = 0;
                 //UserCommonAdded = 0;
                 //UserUncommonAdded = 0;
@@ -57,8 +59,8 @@ namespace SteamBot
                 BotRareAdded = 0;
                 //UserCommonAdded = 0;
                 //UserUncommonAdded = 0;
-                RareWardNum = 0;
-                UncommonWardNum=0;
+              //  RareWardNum = 0;
+                //UncommonWardNum=0;
                 UserUncommonAdded =0;
                 UserCommonAdded =0;
                 UserRareAdded = 0;
@@ -444,8 +446,8 @@ namespace SteamBot
                     Log.Warn("The trade might have failed, but we can't be sure.");
                 }
                 Log.Success("Trade Complete!");
-                OnTradeClose();
-                Ward();
+              // OnTradeClose();
+               // Ward();
                 
                 
             }
@@ -457,6 +459,13 @@ namespace SteamBot
             
         }
 
+        public override void OnTradeSuccess()
+        {
+           // OnTradeClose();
+            UncommonWardNum = 0;
+            RareWardNum = 0;
+            Ward();
+        }
         public  void Ward()
         {
             if (Warding == true)
@@ -520,6 +529,11 @@ namespace SteamBot
                     logx = logx + "   " + y;
                 }
                 Log.Success(logx);
+                if (IsAdmin)
+                {
+                    RareWardNum = RareWardNum + 1;
+                    UncommonWardNum = UncommonWardNum + 1;
+                }
                 Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, logx);
                 if (RareWardNum > 0 || UncommonWardNum>0)
                 {

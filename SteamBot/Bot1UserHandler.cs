@@ -24,7 +24,10 @@ namespace SteamBot
         public Bot1UserHandler(Bot bot, SteamID sid): base(bot, sid) 
         {
         }
+        public override void OnTradeSuccess()
+        {
 
+        }
         public void leavethequeue(SteamID OtherSid, EChatEntryType type)
         {
             if (Bot1Queue.locked == false)

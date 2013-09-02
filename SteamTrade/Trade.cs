@@ -133,6 +133,8 @@ namespace SteamTrade
 
         public delegate void CloseHandler ();
 
+        public delegate void SuccessHandler();
+
         public delegate void ErrorHandler (string error);
 
         public delegate void TimeoutHandler ();
@@ -155,6 +157,8 @@ namespace SteamTrade
         /// to close the trade.
         /// </summary>
         public event CloseHandler OnClose;
+
+        public event SuccessHandler OnSuccess;
         
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -501,6 +505,9 @@ namespace SteamTrade
                 // Successful trade
                 case 1:
                     HasTradeCompletedOk = true;
+                    if (OnSuccess != null)
+                        OnSuccess();
+                    FireOnCloseEvent();
                     return otherDidSomething;
 
                 // All other known values (3, 4) correspond to trades closing.
