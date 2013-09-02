@@ -304,10 +304,11 @@ namespace SteamTrade
             pollThread.Start();
         }
 
+       
+
         void CheckTradeTimeout (Trade trade)
         {
             var now = DateTime.Now;
-
             DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaxActionGapSec);
             int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
 

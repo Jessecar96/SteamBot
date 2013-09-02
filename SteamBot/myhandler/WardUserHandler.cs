@@ -33,7 +33,7 @@ namespace SteamBot
         public void ReInit()
         {
             
-            Bot.log.Warn( Convert.ToString ( RareWardNum ) );
+           // Bot.log.Warn( Convert.ToString ( RareWardNum ) );
            // if (Warding == true)
             if (RareWardNum > 0 || UncommonWardNum>0)
             {
@@ -52,10 +52,11 @@ namespace SteamBot
                 //UserUncommonAdded = 0;
                 
                 fakeitem = 0;
-                Warding = false;
+                
             }
             else
             {
+               
                 BotRareAdded = 0;
                 //UserCommonAdded = 0;
                 //UserUncommonAdded = 0;
@@ -461,7 +462,7 @@ namespace SteamBot
 
         public override void OnTradeSuccess()
         {
-           // OnTradeClose();
+            OnTradeClose();
             UncommonWardNum = 0;
             RareWardNum = 0;
             Ward();
@@ -529,11 +530,12 @@ namespace SteamBot
                     logx = logx + "   " + y;
                 }
                 Log.Success(logx);
+                /*
                 if (IsAdmin)
                 {
                     RareWardNum = RareWardNum + 1;
                     UncommonWardNum = UncommonWardNum + 1;
-                }
+                } */
                 Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, logx);
                 if (RareWardNum > 0 || UncommonWardNum>0)
                 {

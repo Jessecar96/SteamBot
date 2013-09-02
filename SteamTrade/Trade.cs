@@ -507,7 +507,7 @@ namespace SteamTrade
                     HasTradeCompletedOk = true;
                     if (OnSuccess != null)
                         OnSuccess();
-                    FireOnCloseEvent();
+                   // FireOnCloseEvent();
                     return otherDidSomething;
 
                 // All other known values (3, 4) correspond to trades closing.
