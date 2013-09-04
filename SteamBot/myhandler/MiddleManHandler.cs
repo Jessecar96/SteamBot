@@ -43,6 +43,7 @@ namespace SteamBot
             if (TradeType == 1)
             {
                 currentmiddlerecords.Records.Add(record );
+                Writejson();
             }
         }
         public override bool OnFriendAdd () 
@@ -60,11 +61,6 @@ namespace SteamBot
            TradeType = 0;
            middleitemadd = false;
            credititemadd = false;
-           
-           
-           
-            
-             
         }
         public void ReInititem()
         {
@@ -132,6 +128,30 @@ namespace SteamBot
                     Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品没有找到");
                 }
                 
+            }
+            else if (message.Contains("info"))
+            {
+                string msg = message;
+                msg = msg.Remove(0, 4);
+                msg = msg.Trim();
+                bool find = false;
+                foreach (var xxx in currentmiddlerecords.Records)
+                {
+                    if (xxx.Recordid == msg)
+                    //    && xxx.Sellersteam64id == OtherSID.ConvertToUInt64())
+                    {
+                        find = true;
+                        
+                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + "  " +xxx.Sellersteam64id );
+                        
+                        break;
+                    }
+                }
+                if (find == false)
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品没有找到");
+                }
+
             }
             else if (message.Contains("myitems"))
             {
@@ -804,9 +824,7 @@ namespace SteamBot
                 //trades with a lot of items so we use a try-catch
             if (Validate())
             {
-                var otheritems = Trade.OtherOfferedItems;
-                var myitems = Trade.steamMyOfferedItems;
-                Warding = true;
+               
                 try
                 {
                     Trade.AcceptTrade();
@@ -814,85 +832,10 @@ namespace SteamBot
                 catch
                 {
                     Log.Warn("The trade might have failed, but we can't be sure.");
-                    TradeError = true;
-                    //准备检查库存
+                    
                 }
                 Log.Success("Trade Complete!");
-                OnTradeClose();
-                 bool checkresult = false;
-                if (TradeError == true)
-                {
-                    Inventory newInventory = Inventory.FetchInventory(Bot.SteamUser.SteamID.ConvertToUInt64(), Bot.apiKey);
-                   Inventory.Item checkitem;
-                   if (TradeType == 4)
-                   {
-                       checkitem = newInventory.GetItem(myitems[0]);
-                   }
-                   else
-                   {
-                       checkitem = newInventory.GetItemsByOriginal_id(UserItemToAdded[0].Id);
-                   }
-                    if (checkitem != null)
-                    {
-                        checkresult = true;
-                    }
-
-                    else
-                    {
-                        checkresult = false;
-                    }
-
-                }
-                if (TradeType == 2)
-                {
-                    if (TradeError == true)
-                    {
-                        if (checkresult == true)
-                        {
-                            TradeError = false;
-                        }
-                    }
-
-                    Additemstofile();
-                }
-                else if (TradeType == 1)
-                {
-                    if (TradeError == true)
-                    {
-                        if (checkresult == false)
-                        {
-                            TradeError = false;
-                        }
-                    }
-                    Sellitemsfromfile();
-                }
-                else if (TradeType == 3)
-                {
-                    if (TradeError == true)
-                    {
-                        if (checkresult == false)
-                        {
-                            TradeError = false;
-                        }
-                    }
-                    ToRemoveitemsfromfile();
-                }
-                else if (TradeType == 4)
-                {
-                    if (TradeError == true)
-                    {
-                        if (checkresult == false)
-                        {
-                            TradeError = false;
-                        }
-                    }
-                    Moneygiveditemsfromfile();
-                }
-                else
-                {
-                    Bot.log.Warn("Tradetype is 0");
-                }
-                Warding = false;
+                
 
                 
                 
@@ -908,10 +851,10 @@ namespace SteamBot
         public void Writejson()
         {
             
-            string json = JsonConvert.SerializeObject(currentuseritem);
-            string path= @"useritem.json";
-            string jsonadd = JsonConvert.SerializeObject(UserItemToAdded );
-            Bot.log.Warn(jsonadd);
+            string json = JsonConvert.SerializeObject( currentmiddlerecords  );
+            string path = @"middlemanitem.json";
+            //string jsonadd = JsonConvert.SerializeObject(UserItemToAdded );
+           // Bot.log.Warn(jsonadd);
             StreamWriter sw = new StreamWriter(path, false);
             sw.WriteLine(json);
             sw.Close();
