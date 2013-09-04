@@ -46,6 +46,7 @@
     <Compile Include="Dota2.cs" />
     <Compile Include="Exceptions\TradeException.cs" />
     <Compile Include="ForeignInventory.cs" />
+    <Compile Include="MiddleManItem.cs" />
     <Compile Include="Schemazh.cs" />
     <Compile Include="Trade.cs" />
     <Compile Include="Schema.cs" />

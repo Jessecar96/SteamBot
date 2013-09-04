@@ -99,6 +99,7 @@
     <Compile Include="Bot1UserHandler.cs" />
     <Compile Include="CardforkeyUserHandler.cs" />
     <Compile Include="CommonUserHandler.cs" />
+    <Compile Include="myhandler\MiddleManHandler.cs" />
     <Compile Include="myhandler\RareKeyUserHandler.cs" />
     <Compile Include="myhandler\RareUserHandler.cs" />
     <Compile Include="myhandler\UserItemSellHandler.cs" />
