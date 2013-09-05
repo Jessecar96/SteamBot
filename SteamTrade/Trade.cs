@@ -127,6 +127,8 @@ namespace SteamTrade
         /// </summary>
         public bool HasTradeCompletedOk { get; private set; }
 
+        public bool HasTradeAccept { get; private set; }
+
         #endregion
                 
         #region Public Events
@@ -583,6 +585,7 @@ namespace SteamTrade
                         OnUserSetReady(false);
                         break;
                     case TradeEventType.UserAccept:
+                        HasTradeAccept = true;
                         OnUserAccept();
                         break;
                     case TradeEventType.UserChat:

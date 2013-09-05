@@ -17,44 +17,64 @@ namespace SteamBot
         MiddleManItem.Record record = new MiddleManItem.Record();
         List<ulong> CreditItemAdded = new List<ulong>();
         MiddleManItem.Record recordtomodify = new MiddleManItem.Record();
-        int UserItemAdded = 0;
-        int RareWardNum, UncommonWardNum = 0;
-        int fakeitem = 0;
         //UserItem.Useritem item = null;
         UserItem.Useritem item = new UserItem.Useritem();
         List<UserItem.Useritem> UserItemToAdded = new List<UserItem.Useritem>();
         List<int> IndexOfItems = new List<int>();
         List<ulong> ItemIdAdded = new List<ulong>();
-        int index = 0;
-        int PriceKey, PriceRr = 0;
-        bool SetingPrice = false;
-        int TradeType = 0; // 1为卖家放置物品,2为买家预定购买;
+        int TradeType = 0; // 1为卖家放置物品,2为买家预定购买,3为买家拿货,4为卖家拿押金
         bool TradeError = false;
-        static int RateOfKeyAndRare = 5;
         public static MiddleManItem currentmiddlerecords = null;
         public static UserItem currentuseritem = null;
         static long filetime;
         static bool Warding = false;
+        static bool successlock, adminlock = false;
         public MiddleManHandler(Bot bot, SteamID sid)
             : base(bot, sid)
         {
         }
         public override void OnTradeSuccess()
         {
-            if (TradeType == 1)
+            
+            successlock = true;
+            if (TradeType == 1)//卖家添加物品
             {
                 currentmiddlerecords.Records.Add(record);
                 Writejson();
             }
-            else if (TradeType == 2)
+            else if (TradeType == 2)//买家放押金
             {
                 recordtomodify.Status = 1;
                 recordtomodify.Buyercredititems = CreditItemAdded;
                 recordtomodify.Buyersteam64id = OtherSID.ConvertToUInt64();
+                SteamID buyerid = new SteamID();
+                buyerid.SetFromUInt64(recordtomodify.Buyersteam64id);
+                Bot.SteamFriends.SendChatMessage(buyerid, EChatEntryType.ChatMsg , "单号 " + recordtomodify.Recordid  + " 的物品已经由 "+recordtomodify.Buyersteam64id+ " 买家付押金预定");
+                Writejson();
+            }
+            else if (TradeType == 3)//买家拿物品
+            {
+                recordtomodify.Status = 3;//status 由 2卖家已确认变为3买家拿走
+                SteamID buyerid = new SteamID();
+                buyerid.SetFromUInt64(recordtomodify.Sellersteam64id );
+                Bot.SteamFriends.SendChatMessage(buyerid, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经由64位id为 " + recordtomodify.Buyersteam64id + " 的买家拿走,你可以拿走你的押金了");
+                Writejson();
+
+            }
+            else if (TradeType == 4)
+            {
+                recordtomodify.Status = 4;//卖家拿走押金
+                Writejson();
+            }
+            else if (TradeType == 5)
+            {
+                recordtomodify.Status = 5;//卖家取消中间人交易,有0变为5
+                Writejson();
             }
             else
             {
             }
+            successlock = false;
         }
         public override bool OnFriendAdd()
         {
@@ -65,12 +85,12 @@ namespace SteamBot
         }
         public void ReInit()
         {
-
-
             TradeError = false;
             TradeType = 0;
             middleitemadd = false;
             credititemadd = false;
+            UserRareAdded = 0;
+            BotRareAdded = 0;
         }
         public void ReInititem()
         {
@@ -107,101 +127,96 @@ namespace SteamBot
             // Bot.SteamFriends.RemoveAllFriends();
             // Bot.log.Warn("Removed all friends from my friends list.");
             // }
-            if (message.Contains("confirm"))
+            if (!adminlock)
             {
-                string msg = message;
-                msg = msg.Remove(0, 7);
-                msg = msg.Trim();
-                bool find = false;
-                foreach (var xxx in currentmiddlerecords.Records)
+                if (message.Contains("confirm"))
                 {
-                    if (xxx.Recordid == msg && xxx.Sellersteam64id == OtherSID.ConvertToUInt64())
+
+                    string msg = message;
+                    msg = msg.Remove(0, 7);
+                    msg = msg.Trim();
+                    bool find = false;
+                    foreach (var xxx in currentmiddlerecords.Records)
                     {
-                        find = true;
-                        xxx.Status = 2;// 2为买家已经确认
-                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品已经由卖家确认收到款");
-                        SteamID xid = new SteamID();
-                        xid.SetFromUInt64(xxx.Buyersteam64id);
-                        Bot.SteamFriends.SendChatMessage(xid, type, "单号 " + msg + " 的物品已经由卖家确认收到款");
-                        break;
+                        if (xxx.Recordid == msg && xxx.Sellersteam64id == OtherSID.ConvertToUInt64())
+                        {
+                            find = true;
+                            xxx.Status = 2;// 2为买家已经确认
+                            Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品已经由卖家确认收到款");
+                            SteamID xid = new SteamID();
+                            xid.SetFromUInt64(xxx.Buyersteam64id);
+                            Bot.SteamFriends.SendChatMessage(xid, type, "单号 " + msg + " 的物品已经由卖家确认收到款");
+                            if (!successlock)
+                            {
+                                Writejson();
+                            }
+                            break;
+                        }
                     }
-                }
-                if (find == false)
-                {
-                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品没有找到");
-                }
-
-            }
-            else if (message.Contains("info"))
-            {
-                string msg = message;
-                msg = msg.Remove(0, 4);
-                msg = msg.Trim();
-                bool find = false;
-                foreach (var xxx in currentmiddlerecords.Records)
-                {
-                    if (xxx.Recordid == msg)
-                    //    && xxx.Sellersteam64id == OtherSID.ConvertToUInt64())
+                    if (find == false)
                     {
-                        find = true;
-
-                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + "  " + xxx.Sellersteam64id);
-
-                        break;
+                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品没有找到");
                     }
-                }
-                if (find == false)
-                {
-                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品没有找到");
-                }
 
-            }
-            else if (message.Contains("myitems"))
-            {
-                string msg = message;
-
-                foreach (var xxx in currentuseritem.Items)
+                }
+                else if (message.Contains("info"))
                 {
-                    if (xxx.Steam64id == OtherSID.ConvertToUInt64())
+                    string msg = message;
+                    msg = msg.Remove(0, 4);
+                    msg = msg.Trim();
+                    bool find = false;
+                    foreach (var xxx in currentmiddlerecords.Records)
                     {
-                        string xstatus, xerror;
-                        if (xxx.Status == 0)
+                        if (xxx.Recordid == msg)
+                        //    && xxx.Sellersteam64id == OtherSID.ConvertToUInt64())
                         {
-                            xstatus = "正在出售中";
-                        }
-                        else if (xxx.Status == 1)
-                        {
-                            xstatus = "已出售";
-                        }
-                        else if (xxx.Status == 2)
-                        {
-                            xstatus = "钱已取";
-                        }
-                        else
-                        {
-                            xstatus = "物品已被所有者移走";
-                        }
+                            find = true;
 
-                        if (xxx.Error == false)
-                        {
-                            xerror = "";
-                        }
+                            Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + "  " + xxx.Sellersteam64id);
 
-                        else
-                        {
-                            xerror = "此物品状态错误,请与管理员联系";
+                            break;
                         }
-
-                        string xmsg = "物品名称:" + xxx.Item_name + " Id:" + xxx.Id + " 价格:" + xxx.Pricekey + "key" + xxx.Pricerr + "RR  " + xstatus + "  " + xerror;
-                        Bot.SteamFriends.SendChatMessage(OtherSID, type, xmsg);
                     }
+                    if (find == false)
+                    {
+                        Bot.SteamFriends.SendChatMessage(OtherSID, type, "单号 " + msg + " 的物品没有找到");
+                    }
+
+                }
+
+                else
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "错误的命令");
                 }
             }
             else
             {
-
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, "管理员锁定机器人维护中,请稍等");
             }
+            if (message.Contains("stop") && IsAdmin)
+            {
+                if (successlock)
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "有人在操作");
+                }
+                else
+                {
+                    adminlock = true;
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "保存文件中");
+                    Writejson();
+                    Bot.SteamFriends.SendChatMessage(OtherSID, type, "文件保存成功");
 
+                }
+            }
+            else if (message.Contains("start") && IsAdmin)
+            {
+                currentmiddlerecords = MiddleManItem.FetchSchema();
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, "middlerecords 读取完成");
+                adminlock = false;
+            }
+            else
+            { 
+            }
             //Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
 
@@ -212,7 +227,7 @@ namespace SteamBot
             {
                 Warding=false;
             } */
-            if (Warding == true)
+            if (successlock||adminlock )
             {
                 Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "其他人正在操作,请稍后再试");
                 return false;
@@ -221,7 +236,7 @@ namespace SteamBot
             {
                 Bot.SteamFriends.SetPersonaState(EPersonaState.Busy);
                 UInt64 xxid = OtherSID.ConvertToUInt64();
-                Bot.log.Warn(xxid.ToString());
+                Bot.log.Warn(xxid.ToString()+" 邀请机器人交易成功");
                 return true;
             }
         }
@@ -467,7 +482,7 @@ namespace SteamBot
                         var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
                         if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
                         {
-                            //UserRareAdded++;
+                            UserRareAdded++;
                             // Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
                             CreditItemAdded.Add(inventoryItem.OriginalId);
                             record.Sellercredititems = CreditItemAdded;
@@ -491,13 +506,13 @@ namespace SteamBot
                 if (!credititemadd)
                 {
                     CreditItemAdded = new List<ulong>();
+                    credititemadd = true;
                 }
-                credititemadd = true;
                 var dota2item = Trade.Dota2Schema.GetItem(schemaItem.Defindex);
                 if (dota2item.Item_rarity == "rare" && (dota2item.Prefab == "wearable" || dota2item.Prefab == "ward" || dota2item.Prefab == "hud_skin"))
                 {
                     UserRareAdded++;
-                    // Trade.SendMessage("机器人添加:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
+                    Trade.SendMessage("所需:" + "稀有 " + BotRareAdded + " 用户添加:" + "稀有 " + UserRareAdded);
                     CreditItemAdded.Add(inventoryItem.OriginalId);
                     //record.Buyercredititems = CreditItemAdded;
                 }
@@ -530,7 +545,7 @@ namespace SteamBot
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);
             string msg = message;
-            if (msg.Contains("buy"))
+            if (msg.Contains("buyitem"))
             {
                 if (TradeType == 0)
                 {
@@ -539,7 +554,7 @@ namespace SteamBot
                 }
                 if (TradeType == 2)
                 {
-                    msg = msg.Remove(0, 3);
+                    msg = msg.Remove(0, 7);
                     msg = msg.Trim();
                     bool find = false;
                     foreach (var xxx in currentmiddlerecords.Records)
@@ -548,9 +563,12 @@ namespace SteamBot
                         {
                             recordtomodify = xxx;
                             Trade.AddItemByOriginal_id(xxx.Id);
-                            foreach (var yyy in xxx.Sellercredititems)
+                            if (xxx.Sellercredititems != null)
                             {
-                                Trade.AddItemByOriginal_id(yyy);
+                                foreach (var yyy in xxx.Sellercredititems)
+                                {
+                                    Trade.AddItemByOriginal_id(yyy);
+                                }
                             }
                             find = true;
                             Trade.SendMessage("机器人添加的第一个是卖家的交易物品,其余为押金,请仔细确认");
@@ -632,6 +650,43 @@ namespace SteamBot
                             recordtomodify = xxx;
                             find = true;
                             //Trade.AddItemByOriginal_id(xxx.Id);
+                            foreach (var yyy in xxx.Sellercredititems )
+                            {
+                                Trade.AddItemByOriginal_id(yyy);
+                            }
+                            break;
+                        }
+                    }
+                    if (find)
+                    {
+                        Trade.SendMessage("物品已放置");
+                    }
+                    else
+                    {
+                        Trade.SendMessage("没有找到符合要求的物品");
+                    }
+
+                }
+                 else if (msg.Contains("cancel"))
+            {
+                if (TradeType == 0)
+                {
+                    TradeType = 5; //卖家取消
+                    Trade.SendMessage("交易模式已经设定为卖家取消中间人模式");
+                }
+                if (TradeType == 5)
+                {
+                    msg = msg.Remove(0, 6);
+                    msg = msg.Trim();
+                    bool find = false;
+
+                    foreach (var xxx in currentmiddlerecords.Records)
+                    {
+                        if (xxx.Recordid == msg && xxx.Sellersteam64id  == OtherSID.ConvertToUInt64() && xxx.Status == 0)//0为还没有买家预定的物品
+                        {
+                            recordtomodify = xxx;
+                            find = true;
+                            Trade.AddItemByOriginal_id(xxx.Id);
                             foreach (var yyy in xxx.Sellercredititems )
                             {
                                 Trade.AddItemByOriginal_id(yyy);
@@ -880,12 +935,25 @@ namespace SteamBot
         {
             if (TradeType == 1)
             {
-                return true;
+                if (UserRareAdded > 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else if (TradeType == 2)
             {
-                Trade.RemoveAllItems();
-                if (BotRareAdded == UserRareAdded)
+                /*
+                if (Trade.steamMyOfferedItems.Count > 0)
+                {
+                    Trade.RemoveAllItems();
+                    return false;
+                }
+                Bot.log.Warn("2"); */
+                if (BotRareAdded <= UserRareAdded && UserRareAdded >0)
                 {
                     return true;
                 }
@@ -894,6 +962,10 @@ namespace SteamBot
                     Trade.SendMessage("你添加的稀有数量与卖家添加的不符");
                     return false;
                 }
+            }
+            else if (TradeType == 3 || TradeType == 4)
+            {
+                return true;
             }
             else
             {

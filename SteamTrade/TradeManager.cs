@@ -308,6 +308,10 @@ namespace SteamTrade
 
         void CheckTradeTimeout (Trade trade)
         {
+            if (trade.HasTradeAccept)
+            {
+                tradeStartTime.AddSeconds(30);
+            }
             var now = DateTime.Now;
             DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaxActionGapSec);
             int untilActionTimeout = (int)Math.Round ((actionTimeout - now).TotalSeconds);
