@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using SteamKit2;
+using System.Diagnostics;
+
 
 namespace SteamTrade
 {
@@ -11,14 +13,23 @@ namespace SteamTrade
         public Dictionary<ulong, ItemDescription> descriptions = new Dictionary<ulong, ItemDescription>();
 
         public bool loaded = false;
-        public string appId;
         public List<string> errors = new List<string>();
 
         public class Item
         {
-            public ulong id{get;set;}
-            public ulong classid { get; set; }
-            public string contextid { get; set; }
+
+            public ulong id { get; set; }
+            public ulong classid { get; set; }//Defindex for TF2
+            public int appid { get; set; }
+            public int contextid { get; set; }
+
+            public Item(ulong Id = 0, int AppId = 0, int ContextId = 0, ulong ClassId = 0)
+            {
+                id = Id;
+                classid = ClassId;
+                appid = AppId;
+                contextid = ContextId;
+            }
         }
 
         public class ItemDescription
@@ -40,7 +51,7 @@ namespace SteamTrade
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                errors.Add("getInfo(" + id + ")" + e.Message);
+                errors.Add("getInfo(" + id + "): " + e.Message);
                 return new ItemDescription();
             }
         }
@@ -59,20 +70,18 @@ namespace SteamTrade
             }
         }
 
-        public bool load(ulong appid,List<uint> types, SteamID steamid)
+        public bool load(int appid,List<int> contextid, SteamID steamid)
         {
             dynamic invResponse;
             Item tmpItemData;
             ItemDescription tmpDescription;
-
             loaded = false;
-            appId = appid.ToString();
 
             try
             {
-                for (int i = 0; i < types.Count; i++)
+                for (int i = 0; i < contextid.Count; i++)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(),appid, types[i]), "GET", null, null, true);
+                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(),appid, contextid[i]), "GET", null, null, true);
 
                     invResponse = JsonConvert.DeserializeObject(response);
 
@@ -88,11 +97,7 @@ namespace SteamTrade
 
                         foreach (var itemId in item)
                         {
-                            tmpItemData = new Item();
-                            tmpItemData.id = itemId.id;
-                            tmpItemData.classid = itemId.classid;
-                            tmpItemData.contextid = types[i].ToString();
-
+                            tmpItemData = new Item((ulong) itemId.id, appid, contextid[i], (ulong) itemId.classid);
                             items.Add((ulong)itemId.id, tmpItemData);
                             break;
                         }
@@ -115,11 +120,16 @@ namespace SteamTrade
                             break;
                         }
                     }
-
-                    if (errors.Count > 0)
-                        return false;
-                    
                 }//end for (inventory type)
+
+                if (errors.Count > 0)
+                    return false;
+                else
+                {
+                    loaded = true;
+                    return true;
+                }
+
             }//end try
             catch (Exception e)
             {
@@ -127,8 +137,6 @@ namespace SteamTrade
                 errors.Add("Exception: " + e.Message);
                 return false;
             }
-            loaded = true;
-            return true;
         }
     }
 }

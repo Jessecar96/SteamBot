@@ -60,23 +60,23 @@ namespace SteamBot
         public override void OnTradeInit() 
         {
             // NEW -------------------------------------------------------------------------------
-            List<uint> InvType = new List<uint>();
+            List<int> contextId = new List<int>();
 
             /*************************************************************************************
              * 
              * SteamInventory AppId = 753 
              * 
-             * Inventory types:
-             *  1 = Gifts (Games), must be public on steam profile in order to work.
-             *  6 = Trading Cards, Emoticons & Backgrounds. 
+             *  Context Id      Description
+             *      1           Gifts (Games), must be public on steam profile in order to work.
+             *      6           Trading Cards, Emoticons & Backgrounds. 
              *  
              ************************************************************************************/
 
-            InvType.Add(1);
-            InvType.Add(6);
+            contextId.Add(1);
+            contextId.Add(6);
 
-            mySteamInventory.load(753, InvType, Bot.SteamClient.SteamID);
-            OtherSteamInventory.load(753, InvType, OtherSID);
+            mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
+            OtherSteamInventory.load(753, contextId, OtherSID);
 
             if (!mySteamInventory.loaded)
             {
@@ -124,16 +124,18 @@ namespace SteamBot
 
                 case "test":
                     Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
-                    foreach(var item in mySteamInventory.items)
+
+                    foreach (var item in mySteamInventory.items)
                     {
-                        Trade.AddItem(item.Value.id,mySteamInventory.appId,item.Value.contextid);
+                        Trade.AddItem(item.Value.id, item.Value.appid, item.Value.contextid);
                     }
+
                 break;
 
                 case "remove":
                     foreach (var item in mySteamInventory.items)
                     {
-                        Trade.RemoveItem(item.Value.id, mySteamInventory.appId, item.Value.contextid);
+                        Trade.RemoveItem(item.Value.id, item.Value.appid, item.Value.contextid);
                     }
                 break;
             }

@@ -43,7 +43,7 @@ namespace SteamTrade
             OtherSID = other;
             List<uint> InvType = new List<uint>();
 
-            session = new TradeSession(sessionId, token, other, "440");
+            session = new TradeSession(sessionId, token, other, 440);
 
             this.eventList = new List<TradeEvent>();
 
@@ -217,9 +217,9 @@ namespace SteamTrade
         /// Adds a specified item by its itemid.
         /// </summary>
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
-        public bool AddItem (ulong itemid,string appid = "",string contextid ="")
+        public bool AddItem (ulong itemid,int appid = 0,int contextid = 0)
         {
-            if (appid =="" & MyInventory.GetItem(itemid) == null)
+            if (appid == 0 & MyInventory.GetItem(itemid) == null)
                 return false;
 
             var slot = NextTradeSlot();
@@ -287,7 +287,7 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem (ulong itemid,string appid = "",string contextid ="")
+        public bool RemoveItem (ulong itemid,int appid = 0,int contextid = 0)
         {
             int? slot = GetItemSlot (itemid);
             if (!slot.HasValue)
@@ -607,6 +607,7 @@ namespace SteamTrade
                     item = new Inventory.Item();
                     item.Id = itemID;
                     item.AppId = tradeEvent.appid;
+                    item.ContextId = tradeEvent.contextid;
                     //Console.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
