@@ -183,7 +183,30 @@ namespace SteamBot
                     }
 
                 }
-
+                else if(message.Contains ("email"))
+                {
+                    string msg = message;
+                    msg = msg.Remove(0, 5);
+                    msg = msg.Trim();
+                    bool find = false;
+                    foreach (var xxx in currentmiddlerecords.Alipayaccounts)
+                    {
+                        if (xxx.Steam64id == OtherSID.ConvertToUInt64())
+                        {
+                            find = true;
+                            Bot.SteamFriends.SendChatMessage(OtherSID, type, "你之前已设置了支付宝账号为 "  + xxx.Account+" ,不能更改" );
+                            break;
+                        }
+                        if (!find)
+                        {
+                            MiddleManItem.Alipayaccount anewaccount = new MiddleManItem.Alipayaccount();
+                            anewaccount.Steam64id = OtherSID.ConvertToUInt64();
+                            anewaccount.Account = msg;
+                            anewaccount.Settime = DateTime.Now.ToString();
+                            currentmiddlerecords.Alipayaccounts.Add(anewaccount);//暂不写入文件
+                        }
+                    }
+                }
                 else
                 {
                     Bot.SteamFriends.SendChatMessage(OtherSID, type, "错误的命令");
@@ -371,11 +394,11 @@ namespace SteamBot
         
         public override void OnTradeMessage(string message)
         {
-            Bot.log.Info("[TRADE MESSAGE] " + message);
+            Bot.log.Info(OtherSID.ConvertToUInt64() + " [TRADE MESSAGE] " + message);
             string msg = message;
             if (msg.Contains("buyitem"))
             {
-                if (TradeType == 0)
+                if (TradeType == 0) 
                 {
                     TradeType = 2;
                     Trade.SendMessage("已设定为预定购买模式");

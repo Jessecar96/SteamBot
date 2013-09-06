@@ -72,7 +72,9 @@ namespace SteamTrade
         [JsonProperty("records")]
         //public Useritem[] Items { get; set; }
         public List<Record> Records { get; set; }
-        
+
+        [JsonProperty("alipayaccounts")]
+        public List<Alipayaccount> Alipayaccounts { get; set; }
 
         /// <summary>
         /// Find an SchemaItem by it's defindex.
@@ -147,6 +149,18 @@ namespace SteamTrade
             [JsonProperty("buyeritemsstatus")]
             public int Buyeritemsstatus { get; set; }
             
+        }
+
+        public class Alipayaccount
+        {
+            [JsonProperty("steam64id")]
+            public UInt64 Steam64id { get; set; }
+
+            [JsonProperty("account")]
+            public string Account { get; set; }
+
+            [JsonProperty("settime")]
+            public string Settime { get; set; }
         }
         /*
         protected class UserItemResult
