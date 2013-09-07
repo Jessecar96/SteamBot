@@ -29,6 +29,7 @@ namespace SteamBot
         static long filetime;
         static bool Warding = false;
         static bool successlock, adminlock = false;
+        static List <UInt64 > friendsaddme = new List<UInt64 >() ;
         public MiddleManHandler(Bot bot, SteamID sid)
             : base(bot, sid)
         {
@@ -66,7 +67,7 @@ namespace SteamBot
                 }
                 else 
                 {
-                    Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经被你预定,没有找到卖家在单号生成前提供给卖家的支付宝账号, "+ "卖家steam账号为 http://steamcommunity.com/profiles/" + recordtomodify.Sellersteam64id + " 请仔细核对是否与你交谈的是同一人");
+                    Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经被你预定,没有找到卖家在单号生成前提供给机器人的支付宝账号, "+ "卖家steam账号为 http://steamcommunity.com/profiles/" + recordtomodify.Sellersteam64id + " 请仔细核对是否与你交谈的是同一人");
                 }
                 Writejson();
             }
@@ -75,7 +76,7 @@ namespace SteamBot
                 recordtomodify.Status = 3;//status 由 2卖家已确认变为3买家拿走
                 SteamID buyerid = new SteamID();
                 buyerid.SetFromUInt64(recordtomodify.Sellersteam64id );
-                Bot.SteamFriends.SendChatMessage(buyerid, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经由64位id为 " + recordtomodify.Buyersteam64id + " 的买家拿走,你可以拿走你的押金了");
+                Bot.SteamFriends.SendChatMessage(buyerid, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经由steam账号为 http://steamcommunity.com/profiles/" + recordtomodify.Buyersteam64id + " 的买家拿走,你可以拿走你的押金了");
                 Writejson();
 
             }
@@ -87,7 +88,11 @@ namespace SteamBot
             else if (TradeType == 5)
             {
                 recordtomodify.Status = 5;//卖家取消中间人交易,有0变为5
+                string tobedeleted = JsonConvert.SerializeObject(recordtomodify ) + "\r\n";
+                WriteFiles("recorddeteled.json", tobedeleted, true);//将移除的写入文件
+                currentmiddlerecords.Records.Remove(recordtomodify);//current移除已完成的部分
                 Writejson();
+
             }
             else
             {
@@ -98,7 +103,14 @@ namespace SteamBot
         {
             Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ConvertToUInt64() + ") added me!");
             // Using a timer here because the message will fail to send if you do it too quickly
-
+            friendsaddme.Add(OtherSID.ConvertToUInt64());
+            while  (Bot.SteamFriends.GetFriendCount() > 150)
+            {
+                Bot.SteamFriends.RemoveFriend(getsteamidform64bit(friendsaddme[0]));
+                friendsaddme.RemoveAt(0);
+            }
+            string xxx = JsonConvert.SerializeObject (friendsaddme );
+            WriteFiles("friends.json", xxx, false);
             return true;
         }
         public void ReInit()
@@ -110,10 +122,7 @@ namespace SteamBot
             UserRareAdded = 0;
             BotRareAdded = 0;
         }
-        public void ReInititem()
-        {
 
-        }
 
 
         public override void OnLoginCompleted()
@@ -123,6 +132,9 @@ namespace SteamBot
                 currentmiddlerecords = MiddleManItem.FetchSchema();
                 Bot.log.Success("middlerecords 读取完成");
             }
+            Bot.SetGamePlaying(570);
+            friendsaddme = getclassfromfiles<List <UInt64 >>("friends.json");
+            Bot.log.Success("friendss 读取完成");
 
         }
 
@@ -134,7 +146,7 @@ namespace SteamBot
 
         public override void OnFriendRemove()
         {
-            Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ToString() + ") removed me!");
+            Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ConvertToUInt64() + ") removed me!");
         }
 
         public override void OnMessage(string message, EChatEntryType type)
@@ -679,6 +691,16 @@ namespace SteamBot
             sw.WriteLine(json);
             sw.Close();
             // 写入文件；
+        }
+
+        public void WriteFiles(string filepath ,string concenttoadd ,bool ifadd )
+        {
+
+            
+            StreamWriter wf = new StreamWriter(filepath, ifadd);
+            wf.WriteLine(concenttoadd );
+            wf.Close();
+            // 写入文件；
 
         }
 
@@ -768,9 +790,24 @@ namespace SteamBot
                         b = b + a;
             return b;
         }
+        public SteamID getsteamidform64bit(UInt64 id )
+        {
+            SteamID ijca = new SteamID ();
+            ijca.SetFromUInt64(id);
+            return ijca;
+        }
+        public dynamic getclassfromfiles<T> (string path)
+        {
+            TextReader reader = new StreamReader(path);
+            string result = reader.ReadToEnd();
+            reader.Close();
+           
+            return JsonConvert.DeserializeObject<T>(result);
 
+        }
     }    
-    
+
+
  
 }
 
