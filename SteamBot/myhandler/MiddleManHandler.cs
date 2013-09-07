@@ -47,9 +47,27 @@ namespace SteamBot
                 recordtomodify.Status = 1;
                 recordtomodify.Buyercredititems = CreditItemAdded;
                 recordtomodify.Buyersteam64id = OtherSID.ConvertToUInt64();
-                SteamID buyerid = new SteamID();
-                buyerid.SetFromUInt64(recordtomodify.Buyersteam64id);
-                Bot.SteamFriends.SendChatMessage(buyerid, EChatEntryType.ChatMsg , "单号 " + recordtomodify.Recordid  + " 的物品已经由 "+recordtomodify.Buyersteam64id+ " 买家付押金预定");
+                SteamID sellerid = new SteamID();
+                sellerid.SetFromUInt64(recordtomodify.Sellersteam64id);
+                Bot.SteamFriends.SendChatMessage(sellerid, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经由" + "steam账号为 http://steamcommunity.com/profiles/" + recordtomodify.Buyersteam64id + " 的买家付押金预定,请自己核对是否是与你交谈的同一人");
+                bool find = false;
+                MiddleManItem.Alipayaccount yyy=new MiddleManItem.Alipayaccount ();
+                foreach (var xxx in currentmiddlerecords.Alipayaccounts )
+                {
+                    if (xxx.Steam64id == recordtomodify.Sellersteam64id)
+                    {
+                        find = true;
+                        yyy = xxx;
+                    }
+                }
+                if (find && (string.Compare(recordtomodify.Recordid, yyy.Settime) > 0))
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经被你预定,卖家提供给机器人的支付宝账号为 " + yyy.Account + " ,请仔细核对是否卖家给你的一致,卖家steam账号为 http://steamcommunity.com/profiles/" + recordtomodify.Sellersteam64id + " 请仔细核对是否与你交谈的是同一人");
+                }
+                else 
+                {
+                    Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "单号 " + recordtomodify.Recordid + " 的物品已经被你预定,没有找到卖家在单号生成前提供给卖家的支付宝账号, "+ "卖家steam账号为 http://steamcommunity.com/profiles/" + recordtomodify.Sellersteam64id + " 请仔细核对是否与你交谈的是同一人");
+                }
                 Writejson();
             }
             else if (TradeType == 3)//买家拿物品
@@ -167,7 +185,7 @@ namespace SteamBot
                     bool find = false;
                     foreach (var xxx in currentmiddlerecords.Records)
                     {
-                        if (xxx.Recordid == msg)
+                        if (xxx.Recordid == msg )
                         //    && xxx.Sellersteam64id == OtherSID.ConvertToUInt64())
                         {
                             find = true;
@@ -202,7 +220,7 @@ namespace SteamBot
                             MiddleManItem.Alipayaccount anewaccount = new MiddleManItem.Alipayaccount();
                             anewaccount.Steam64id = OtherSID.ConvertToUInt64();
                             anewaccount.Account = msg;
-                            anewaccount.Settime = DateTime.Now.ToString();
+                            anewaccount.Settime = gettimestring();
                             currentmiddlerecords.Alipayaccounts.Add(anewaccount);//暂不写入文件
                         }
                     }
