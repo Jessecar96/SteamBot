@@ -102,6 +102,7 @@
     <Compile Include="myhandler\MiddleManHandler.cs" />
     <Compile Include="myhandler\RareKeyUserHandler.cs" />
     <Compile Include="myhandler\RareUserHandler.cs" />
+    <Compile Include="myhandler\stock.cs" />
     <Compile Include="myhandler\UserItemSellHandler.cs" />
     <Compile Include="myhandler\WardUserHandler.cs" />
     <Compile Include="TestUserHandler.cs" />
