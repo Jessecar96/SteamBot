@@ -6,14 +6,15 @@ using System.Timers;
 using System.Net;
 using System.IO;
 using System.Text.RegularExpressions;
-
+using System.Threading;
+using System.Net.Mail;
 namespace SteamBot
 {
     public class StockHandler : UserHandler
     {
 
-
-
+        static bool StockSuccess = false;
+        static int SleepTime = 60000;
         public StockHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
@@ -33,35 +34,94 @@ namespace SteamBot
         {
 
         }
+        private void StartStockThread()
+        {
+            // initialize data to use in thread
 
+
+            var pollThread = new Thread(() =>
+            {
+                StockSuccess = false;
+                const string UrlBase = "http://store.valvesoftware.com/index.php?t=2&g=10";
+                string url = UrlBase;
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+                request.Method = "GET";
+                request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+                request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                request.Host = "store.valvesoftware.com";
+                request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
+                request.Referer = "http://store.valvesoftware.com";
+                int i = 1;
+                // main thread loop for polling
+                while (!StockSuccess)
+                {
+                    
+
+                    try
+                    {
+                        HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+                        var reader = new StreamReader(response.GetResponseStream());
+                        string result = reader.ReadToEnd();
+                        response.Close();
+                        Log.Warn(i.ToString ());
+                        i++;
+                        Regex r = new Regex("product.php");
+                        int x = r.Matches(result).Count;
+                        if (x > 14)
+                        {
+                            SteamID myid = new SteamID();
+                            myid.SetFromUInt64(76561198047154762);
+                            Bot.SteamFriends.SendChatMessage(myid,EChatEntryType .ChatMsg , "valve商店有新物品");
+                            MailMessage mailsend = new MailMessage ();
+                            mailsend.Body = "valve商店有新物品";
+                            mailsend.From =new MailAddress ("me_sunyue@163.com");
+                            mailsend.To.Add(new MailAddress ("812477104@qq.com"));
+                            mailsend.Subject = "valve商店有货";
+                            mailsend.SubjectEncoding = System.Text.Encoding.UTF8;
+                            mailsend.IsBodyHtml = false;
+                            mailsend.Priority = MailPriority.High;
+                            //smtp client   
+                            SmtpClient sender = new SmtpClient();
+                            sender.Host = "smtp.163.com";
+                            sender.Port = 25;
+                            sender .UseDefaultCredentials　=　true;
+                            sender.Credentials = new System.Net.NetworkCredential("me_sunyue@163.com","qwerty19891211");
+                            sender.DeliveryMethod = SmtpDeliveryMethod.Network;
+                            sender.EnableSsl = false;
+                            try
+                            {
+                                sender.Send(mailsend );
+
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Warn("发送邮件失败");
+                            }   
+                            StockSuccess = true;
+                            Log.Warn("valve商店有新物品");
+                        }
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn(ex.ToString() );
+
+                    }
+                    Thread.Sleep(SleepTime);
+                }
+
+
+            });
+
+            pollThread.Start();
+        }
 
         public override void OnLoginCompleted()
         {
-            const string UrlBase = "http://store.valvesoftware.com/index.php?t=2&g=10";
-            string url = UrlBase;
-            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url) ;
-            request.Method = "GET";
-            request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
-            request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-            request.Host = "store.valvesoftware.com";
-            request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
-            request.Referer = "http://store.valvesoftware.com";
-            HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-            var reader = new StreamReader(response.GetResponseStream());
-            string result = reader.ReadToEnd();
-            response.Close();
-            Regex r = new Regex("product.php");
-            int x = r.Matches(result).Count;
-            if (x > 14)
-            {
-                Log.Warn("valve商店有新物品" + "\r\n");
-                Log.Warn(x.ToString());
-            }
-            else
-            {
-                Log.Warn("valve商店没有新物品" + "\r\n");
-                Log.Warn( x.ToString ());
-            }
+            Log.Warn("启动");
+            StartStockThread();
+            Log.Warn("启动成功");
         }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
@@ -76,7 +136,10 @@ namespace SteamBot
         
         public override void OnMessage (string message, EChatEntryType type) 
         {
-           
+            if (message.Contains("stock"))
+            {
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, StockSuccess.ToString() );
+            }
 
         }
 
