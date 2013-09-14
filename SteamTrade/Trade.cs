@@ -217,9 +217,13 @@ namespace SteamTrade
         /// Adds a specified item by its itemid.
         /// </summary>
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
-        public bool AddItem (ulong itemid,int appid = 0,int contextid = 0)
+        public bool AddItem (ulong itemid)//TF2 Default
         {
-            if (appid == 0 & MyInventory.GetItem(itemid) == null)
+            return AddItem(itemid,440,2);
+        }
+        public bool AddItem(ulong itemid, int appid, int contextid)
+        {
+            if (appid == 440 & MyInventory.GetItem(itemid) == null)
                 return false;
 
             var slot = NextTradeSlot();
@@ -287,14 +291,19 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem (ulong itemid,int appid = 0,int contextid = 0)
+        /// 
+        public bool RemoveItem(ulong itemid)
+        {
+            return RemoveItem(itemid,440,2);
+        }
+        public bool RemoveItem (ulong itemid,int appid,int contextid)
         {
             int? slot = GetItemSlot (itemid);
             if (!slot.HasValue)
                 return false;
 
             bool ok = session.RemoveItemWebCmd(itemid, slot.Value,appid,contextid);
-
+            
             if (!ok)
                 throw new TradeException ("The web command to remove the item failed.");
 
@@ -604,10 +613,12 @@ namespace SteamTrade
                 }
                 else
                 {
-                    item = new Inventory.Item();
-                    item.Id = itemID;
-                    item.AppId = tradeEvent.appid;
-                    item.ContextId = tradeEvent.contextid;
+                    item = new Inventory.Item()
+                    {
+                        Id=itemID,
+                        AppId=tradeEvent.appid,
+                        ContextId=tradeEvent.contextid
+                    };
                     //Console.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
@@ -667,9 +678,12 @@ namespace SteamTrade
                 else
                 {
                     // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
-                    item = new Inventory.Item();
-                    item.Id = itemID;
-                    item.AppId = tradeEvent.appid;
+                    item = new Inventory.Item()
+                    {
+                        Id = itemID,
+                        AppId = tradeEvent.appid,
+                        ContextId = tradeEvent.contextid
+                    };
                     OnUserRemoveItem(null, item);
                 }
             }

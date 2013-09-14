@@ -127,7 +127,7 @@ namespace SteamBot
 
                     foreach (var item in mySteamInventory.items)
                     {
-                        Trade.AddItem(item.Value.id, item.Value.appid, item.Value.contextid);
+                        Trade.AddItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
                     }
 
                 break;
@@ -135,7 +135,7 @@ namespace SteamBot
                 case "remove":
                     foreach (var item in mySteamInventory.items)
                     {
-                        Trade.RemoveItem(item.Value.id, item.Value.appid, item.Value.contextid);
+                        Trade.RemoveItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
                     }
                 break;
             }
