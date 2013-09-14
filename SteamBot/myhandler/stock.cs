@@ -44,34 +44,32 @@ namespace SteamBot
                 StockSuccess = false;
                 const string UrlBase = "http://store.valvesoftware.com/index.php?t=2&g=10";
                 string url = UrlBase;
-                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
-                request.Method = "GET";
-                request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
-                request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-                request.Host = "store.valvesoftware.com";
-                request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
-                request.Referer = "http://store.valvesoftware.com";
-                int i = 1;
-                // main thread loop for polling
+                
+                
                 while (!StockSuccess)
                 {
-                    
-
+                    HttpWebRequest request = null;
+                    HttpWebResponse response = null;
+                    StreamReader reader = null;
                     try
                     {
-                        HttpWebResponse response = request.GetResponse() as HttpWebResponse;
-                        var reader = new StreamReader(response.GetResponseStream());
+                        request = (HttpWebRequest)HttpWebRequest.Create(url);
+                        request.Method = "GET";
+                        request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+                        request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                        request.Host = "store.valvesoftware.com";
+                        request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
+                        request.Referer = "http://store.valvesoftware.com";
+                        response = request.GetResponse() as HttpWebResponse;
+                        reader = new StreamReader(response.GetResponseStream());
                         string result = reader.ReadToEnd();
-                        response.Close();
-                        Log.Warn(i.ToString ());
-                        i++;
                         Regex r = new Regex("product.php");
                         int x = r.Matches(result).Count;
-                        if (x > 14)
+                        if (x != 14)
                         {
                             SteamID myid = new SteamID();
                             myid.SetFromUInt64(76561198047154762);
-                            Bot.SteamFriends.SendChatMessage(myid,EChatEntryType .ChatMsg , "valve商店有新物品");
+                            Bot.SteamFriends.SendChatMessage(myid, EChatEntryType.ChatMsg, "valve商店有新物品");
                             MailMessage mailsend = new MailMessage ();
                             mailsend.Body = "valve商店有新物品";
                             mailsend.From =new MailAddress ("me_sunyue@163.com");
@@ -95,7 +93,7 @@ namespace SteamBot
                             }
                             catch (Exception e)
                             {
-                                Log.Warn("发送邮件失败");
+                                Log.Warn("发送邮件失败 "+ e.ToString ());
                             }   
                             StockSuccess = true;
                             Log.Warn("valve商店有新物品");
@@ -105,8 +103,16 @@ namespace SteamBot
                     }
                     catch (Exception ex)
                     {
-                        Log.Warn(ex.ToString() );
+                        Log.Warn(ex.ToString());
 
+
+                    }
+                    finally
+                    {
+                        if (request != null) request.Abort();
+                        if (response != null) response.Close();
+                        if (reader != null) reader.Close();
+ 
                     }
                     Thread.Sleep(SleepTime);
                 }
@@ -136,9 +142,18 @@ namespace SteamBot
         
         public override void OnMessage (string message, EChatEntryType type) 
         {
+            string msg = message.ToLower();
             if (message.Contains("stock"))
             {
                 Bot.SteamFriends.SendChatMessage(OtherSID, type, StockSuccess.ToString() );
+            }
+            if (message.Contains("time"))
+            {
+                msg = msg.Trim();
+                msg = msg.Remove(0, 4);
+                msg = msg.Trim();
+                SleepTime = Convert.ToInt32(msg);
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, "时间调整为"+msg +"毫秒");
             }
 
         }
