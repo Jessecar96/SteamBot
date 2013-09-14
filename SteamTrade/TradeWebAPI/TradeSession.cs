@@ -22,7 +22,6 @@ namespace SteamTrade.TradeWebAPI
         readonly string steamLogin;
         readonly string sessionId;
         readonly SteamID OtherSID;
-        readonly int tradeAppId;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TradeSession"/> class.
@@ -31,12 +30,11 @@ namespace SteamTrade.TradeWebAPI
         /// <param name="steamLogin">The current steam login.</param>
         /// <param name="otherSid">The Steam id of the other trading partner.</param>
         /// <param name="appId">The Steam app id. Ex. "440" for TF2</param>
-        public TradeSession(string sessionId, string steamLogin, SteamID otherSid, int AppId)
+        public TradeSession(string sessionId, string steamLogin, SteamID otherSid)
         {
             this.sessionId = sessionId;
             this.steamLogin = steamLogin;
             OtherSID = otherSid;
-            tradeAppId = AppId;
 
             Init();
         }
@@ -88,14 +86,20 @@ namespace SteamTrade.TradeWebAPI
         /// <param name="otherId">The other id.</param>
         /// <param name="contextId">The current trade context id.</param>
         /// <returns>A dynamic JSON object.</returns>
-        internal dynamic GetForiegnInventory(SteamID otherId, int contextId, int appid = 0)
+        /// 
+
+        internal dynamic GetForiegnInventory(SteamID otherId)
+        {
+            return GetForiegnInventory(otherId, 440, 2);
+        }
+        internal dynamic GetForiegnInventory(SteamID otherId, int contextId, int appid)
         {
             var data = new NameValueCollection();
 
             data.Add("sessionid", sessionIdEsc);
-            data.Add("steamid", otherId.ConvertToUInt64().ToString());
-            data.Add("appid", appid==0 ? tradeAppId.ToString() : appid.ToString());
-            data.Add("contextid", contextId.ToString());
+            data.Add("steamid", "" + otherId);
+            data.Add("appid", "" + appid);
+            data.Add("contextid", "" + contextId);
 
             try
             {
@@ -140,13 +144,13 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid = 0,int contextid = 0)
+        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,int contextid)
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", appid == 0 ? tradeAppId.ToString() : appid.ToString());
-            data.Add ("contextid", contextid == 0 ?"2":contextid.ToString());
+            data.Add("appid", "" + appid);
+            data.Add ("contextid", "" + contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
@@ -167,13 +171,13 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid = 440, int contextid = 2)
+        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, int contextid)
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", appid ==440 ? "440" : appid.ToString());
-            data.Add("contextid", contextid == 2 ? "2" : contextid.ToString());
+            data.Add("appid", "" + appid);
+            data.Add("contextid", "" + contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 

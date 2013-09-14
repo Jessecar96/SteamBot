@@ -43,7 +43,7 @@ namespace SteamTrade
             OtherSID = other;
             List<uint> InvType = new List<uint>();
 
-            session = new TradeSession(sessionId, token, other, 440);
+            session = new TradeSession(sessionId, token, other);
 
             this.eventList = new List<TradeEvent>();
 
@@ -641,7 +641,7 @@ namespace SteamTrade
             if (OtherPrivateInventory == null)
             {
                 // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid);
+                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid,tradeEvent.contextid);
                 OtherPrivateInventory = new ForeignInventory(f);
             }
 
