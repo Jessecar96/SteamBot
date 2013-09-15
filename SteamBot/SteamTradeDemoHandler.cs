@@ -78,9 +78,9 @@ namespace SteamBot
             mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
             OtherSteamInventory.load(753, contextId, OtherSID);
 
-            if (!mySteamInventory.loaded)
+            if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
             {
-                Trade.SendMessage("Couldn't open your inventory, type 'errors' for more info.");
+                Trade.SendMessage("Couldn't open an inventory, type 'errors' for more info.");
             }
 
             Trade.SendMessage("Type 'test' to start.");
@@ -89,18 +89,24 @@ namespace SteamBot
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
             // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
-            Trade.SendMessage("Object AppID:" + inventoryItem.AppId);
+            Trade.SendMessage("Object AppID: " + inventoryItem.AppId);
+            Trade.SendMessage("Object ContextId: " + inventoryItem.ContextId);
 
             switch (inventoryItem.AppId)
             {
                 case 440:
-                    Trade.SendMessage("TF2 Item");
+                    Trade.SendMessage("TF2 Item Added.");
+                    Trade.SendMessage("Name: " + schemaItem.Name);
+                    Trade.SendMessage("Quality: " + inventoryItem.Quality);
+                    Trade.SendMessage("Level: " + inventoryItem.Level);
+                    Trade.SendMessage("Craftable: " + (inventoryItem.IsNotCraftable?"No":"Yes"));
                     break;
 
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getInfo(inventoryItem.Id);
-                    Trade.SendMessage("Object type: " + tmpDescription.type);
-                    Trade.SendMessage("Marketable: " + tmpDescription.marketable);
+                    Trade.SendMessage("Steam Inventory Item Added.");
+                    Trade.SendMessage("Type: " + tmpDescription.type);
+                    Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
                     break;
 
                 default:
@@ -116,9 +122,22 @@ namespace SteamBot
             switch (message.ToLower())
             {
                 case "errors":
-                    foreach (string error in OtherSteamInventory.errors)
+                    if (OtherSteamInventory.errors.Count > 0)
                     {
-                        Trade.SendMessage(" * " + error);
+                        Trade.SendMessage("User Errors:");
+                        foreach (string error in OtherSteamInventory.errors)
+                        {
+                            Trade.SendMessage(" * " + error);
+                        }
+                    }
+
+                    if (mySteamInventory.errors.Count > 0)
+                    {
+                        Trade.SendMessage("Bot Errors:");
+                        foreach (string error in mySteamInventory.errors)
+                        {
+                            Trade.SendMessage(" * " + error);
+                        }
                     }
                 break;
 
@@ -181,7 +200,7 @@ namespace SteamBot
         public bool Validate ()
         {            
             List<string> errors = new List<string> ();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items.");
+            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed.");
 
             // send the errors
             if (errors.Count != 0)

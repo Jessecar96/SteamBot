@@ -15,7 +15,7 @@ namespace SteamTrade
         public Dictionary<ulong, Item> items = new Dictionary<ulong, Item>();
         public Dictionary<ulong, ItemDescription> descriptions = new Dictionary<ulong, ItemDescription>();
 
-        public bool loaded = false;
+        public bool isLoaded = false;
         public List<string> errors = new List<string>();
 
         public class Item : TradeUserAssets
@@ -61,23 +61,22 @@ namespace SteamTrade
             }
         }
 
-        public bool load(int appid,List<int> types, SteamID steamid)
+        public bool load(int appid,List<int> contextIds, SteamID steamid)
         {
             dynamic invResponse;
-            loaded = false;
+            isLoaded = false;
 
             try
             {
-                for (int i = 0; i < types.Count; i++)
+                for (int i = 0; i < contextIds.Count; i++)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(),appid, types[i]), "GET", null, null, true);
-
+                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(),appid, contextIds[i]), "GET", null, null, true);
                     invResponse = JsonConvert.DeserializeObject(response);
 
                     if (invResponse.success == false)
                     {
                         errors.Add("Fail to open backpack: " + invResponse.Error);
-                        break;
+                        continue;
                     }
 
                     //rgInventory = Items on Steam Inventory 
@@ -89,7 +88,7 @@ namespace SteamTrade
                             items.Add((ulong)itemId.id, new Item()
                             {
                                 appid = appid,
-                                contextid = types[i],
+                                contextid = contextIds[i],
                                 assetid = itemId.id,
                                 classid = itemId.classid
                             });
@@ -107,7 +106,7 @@ namespace SteamTrade
                                 name = classid_instanceid.name,
                                 type = classid_instanceid.type,
                                 marketable = (bool) classid_instanceid.marketable,
-                                tradable = (bool) classid_instanceid.marketable,
+                                tradable = (bool)classid_instanceid.tradable,
                                 metadata = classid_instanceid.descriptions
                             });
                             break;
@@ -125,7 +124,7 @@ namespace SteamTrade
                 errors.Add("Exception: " + e.Message);
                 return false;
             }
-            loaded = true;
+            isLoaded = true;
             return true;
         }
     }

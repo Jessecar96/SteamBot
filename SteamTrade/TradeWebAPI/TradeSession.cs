@@ -29,7 +29,6 @@ namespace SteamTrade.TradeWebAPI
         /// <param name="sessionId">The session id.</param>
         /// <param name="steamLogin">The current steam login.</param>
         /// <param name="otherSid">The Steam id of the other trading partner.</param>
-        /// <param name="appId">The Steam app id. Ex. "440" for TF2</param>
         public TradeSession(string sessionId, string steamLogin, SteamID otherSid)
         {
             this.sessionId = sessionId;
