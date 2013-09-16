@@ -16,9 +16,8 @@ namespace SteamBot
     {
         private readonly BotManager manager;
         private CommandSet p;
-        private int stop = -1;
-        private int start = -1;
-        private string stopName = String.Empty;
+        private string start = String.Empty;
+        private string stop = String.Empty;
         private bool showHelp;
         private bool clearConsole;
 
@@ -27,18 +26,20 @@ namespace SteamBot
             this.manager = manager;
             p = new CommandSet
                     {
-                        new BotManagerOption("stop", "stop (X) where X = index of the configured bot",
-                                             s => stop = Convert.ToInt32(s)),
-                        new BotManagerOption("start", "start (X) where X = index of the configured bot",
-                                             s => start = Convert.ToInt32(s)),
-                        new BotManagerOption("stopbot", "stopbot (X) where X = username of the bot", s => stopName = s),
+                        new BotManagerOption("stop", "stop (X) where X = the username or index of the configured bot",
+                                             s => stop = s),
+                        new BotManagerOption("start", "start (X) where X = the username or index of the configured bot",
+                                             s => start = s),
                         new BotManagerOption("help", "shows this help text", s => showHelp = s != null),
                         new BotManagerOption("show",
                                              "show (x) where x is one of the following: index, \"bots\", or empty",
                                              param => ShowCommand(param)),
                         new BotManagerOption("clear", "clears this console", s => clearConsole = s != null),
-                        new BotManagerOption("auth", "auth (X)=(Y) where X = index of the configured bot and Y = the steamguard code",
-                            AuthSet)
+                        new BotManagerOption("auth", "auth (X)=(Y) where X = the username or index of the configured bot and Y = the steamguard code",
+                                             AuthSet),
+                        new BotManagerOption("exec", 
+                                             "exec (X) (Y) where X = the username or index of the bot and Y = your custom command to execute",
+                                             ExecCommand)
                     };
         }
 
@@ -49,13 +50,23 @@ namespace SteamBot
             if (xy.Length == 2)
             {
                 int index;
+                string code = xy[1].Trim();
 
-                if (int.TryParse(xy[0], out index))
+                if (int.TryParse(xy[0], out index) && (index < manager.ConfigObject.Bots.Length))
                 {
-                    string code = xy[1].Trim();
-
                     Console.WriteLine("Authing bot with '" + code + "'");
                     manager.AuthBot(index, code);
+                }
+                else if (!String.IsNullOrEmpty(xy[0]))
+                {
+                    for (index = 0; index < manager.ConfigObject.Bots.Length; index++)
+                    {
+                        if (manager.ConfigObject.Bots[index].Username.Equals(xy[0], StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            Console.WriteLine("Authing bot with '" + code + "'");
+                            manager.AuthBot(index, code);
+                        }
+                    }
                 }
             }
         }
@@ -67,9 +78,8 @@ namespace SteamBot
         public void CommandInterpreter(string command)
         {
             showHelp = false;
-            stop = -1;
-            start = -1;
-            stopName = null;
+            start = null;
+            stop = null;
 
             p.Parse(command);
 
@@ -79,18 +89,30 @@ namespace SteamBot
                 p.WriteOptionDescriptions(Console.Out);
             }
 
-            if (stop > -1)
+            if (!String.IsNullOrEmpty(stop))
             {
-                manager.StopBot(stop);
-            }
-            else if (!String.IsNullOrEmpty(stopName))
-            {
-                manager.StopBot(stopName);
+                int index;
+                if (int.TryParse(stop, out index) && (index < manager.ConfigObject.Bots.Length))
+                {
+                    manager.StopBot(index);
+                }
+                else
+                {
+                    manager.StopBot(stop);
+                }
             }
 
-            if (start > -1)
+            if (!String.IsNullOrEmpty(start))
             {
-                manager.StartBot(start);
+                int index;
+                if (int.TryParse(start, out index) && (index < manager.ConfigObject.Bots.Length))
+                {
+                    manager.StartBot(index);
+                }
+                else
+                {
+                    manager.StartBot(start);
+                }
             }
 
             if (clearConsole)
@@ -136,6 +158,46 @@ namespace SteamBot
             }
         }
 
+        private void ExecCommand(string cmd)
+        {
+            cmd = cmd.Trim();
+
+            var cs = cmd.Split(' ');
+
+            if (cs.Length < 2)
+            {
+                Console.WriteLine("Error: No command given to be executed.");
+                return;
+            }
+
+            // Take the rest of the input as is
+            var command = cmd.Remove(0, cs[0].Length + 1);
+
+            int index;
+            // Try index first then search usernames
+            if (int.TryParse(cs[0], out index) && (index < manager.ConfigObject.Bots.Length))
+            {
+                if (manager.ConfigObject.Bots.Length > index)
+                {
+                    manager.SendCommand(index, command);
+                    return;
+                }
+            }
+            else if (!String.IsNullOrEmpty(cs[0]))
+            {
+                for (index = 0; index < manager.ConfigObject.Bots.Length; index++)
+                {
+                    if (manager.ConfigObject.Bots[index].Username.Equals(cs[0], StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        manager.SendCommand(index, command);
+                        return;
+                    }
+                }
+            }
+            // Print error
+            Console.WriteLine("Error: Bot " + cs[0] + " not found.");
+        }
+
         #region Nested Options classes
         // these are very much like the NDesk.Options but without the
         // maturity, features or need for command seprators like "-" or "/"
@@ -171,7 +233,11 @@ namespace SteamBot
                 {
                     if (cs[0].Equals(option.Name, StringComparison.CurrentCultureIgnoreCase))
                     {
-                        if (cs.Length > 1)
+                        if (cs.Length > 2)
+                        {
+                            option.Func(c.Remove(0, cs[0].Length + 1));
+                        }
+                        else if (cs.Length > 1)
                         {
                             option.Func(cs[1]);
                         }
