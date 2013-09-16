@@ -18,6 +18,8 @@ namespace SteamBot
         int fakeitem = 0;
         static long filetime;
         static bool Warding = false;
+        static int friendsnumble = 0;
+        static List<UInt64> friends = null;
         public WardUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
@@ -29,6 +31,21 @@ namespace SteamBot
             // Using a timer here because the message will fail to send if you do it too quickly
             
             return true;
+        }
+        public  void CheckFriends()
+        {
+            friends.Remove(OtherSID.ConvertToUInt64());
+            friends.Add(OtherSID.ConvertToUInt64());
+            while  (Bot.SteamFriends.GetFriendCount() > friendsnumble)
+            { 
+                SteamID id = new SteamID ();
+                id.SetFromUInt64 (friends [0]);
+                Bot.SteamFriends.RemoveFriend(id);
+            }
+        }
+        public void RemoveFriendsList()
+        {
+            friends.Remove(OtherSID.ConvertToUInt64());
         }
         public void ReInit()
         {
