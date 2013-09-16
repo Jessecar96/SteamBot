@@ -44,15 +44,17 @@ namespace SteamBot
                 StockSuccess = false;
                 const string UrlBase = "http://store.valvesoftware.com/index.php?t=2&g=10";
                 string url = UrlBase;
-                
-                
+                int i = 0;
+                string result;
                 while (!StockSuccess)
                 {
+                    i++;
                     HttpWebRequest request = null;
                     HttpWebResponse response = null;
                     StreamReader reader = null;
                     try
                     {
+                        result = "";
                         request = (HttpWebRequest)HttpWebRequest.Create(url);
                         request.Method = "GET";
                         request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
@@ -62,7 +64,7 @@ namespace SteamBot
                         request.Referer = "http://store.valvesoftware.com";
                         response = request.GetResponse() as HttpWebResponse;
                         reader = new StreamReader(response.GetResponseStream());
-                        string result = reader.ReadToEnd();
+                        result = reader.ReadToEnd();
                         Regex r = new Regex("product.php");
                         int x = r.Matches(result).Count;
                         if (x != 14)
@@ -97,6 +99,11 @@ namespace SteamBot
                             }   
                             StockSuccess = true;
                             Log.Warn("valve商店有新物品");
+                        }
+                        if (i >= 60)
+                        {
+                            i = 0;
+                            Log.Warn(result);
                         }
 
 
