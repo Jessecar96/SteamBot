@@ -146,7 +146,6 @@ namespace SteamBot
                 case "test":
                     if (tested)
                     {
-
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
                             Trade.RemoveItem(item);
