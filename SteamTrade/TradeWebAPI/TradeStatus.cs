@@ -149,7 +149,9 @@ namespace SteamTrade.TradeWebAPI
 
     public class TradeUserAssets
     {
+        /// <summary>Iventory type</summary>
         public int contextid { get; set; }
+        /// <summary>itemid</summary>
         public ulong assetid { get; set; }
         public int appid { get; set; }
         public int amount { get; set; }

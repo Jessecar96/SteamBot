@@ -9,6 +9,7 @@ namespace SteamBot
         // NEW ------------------------------------------------------------------
         private GenericInventory mySteamInventory = new GenericInventory();
         private GenericInventory OtherSteamInventory = new GenericInventory();
+        private bool tested;
         // ----------------------------------------------------------------------
 
         public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
@@ -61,6 +62,7 @@ namespace SteamBot
         {
             // NEW -------------------------------------------------------------------------------
             List<int> contextId = new List<int>();
+            tested = false;
 
             /*************************************************************************************
              * 
@@ -142,12 +144,24 @@ namespace SteamBot
                 break;
 
                 case "test":
-                    Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
-
-                    foreach (var item in mySteamInventory.items)
+                    if (tested)
                     {
-                        Trade.AddItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
+
+                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+                        {
+                            Trade.RemoveItem(item);
+                        }
                     }
+                    else
+                    {
+                        Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
+                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+                        {
+                            Trade.AddItem(item);
+                        }
+                    }
+
+                    tested = !tested;
 
                 break;
 

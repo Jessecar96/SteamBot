@@ -219,20 +219,28 @@ namespace SteamTrade
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
         public bool AddItem (ulong itemid)//TF2 Default
         {
-            return AddItem(itemid,440,2);
+            if (MyInventory.GetItem(itemid) == null)
+            {
+                return false;
+            }
+            else
+            {
+                return AddItem(new TradeUserAssets(){assetid=itemid,appid=440,contextid=2});
+            }
         }
         public bool AddItem(ulong itemid, int appid, int contextid)
         {
-            if (appid == 440 & MyInventory.GetItem(itemid) == null)
-                return false;
-
+            return AddItem(new TradeUserAssets(){assetid=itemid,appid=appid,contextid=contextid});
+        }
+        public bool AddItem(TradeUserAssets item)
+        {
             var slot = NextTradeSlot();
-            bool ok = session.AddItemWebCmd(itemid, slot,appid,contextid);
+            bool ok = session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid);
 
             if (!ok)
                 throw new TradeException("The Web command to add the Item failed");
 
-            myOfferedItems[slot] = itemid;
+            myOfferedItems[slot] = item.assetid;
             
             return true;
         }
@@ -291,10 +299,13 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        /// 
         public bool RemoveItem(ulong itemid)
         {
             return RemoveItem(itemid,440,2);
+        }
+        public bool RemoveItem(TradeUserAssets item)
+        {
+            return RemoveItem(item.assetid, item.appid, item.contextid);
         }
         public bool RemoveItem (ulong itemid,int appid,int contextid)
         {
