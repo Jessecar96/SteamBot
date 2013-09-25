@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using SteamTrade;
 using System;
 using System.Timers;
+using System.Net;
+using System.IO;
+using System.Threading;
+using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SteamBot
 {
@@ -35,7 +41,73 @@ namespace SteamBot
 
         public override void OnLoginCompleted()
         {
+            //const string SchemaMutexName = "steam_bot_dota2";
+            string url = Trade.CurrentSchema.ItemsGameUrl;
+            string outputpath = "dota2file.json";
+            HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+            request.Method = "GET";
+            request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+            request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+            request.Host = "media.steampowered.com";
+            request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
+            request.Referer = "http://media.steampowered.com";
+            HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+            DateTime schemaLastModified = DateTime.Parse(response.Headers["Last-Modified"]);
+            Log.Warn(schemaLastModified.ToString());
+            Stream result = response.GetResponseStream();
+            string xxx = result.ToString();
+            Log.Warn(xxx);
+            //response.Close();
+            //request.Abort();
+            Log.Warn ( Convertvdf2json(result, outputpath, false));
+
         }
+        public static string Convertvdf2json(Stream inputstream, string outputpath, bool CompactJSON)
+        {
+
+                using (FileStream stream2 = System.IO.File.Create(outputpath))
+                {
+                    KeyValue kv = new KeyValue(null, null);
+                    
+                    kv.ReadAsText(inputstream);
+                    return Convert(kv, stream2, CompactJSON);
+                }
+
+        }
+        public static string Convert(KeyValue kv, Stream outputStream, bool compactJSON)
+        {
+            JObject obj2 = new JObject();
+            new JObject();
+            obj2[kv.Name] = ConvertRecursive(kv);
+            using (StreamWriter writer = new StreamWriter (outputStream ,Encoding.UTF8  ))
+            {
+                using (JsonTextWriter writer2 = new JsonTextWriter(writer))
+                {
+                    writer2.Formatting = compactJSON ? Formatting.None : Formatting.Indented;
+                    obj2.WriteTo(writer2, new JsonConverter[0]);
+                    //string x;
+                    string x = obj2["items_game"]["items"].;
+
+                    //JObject xxx = JObject.Parse(x);
+                    return x;
+                }
+            }
+        }
+
+        private static JToken ConvertRecursive(KeyValue kv)
+        {
+            JObject obj2 = new JObject();
+            if (kv.Children.Count <= 0)
+            {
+                return kv.Value;
+            }
+            foreach (KeyValue value2 in kv.Children)
+            {
+                obj2[value2.Name] = ConvertRecursive(value2);
+            }
+            return obj2;
+        }
+
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
