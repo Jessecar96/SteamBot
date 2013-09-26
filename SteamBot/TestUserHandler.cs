@@ -86,7 +86,7 @@ namespace SteamBot
                     writer2.Formatting = compactJSON ? Formatting.None : Formatting.Indented;
                     obj2.WriteTo(writer2, new JsonConverter[0]);
                     //string x;
-                    string x = obj2["items_game"]["items"].;
+                    string x = obj2["items_game"]["items"].ToString ();
 
                     //JObject xxx = JObject.Parse(x);
                     return x;

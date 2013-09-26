@@ -14,7 +14,7 @@ namespace SteamBot
     {
 
         static bool StockSuccess = false;
-        static int SleepTime = 60000;
+        static int SleepTime = 30000;
         public StockHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
@@ -45,6 +45,7 @@ namespace SteamBot
                 const string UrlBase = "http://store.valvesoftware.com/index.php?t=2&g=10";
                 string url = UrlBase;
                 int i = 0;
+                int ee = 0;
                 string result;
                 while (!StockSuccess)
                 {
@@ -67,7 +68,7 @@ namespace SteamBot
                         result = reader.ReadToEnd();
                         Regex r = new Regex("product.php");
                         int x = r.Matches(result).Count;
-                        if (x != 14)
+                        if (x != 15)
                         {
                             SteamID myid = new SteamID();
                             myid.SetFromUInt64(76561198047154762);
@@ -100,17 +101,15 @@ namespace SteamBot
                             StockSuccess = true;
                             Log.Warn("valve商店有新物品");
                         }
-                        if (i >= 60)
-                        {
-                            i = 0;
-                            Log.Warn(result);
-                        }
+
 
 
                     }
                     catch (Exception ex)
                     {
+                        ee++;
                         Log.Warn(ex.ToString());
+                        Log.Warn(ee+"/"+i);
 
 
                     }
