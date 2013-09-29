@@ -69,7 +69,26 @@ namespace SteamTrade
                         request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
                         request.Referer = "http://media.steampowered.com";
                         request.IfModifiedSince = File.GetCreationTime(cachefile);
-                        HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+                        try
+                        {
+                            HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+                        }
+                        catch (WebException webEx)
+                        {
+                            HttpWebResponse responsewebEx = (HttpWebResponse)webEx.Response;
+                            if (responsewebEx.StatusCode == HttpStatusCode.NotModified)
+                            {
+                                needhttp = false;
+                                Console.WriteLine("文件未修改,无需下载");
+                            }
+                            else
+                            {
+                                needhttp = true;
+                                Console.WriteLine("文件已修改,重新下载");
+                            }
+                           // Console.WriteLine(webEx.Status.ToString());
+                        }
+                    /*
                         if (response.StatusCode == HttpStatusCode.NotModified)
                         {
                             needhttp = false;
@@ -79,7 +98,7 @@ namespace SteamTrade
                         {
                             needhttp = true;
                             Console.Write("文件已修改,重新下载");
-                        }
+                        } */
                  //   }
                    /* catch
                     {
@@ -89,30 +108,17 @@ namespace SteamTrade
                 }
                 else
                 {
-                    Console.WriteLine(cache.Length);
-                    Console.WriteLine(url.Length);
-                    Console.WriteLine();
-                    Console.Write(cache);
-                    Console.WriteLine();
-                    Console.Write(url);
-                    Console.WriteLine();
-                    Console.Write("url已变化");
-                    Console.WriteLine();
+                    needhttp = true;
                 }
             }
             if (!needhttp)
             {
-                Console.Write("需要重新下载");
+                Console.Write("无需重新下载");
                 try
                 {
-                    StreamReader reader = new StreamReader(cachefile);
-                    Stream urlresult = reader.BaseStream ;
-                    //string result = GetSchemaString();
-                    // TextWriter aaa = new StreamWriter(cachefile ,true);
-                    //aaa.Write(urlresult);
-                    Convertvdf2json(urlresult, cachefile, false);
                     string result = GetSchemaString();
                     schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                    Console.Write("json解析完成");
                     //return schemaResult.items_game ?? null;
                 }
                 catch
@@ -144,7 +150,7 @@ namespace SteamTrade
                     request.Abort();
                     string result = GetSchemaString();
                     schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
-                   // return schemaResult.items_game ?? null;
+                    //return schemaResult.items_game ?? null;
 
                 }
                 catch
