@@ -8,7 +8,7 @@ namespace SteamTrade
 {
     
     /// <summary>
-    /// Generic Steam Backpak Interface
+    /// Generic Steam Backpack Interface
     /// </summary>
     public class GenericInventory
     {
@@ -30,7 +30,7 @@ namespace SteamTrade
             public bool tradable { get; set; }
             public bool marketable { get; set; }
 
-            public dynamic metadata { get; set; }
+            public dynamic app_data { get; set; }
         }
 
         public ItemDescription getInfo(ulong id)
@@ -107,7 +107,7 @@ namespace SteamTrade
                                 type = classid_instanceid.type,
                                 marketable = (bool) classid_instanceid.marketable,
                                 tradable = (bool)classid_instanceid.tradable,
-                                metadata = classid_instanceid.descriptions
+                                app_data = classid_instanceid.app_data
                             });
                             break;
                         }
