@@ -15,7 +15,7 @@ namespace SteamBot
     public class TestUserHandler : UserHandler
     {
         int BotUncommonAdded, UserUncommonAdded, userRareAdded = 0;
-    
+        static Test xxx = null;
         public TestUserHandler(Bot bot, SteamID sid)
             : base(bot, sid) 
         {
@@ -40,13 +40,14 @@ namespace SteamBot
 
 
         public override void OnLoginCompleted()
-        {
+        { /*
             //const string SchemaMutexName = "steam_bot_dota2";
             string url = Trade.CurrentSchema.ItemsGameUrl;
             string outputpath = "dota2file.json";
             HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
-            request.Method = "GET";
-            request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+            request.Method = "GET"; */
+            //request.Accept = "text/javascript, text/html, application/xml, text/xml, */*"; 
+            /*
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             request.Host = "media.steampowered.com";
             request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
@@ -59,7 +60,10 @@ namespace SteamBot
             Log.Warn(xxx);
             //response.Close();
             //request.Abort();
-            Log.Warn ( Convertvdf2json(result, outputpath, false));
+            Log.Warn ( Convertvdf2json(result, outputpath, false)); */
+            xxx = Test.FetchSchema(Trade.CurrentSchema.ItemsGameUrl);
+            
+            Log.Warn (xxx.Items["282"].Name);
 
         }
         public static string Convertvdf2json(Stream inputstream, string outputpath, bool CompactJSON)
