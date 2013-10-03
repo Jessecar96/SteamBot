@@ -19,9 +19,7 @@ namespace SteamBot
             return true;
         }
 
-        public override void OnLoginCompleted()
-        {
-        }
+        public override void OnLoginCompleted() {}
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
@@ -105,7 +103,7 @@ namespace SteamBot
                     break;
 
                 case 753:
-                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getInfo(inventoryItem.Id);
+                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
                     Trade.SendMessage("Steam Inventory Item Added.");
                     Trade.SendMessage("Type: " + tmpDescription.type);
                     Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
@@ -184,7 +182,7 @@ namespace SteamBot
             }
             else
             {
-                if(Validate ())
+                if(Validate () | IsAdmin)
                 {
                     Trade.SetReady (true);
                 }
@@ -193,7 +191,7 @@ namespace SteamBot
         
         public override void OnTradeAccept() 
         {
-            if (Validate() || IsAdmin)
+            if (Validate() | IsAdmin)
             {
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
@@ -213,7 +211,7 @@ namespace SteamBot
         public bool Validate ()
         {            
             List<string> errors = new List<string> ();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed.");
+            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're and Admin.");
 
             // send the errors
             if (errors.Count != 0)

@@ -13,14 +13,20 @@ namespace SteamTrade
     public class GenericInventory
     {
         public Dictionary<ulong, Item> items = new Dictionary<ulong, Item>();
-        public Dictionary<ulong, ItemDescription> descriptions = new Dictionary<ulong, ItemDescription>();
+        public Dictionary<string, ItemDescription> descriptions = new Dictionary<string, ItemDescription>();
 
         public bool isLoaded = false;
         public List<string> errors = new List<string>();
 
         public class Item : TradeUserAssets
         {
-            public ulong classid { get; set; }
+            public string descriptionid { get; set; }
+
+            public override string  ToString()
+            {
+                return string.Format("id:{0}, appid:{1}, contextid:{2}, amount:{3}, descriptionid:{4}",
+                    assetid, appid, contextid, amount, descriptionid);
+            }
         }
 
         public class ItemDescription
@@ -30,34 +36,35 @@ namespace SteamTrade
             public bool tradable { get; set; }
             public bool marketable { get; set; }
 
-            public dynamic app_data { get; set; }
+            public Dictionary<string, string> app_data{ get; set; }
+
+            public void debug_app_data()
+            {
+                Console.WriteLine("\n\""+name+"\"");
+                if (app_data == null)
+                {
+                    Console.WriteLine("Doesn't have app_data");
+                    return;
+                }
+
+                foreach (var value in app_data)
+                {
+                    Console.WriteLine(string.Format("{0} = {1}",value.Key,value.Value));
+                }
+                Console.WriteLine("");
+            }
         }
 
-        public ItemDescription getInfo(ulong id)
+        public ItemDescription getDescription(ulong id)
         {
             try
             {
-                return descriptions[items[id].classid];
+                return descriptions[items[id].descriptionid];
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                errors.Add("getInfo(" + id + "): " + e.Message);
-                return new ItemDescription();
-            }
-        }
-
-        public bool itemExists(ulong id)
-        {
-            try
-            {
-                GenericInventory.Item tmpItem = items[id];
-                return true;
-            }
-            catch (Exception e)
-            {
-                errors.Add(e.Message);
-                return false;
+                Console.WriteLine("ERROR: "+ e.Message);
+                return null;
             }
         }
 
@@ -65,12 +72,13 @@ namespace SteamTrade
         {
             dynamic invResponse;
             isLoaded = false;
+            Dictionary<string, string> tmpAppData;
 
             try
             {
                 for (int i = 0; i < contextIds.Count; i++)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(),appid, contextIds[i]), "GET", null, null, true);
+                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(),appid, contextIds[i]), "GET", null, null, true);
                     invResponse = JsonConvert.DeserializeObject(response);
 
                     if (invResponse.success == false)
@@ -90,7 +98,7 @@ namespace SteamTrade
                                 appid = appid,
                                 contextid = contextIds[i],
                                 assetid = itemId.id,
-                                classid = itemId.classid
+                                descriptionid = itemId.classid + "_" + itemId.instanceid
                             });
                             break;
                         }
@@ -99,16 +107,32 @@ namespace SteamTrade
                     // rgDescriptions = Item Schema (sort of)
                     foreach (var description in invResponse.rgDescriptions)
                     {
-                        foreach (var classid_instanceid in description)// classid + '_' + instenceid 
+                        foreach (var class_instance in description)// classid + '_' + instenceid 
                         {
-                            if (!descriptions.ContainsKey((ulong)classid_instanceid.classid))
-                            descriptions.Add((ulong)classid_instanceid.classid, new ItemDescription(){
-                                name = classid_instanceid.name,
-                                type = classid_instanceid.type,
-                                marketable = (bool) classid_instanceid.marketable,
-                                tradable = (bool)classid_instanceid.tradable,
-                                app_data = classid_instanceid.app_data
-                            });
+                            if (class_instance.app_data != null)
+                            {
+                                tmpAppData = new Dictionary<string, string>();
+                                foreach (var value in class_instance.app_data)
+                                {
+                                    tmpAppData.Add(""+value.Name,""+value.Value);
+                                }
+                            }
+                            else
+                            {
+                                tmpAppData= null;
+                            }
+
+                                
+                            descriptions.Add("" + class_instance.classid + "_" + class_instance.instaceid, 
+                                new ItemDescription()
+                                    {
+                                        name = class_instance.name,
+                                        type = class_instance.type,
+                                        marketable = (bool) class_instance.marketable,
+                                        tradable = (bool)class_instance.tradable,
+                                        app_data = tmpAppData
+                                    }
+                            );
                             break;
                         }
                     }
