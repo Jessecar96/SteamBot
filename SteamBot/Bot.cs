@@ -695,10 +695,27 @@ namespace SteamBot
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
         {
+            bool success = true;
+            CallbackMsg msg = null;
+
             while (!backgroundWorker.CancellationPending)
             {
-                CallbackMsg msg = SteamClient.WaitForCallback(true);
-                HandleSteamMessage(msg);
+                try
+                {
+                    if (success)
+                    {
+                        msg = SteamClient.WaitForCallback(true);
+                    }
+
+                    HandleSteamMessage(msg);
+                    success = true;
+                }
+                catch (WebException e)
+                {
+                    log.Error("URI: " + e.Response.ResponseUri + " >> " + e.Message);
+                    System.Threading.Thread.Sleep(60000);
+                    success = false;
+                }
             }
         }
 
