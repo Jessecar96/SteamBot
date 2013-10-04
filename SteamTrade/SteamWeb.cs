@@ -121,7 +121,7 @@ namespace SteamTrade
                     capText = Uri.EscapeDataString (Console.ReadLine ());
                 }
 
-                data.Add ("captcha_gid", captcha ? capGID : "");
+                data.Add ("captchagid", captcha ? capGID : "");
                 data.Add ("captcha_text", captcha ? capText : "");
                 // Captcha end
 
