@@ -63,7 +63,7 @@ namespace SteamTrade
             }
             catch (Exception e)
             {
-                Console.WriteLine("ERROR: "+ e.Message);
+                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}",id,e.Message));
                 return null;
             }
         }
@@ -123,7 +123,7 @@ namespace SteamTrade
                             }
 
                                 
-                            descriptions.Add("" + class_instance.classid + "_" + class_instance.instaceid, 
+                            descriptions.Add("" + (class_instance.classid??'0') + "_" + (class_instance.instaceid??'0'), 
                                 new ItemDescription()
                                     {
                                         name = class_instance.name,
