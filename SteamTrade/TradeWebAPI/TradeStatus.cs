@@ -149,10 +149,17 @@ namespace SteamTrade.TradeWebAPI
 
     public class TradeUserAssets
     {
+        /// <summary>Iventory type</summary>
         public int contextid { get; set; }
+        /// <summary>itemid</summary>
         public ulong assetid { get; set; }
         public int appid { get; set; }
-        public int amount { get; set; }
+        public int amount = 1;
+
+        public override string ToString()
+        {
+            return string.Format("id:{0}, appid:{1}, contextid:{2}, amount:{3}",assetid,appid,contextid,amount);
+        }
     }
 
     public enum TradeEventType : int

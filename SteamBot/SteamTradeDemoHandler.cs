@@ -9,6 +9,7 @@ namespace SteamBot
         // NEW ------------------------------------------------------------------
         private GenericInventory mySteamInventory = new GenericInventory();
         private GenericInventory OtherSteamInventory = new GenericInventory();
+        private bool tested;
         // ----------------------------------------------------------------------
 
         public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
@@ -18,9 +19,7 @@ namespace SteamBot
             return true;
         }
 
-        public override void OnLoginCompleted()
-        {
-        }
+        public override void OnLoginCompleted() {}
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
@@ -60,46 +59,54 @@ namespace SteamBot
         public override void OnTradeInit() 
         {
             // NEW -------------------------------------------------------------------------------
-            List<uint> InvType = new List<uint>();
+            List<int> contextId = new List<int>();
+            tested = false;
 
             /*************************************************************************************
              * 
              * SteamInventory AppId = 753 
              * 
-             * Inventory types:
-             *  1 = Gifts (Games), must be public on steam profile in order to work.
-             *  6 = Trading Cards, Emoticons & Backgrounds. 
+             *  Context Id      Description
+             *      1           Gifts (Games), must be public on steam profile in order to work.
+             *      6           Trading Cards, Emoticons & Backgrounds. 
              *  
              ************************************************************************************/
 
-            InvType.Add(1);
-            InvType.Add(6);
+            contextId.Add(1);
+            contextId.Add(6);
 
-            mySteamInventory.load(753, InvType, Bot.SteamClient.SteamID);
-            OtherSteamInventory.load(753, InvType, OtherSID);
+            mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
+            OtherSteamInventory.load(753, contextId, OtherSID);
 
-            if (!OtherSteamInventory.loaded)
+            if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
             {
-                Trade.SendMessage("Couldn't open your inventory, type 'errors' for more info.");
+                Trade.SendMessage("Couldn't open an inventory, type 'errors' for more info.");
             }
-            
+
+            Trade.SendMessage("Type 'test' to start.");
             // -----------------------------------------------------------------------------------
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
             // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
-            Trade.SendMessage("Object AppID:" + inventoryItem.AppId);
+            Trade.SendMessage("Object AppID: " + inventoryItem.AppId);
+            Trade.SendMessage("Object ContextId: " + inventoryItem.ContextId);
 
             switch (inventoryItem.AppId)
             {
                 case 440:
-                    Trade.SendMessage("TF2 Item");
+                    Trade.SendMessage("TF2 Item Added.");
+                    Trade.SendMessage("Name: " + schemaItem.Name);
+                    Trade.SendMessage("Quality: " + inventoryItem.Quality);
+                    Trade.SendMessage("Level: " + inventoryItem.Level);
+                    Trade.SendMessage("Craftable: " + (inventoryItem.IsNotCraftable?"No":"Yes"));
                     break;
 
                 case 753:
-                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getInfo(inventoryItem.Id);
-                    Trade.SendMessage("Object type: " + tmpDescription.type);
-                    Trade.SendMessage("Marketable: " + tmpDescription.marketable);
+                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
+                    Trade.SendMessage("Steam Inventory Item Added.");
+                    Trade.SendMessage("Type: " + tmpDescription.type);
+                    Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
                     break;
 
                 default:
@@ -112,12 +119,55 @@ namespace SteamBot
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
         public override void OnTradeMessage (string message) {
-            if (message.ToLower() == "errors")
+            switch (message.ToLower())
             {
-                foreach (string error in OtherSteamInventory.errors)
-                {
-                    Trade.SendMessage(" * " + error);
-                }
+                case "errors":
+                    if (OtherSteamInventory.errors.Count > 0)
+                    {
+                        Trade.SendMessage("User Errors:");
+                        foreach (string error in OtherSteamInventory.errors)
+                        {
+                            Trade.SendMessage(" * " + error);
+                        }
+                    }
+
+                    if (mySteamInventory.errors.Count > 0)
+                    {
+                        Trade.SendMessage("Bot Errors:");
+                        foreach (string error in mySteamInventory.errors)
+                        {
+                            Trade.SendMessage(" * " + error);
+                        }
+                    }
+                break;
+
+                case "test":
+                    if (tested)
+                    {
+                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+                        {
+                            Trade.RemoveItem(item);
+                        }
+                    }
+                    else
+                    {
+                        Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
+                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+                        {
+                            Trade.AddItem(item);
+                        }
+                    }
+
+                    tested = !tested;
+
+                break;
+
+                case "remove":
+                    foreach (var item in mySteamInventory.items)
+                    {
+                        Trade.RemoveItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
+                    }
+                break;
             }
         }
         
@@ -132,7 +182,7 @@ namespace SteamBot
             }
             else
             {
-                if(Validate ())
+                if(Validate () | IsAdmin)
                 {
                     Trade.SetReady (true);
                 }
@@ -141,7 +191,7 @@ namespace SteamBot
         
         public override void OnTradeAccept() 
         {
-            if (Validate() || IsAdmin)
+            if (Validate() | IsAdmin)
             {
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
@@ -161,7 +211,7 @@ namespace SteamBot
         public bool Validate ()
         {            
             List<string> errors = new List<string> ();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items.");
+            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're and Admin.");
 
             // send the errors
             if (errors.Count != 0)

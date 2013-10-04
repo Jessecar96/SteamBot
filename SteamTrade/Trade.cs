@@ -43,7 +43,7 @@ namespace SteamTrade
             OtherSID = other;
             List<uint> InvType = new List<uint>();
 
-            session = new TradeSession(sessionId, token, other, "440");
+            session = new TradeSession(sessionId, token, other);
 
             this.eventList = new List<TradeEvent>();
 
@@ -217,19 +217,31 @@ namespace SteamTrade
         /// Adds a specified item by its itemid.
         /// </summary>
         /// <returns><c>false</c> if the item was not found in the inventory.</returns>
-        public bool AddItem (ulong itemid)
+        public bool AddItem (ulong itemid)//TF2 Default
         {
-            if (MyInventory.GetItem (itemid) == null)
+            if (MyInventory.GetItem(itemid) == null)
+            {
                 return false;
-
-            var slot = NextTradeSlot ();
-            bool ok = session.AddItemWebCmd (itemid, slot);
+            }
+            else
+            {
+                return AddItem(new TradeUserAssets(){assetid=itemid,appid=440,contextid=2});
+            }
+        }
+        public bool AddItem(ulong itemid, int appid, int contextid)
+        {
+            return AddItem(new TradeUserAssets(){assetid=itemid,appid=appid,contextid=contextid});
+        }
+        public bool AddItem(TradeUserAssets item)
+        {
+            var slot = NextTradeSlot();
+            bool ok = session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid);
 
             if (!ok)
-                throw new TradeException ("The Web command to add the Item failed");
+                throw new TradeException("The Web command to add the Item failed");
 
-            myOfferedItems [slot] = itemid;
-
+            myOfferedItems[slot] = item.assetid;
+            
             return true;
         }
 
@@ -287,14 +299,22 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem (ulong itemid)
+        public bool RemoveItem(ulong itemid)
+        {
+            return RemoveItem(itemid,440,2);
+        }
+        public bool RemoveItem(TradeUserAssets item)
+        {
+            return RemoveItem(item.assetid, item.appid, item.contextid);
+        }
+        public bool RemoveItem (ulong itemid,int appid,int contextid)
         {
             int? slot = GetItemSlot (itemid);
             if (!slot.HasValue)
                 return false;
 
-            bool ok = session.RemoveItemWebCmd(itemid, slot.Value);
-
+            bool ok = session.RemoveItemWebCmd(itemid, slot.Value,appid,contextid);
+            
             if (!ok)
                 throw new TradeException ("The web command to remove the item failed.");
 
@@ -604,9 +624,12 @@ namespace SteamTrade
                 }
                 else
                 {
-                    item = new Inventory.Item();
-                    item.Id = itemID;
-                    item.AppId = tradeEvent.appid;
+                    item = new Inventory.Item()
+                    {
+                        Id=itemID,
+                        AppId=tradeEvent.appid,
+                        ContextId=tradeEvent.contextid
+                    };
                     //Console.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
@@ -629,7 +652,7 @@ namespace SteamTrade
             if (OtherPrivateInventory == null)
             {
                 // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid);
+                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid,tradeEvent.contextid);
                 OtherPrivateInventory = new ForeignInventory(f);
             }
 
@@ -666,9 +689,12 @@ namespace SteamTrade
                 else
                 {
                     // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
-                    item = new Inventory.Item();
-                    item.Id = itemID;
-                    item.AppId = tradeEvent.appid;
+                    item = new Inventory.Item()
+                    {
+                        Id = itemID,
+                        AppId = tradeEvent.appid,
+                        ContextId = tradeEvent.contextid
+                    };
                     OnUserRemoveItem(null, item);
                 }
             }
