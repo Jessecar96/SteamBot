@@ -104,6 +104,13 @@ namespace SteamBot
 
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
+
+                    if (tmpDescription == null)
+                    {
+                        Trade.SendMessage("Description Not Found");
+                        break;
+                    }
+
                     Trade.SendMessage("Steam Inventory Item Added.");
                     Trade.SendMessage("Type: " + tmpDescription.type);
                     Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
@@ -154,7 +161,10 @@ namespace SteamBot
                         Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
-                            Trade.AddItem(item);
+                            if (mySteamInventory.isLoaded & mySteamInventory.getDescription(item.assetid).tradable)
+                            {
+                                Trade.AddItem(item);
+                            }
                         }
                     }
 

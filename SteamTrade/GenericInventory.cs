@@ -53,6 +53,12 @@ namespace SteamTrade
                 }
                 Console.WriteLine("");
             }
+
+            public override string ToString()
+            {
+                return string.Format("Name:{0}, Type:{1}, Tradeable:{2}, Marketable:{3}",
+                    name,type,tradable,marketable);
+            }
         }
 
         public ItemDescription getDescription(ulong id)
@@ -73,6 +79,8 @@ namespace SteamTrade
             dynamic invResponse;
             isLoaded = false;
             Dictionary<string, string> tmpAppData;
+            items.Clear();
+            descriptions.Clear();
 
             try
             {
@@ -122,19 +130,18 @@ namespace SteamTrade
                                 tmpAppData= null;
                             }
 
-                                
-                            descriptions.Add("" + (class_instance.classid??'0') + "_" + (class_instance.instaceid??'0'), 
+                            descriptions.Add("" + (class_instance.classid ?? '0') + "_" + (class_instance.instaceid ?? '0'),
                                 new ItemDescription()
                                     {
                                         name = class_instance.name,
                                         type = class_instance.type,
-                                        marketable = (bool) class_instance.marketable,
+                                        marketable = (bool)class_instance.marketable,
                                         tradable = (bool)class_instance.tradable,
                                         app_data = tmpAppData
                                     }
                             );
-                            break;
                         }
+                        break;
                     }
 
                     if (errors.Count > 0)
@@ -144,8 +151,8 @@ namespace SteamTrade
             }//end try
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                errors.Add("Exception: " + e.Message);
+                Console.WriteLine(string.Format("ERROR: load({0},{1},{2}) >> {3}",appid,contextIds.ToString(),steamid.ConvertToUInt64(), e.Message));
+                errors.Add("Exception: load(...) >> " + e.Message);
                 return false;
             }
             isLoaded = true;
