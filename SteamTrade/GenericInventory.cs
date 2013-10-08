@@ -6,7 +6,6 @@ using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
 {
-    
     /// <summary>
     /// Generic Steam Backpack Interface
     /// </summary>
@@ -115,7 +114,7 @@ namespace SteamTrade
                     // rgDescriptions = Item Schema (sort of)
                     foreach (var description in invResponse.rgDescriptions)
                     {
-                        foreach (var class_instance in description)// classid + '_' + instenceid 
+                        foreach (var class_instance in description)// classid + '_' + instanceid 
                         {
                             if (class_instance.app_data != null)
                             {
@@ -140,8 +139,8 @@ namespace SteamTrade
                                         app_data = tmpAppData
                                     }
                             );
+                            break;
                         }
-                        break;
                     }
 
                     if (errors.Count > 0)

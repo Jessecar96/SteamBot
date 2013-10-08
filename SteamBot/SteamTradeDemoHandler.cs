@@ -68,11 +68,13 @@ namespace SteamBot
              * 
              *  Context Id      Description
              *      1           Gifts (Games), must be public on steam profile in order to work.
+             *      3           Coupons
              *      6           Trading Cards, Emoticons & Backgrounds. 
              *  
              ************************************************************************************/
 
             contextId.Add(1);
+            contextId.Add(3);
             contextId.Add(6);
 
             mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
