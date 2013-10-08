@@ -130,7 +130,7 @@ namespace SteamTrade
                                 tmpAppData= null;
                             }
 
-                            descriptions.Add("" + (class_instance.classid ?? '0') + "_" + (class_instance.instaceid ?? '0'),
+                            descriptions.Add("" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0'),
                                 new ItemDescription()
                                     {
                                         name = class_instance.name,
