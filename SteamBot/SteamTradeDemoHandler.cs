@@ -68,11 +68,13 @@ namespace SteamBot
              * 
              *  Context Id      Description
              *      1           Gifts (Games), must be public on steam profile in order to work.
+             *      3           Coupons
              *      6           Trading Cards, Emoticons & Backgrounds. 
              *  
              ************************************************************************************/
 
             contextId.Add(1);
+            contextId.Add(3);
             contextId.Add(6);
 
             mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
@@ -104,6 +106,13 @@ namespace SteamBot
 
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
+
+                    if (tmpDescription == null)
+                    {
+                        Trade.SendMessage("Description Not Found");
+                        break;
+                    }
+
                     Trade.SendMessage("Steam Inventory Item Added.");
                     Trade.SendMessage("Type: " + tmpDescription.type);
                     Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
@@ -154,7 +163,10 @@ namespace SteamBot
                         Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
-                            Trade.AddItem(item);
+                            if (mySteamInventory.isLoaded & mySteamInventory.getDescription(item.assetid).tradable)
+                            {
+                                Trade.AddItem(item);
+                            }
                         }
                     }
 
