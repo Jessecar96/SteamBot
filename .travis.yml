@@ -6,11 +6,13 @@ env:
 before_install:
   # Make sure mono is installed,
   # pipe stdout to dev/null because qq is still too chatty
-  # Adding the mono-testing PPA, because Ubuntu 12.04 uses mono 2.10,
+  # Adding the mono-experimental build, because Ubuntu 12.04 uses mono 2.10,
   # which doesn't include Microsoft.Build.dll, which is needed
   # for NuGet.exe to function properly.
-  - sudo apt-get install -qq python-software-properties
-  - sudo add-apt-repository -y ppa:v-kukol/mono-testing
+  #
+  # Shame on us for appending to sources.list, but it's simple, fast and used
+  # only for TravisCI
+  - echo " deb http://debian.meebey.net/experimental/mono /" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get update -qq > /dev/null
   - sudo apt-get install -qq mono-complete mono-gmcs > /dev/null
   # update root certs for nuget
