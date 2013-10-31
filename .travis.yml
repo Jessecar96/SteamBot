@@ -14,7 +14,7 @@ before_install:
   # only for TravisCI
   - sudo echo "deb http://debian.meebey.net/experimental/mono /" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get update > /dev/null
-  - sudo apt-get install --force-yes -y mono-complete
+  - sudo apt-get -d install --force-yes -y mono-complete
   # update root certs for nuget
   - mozroots --import --sync
   - chmod a+x .ci/build.sh
