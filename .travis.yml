@@ -12,7 +12,7 @@ before_install:
   #
   # Shame on us for appending to sources.list, but it's simple, fast and used
   # only for TravisCI
-  - sudo echo " deb http://debian.meebey.net/experimental/mono /" | sudo tee -a /etc/apt/sources.list
+  - sudo echo "deb http://debian.meebey.net/experimental/mono /" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get update > /dev/null
   - sudo apt-get install --force-yes -y mono-complete
   # update root certs for nuget
