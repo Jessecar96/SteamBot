@@ -287,7 +287,7 @@ namespace SteamBot
 
         public void SetGamePlaying(int id)
         {
-            var gamePlaying = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
+            var gamePlaying = new SteamKit2.ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
 
             if (id != 0)
                 gamePlaying.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed

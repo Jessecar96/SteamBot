@@ -1,9 +1,2 @@
-[submodule "Lib/SteamKit2"]
-	path = Lib/SteamKit2
-	url = git://github.com/redjazz96/SteamKit2.git
-[submodule "Lib/Newtonsoft.Json"]
-	path = Lib/Newtonsoft.Json
-	url = git://github.com/redjazz96/Newtonsoft.Json.git
-[submodule "Lib/protobuf-net"]
-	path = Lib/protobuf-net
-	url = git://github.com/redjazz96/protobuf-net.git
+
+
