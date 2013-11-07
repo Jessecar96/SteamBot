@@ -83,7 +83,10 @@
     </Target>
 
     <Target Name="_DownloadNuGet">
-        <DownloadNuGet OutputFilename="$(NuGetExePath)" Condition=" '$(DownloadNuGetExe)' == 'true' AND !Exists('$(NuGetExePath)')" />
+        <!-- Inline tasks are not yet supported by xbuild -->
+        <Exec Command="mozroots --import --sync;wget -O '$(NuGetExePath)' https://nuget.org/nuget.exe"
+              Condition="'$(OS)' != 'Windows_NT' AND '$(DownloadNuGetExe)' == 'true' AND !Exists('$(NuGetExePath)')" />
+        <DownloadNuGet OutputFilename="$(NuGetExePath)" Condition="'$(OS)' == 'Windows_NT' AND '$(DownloadNuGetExe)' == 'true' AND !Exists('$(NuGetExePath)')" />
     </Target>
 
     <Target Name="RestorePackages" DependsOnTargets="CheckPrerequisites">
