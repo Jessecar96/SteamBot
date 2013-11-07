@@ -28,5 +28,4 @@ packages
 *.nupkg
 
 # Allow NuGet specific exes and dlls
-!.nuget/NuGet.exe
 !.nuget/Microsoft.Build.dll
