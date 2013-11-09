@@ -22,3 +22,10 @@ Ankh.NoLoad
 
 *.userprefs
 *.pidb
+
+# NuGet Packages Directory
+packages
+*.nupkg
+
+# Allow NuGet specific exes and dlls
+!.nuget/Microsoft.Build.dll
