@@ -188,7 +188,13 @@ namespace SteamBot
                 }
             }
         }
-        
+
+        public override void OnTradeComplete()
+        {
+            // Trade completed successfully
+            Log.Success("Trade Complete.");
+        }
+
         public override void OnTradeAccept() 
         {
             if (Validate() | IsAdmin)
