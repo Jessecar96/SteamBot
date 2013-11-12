@@ -176,7 +176,7 @@ namespace SteamTrade
             if (OtherInventory == null || MyInventory == null)
                 InitializeTrade (me, other);
 
-            var t = new Trade (me, other, sessionId, token, apiKey, MyInventory, OtherInventory);
+            var t = new Trade (me, other, sessionId, token, MyInventory, OtherInventory);
 
             t.OnClose += delegate
             {
@@ -227,10 +227,10 @@ namespace SteamTrade
             // fetch other player's inventory from the Steam API.
             OtherInventory = Inventory.FetchInventory (other.ConvertToUInt64 (), apiKey);
 
-            if (OtherInventory == null)
-            {
-                throw new InventoryFetchException (other);
-            }
+            //if (OtherInventory == null)
+            //{
+            //    throw new InventoryFetchException (other);
+            //}
             
             // fetch our inventory from the Steam API.
             MyInventory = Inventory.FetchInventory (me.ConvertToUInt64 (), apiKey);
@@ -274,20 +274,11 @@ namespace SteamTrade
                         if (action)
                             lastOtherActionTime = DateTime.Now;
                         
-                        if (trade.OtherUserCancelled)
+                        if (trade.OtherUserCancelled || trade.HasTradeCompletedOk)
                         {
                             IsTradeThreadRunning = false;
 
-                            try
-                            {
-                                trade.CancelTrade ();
-                            }
-                            catch (Exception)
-                            {
-                                // ignore. possibly log. We don't care if the Cancel web command fails here we just want 
-                                // to fire the OnClose event.
-                                DebugPrint ("[TRADEMANAGER] error trying to cancel from poll thread");
-                            }
+                            trade.FireOnCloseEvent();
                         }
 
                         CheckTradeTimeout (trade);
@@ -295,8 +286,8 @@ namespace SteamTrade
                     catch (Exception ex)
                     {
                         // TODO: find a new way to do this w/o the trade events
-//                        if (OnError != null)
-//                            OnError ("Error Polling Trade: " + e);
+                        //if (OnError != null)
+                        //    OnError("Error Polling Trade: " + e);
                         
                         // ok then we should stop polling...
                         IsTradeThreadRunning = false;

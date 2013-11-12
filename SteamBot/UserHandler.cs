@@ -95,6 +95,15 @@ namespace SteamBot
 
         }
 
+        /// <summary>
+        /// Called when an 'exec' command is given via botmanager.
+        /// </summary>
+        /// <param name="command">The command message.</param>
+        public virtual void OnBotCommand(string command)
+        {
+
+        }
+
         #region Trade events
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 

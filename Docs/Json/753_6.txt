@@ -1,0 +1,43 @@
+{
+	"success":true,
+	"rgInventory":
+	{
+		"70968777":
+		{
+			"id":"70968777",
+			"classid":"172884566",
+			"instanceid":"0",
+			"amount":"1",
+			"pos":1
+		}
+	},
+	
+	"rgCurrency":[],
+	
+	"rgDescriptions":
+	{
+		"172884566_0":
+		{
+			"appid":"753",
+			"classid":"172884566",
+			"instanceid":"0",
+			"icon_url":"LM8bG-H8rsNnAQorXQCek5SD0aqljKCDs8_ZMbnm1jTlxCzguODo0cfYFtV7YNAZmZbIufDO4pu4wsQpuOXXM-jAP6Cm6PvTxoVa02Iqzh7Tw5Xqr4y427WZ1WPxrZMwvZ0_t6vkr9KRlEHfdy2XWMrFlL_7muvX4p-HaafwjDv0zg==","icon_url_large":"LM8bG-H8rsNnAQorXQCek5SD0aqljKCDs8_ZMbnm1jTlxCzguODo0cfYFtV7YNAZmZbIufDO4pu4wsQpuOXXM-jAP6Cm6PvTxoVa02Iqzh7Tw5Xqr4y427WZ1WPxrZMwvZ0_t6vkr9KRlEHfdy2XWMrFlL_7muvX4p-HaafwjDv0zg==",
+			"icon_drag_url":"",
+			"name":"GM_Construct",
+			"market_hash_name":"4000-GM_Construct",
+			"market_name":"GM_Construct",
+			"name_color":"",
+			"background_color":"",
+			"type":"Garry's Mod Profile Background",
+			"tradable":1,
+			"marketable":1,
+			"market_fee_app":"4000",
+			
+			"descriptions":[{"value":"The map that spawned a million melons"}],
+			
+			"tags":[{"internal_name":"app_4000","name":"Garry's Mod","category":"Game","category_name":"Game"},
+					{"internal_name":"droprate_0","name":"Common","category":"droprate","category_name":"Rarity"},
+					{"internal_name":"item_class_3","name":"Profile Background","category":"item_class","category_name":"Item Type"}]
+		}
+	}
+}

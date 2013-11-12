@@ -121,7 +121,7 @@ namespace SteamTrade
                     capText = Uri.EscapeDataString (Console.ReadLine ());
                 }
 
-                data.Add ("captcha_gid", captcha ? capGID : "");
+                data.Add ("captchagid", captcha ? capGID : "");
                 data.Add ("captcha_text", captcha ? capText : "");
                 // Captcha end
 
@@ -174,7 +174,7 @@ namespace SteamTrade
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary> 
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
-        public static bool Authenticate (SteamUser.LoginKeyCallback callback, SteamClient client, out string sessionId, out string token)
+        public static bool Authenticate(SteamUser.LoginKeyCallback callback, SteamClient client, out string sessionId, out string token, string MyLoginKey)
         {
             sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (callback.UniqueID.ToString ()));
             
@@ -192,7 +192,7 @@ namespace SteamTrade
                 
                 
                 byte[] loginKey = new byte[20];
-                Array.Copy (Encoding.ASCII.GetBytes (callback.LoginKey), loginKey, callback.LoginKey.Length);
+                Array.Copy(Encoding.ASCII.GetBytes(MyLoginKey), loginKey, MyLoginKey.Length);
                 
                 // aes encrypt the loginkey with our session key
                 byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt (loginKey, sessionKey);
