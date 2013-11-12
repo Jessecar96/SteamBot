@@ -57,7 +57,10 @@ namespace SteamBot
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {
                 Configuration.BotInfo info = ConfigObject.Bots[i];
-                mainLog.Info("Launching Bot " + info.DisplayName + "...");
+                if (ConfigObject.AutoStartAllBots || info.AutoStart)
+                {
+                    mainLog.Info("Launching Bot " + info.DisplayName + "...");
+                }
 
                 var v = new RunningBot(useSeparateProcesses, i, ConfigObject);
                 botProcs.Add(v);
@@ -119,7 +122,7 @@ namespace SteamBot
             mainLog.Debug(String.Format("Killing bot with username {0}.", botUserName));
 
             var res = from b in botProcs
-                      where b.BotConfig.Username == botUserName
+                      where b.BotConfig.Username.Equals(botUserName, StringComparison.CurrentCultureIgnoreCase)
                       select b;
 
             foreach (var bot in res)
@@ -151,7 +154,7 @@ namespace SteamBot
             mainLog.Debug(String.Format("Starting bot with username {0}.", botUserName));
 
             var res = from b in botProcs
-                      where b.BotConfig.Username == botUserName
+                      where b.BotConfig.Username.Equals(botUserName, StringComparison.CurrentCultureIgnoreCase)
                       select b;
 
             foreach (var bot in res)
@@ -170,16 +173,54 @@ namespace SteamBot
         {
             if (index < botProcs.Count)
             {
-                if (!botProcs[index].UsingProcesses)
-                    botProcs[index].TheBot.AuthCode = AuthCode;
-                else
+                if (botProcs[index].UsingProcesses)
                 {
                     //  Write out auth code to the bot process' stdin
                     StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
 
-                    BotStdIn.WriteLine(AuthCode);
+                    BotStdIn.WriteLine("auth " + AuthCode);
                     BotStdIn.Flush();
                 }
+                else
+                {
+                    botProcs[index].TheBot.AuthCode = AuthCode;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends the BotManager command to the target Bot
+        /// </summary>
+        /// <param name="index">The target bot's index</param>
+        /// <param name="command">The command to be executed</param>
+        public void SendCommand(int index, string command)
+        {
+            mainLog.Debug(String.Format("Sending command \"{0}\" to Bot at index {1}", command, index));
+            if (index < botProcs.Count)
+            {
+                if (botProcs[index].IsRunning)
+                {
+                    if (botProcs[index].UsingProcesses)
+                    {
+                        //  Write out the exec command to the bot process' stdin
+                        StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
+
+                        BotStdIn.WriteLine("exec " + command);
+                        BotStdIn.Flush();
+                    }
+                    else
+                    {
+                        botProcs[index].TheBot.HandleBotCommand(command);
+                    }
+                }
+                else
+                {
+                    mainLog.Warn(String.Format("Bot at index {0} is not running. Use the 'Start' command first", index));
+                }
+            }
+            else
+            {
+                mainLog.Warn(String.Format("Invalid Bot index: {0}", index));
             }
         }
 
@@ -240,17 +281,22 @@ namespace SteamBot
             // will not be null in threaded mode. will be null in process mode.
             public Bot TheBot { get; set; }
 
+            public bool IsRunning = false;
+
             public void Stop()
             {
-                if (UsingProcesses)
+                if (IsRunning && UsingProcesses)
                 {
                     if (!BotProcess.HasExited)
+                    {
                         BotProcess.Kill();
+                        IsRunning = false;
+                    }
                 }
-                else
+                else if (TheBot != null && TheBot.IsRunning)
                 {
-                    if (TheBot != null)
-                        TheBot.StopBot();
+                    TheBot.StopBot();
+                    IsRunning = false;
                 }
             }
 
@@ -258,12 +304,22 @@ namespace SteamBot
             {
                 if (UsingProcesses)
                 {
-                    SpawnSteamBotProcess(BotConfigIndex);
+                    if (!IsRunning)
+                    {
+                        SpawnSteamBotProcess(BotConfigIndex);
+                        IsRunning = true;
+                    }
                 }
-                else
+                else if (TheBot == null)
                 {
                     SpawnBotThread(BotConfig);
-                }  
+                    IsRunning = true;
+                }
+                else if (!TheBot.IsRunning)
+                {
+                    SpawnBotThread(BotConfig);
+                    IsRunning = true;
+                }
             }
 
             private void SpawnSteamBotProcess(int botIndex)

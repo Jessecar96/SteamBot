@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Non TF2 Inventories</title>
+	<style type="text/css">
+		body{margin:0px;padding:5px 10px;font-family:consolas,profont,monospace;font-size:0.8em}
+		table,td{border:1px solid silver}
+		table{margin-bottom:20px;empty-cells:hide}
+		caption,table,th,td{padding:5px}
+		pre{font-size:1.2em}
+		h1,b{color:#69C}
+		strong{color:#C00}
+		.version{font-weight:bold;text-align:right;}
+	</style>
+</head>
+<body>
+<p class="version">Version 1.1 (2013/08/18)</p>
+<h1>Known Inventories</h1>
+<p>
+	<b>Base URL:</b> http://steamcommunity.com/id/<b>userName</b>/inventory/json/<b>AppId</b>/<b>ContextId</b><br>
+	<b>Game Appids List:</b> <a href="http://api.steampowered.com/ISteamApps/GetAppList/v2">http://api.steampowered.com/ISteamApps/GetAppList/v2</a><br>
+	<b>NOTE:</b> Inventory Context Id (type) changes according to the AppId item schema, so it's up to you find it out wich ones work :/
+</p>
+
+<!--
+TEMPLATE
+<table>
+	<caption>Name (AppId)</caption>
+	<tr><th>Context Id</th><th>Description</th><th>Notes</th></tr>
+	<tr>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+</table>
+-->
+
+	<table>
+		<caption>Steam Inventory (AppId 753)</caption>
+		<tr><th>Context Id</th><th>Description</th><th>Notes</th></tr>
+		
+		<tr>
+			<td>1</td>
+			<td>Gifts (Games)</td>
+			<td><Strong>WARNING:</Strong> Automatization (buy &amp; sell) may be against Steam TOS</td>
+		</tr>
+		
+		<tr>
+			<td>3</td>
+			<td>Coupons</td>
+			<td></td>
+		</tr>
+	
+		<tr>
+			<td>6</td>
+			<td>Steam Trading Cards</td>
+			<td>Game Cards, Profile Backgrounds &amp; Emoticons</td>
+		</tr>
+	</table>
+	
+	<table>
+		<caption>Counter-Strike: Global Offensive (AppId 730)</caption>
+		<tr><th>Context Id</th><th>Description</th><th>Notes</th></tr>
+		<tr>
+			<td>2</td>
+			<td>Inventory</td>
+			<td>Weapons</td>
+		</tr>
+	</table>
+
+	<table>
+		<caption>Dota 2 (AppId 570)</caption>
+		<tr><th>Context Id</th><th>Description</th><th>Notes</th></tr>
+		<tr>
+			<td>2</td>
+			<td>Main Inventory</td>
+			<td>Not sure</td>
+		</tr>
+	</table>
+</body>
+</html>

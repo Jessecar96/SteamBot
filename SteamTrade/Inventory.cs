@@ -93,6 +93,9 @@ namespace SteamTrade
 
         public class Item
         {
+            public int AppId = 440;
+            public int ContextId = 2;
+
             [JsonProperty("id")]
             public ulong Id { get; set; }
 
@@ -169,6 +172,18 @@ namespace SteamTrade
 
             [JsonProperty("float_value")]
             public float FloatValue { get; set; }
+
+            [JsonProperty("account_info")]
+            public AccountInfo AccountInfo { get; set; } 
+        }
+
+        public class AccountInfo
+        {
+            [JsonProperty("steamid")]
+            public ulong SteamID { get; set; }
+
+            [JsonProperty("personaname")]
+            public string PersonaName { get; set; }
         }
 
         protected class InventoryResult
