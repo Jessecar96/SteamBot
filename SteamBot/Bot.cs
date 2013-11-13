@@ -706,7 +706,7 @@ namespace SteamBot
             {
                 try
                 {
-                    if (success)
+                    if (success || msg == null)
                     {
                         msg = SteamClient.WaitForCallback(true);
                     }
@@ -717,8 +717,16 @@ namespace SteamBot
                 catch (WebException e)
                 {
                     log.Error("URI: " + e.Response.ResponseUri + " >> " + e.Message);
-                    System.Threading.Thread.Sleep(60000);
+                    System.Threading.Thread.Sleep(300000);//Steam is down, retry in 5 minutes.
                     success = false;
+                }
+                catch (Exception e)
+                {
+                    log.Error(e.Message);
+                    log.Warn("Restarting bot...");
+                    success = false;
+                    this.StopBot();
+                    this.StartBot();
                 }
             }
         }
