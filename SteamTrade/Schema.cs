@@ -49,7 +49,7 @@ namespace SteamTrade
 
             HttpWebResponse response = SteamWeb.Request(url, "GET");
 
-            DateTime schemaLastModified = DateTime.Parse(response.Headers["Last-Modified"]);
+            DateTime schemaLastModified = DateTime.Parse(response.Headers["Last-Modified"].Replace(" UTC", "Z"));
 
             string result = GetSchemaString(response, schemaLastModified);
 
