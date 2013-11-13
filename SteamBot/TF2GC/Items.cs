@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SteamKit2.GC;
+using SteamTrade;
 
 namespace SteamBot.TF2GC
 {
@@ -55,6 +56,47 @@ namespace SteamBot.TF2GC
             aMsg.Write ((uint)newInventoryDescriptor);
 
             bot.SteamGameCoordinator.Send (aMsg, 440);
+        }
+
+        public static void AutoSetItemPositions(Bot bot)
+        {
+            bot.GetInventory();
+            List<int> usedPositions = new List<int>();
+            List<Inventory.Item> itemsToBePlaced = new List<Inventory.Item>();
+            List<int> freePositions = new List<int>();
+            foreach (var s in bot.MyInventory.Items)
+            {
+                if (s.InventoryPosition != 0)
+                {
+                    usedPositions.Add(s.InventoryPosition);
+                }
+                else
+                {
+                    itemsToBePlaced.Add(s);
+                }
+            }
+            if (bot.MyInventory.NumSlots > usedPositions.Count)
+            {
+                usedPositions.Sort();
+                var missing = Enumerable.Range(1, (int)bot.MyInventory.NumSlots).Except(usedPositions);
+                freePositions = missing.ToList();
+                var freeSlots = bot.MyInventory.NumSlots - usedPositions.Count;
+                if (itemsToBePlaced.Count < freeSlots)
+                {
+                    for (int i = 0; i < itemsToBePlaced.Count; i++)
+                    {
+                        SetItemPosition(bot, itemsToBePlaced[i], (short)freePositions[i]);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < freePositions.Count; i++)
+                    {
+                        SetItemPosition(bot, itemsToBePlaced[i], (short)freePositions[i]);
+                    }
+                }
+                bot.log.Success("Items placed in Inventory Successfully.");
+            }
         }
     }
 }
