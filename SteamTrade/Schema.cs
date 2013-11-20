@@ -47,7 +47,7 @@ namespace SteamTrade
                 }
             }
 
-            HttpWebResponse response = SteamWeb.Request(url, "GET");
+            HttpWebResponse response = (HttpWebResponse)WebRequest.Create(url).GetResponse();//SteamWeb.Request(url, "GET");
 
             DateTime schemaLastModified = response.LastModified;
 
