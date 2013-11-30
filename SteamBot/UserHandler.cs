@@ -130,5 +130,14 @@ namespace SteamBot
         public abstract void OnTradeAccept ();
 
         #endregion Trade events
+
+        /// <summary>
+        /// A helper method for sending a chat message to the other user (in the chat window, not the trade window)
+        /// </summary>
+        /// <param name="message">The message to send to the other user</param>
+        protected virtual void SendChatMessage(string message)
+        {
+            Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, message);
+        }
     }
 }
