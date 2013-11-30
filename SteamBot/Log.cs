@@ -89,9 +89,16 @@ namespace SteamBot
                 DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss"),
                 _LogLevel (level).ToUpper (), line
                 );
-            _FileStream.WriteLine (formattedString);
-            if (level >= OutputToConsole)
-                _OutputLineToConsole (level, formattedString);
+
+            if(level > LogLevel.Debug)
+            {
+                _FileStream.WriteLine(formattedString);
+            }
+
+            if(level >= OutputToConsole)
+            {
+                _OutputLineToConsole(level, formattedString);
+            }
         }
 
         // Outputs a line to the console, with the correct color
