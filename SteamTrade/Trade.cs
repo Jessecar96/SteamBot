@@ -133,6 +133,8 @@ namespace SteamTrade
 
         public delegate void CloseHandler ();
 
+        public delegate void CompleteHandler ();
+
         public delegate void ErrorHandler (string error);
 
         public delegate void TimeoutHandler ();
@@ -155,6 +157,11 @@ namespace SteamTrade
         /// to close the trade.
         /// </summary>
         public event CloseHandler OnClose;
+
+        /// <summary>
+        /// Called when the trade completes successfully.
+        /// </summary>
+        public event CompleteHandler OnComplete;
         
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -708,6 +715,14 @@ namespace SteamTrade
 
                 OnUserRemoveItem(schemaItem, null);
             }
+        }
+
+        internal void FireOnCompleteEvent()
+        {
+            var onCompleteEvent = OnComplete;
+
+            if (onCompleteEvent != null)
+                onCompleteEvent();
         }
 
         internal void FireOnCloseEvent()

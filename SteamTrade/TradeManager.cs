@@ -278,6 +278,9 @@ namespace SteamTrade
                         {
                             IsTradeThreadRunning = false;
 
+                            if (trade.HasTradeCompletedOk)
+                                trade.FireOnCompleteEvent();
+
                             trade.FireOnCloseEvent();
                         }
 

@@ -111,6 +111,8 @@ namespace SteamBot
 
         public abstract void OnTradeTimeout ();
 
+        public abstract void OnTradeComplete ();
+
         public virtual void OnTradeClose ()
         {
             Bot.log.Warn ("[USERHANDLER] TRADE CLOSED");
