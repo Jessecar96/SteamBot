@@ -61,6 +61,8 @@ namespace SteamTrade
         /// <summary>Gets the other user's steam ID.</summary> 
         public SteamID OtherSID { get; private set; }
 
+        public ICollection<ulong> MyOfferedItems { get { return myOfferedItems.Values;  } }
+
         /// <summary>
         /// Gets the bot's Steam ID.
         /// </summary>
