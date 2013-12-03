@@ -35,6 +35,8 @@ namespace SteamTrade
             public string type { get; set; }
             public bool tradable { get; set; }
             public bool marketable { get; set; }
+            public string url { get; set; }
+            public long classid { get; set; }
 
             public Dictionary<string, string> app_data{ get; set; }
 
@@ -129,6 +131,8 @@ namespace SteamTrade
                                         type = class_instance.type,
                                         marketable = (bool) class_instance.marketable,
                                         tradable = (bool)class_instance.tradable,
+                                        classid = long.Parse((string)class_instance.classid),
+                                        url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
                                         app_data = tmpAppData
                                     }
                             );
