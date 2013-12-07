@@ -32,7 +32,7 @@ namespace SteamBot
 
         public override void OnFriendRemove() { }
 
-        public override void OnMessage(string message, EChatEntryType type)
+        protected override void OnMessage(string message, EChatEntryType type)
         {
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
@@ -154,7 +154,7 @@ namespace SteamBot
 
         }
 
-        public override void OnTradeMessage(string message)
+        protected override void OnTradeMessage(string message)
         {
 
             switch (message.ToLower())

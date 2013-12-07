@@ -117,7 +117,7 @@ namespace SteamBot
             Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ToString() + ") removed me!");
         }
 
-        public override void OnMessage(string message, EChatEntryType type)
+        protected override void OnMessage(string message, EChatEntryType type)
         {
             message = message.ToLower();
 
@@ -613,7 +613,7 @@ namespace SteamBot
             }
         }
 
-        public override void OnTradeMessage(string message)
+        protected override void OnTradeMessage(string message)
         {
             Bot.log.Info("[TRADE MESSAGE] " + message);
             message = message.ToLower();

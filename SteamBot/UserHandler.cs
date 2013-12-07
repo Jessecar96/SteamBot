@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using SteamKit2;
 using SteamTrade;
+using System.Threading.Tasks;
 
 namespace SteamBot
 {
@@ -12,6 +13,7 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
+        private bool _lastMessageWasFromTrade;
 
         public UserHandler (Bot bot, SteamID sid)
         {
@@ -65,11 +67,17 @@ namespace SteamBot
         /// </summary>
         public abstract void OnFriendRemove ();
 
+        public void OnMessageHandler(string message, EChatEntryType type)
+        {
+            _lastMessageWasFromTrade = false;
+            OnMessage(message, type);
+        }
+
         /// <summary>
         /// Called whenever a message is sent to the bot.
         /// This is limited to regular and emote messages.
         /// </summary>
-        public abstract void OnMessage (string message, EChatEntryType type);
+        protected abstract void OnMessage (string message, EChatEntryType type);
 
         /// <summary>
         /// Called when the bot is fully logged in.
@@ -125,7 +133,13 @@ namespace SteamBot
 
         public abstract void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public abstract void OnTradeMessage (string message);
+        public void OnTradeMessageHandler(string message)
+        {
+            _lastMessageWasFromTrade = true;
+            OnTradeMessage(message);
+        }
+
+        protected abstract void OnTradeMessage (string message);
 
         public abstract void OnTradeReady (bool ready);
 
@@ -134,12 +148,49 @@ namespace SteamBot
         #endregion Trade events
 
         /// <summary>
-        /// A helper method for sending a chat message to the other user (in the chat window, not the trade window)
+        /// A helper method for sending a chat message to the other user in the chat window (as opposed to the trade window)
         /// </summary>
         /// <param name="message">The message to send to the other user</param>
-        protected virtual void SendChatMessage(string message)
+        /// <param name="delayMs">Optional.  The delay before sending the message, in milliseconds.</param>
+        protected virtual async void SendChatMessage(string message, int delayMs = 0)
         {
+            if(delayMs != 0)
+            {
+                await Task.Delay(delayMs);
+            }
             Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, message);
+        }
+
+        /// <summary>
+        /// A helper method for sending a chat message to the other user in the trade window.
+        /// </summary>
+        /// <param name="message">The message to send to the other user</param>
+        /// <param name="delayMs">Optional.  The delay before sending the message, in milliseconds.</param>
+        protected virtual async void SendTradeMessage(string message, int delayMs = 0)
+        {
+            if(delayMs != 0)
+            {
+                await Task.Delay(delayMs);
+            }
+            Trade.SendMessage(message);
+        }
+
+        /// <summary>
+        /// Sends a message to the user in either the chat window or the trade window, depending on which screen
+        /// the user sent a message from last.  Useful for responding to commands.
+        /// </summary>
+        /// <param name="message">The message to send to the other user</param>
+        /// <param name="delayMs">Optional.  The delay before sending the message, in milliseconds.</param>
+        protected virtual void SendReplyMessage(string message, int delayMs = 0)
+        {
+            if(_lastMessageWasFromTrade && Trade != null)
+            {
+                SendTradeMessage(message, delayMs);
+            }
+            else
+            {
+                SendChatMessage(message, delayMs);
+            }
         }
     }
 }
