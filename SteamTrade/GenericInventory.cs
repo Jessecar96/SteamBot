@@ -68,17 +68,21 @@ namespace SteamTrade
             }
         }
 
-        public bool load(int appid,List<int> contextIds, SteamID steamid)
+        public bool load(int appid, IEnumerable<int> contextIds, SteamID steamid)
         {
             dynamic invResponse;
             isLoaded = false;
             Dictionary<string, string> tmpAppData;
 
+            items.Clear();
+            descriptions.Clear();
+            errors.Clear();
+
             try
             {
-                for (int i = 0; i < contextIds.Count; i++)
+                foreach(int contextId in contextIds)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(),appid, contextIds[i]), "GET", null, null, true);
+                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, null, true);
                     invResponse = JsonConvert.DeserializeObject(response);
 
                     if (invResponse.success == false)
@@ -96,7 +100,7 @@ namespace SteamTrade
                             items.Add((ulong)itemId.id, new Item()
                             {
                                 appid = appid,
-                                contextid = contextIds[i],
+                                contextid = contextId,
                                 assetid = itemId.id,
                                 descriptionid = itemId.classid + "_" + itemId.instanceid
                             });
