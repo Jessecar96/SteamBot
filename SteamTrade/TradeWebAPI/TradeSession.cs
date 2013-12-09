@@ -125,13 +125,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "chat", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -156,13 +150,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch(baseTradeURL + "additem", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -183,13 +171,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "removeitem", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -205,13 +187,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "toggleready", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -228,13 +204,7 @@ namespace SteamTrade.TradeWebAPI
             string response = Fetch (baseTradeURL + "confirm", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(response);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -249,13 +219,23 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "cancel", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
+            return IsSuccess(json);
+        }
 
-            if (json == null || json.success != "true")
+        private bool IsSuccess(dynamic json)
+        {
+            if(json == null)
+                return false;
+            try
+            {
+                //Sometimes, the response looks like this:  {"success":false,"results":{"success":11}}
+                //I believe this is Steam's way of asking the trade window (which is actually a webpage) to refresh, following a large successful update
+                return (json.success == "true" || (json.results != null && json.results.success == "11"));
+            }
+            catch(Exception)
             {
                 return false;
             }
-
-            return true;
         }
 
         #endregion Trade Web API command methods
