@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.Exceptions;
@@ -13,6 +14,9 @@ namespace SteamTrade
         #region Static Public data
         public static Schema CurrentSchema = null;
         #endregion
+
+        private const int WEB_REQUEST_MAX_RETRIES = 3;
+        private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 600;
 
         // list to store all trade events already processed
         List<TradeEvent> eventList;
@@ -211,15 +215,12 @@ namespace SteamTrade
         /// </summary>
         public bool CancelTrade ()
         {
-            bool ok = session.CancelTradeWebCmd ();
-
-            if (!ok)
-                throw new TradeException ("The Web command to cancel the trade failed");
+            bool success = RetryWebRequest(session.CancelTradeWebCmd);
             
-            if (OnClose != null)
+            if (success && OnClose != null)
                 OnClose ();
 
-            return true;
+            return success;
         }
 
         /// <summary>
@@ -244,14 +245,12 @@ namespace SteamTrade
         public bool AddItem(TradeUserAssets item)
         {
             var slot = NextTradeSlot();
-            bool ok = session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid);
+            bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid));
 
-            if (!ok)
-                throw new TradeException("The Web command to add the Item failed");
-
-            myOfferedItems[slot] = item.assetid;
+            if(success)
+                myOfferedItems[slot] = item.assetid;
             
-            return true;
+            return success;
         }
 
         /// <summary>
@@ -322,14 +321,12 @@ namespace SteamTrade
             if (!slot.HasValue)
                 return false;
 
-            bool ok = session.RemoveItemWebCmd(itemid, slot.Value,appid,contextid);
-            
-            if (!ok)
-                throw new TradeException ("The web command to remove the item failed.");
+            bool success = RetryWebRequest(() => session.RemoveItemWebCmd(itemid, slot.Value, appid, contextid));
 
-            myOfferedItems.Remove (slot.Value);
+            if(success)
+                myOfferedItems.Remove (slot.Value);
 
-            return true;
+            return success;
         }
 
         /// <summary>
@@ -408,12 +405,7 @@ namespace SteamTrade
         /// </summary>
         public bool SendMessage (string msg)
         {
-            bool ok = session.SendMessageWebCmd(msg);
-
-            if (!ok)
-                throw new TradeException ("The web command to send the trade message failed.");
-
-            return true;
+            return RetryWebRequest(() => session.SendMessageWebCmd(msg));
         }
 
         /// <summary>
@@ -424,12 +416,7 @@ namespace SteamTrade
             // testing
             ValidateLocalTradeItems ();
 
-            bool ok = session.SetReadyWebCmd(ready);
-
-            if (!ok)
-                throw new TradeException ("The web command to set trade ready state failed.");
-
-            return true;
+            return RetryWebRequest(() => session.SetReadyWebCmd(ready)); ;
         }
 
         /// <summary>
@@ -440,12 +427,32 @@ namespace SteamTrade
         {
             ValidateLocalTradeItems ();
 
-            bool ok = session.AcceptTradeWebCmd();
+            return RetryWebRequest(session.AcceptTradeWebCmd);
+        }
 
-            if (!ok)
-                throw new TradeException ("The web command to accept the trade failed.");
+        /// <summary>
+        /// Calls the given function multiple times, until we get a non-null/non-false/non-zero result, or we've made at least
+        /// WEB_REQUEST_MAX_RETRIES attempts (with WEB_REQUEST_TIME_BETWEEN_RETRIES_MS between attempts)
+        /// </summary>
+        /// <returns>The result of the function if it succeeded, or default(T) (null/false/0) otherwise</returns>
+        private T RetryWebRequest<T>(Func<T> webEvent)
+        {
+            for(int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
+            {
+                //Don't make any more requests if the trade has ended!
+                if(HasTradeCompletedOk || OtherUserCancelled)
+                    return default(T);
 
-            return true;
+                T result = webEvent();
+                if(!EqualityComparer<T>.Default.Equals(result, default(T)))
+                    return result;
+                if(i != WEB_REQUEST_MAX_RETRIES)
+                {
+                    //This will cause the bot to stop responding while we wait between web requests.  ...Is this really what we want?
+                    Thread.Sleep(WEB_REQUEST_TIME_BETWEEN_RETRIES_MS);
+                }
+            }
+            return default(T);
         }
 
         /// <summary>
@@ -468,10 +475,10 @@ namespace SteamTrade
                     OnAfterInit ();
             }
 
-            TradeStatus status = session.GetStatus();
+            TradeStatus status = RetryWebRequest(session.GetStatus);
 
             if (status == null)
-                throw new TradeException ("The web command to get the trade status failed.");
+                return false;
 
             switch (status.trade_status)
             {
