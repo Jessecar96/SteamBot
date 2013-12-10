@@ -12,16 +12,16 @@ namespace SteamTrade.TradeWebAPI
     /// </summary>
     public class TradeSession
     {
-        static string SteamCommunityDomain = "steamcommunity.com";
-        static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
+        private const string SteamCommunityDomain = "steamcommunity.com";
+        private const string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
-        string sessionIdEsc;
-        string baseTradeURL;
-        CookieContainer cookies;
+        private string sessionIdEsc;
+        private string baseTradeURL;
+        private CookieContainer cookies;
 
-        readonly string steamLogin;
-        readonly string sessionId;
-        readonly SteamID OtherSID;
+        private readonly string steamLogin;
+        private readonly string sessionId;
+        private readonly SteamID OtherSID;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TradeSession"/> class.
@@ -83,9 +83,7 @@ namespace SteamTrade.TradeWebAPI
         /// Gets the foriegn inventory.
         /// </summary>
         /// <param name="otherId">The other id.</param>
-        /// <param name="contextId">The current trade context id.</param>
         /// <returns>A dynamic JSON object.</returns>
-        /// 
 
         internal dynamic GetForiegnInventory(SteamID otherId)
         {

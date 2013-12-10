@@ -8,15 +8,15 @@ namespace SteamTrade
 {
     public class TradeManager
     {
-        const int MaxGapTimeDefault = 15;
-        const int MaxTradeTimeDefault = 180;
-        const int TradePollingIntervalDefault = 800;
-        string apiKey;
-        string sessionId;
-        string token;
-        DateTime tradeStartTime;
-        DateTime lastOtherActionTime;
-        Trade trade;
+        private const int MaxGapTimeDefault = 15;
+        private const int MaxTradeTimeDefault = 180;
+        private const int TradePollingIntervalDefault = 800;
+        private readonly string apiKey;
+        private readonly string sessionId;
+        private readonly string token;
+        private DateTime tradeStartTime;
+        private DateTime lastOtherActionTime;
+        private Trade trade;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -157,7 +157,7 @@ namespace SteamTrade
 
         /// <summary>
         /// Creates a trade object, starts the trade, and returns it for use. 
-        /// Call <see cref="FetchInventories"/> before using this method.
+        /// Call <see cref="InitializeTrade"/> before using this method.
         /// </summary>
         /// <returns>
         /// The trade object to use to interact with the Steam trade.
