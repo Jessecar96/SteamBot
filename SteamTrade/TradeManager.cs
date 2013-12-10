@@ -16,6 +16,7 @@ namespace SteamTrade
         private readonly string token;
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
+        private DateTime lastTimeoutMessage;
         private Trade trade;
 
         /// <summary>
@@ -255,6 +256,7 @@ namespace SteamTrade
             // initialize data to use in thread
             tradeStartTime = DateTime.Now;
             lastOtherActionTime = DateTime.Now;
+            lastTimeoutMessage = DateTime.Now.AddSeconds(-1000);
 
             var pollThread = new Thread (() =>
             {
@@ -307,7 +309,7 @@ namespace SteamTrade
             pollThread.Start();
         }
 
-        void CheckTradeTimeout (Trade trade)
+        private void CheckTradeTimeout (Trade trade)
         {
             var now = DateTime.Now;
 
@@ -318,6 +320,8 @@ namespace SteamTrade
 
             DateTime tradeTimeout = tradeStartTime.AddSeconds (MaxTradeTimeSec);
             int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
+
+            double secsSinceLastTimeoutMessage = (now - lastTimeoutMessage).TotalSeconds;
 
             if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
             {
@@ -333,14 +337,15 @@ namespace SteamTrade
 
                 trade.CancelTrade ();
             }
-            else if (untilActionTimeout <= 20 && untilActionTimeout % 10 == 0)
+            else if (untilActionTimeout <= 20 && secsSinceLastTimeoutMessage >= 10)
             {
                 trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                lastTimeoutMessage = now;
             }
         }
 
         [Conditional ("DEBUG_TRADE_MANAGER")]
-        void DebugPrint (string output)
+        private static void DebugPrint (string output)
         {
             // I don't really want to add the Logger as a dependecy to TradeManager so I 
             // print using the console directly. To enable this for debugging put this:
