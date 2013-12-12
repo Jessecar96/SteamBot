@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.Exceptions;
-using Newtonsoft.Json.Linq;
 using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
@@ -19,33 +18,22 @@ namespace SteamTrade
         private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 600;
 
         // list to store all trade events already processed
-        List<TradeEvent> eventList;
+        private readonly List<TradeEvent> eventList;
 
         // current bot's sid
-        SteamID mySteamId;
+        private readonly SteamID mySteamId;
 
-        // If the bot is ready.
-        bool meIsReady = false;
-
-        // If the other user is ready.
-        bool otherIsReady = false;
-
-        // Whether or not the trade actually started.
-        bool tradeStarted = false;
-
-        Dictionary<int, ulong> myOfferedItems;
-        List<ulong> steamMyOfferedItems;
-
-        // Internal properties needed for Steam API.
-        int numEvents;
-
+        private readonly Dictionary<int, ulong> myOfferedItems;
+        private readonly List<ulong> steamMyOfferedItems;
         private readonly TradeSession session;
 
         internal Trade(SteamID me, SteamID other, string sessionId, string token, Inventory myInventory, Inventory otherInventory)
         {
+            TradeStarted = false;
+            OtherIsReady = false;
+            MeIsReady = false;
             mySteamId = me;
             OtherSID = other;
-            List<uint> InvType = new List<uint>();
 
             session = new TradeSession(sessionId, token, other);
 
@@ -57,7 +45,6 @@ namespace SteamTrade
 
             OtherInventory = otherInventory;
             MyInventory = myInventory;
-
         }
 
         #region Public Properties
@@ -101,26 +88,17 @@ namespace SteamTrade
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
         /// </summary>
-        public bool OtherIsReady
-        {
-            get { return otherIsReady; }
-        }
+        public bool OtherIsReady { get; private set; }
 
         /// <summary>
         /// Gets a value indicating if the bot is ready to trade.
         /// </summary>
-        public bool MeIsReady
-        {
-            get { return meIsReady; }
-        }
+        public bool MeIsReady { get; private set; }
 
         /// <summary>
         /// Gets a value indicating if a trade has started.
         /// </summary>
-        public bool TradeStarted
-        {
-            get { return tradeStarted; }
-        }
+        public bool TradeStarted { get; private set; }
 
         /// <summary>
         /// Gets a value indicating if the remote trading partner cancelled the trade.
@@ -303,19 +281,17 @@ namespace SteamTrade
             return added;
         }
 
-        /// <summary>
-        /// Removes an item by its itemid.
-        /// </summary>
-        /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem(ulong itemid)
-        {
-            return RemoveItem(itemid,440,2);
-        }
+
         public bool RemoveItem(TradeUserAssets item)
         {
             return RemoveItem(item.assetid, item.appid, item.contextid);
         }
-        public bool RemoveItem (ulong itemid,int appid,int contextid)
+
+        /// <summary>
+        /// Removes an item by its itemid.
+        /// </summary>
+        /// <returns><c>false</c> the item was not found in the trade.</returns>
+        public bool RemoveItem (ulong itemid, int appid = 440, int contextid = 2)
         {
             int? slot = GetItemSlot (itemid);
             if (!slot.HasValue)
@@ -418,7 +394,7 @@ namespace SteamTrade
             //from Trade.Poll() inside of the OnTradeAccept() handler, the OnTradeAccept()
             //handler might think the bot is ready, when really it's not!
             if(!ready)
-                meIsReady = false;
+                MeIsReady = false;
 
             // testing
             ValidateLocalTradeItems ();
@@ -474,7 +450,7 @@ namespace SteamTrade
 
             if (!TradeStarted)
             {
-                tradeStarted = true;
+                TradeStarted = true;
 
                 // since there is no feedback to let us know that the trade
                 // is fully initialized we assume that it is when we start polling.
@@ -496,7 +472,7 @@ namespace SteamTrade
                 // Successful trade
                 case 1:
                     HasTradeCompletedOk = true;
-                    return otherDidSomething;
+                    return false;
 
                 // All other known values (3, 4) correspond to trades closing.
                 default:
@@ -505,7 +481,7 @@ namespace SteamTrade
                         OnError("Trade was closed by other user. Trade status: " + status.trade_status);
                     }
                     OtherUserCancelled = true;
-                    return otherDidSomething;
+                    return false;
             }
 
             if (status.newversion)
@@ -513,8 +489,6 @@ namespace SteamTrade
                 // handle item adding and removing
                 session.Version = status.version;
 
-                TradeEvent trdEvent = status.GetLastEvent();
-                TradeEventType actionType = (TradeEventType) trdEvent.action;
                 HandleTradeVersionChange(status);
                 return true;
             }
@@ -545,15 +519,6 @@ namespace SteamTrade
 
                 otherDidSomething = true;
 
-                /* Trade Action ID's
-                 * 0 = Add item (itemid = "assetid")
-                 * 1 = remove item (itemid = "assetid")
-                 * 2 = Toggle ready
-                 * 3 = Toggle not ready
-                 * 4 = ?
-                 * 5 = ? - maybe some sort of cancel
-                 * 6 = ?
-                 * 7 = Chat (message = "text")        */
                 switch ((TradeEventType) tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
@@ -563,11 +528,11 @@ namespace SteamTrade
                         FireOnUserRemoveItem(tradeEvent);
                         break;
                     case TradeEventType.UserSetReady:
-                        otherIsReady = true;
+                        OtherIsReady = true;
                         OnUserSetReady(true);
                         break;
                     case TradeEventType.UserSetUnReady:
-                        otherIsReady = false;
+                        OtherIsReady = false;
                         OnUserSetReady(false);
                         break;
                     case TradeEventType.UserAccept:
@@ -587,8 +552,8 @@ namespace SteamTrade
             // Update Local Variables
             if (status.them != null)
             {
-                otherIsReady = status.them.ready == 1;
-                meIsReady = status.me.ready == 1;
+                OtherIsReady = status.them.ready == 1;
+                MeIsReady = status.me.ready == 1;
             }
 
             if (status.logpos != 0)
@@ -599,26 +564,20 @@ namespace SteamTrade
             return otherDidSomething;
         }
 
-        void HandleTradeVersionChange(TradeStatus status)
+        private void HandleTradeVersionChange(TradeStatus status)
         {
             CopyNewAssets(OtherOfferedItems, status.them.GetAssets());
 
             CopyNewAssets(steamMyOfferedItems, status.me.GetAssets());
         }
 
-        private void CopyNewAssets(List<ulong> dest, TradeUserAssets[] assetList)
+        private void CopyNewAssets(List<ulong> dest, IEnumerable<TradeUserAssets> assetList)
         {
             if (assetList == null) 
                 return;
 
-            //Console.WriteLine("clearing dest");
             dest.Clear();
-
-            foreach (var asset in assetList)
-            {
-                dest.Add(asset.assetid);
-                //Console.WriteLine(asset.assetid);
-            }
+            dest.AddRange(assetList.Select(asset => asset.assetid));
         }
 
         /// <summary>
@@ -630,11 +589,10 @@ namespace SteamTrade
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
             ulong itemID = tradeEvent.assetid;
-            Inventory.Item item;
 
             if (OtherInventory != null)
             {
-                item = OtherInventory.GetItem(itemID);
+                Inventory.Item item = OtherInventory.GetItem(itemID);
                 if (item != null)
                 {
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
@@ -647,7 +605,7 @@ namespace SteamTrade
                 }
                 else
                 {
-                    item = new Inventory.Item()
+                    item = new Inventory.Item
                     {
                         Id=itemID,
                         AppId=tradeEvent.appid,
@@ -693,12 +651,11 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            ulong itemID = (ulong) tradeEvent.assetid;
-            Inventory.Item item;
+            ulong itemID = tradeEvent.assetid;
 
             if (OtherInventory != null)
             {
-                item = OtherInventory.GetItem(itemID);
+                Inventory.Item item = OtherInventory.GetItem(itemID);
                 if (item != null)
                 {
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
@@ -749,7 +706,7 @@ namespace SteamTrade
                 onCloseEvent();
         }
 
-        int NextTradeSlot ()
+        private int NextTradeSlot()
         {
             int slot = 0;
             while (myOfferedItems.ContainsKey (slot))
@@ -759,7 +716,7 @@ namespace SteamTrade
             return slot;
         }
 
-        int? GetItemSlot (ulong itemid)
+        private int? GetItemSlot(ulong itemid)
         {
             foreach (int slot in myOfferedItems.Keys)
             {
@@ -771,31 +728,16 @@ namespace SteamTrade
             return null;
         }
 
-        void ValidateSteamItemChanged (ulong itemid, bool wasAdded)
-        {
-            // checks to make sure that the Trade polling saw
-            // the correct change for the given item.
-
-            // check if the correct item was added
-            if (wasAdded && !myOfferedItems.ContainsValue (itemid))
-                throw new TradeException ("Steam Trade had an invalid item added: " + itemid);
-
-            // check if the correct item was removed
-            if (!wasAdded && myOfferedItems.ContainsValue (itemid))
-                throw new TradeException ("Steam Trade had an invalid item removed: " + itemid);
-        }
-
-        void ValidateLocalTradeItems ()
+        private void ValidateLocalTradeItems ()
         {
             if (myOfferedItems.Count != steamMyOfferedItems.Count)
             {
                 throw new TradeException ("Error validating local copy of items in the trade: Count mismatch");
             }
 
-            foreach (ulong id in myOfferedItems.Values)
+            if (myOfferedItems.Values.Any(id => !steamMyOfferedItems.Contains(id)))
             {
-                if (!steamMyOfferedItems.Contains (id))
-                    throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
+                throw new TradeException ("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
         }
     }
