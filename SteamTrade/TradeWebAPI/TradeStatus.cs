@@ -162,13 +162,15 @@ namespace SteamTrade.TradeWebAPI
         }
     }
 
-    public enum TradeEventType : int
+    public enum TradeEventType
     {
-        ItemAdded = 0,
-        ItemRemoved = 1,
+        ItemAdded = 0, //itemid = "assetid"
+        ItemRemoved = 1, //itemid = "assetid"
         UserSetReady = 2,
         UserSetUnReady = 3,
         UserAccept = 4,
-        UserChat = 7
+        //5 = ?? Maybe some sort of cancel?
+        //6 = ??
+        UserChat = 7 //message = "text"
     }
 }
