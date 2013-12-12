@@ -404,10 +404,17 @@ namespace SteamTrade
         /// </summary>
         public bool SetReady (bool ready)
         {
+            //If the bot calls SetReady(false) and the call fails, we still want meIsReady to be
+            //set to false.  Otherwise, if the call to SetReady() was a result of a callback
+            //from Trade.Poll() inside of the OnTradeAccept() handler, the OnTradeAccept()
+            //handler might think the bot is ready, when really it's not!
+            if(!ready)
+                meIsReady = false;
+
             // testing
             ValidateLocalTradeItems ();
 
-            return RetryWebRequest(() => session.SetReadyWebCmd(ready)); ;
+            return RetryWebRequest(() => session.SetReadyWebCmd(ready));
         }
 
         /// <summary>

@@ -653,8 +653,8 @@ namespace SteamBot
             trade.OnUserAddItem += handler.OnTradeAddItem;
             trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
             trade.OnMessage += handler.OnTradeMessage;
-            trade.OnUserSetReady += handler.OnTradeReady;
-            trade.OnUserAccept += handler.OnTradeAccept;
+            trade.OnUserSetReady += handler.OnTradeReadyHandler;
+            trade.OnUserAccept += handler.OnTradeAcceptHandler;
         }
         
         /// <summary>
@@ -669,8 +669,8 @@ namespace SteamBot
             trade.OnUserAddItem -= handler.OnTradeAddItem;
             trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
             trade.OnMessage -= handler.OnTradeMessage;
-            trade.OnUserSetReady -= handler.OnTradeReady;
-            trade.OnUserAccept -= handler.OnTradeAccept;
+            trade.OnUserSetReady -= handler.OnTradeReadyHandler;
+            trade.OnUserAccept -= handler.OnTradeAcceptHandler;
         }
 
         #region Background Worker Methods
