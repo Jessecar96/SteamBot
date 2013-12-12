@@ -141,9 +141,24 @@ namespace SteamBot
 
         protected abstract void OnTradeMessage (string message);
 
+        public void OnTradeReadyHandler(bool ready)
+        {
+            Trade.Poll();
+            OnTradeReady(ready);
+        }
+
         public abstract void OnTradeReady (bool ready);
 
-        public abstract void OnTradeAccept ();
+        public void OnTradeAcceptHandler()
+        {
+            Trade.Poll();
+            if (Trade.OtherIsReady && Trade.MeIsReady)
+            {
+                OnTradeAccept();
+            }
+        }
+
+        public abstract void OnTradeAccept();
 
         #endregion Trade events
 
