@@ -14,7 +14,6 @@ namespace SteamTrade
 {
     public class SteamWeb
     {
-
         public static string Fetch (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
         {
             HttpWebResponse response = Request (url, method, data, cookies, ajax);
@@ -28,10 +27,10 @@ namespace SteamTrade
 
             request.Method = method;
 
-            request.Accept = "text/javascript, text/html, application/xml, text/xml, */*";
+            request.Accept = "application/json, text/javascript, */*;q=0.5";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-            request.Host = "steamcommunity.com";
-            request.UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.47 Safari/536.11";
+            //request.Host is set automatically
+            request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = "http://steamcommunity.com/trade/1";
 
             if (ajax)
@@ -48,8 +47,7 @@ namespace SteamTrade
             {
                 string dataString = String.Join ("&", Array.ConvertAll (data.AllKeys, key =>
                     String.Format ("{0}={1}", HttpUtility.UrlEncode (key), HttpUtility.UrlEncode (data [key]))
-                )
-                );
+                ));
 
                 byte[] dataBytes = Encoding.ASCII.GetBytes (dataString);
                 request.ContentLength = dataBytes.Length;
