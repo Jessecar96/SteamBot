@@ -514,6 +514,7 @@ namespace SteamBot
                 {
                     log.Warn ("Trade failed: " + callback.Response);
                     CloseTrade ();
+                    GetUserHandler(CurrentTrade.OtherSID).OnBotsTradeRequestRejected();
                 }
 
             });
