@@ -53,7 +53,7 @@ namespace SteamTrade.TradeWebAPI
 
         public string text { get; set; }
 
-        public int contextid { get; set; }
+        public long contextid { get; set; }
 
         public ulong assetid { get; set; }
 
@@ -64,17 +64,10 @@ namespace SteamTrade.TradeWebAPI
         /// <returns>True if equal, false if not</returns>
         public bool Equals(TradeEvent other)
         {
-            if (this.steamid == other.steamid && this.action == other.action
-                && this.timestamp == other.timestamp && this.appid == other.appid
-                && this.text == other.text && this.contextid == other.contextid
-                && this.assetid == other.assetid)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return this.steamid == other.steamid && this.action == other.action
+                   && this.timestamp == other.timestamp && this.appid == other.appid
+                   && this.text == other.text && this.contextid == other.contextid
+                   && this.assetid == other.assetid;
         }
     }
 
@@ -150,7 +143,7 @@ namespace SteamTrade.TradeWebAPI
     public class TradeUserAssets
     {
         /// <summary>Iventory type</summary>
-        public int contextid { get; set; }
+        public long contextid { get; set; }
         /// <summary>itemid</summary>
         public ulong assetid { get; set; }
         public int appid { get; set; }

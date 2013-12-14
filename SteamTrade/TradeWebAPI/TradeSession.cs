@@ -89,7 +89,7 @@ namespace SteamTrade.TradeWebAPI
         {
             return GetForiegnInventory(otherId, 440, 2);
         }
-        internal dynamic GetForiegnInventory(SteamID otherId, int contextId, int appid)
+        internal dynamic GetForiegnInventory(SteamID otherId, long contextId, int appid)
         {
             var data = new NameValueCollection();
 
@@ -135,7 +135,7 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,int contextid)
+        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,long contextid)
         {
             var data = new NameValueCollection ();
 
@@ -156,7 +156,7 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, int contextid)
+        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
         {
             var data = new NameValueCollection ();
 
