@@ -307,7 +307,7 @@ namespace SteamTrade
             foreach (ulong id in myOfferedItems.Values)
             {
                 Inventory.Item item = MyInventory.GetItem (id);
-                if (item.Defindex == defindex)
+                if (item != null && item.Defindex == defindex)
                 {
                     return RemoveItem (item.Id);
                 }
