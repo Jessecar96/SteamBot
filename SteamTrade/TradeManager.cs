@@ -282,8 +282,10 @@ namespace SteamTrade
 
                             trade.FireOnCloseEvent();
                         }
-
-                        CheckTradeTimeout (trade);
+                        else
+                        {
+                            CheckTradeTimeout(trade);                            
+                        }
                     }
                     catch (Exception ex)
                     {
