@@ -68,7 +68,7 @@ namespace SteamTrade
             }
         }
 
-        public bool load(int appid, IEnumerable<int> contextIds, SteamID steamid)
+        public bool load(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             dynamic invResponse;
             isLoaded = false;
@@ -80,7 +80,7 @@ namespace SteamTrade
 
             try
             {
-                foreach(int contextId in contextIds)
+                foreach(long contextId in contextIds)
                 {
                     string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, null, true);
                     invResponse = JsonConvert.DeserializeObject(response);

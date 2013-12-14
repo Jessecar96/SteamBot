@@ -59,7 +59,7 @@ namespace SteamBot
         public override void OnTradeInit() 
         {
             // NEW -------------------------------------------------------------------------------
-            List<int> contextId = new List<int>();
+            List<long> contextId = new List<long>();
             tested = false;
 
             /*************************************************************************************

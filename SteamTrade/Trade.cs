@@ -207,7 +207,7 @@ namespace SteamTrade
                 return AddItem(new TradeUserAssets(){assetid=itemid,appid=440,contextid=2});
             }
         }
-        public bool AddItem(ulong itemid, int appid, int contextid)
+        public bool AddItem(ulong itemid, int appid, long contextid)
         {
             return AddItem(new TradeUserAssets(){assetid=itemid,appid=appid,contextid=contextid});
         }
@@ -282,7 +282,7 @@ namespace SteamTrade
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem (ulong itemid, int appid = 440, int contextid = 2)
+        public bool RemoveItem (ulong itemid, int appid = 440, long contextid = 2)
         {
             int? slot = GetItemSlot (itemid);
             if (!slot.HasValue)
@@ -624,7 +624,7 @@ namespace SteamTrade
             if (OtherPrivateInventory == null)
             {
                 // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid,tradeEvent.contextid);
+                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
                 OtherPrivateInventory = new ForeignInventory(f);
             }
 
