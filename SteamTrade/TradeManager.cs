@@ -169,15 +169,16 @@ namespace SteamTrade
         /// <param name='other'>
         /// The <see cref="SteamID"/> of the other trade partner.
         /// </param>
+        /// <param name="otherUserName">The trade partner's username</param>
         /// <remarks>
         /// If the needed inventories are <c>null</c> then they will be fetched.
         /// </remarks>
-        public Trade StartTrade (SteamID  me, SteamID other)
+        public Trade StartTrade (SteamID  me, SteamID other, string otherUserName)
         {
             if (OtherInventory == null || MyInventory == null)
                 InitializeTrade (me, other);
 
-            var t = new Trade (me, other, sessionId, token, MyInventory, OtherInventory);
+            var t = new Trade (me, other, otherUserName, sessionId, token, MyInventory, OtherInventory);
 
             t.OnClose += delegate
             {

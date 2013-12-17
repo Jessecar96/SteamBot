@@ -12,6 +12,15 @@ namespace SteamTrade
     {
         #region Static Public data
         public static Schema CurrentSchema = null;
+
+        public enum TradeStatusType
+        {
+            OnGoing = 0,
+            CompletedSuccessfully = 1,
+            //2 is unknown
+            CancelledByUser = 3,
+            SessionExpired = 4
+        }
         #endregion
 
         private const int WEB_REQUEST_MAX_RETRIES = 3;
@@ -23,11 +32,13 @@ namespace SteamTrade
         // current bot's sid
         private readonly SteamID mySteamId;
 
+
+        private readonly string otherUserName;
         private readonly Dictionary<int, ulong> myOfferedItems;
         private readonly List<ulong> steamMyOfferedItems;
         private readonly TradeSession session;
 
-        internal Trade(SteamID me, SteamID other, string sessionId, string token, Inventory myInventory, Inventory otherInventory)
+        internal Trade(SteamID me, SteamID other, string otherUserName,string sessionId, string token, Inventory myInventory, Inventory otherInventory)
         {
             TradeStarted = false;
             OtherIsReady = false;
@@ -38,6 +49,7 @@ namespace SteamTrade
             session = new TradeSession(sessionId, token, other);
 
             this.eventList = new List<TradeEvent>();
+            this.otherUserName = otherUserName;
 
             OtherOfferedItems = new List<ulong>();
             myOfferedItems = new Dictionary<int, ulong>();
@@ -446,8 +458,6 @@ namespace SteamTrade
         /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
         public bool Poll ()
         {
-            bool otherDidSomething = false;
-
             if (!TradeStarted)
             {
                 TradeStarted = true;
@@ -462,29 +472,44 @@ namespace SteamTrade
 
             if (status == null)
                 return false;
+            string errorType;
 
-            switch (status.trade_status)
+            switch ((TradeStatusType)status.trade_status)
             {
                 // Nothing happened. i.e. trade hasn't closed yet.
-                case 0:
-                    break;
+                case TradeStatusType.OnGoing:
+                    return HandleTradeOngoing(status);
 
                 // Successful trade
-                case 1:
+                case TradeStatusType.CompletedSuccessfully:
                     HasTradeCompletedOk = true;
                     return false;
 
-                // All other known values (3, 4) correspond to trades closing.
+                case TradeStatusType.CancelledByUser:
+                    errorType = "was cancelled";
+                    break;
+                case TradeStatusType.SessionExpired:
+                    errorType = "expired";
+                    break;
                 default:
-                    if (OnError != null)
-                    {
-                        OnError("Trade was closed by other user. Trade status: " + status.trade_status);
-                    }
-                    OtherUserCancelled = true;
-                    return false;
+                    errorType = "closed for unknown reason " + status.trade_status;
+                    break;
             }
 
-            if (status.newversion)
+            if(OnError != null)
+            {
+                string errorMessage = String.Format("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64(), errorType);
+                OnError(errorMessage);
+            }
+            OtherUserCancelled = true;
+            return false;
+        }
+
+        private bool HandleTradeOngoing(TradeStatus status)
+        {
+            bool otherDidSomething = false;
+
+            if(status.newversion)
             {
                 // handle item adding and removing
                 session.Version = status.version;
@@ -492,7 +517,7 @@ namespace SteamTrade
                 HandleTradeVersionChange(status);
                 return true;
             }
-            else if (status.version > session.Version)
+            else if(status.version > session.Version)
             {
                 // oh crap! we missed a version update abort so we don't get 
                 // scammed. if we could get what steam thinks what's in the 
@@ -503,9 +528,9 @@ namespace SteamTrade
 
             var events = status.GetAllEvents();
 
-            foreach (var tradeEvent in events)
+            foreach(var tradeEvent in events)
             {
-                if (eventList.Contains(tradeEvent))
+                if(eventList.Contains(tradeEvent))
                     continue;
 
                 //add event to processed list, as we are taking care of this event now
@@ -514,12 +539,12 @@ namespace SteamTrade
                 bool isBot = tradeEvent.steamid == MySteamId.ConvertToUInt64().ToString();
 
                 // dont process if this is something the bot did
-                if (isBot)
+                if(isBot)
                     continue;
 
                 otherDidSomething = true;
 
-                switch ((TradeEventType) tradeEvent.action)
+                switch((TradeEventType)tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
                         FireOnUserAddItem(tradeEvent);
@@ -543,20 +568,20 @@ namespace SteamTrade
                         break;
                     default:
                         // Todo: add an OnWarning or similar event
-                        if (OnError != null)
+                        if(OnError != null)
                             OnError("Unknown Event ID: " + tradeEvent.action);
                         break;
                 }
             }
 
             // Update Local Variables
-            if (status.them != null)
+            if(status.them != null)
             {
                 OtherIsReady = status.them.ready == 1;
                 MeIsReady = status.me.ready == 1;
             }
 
-            if (status.logpos != 0)
+            if(status.logpos != 0)
             {
                 session.LogPos = status.logpos;
             }

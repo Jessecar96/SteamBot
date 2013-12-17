@@ -252,7 +252,7 @@ namespace SteamBot
             try
             {
                 tradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other);
+                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other, SteamFriends.GetFriendPersonaName(other));
             }
             catch (SteamTrade.Exceptions.InventoryFetchException ie)
             {
