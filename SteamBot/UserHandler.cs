@@ -128,7 +128,6 @@ namespace SteamBot
 
         public virtual void OnTradeClose ()
         {
-            Bot.log.Warn ("[USERHANDLER] TRADE CLOSED");
             Bot.CloseTrade ();
         }
 
