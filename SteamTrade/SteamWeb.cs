@@ -17,8 +17,13 @@ namespace SteamTrade
         public static string Fetch (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
         {
             HttpWebResponse response = Request (url, method, data, cookies, ajax);
-            StreamReader reader = new StreamReader (response.GetResponseStream ());
-            return reader.ReadToEnd ();
+            using(Stream responseStream = response.GetResponseStream())
+            {
+                using(StreamReader reader = new StreamReader(responseStream))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
         }
 
         public static HttpWebResponse Request (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
@@ -26,12 +31,12 @@ namespace SteamTrade
             HttpWebRequest request = WebRequest.Create (url) as HttpWebRequest;
 
             request.Method = method;
-
-            request.Accept = "application/json, text/javascript, */*;q=0.5";
+            request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             //request.Host is set automatically
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = "http://steamcommunity.com/trade/1";
+            request.Timeout = 50000; //Timeout after 50 seconds
 
             if (ajax)
             {
@@ -49,11 +54,13 @@ namespace SteamTrade
                     String.Format ("{0}={1}", HttpUtility.UrlEncode (key), HttpUtility.UrlEncode (data [key]))
                 ));
 
-                byte[] dataBytes = Encoding.ASCII.GetBytes (dataString);
+                byte[] dataBytes = Encoding.UTF8.GetBytes (dataString);
                 request.ContentLength = dataBytes.Length;
 
-                Stream requestStream = request.GetRequestStream ();
-                requestStream.Write (dataBytes, 0, dataBytes.Length);
+                using(Stream requestStream = request.GetRequestStream())
+                {
+                    requestStream.Write(dataBytes, 0, dataBytes.Length);
+                }
             }
 
             // Get the response
