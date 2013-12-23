@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
@@ -12,11 +14,45 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
-        public Dictionary<ulong, Item> items = new Dictionary<ulong, Item>();
-        public Dictionary<string, ItemDescription> descriptions = new Dictionary<string, ItemDescription>();
+        public Dictionary<ulong, Item> items
+        {
+            get
+            {
+                if(_loadTask == null)
+                    return null;
+                _loadTask.Wait();
+                return _items;
+            }
+        }
+
+        public Dictionary<string, ItemDescription> descriptions
+        {
+            get
+            {
+                if(_loadTask == null)
+                    return null;
+                _loadTask.Wait();
+                return _descriptions;
+            }
+        }
+
+        public List<string> errors
+        {
+            get
+            {
+                if(_loadTask == null)
+                    return null;
+                _loadTask.Wait();
+                return _errors;
+            }
+        }
 
         public bool isLoaded = false;
-        public List<string> errors = new List<string>();
+
+        private Task _loadTask;
+        private Dictionary<string, ItemDescription> _descriptions = new Dictionary<string, ItemDescription>();
+        private Dictionary<ulong, Item> _items = new Dictionary<ulong, Item>();
+        private List<string> _errors = new List<string>();
 
         public class Item : TradeUserAssets
         {
@@ -59,9 +95,13 @@ namespace SteamTrade
 
         public ItemDescription getDescription(ulong id)
         {
+            if(_loadTask == null)
+                return null;
+            _loadTask.Wait();
+
             try
             {
-                return descriptions[items[id].descriptionid];
+                return _descriptions[_items[id].descriptionid];
             }
             catch (Exception e)
             {
@@ -70,15 +110,21 @@ namespace SteamTrade
             }
         }
 
-        public bool load(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        public void load(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        {
+            List<long> contextIdsCopy = contextIds.ToList();
+            _loadTask = Task.Run(() => loadImplementation(appid, contextIdsCopy, steamid));
+        }
+
+        public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             dynamic invResponse;
             isLoaded = false;
             Dictionary<string, string> tmpAppData;
 
-            items.Clear();
-            descriptions.Clear();
-            errors.Clear();
+            _items.Clear();
+            _descriptions.Clear();
+            _errors.Clear();
 
             try
             {
@@ -89,7 +135,7 @@ namespace SteamTrade
 
                     if (invResponse.success == false)
                     {
-                        errors.Add("Fail to open backpack: " + invResponse.Error);
+                        _errors.Add("Fail to open backpack: " + invResponse.Error);
                         continue;
                     }
 
@@ -99,7 +145,7 @@ namespace SteamTrade
 
                         foreach (var itemId in item)
                         {
-                            items.Add((ulong)itemId.id, new Item()
+                            _items.Add((ulong)itemId.id, new Item()
                             {
                                 appid = appid,
                                 contextid = contextId,
@@ -128,7 +174,7 @@ namespace SteamTrade
                                 tmpAppData= null;
                             }
 
-                            descriptions.Add("" + (class_instance.classid??'0') + "_" + (class_instance.instanceid??'0'), 
+                            _descriptions.Add("" + (class_instance.classid??'0') + "_" + (class_instance.instanceid??'0'), 
                                 new ItemDescription()
                                     {
                                         name = class_instance.name,
@@ -143,20 +189,15 @@ namespace SteamTrade
                             break;
                         }
                     }
-
-                    if (errors.Count > 0)
-                        return false;
                     
                 }//end for (contextId)
             }//end try
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                errors.Add("Exception: " + e.Message);
-                return false;
+                _errors.Add("Exception: " + e.Message);
             }
             isLoaded = true;
-            return true;
         }
     }
 }

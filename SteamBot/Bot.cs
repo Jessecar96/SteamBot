@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Web;
 using System.Net;
 using System.Text;
@@ -83,9 +84,16 @@ namespace SteamBot
         SteamUser.LogOnDetails logOnDetails;
 
         TradeManager tradeManager;
+        private Task<Inventory> myInventoryTask;
 
-        public Inventory MyInventory;
-        public Inventory OtherInventory;
+        public Inventory MyInventory
+        {
+            get
+            {
+                myInventoryTask.Wait();
+                return myInventoryTask.Result;
+            }
+        }
 
         private BackgroundWorker backgroundWorker;
 
@@ -621,7 +629,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            MyInventory = Inventory.FetchInventory(SteamUser.SteamID, apiKey);
+            myInventoryTask = Task.Run(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
         }
 
         /// <summary>
@@ -642,7 +650,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory(SteamID OtherSID)
         {
-            OtherInventory = Inventory.FetchInventory(OtherSID, apiKey);
+            Task.Run(() => Inventory.FetchInventory(OtherSID, apiKey));
         }
 
         /// <summary>
