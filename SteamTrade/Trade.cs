@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
@@ -26,8 +27,10 @@ namespace SteamTrade
         private readonly Dictionary<int, ulong> myOfferedItems;
         private readonly List<ulong> steamMyOfferedItems;
         private readonly TradeSession session;
+        private readonly Task<Inventory> myInventoryTask;
+        private readonly Task<Inventory> otherInventoryTask;
 
-        internal Trade(SteamID me, SteamID other, string sessionId, string token, Inventory myInventory, Inventory otherInventory)
+        internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
             TradeStarted = false;
             OtherIsReady = false;
@@ -43,8 +46,8 @@ namespace SteamTrade
             myOfferedItems = new Dictionary<int, ulong>();
             steamMyOfferedItems = new List<ulong>();
 
-            OtherInventory = otherInventory;
-            MyInventory = myInventory;
+            this.otherInventoryTask = otherInventoryTask;
+            this.myInventoryTask = myInventoryTask;
         }
 
         #region Public Properties
@@ -63,7 +66,17 @@ namespace SteamTrade
         /// <summary> 
         /// Gets the inventory of the other user. 
         /// </summary>
-        public Inventory OtherInventory { get; private set; }
+        public Inventory OtherInventory
+        {
+            get
+            {
+                if(otherInventoryTask == null)
+                    return null;
+
+                otherInventoryTask.Wait();
+                return otherInventoryTask.Result;
+            }
+        }
 
         /// <summary> 
         /// Gets the private inventory of the other user. 
@@ -73,7 +86,17 @@ namespace SteamTrade
         /// <summary> 
         /// Gets the inventory of the bot.
         /// </summary>
-        public Inventory MyInventory { get; private set; }
+        public Inventory MyInventory
+        {
+            get
+            {
+                if(myInventoryTask == null)
+                    return null;
+
+                myInventoryTask.Wait();
+                return myInventoryTask.Result;
+            }
+        }
 
         /// <summary>
         /// Gets the items the user has offered, by itemid.
