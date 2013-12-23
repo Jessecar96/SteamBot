@@ -722,17 +722,15 @@ namespace SteamBot
                 }
                 catch (WebException e)
                 {
-                    log.Error("URI: " + e.Response.ResponseUri + " >> " + e.Message);
-                    System.Threading.Thread.Sleep(300000);//Steam is down, retry in 5 minutes.
+                    log.Error("URI: " + (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown") + " >> " + e.ToString());
+                    System.Threading.Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
                     success = false;
                 }
                 catch (Exception e)
                 {
-                    log.Error(e.Message);
+                    log.Error(e.ToString());
                     log.Warn("Restarting bot...");
                     success = false;
-                    this.StopBot();
-                    this.StartBot();
                 }
             }
         }
