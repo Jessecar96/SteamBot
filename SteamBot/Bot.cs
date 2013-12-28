@@ -281,7 +281,7 @@ namespace SteamBot
                                              EChatEntryType.ChatMsg,
                                              response);
 
-                log.Info ("Bot sent other: " + response);
+                log.Info ("Bot sent other: {0}", response);
                 
                 CurrentTrade = null;
                 return false;
@@ -315,7 +315,7 @@ namespace SteamBot
             #region Login
             msg.Handle<SteamClient.ConnectedCallback> (callback =>
             {
-                log.Debug ("Connection Callback: " + callback.Result);
+                log.Debug ("Connection Callback: {0}", callback.Result);
 
                 if (callback.Result == EResult.OK)
                 {
@@ -331,7 +331,7 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoggedOnCallback> (callback =>
             {
-                log.Debug ("Logged On Callback: " + callback.Result);
+                log.Debug ("Logged On Callback: {0}", callback.Result);
 
                 if (callback.Result == EResult.OK)
                 {
@@ -339,7 +339,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    log.Error ("Login Error: " + callback.Result);
+                    log.Error ("Login Error: {0}", callback.Result);
                 }
 
                 if (callback.Result == EResult.AccountLogonDenied)
@@ -443,10 +443,10 @@ namespace SteamBot
                 if (callback.EntryType == EChatEntryType.ChatMsg ||
                     callback.EntryType == EChatEntryType.Emote)
                 {
-                    log.Info (String.Format ("Chat Message from {0}: {1}",
+                    log.Info ("Chat Message from {0}: {1}",
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
                                          callback.Message
-                                         ));
+                                         );
                     GetUserHandler(callback.Sender).OnMessageHandler(callback.Message, type);
                 }
             });
@@ -515,12 +515,12 @@ namespace SteamBot
             {
                 if (callback.Response == EEconTradeResponse.Accepted)
                 {
-                    log.Debug ("Trade Status: " + callback.Response);
+                    log.Debug ("Trade Status: {0}", callback.Response);
                     log.Info ("Trade Accepted!");
                 }
                 else
                 {
-                    log.Warn ("Trade failed: " + callback.Response);
+                    log.Warn ("Trade failed: {0}", callback.Response);
                     CloseTrade ();
                     if(callback.Response == EEconTradeResponse.Declined && CurrentTrade != null)
                     {
@@ -535,7 +535,7 @@ namespace SteamBot
             msg.Handle<SteamUser.LoggedOffCallback> (callback =>
             {
                 IsLoggedIn = false;
-                log.Warn ("Logged Off: " + callback.Result);
+                log.Warn ("Logged Off: {0}", callback.Result);
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
@@ -724,7 +724,7 @@ namespace SteamBot
                 }
                 catch (WebException e)
                 {
-                    log.Error("URI: " + (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown") + " >> " + e.ToString());
+                    log.Error("URI: {0} >> {1}", (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown"), e.ToString());
                     System.Threading.Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
                 }
                 catch (Exception e)

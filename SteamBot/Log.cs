@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 
 namespace SteamBot
 {
@@ -87,7 +88,7 @@ namespace SteamBot
                 "[{0} {1}] {2}: {3}",
                 (_Bot ?? "(System)"),
                 DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss"),
-                _LogLevel (level).ToUpper (), String.Format(line, formatParams)
+                _LogLevel(level).ToUpper(), (formatParams != null && formatParams.Any() ? String.Format(line, formatParams) : line)
                 );
 
             if(level > LogLevel.Debug)
