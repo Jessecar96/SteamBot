@@ -514,11 +514,9 @@ namespace SteamTrade
                     break;
             }
 
-            if(OnError != null)
-            {
-                string errorMessage = String.Format("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64(), errorType);
-                OnError(errorMessage);
-            }
+            string errorMessage = String.Format("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64(), errorType);
+            FireOnErrorEvent(errorMessage);
+
             OtherUserCancelled = true;
             return false;
         }
@@ -586,8 +584,7 @@ namespace SteamTrade
                         break;
                     default:
                         // Todo: add an OnWarning or similar event
-                        if(OnError != null)
-                            OnError("Unknown Event ID: " + tradeEvent.action);
+                        FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
                         break;
                 }
             }
@@ -747,6 +744,14 @@ namespace SteamTrade
 
             if (onCloseEvent != null)
                 onCloseEvent();
+        }
+
+        internal void FireOnErrorEvent(string errorMessage)
+        {
+            var onErrorEvent = OnError;
+
+            if(onErrorEvent != null)
+                onErrorEvent(errorMessage);
         }
 
         private int NextTradeSlot()
