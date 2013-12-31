@@ -260,7 +260,12 @@ namespace SteamBot
             try
             {
                 tradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other, SteamFriends.GetFriendPersonaName(other));
+                CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other, SteamFriends.GetFriendPersonaName(other));
+                CurrentTrade.OnClose += CloseTrade;
+                SubscribeTrade(CurrentTrade, GetUserHandler(other));
+
+                tradeManager.StartTradeThread(CurrentTrade);
+                return true;
             }
             catch (SteamTrade.Exceptions.InventoryFetchException ie)
             {
@@ -286,11 +291,6 @@ namespace SteamBot
                 CurrentTrade = null;
                 return false;
             }
-            
-            CurrentTrade.OnClose += CloseTrade;
-            SubscribeTrade (CurrentTrade, GetUserHandler (other));
-
-            return true;
         }
 
         public void SetGamePlaying(int id)
@@ -658,7 +658,7 @@ namespace SteamBot
         /// </summary>
         public void SubscribeTrade (Trade trade, UserHandler handler)
         {
-            trade.OnComplete += handler.OnTradeComplete;
+            trade.OnSuccess += handler.OnTradeSuccess;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
             //trade.OnTimeout += OnTradeTimeout;
@@ -675,7 +675,7 @@ namespace SteamBot
         /// </summary>
         public void UnsubscribeTrade (UserHandler handler, Trade trade)
         {
-            trade.OnComplete -= handler.OnTradeComplete;
+            trade.OnSuccess -= handler.OnTradeSuccess;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
             //Trade.OnTimeout -= OnTradeTimeout;

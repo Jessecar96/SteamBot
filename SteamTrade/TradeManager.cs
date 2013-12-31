@@ -172,7 +172,7 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Creates a trade object, starts the trade, and returns it for use. 
+        /// Creates a trade object and returns it for use. 
         /// Call <see cref="InitializeTrade"/> before using this method.
         /// </summary>
         /// <returns>
@@ -188,7 +188,7 @@ namespace SteamTrade
         /// <remarks>
         /// If the needed inventories are <c>null</c> then they will be fetched.
         /// </remarks>
-        public Trade StartTrade (SteamID  me, SteamID other, string otherUserName)
+        public Trade CreateTrade (SteamID  me, SteamID other, string otherUserName)
         {
             if (otherInventoryTask == null || myInventoryTask == null)
                 InitializeTrade (me, other);
@@ -203,10 +203,6 @@ namespace SteamTrade
                     OnTradeEnded (this, null);
             };
 
-            trade = t;
-
-            StartTradeThread ();
-
             return t;
         }
 
@@ -219,7 +215,7 @@ namespace SteamTrade
         /// </remarks>            
         public void StopTrade ()
         {
-            // TODO: something to check that trade was the Trade returned from StartTrade
+            // TODO: something to check that trade was the Trade returned from CreateTrade
             otherInventoryTask = null;
             myInventoryTask = null;
 
@@ -237,7 +233,7 @@ namespace SteamTrade
         /// </param>
         /// <remarks>
         /// This should be done anytime a new user is traded with or the inventories are out of date. It should
-        /// be done sometime before calling <see cref="StartTrade"/>.
+        /// be done sometime before calling <see cref="CreateTrade"/>.
         /// </remarks>
         public void InitializeTrade (SteamID me, SteamID other)
         {
@@ -262,8 +258,13 @@ namespace SteamTrade
 
         #endregion Public Methods
 
-        private void StartTradeThread ()
+        /// <summary>
+        /// Starts the actual trade-polling thread.
+        /// </summary>
+        public void StartTradeThread (Trade trade)
         {
+            this.trade = trade;
+
             // initialize data to use in thread
             tradeStartTime = DateTime.Now;
             lastOtherActionTime = DateTime.Now;
