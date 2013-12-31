@@ -286,11 +286,17 @@ namespace SteamTrade
                 finally
                 {
                     DebugPrint("Trade thread shutting down.");
-
-                    if(trade.HasTradeCompletedOk)
-                        trade.FireOnSuccessEvent();
-
-                    trade.FireOnCloseEvent();
+                    try
+                    {
+                        if(trade.HasTradeCompletedOk)
+                            trade.FireOnSuccessEvent();
+                    }
+                    finally
+                    {
+                        //Make sure OnClose is always fired, even if OnSuccess throws an exception
+                        //(which it NEVER should, but...)
+                        trade.FireOnCloseEvent();
+                    }
                 }
             });
 

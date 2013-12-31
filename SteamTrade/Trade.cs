@@ -191,12 +191,7 @@ namespace SteamTrade
         /// </summary>
         public bool CancelTrade ()
         {
-            bool success = RetryWebRequest(session.CancelTradeWebCmd);
-            
-            if (success)
-                FireOnCloseEvent();
-
-            return success;
+            return RetryWebRequest(session.CancelTradeWebCmd);
         }
 
         /// <summary>
