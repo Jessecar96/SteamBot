@@ -228,7 +228,7 @@ namespace SteamBot
             }
         }
 
-        public override void OnTradeComplete()
+        public override void OnTradeSuccess()
         {
             // Trade completed successfully
             Log.Success("Trade Complete.");

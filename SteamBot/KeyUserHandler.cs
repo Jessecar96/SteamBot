@@ -92,7 +92,7 @@ namespace SteamBot
 
         }
 
-        public override void OnTradeComplete()
+        public override void OnTradeSuccess()
         {
             throw new NotImplementedException();
         }

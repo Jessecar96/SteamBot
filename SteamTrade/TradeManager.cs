@@ -276,53 +276,52 @@ namespace SteamTrade
                 DebugPrint ("Trade thread starting.");
                 
                 // main thread loop for polling
-                while (IsTradeThreadRunning)
+                try
                 {
-                    Thread.Sleep (TradePollingInterval);
-                    
-                    try
+                    while(IsTradeThreadRunning)
                     {
-                        bool action = trade.Poll ();
+                        bool action = trade.Poll();
 
-                        if (action)
+                        if(action)
                             lastOtherActionTime = DateTime.Now;
-                        
-                        if (trade.OtherUserCancelled || trade.HasTradeCompletedOk)
+
+                        if(trade.OtherUserCancelled || trade.HasTradeCompletedOk || CheckTradeTimeout(trade))
                         {
                             IsTradeThreadRunning = false;
-
-                            if (trade.HasTradeCompletedOk)
-                                trade.FireOnCompleteEvent();
-
-                            trade.FireOnCloseEvent();
+                            break;
                         }
-                        else
-                        {
-                            CheckTradeTimeout(trade);                            
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // TODO: find a new way to do this w/o the trade events
-                        //if (OnError != null)
-                        //    OnError("Error Polling Trade: " + e);
-                        
-                        // ok then we should stop polling...
-                        IsTradeThreadRunning = false;
-                        DebugPrint ("[TRADEMANAGER] general error caught: " + ex);
+
+                        Thread.Sleep(TradePollingInterval);
                     }
                 }
+                catch(Exception ex)
+                {
+                    // TODO: find a new way to do this w/o the trade events
+                    //if (OnError != null)
+                    //    OnError("Error Polling Trade: " + e);
 
-                DebugPrint ("Trade thread shutting down.");
+                    // ok then we should stop polling...
+                    IsTradeThreadRunning = false;
+                    DebugPrint("[TRADEMANAGER] general error caught: " + ex);
+                }
+                finally
+                {
+                    DebugPrint("Trade thread shutting down.");
 
-                if (OnTradeEnded != null)
-                    OnTradeEnded (this, null);
+                    if(trade.HasTradeCompletedOk)
+                        trade.FireOnSuccessEvent();
+
+                    trade.FireOnCloseEvent();
+
+                    if(OnTradeEnded != null)
+                        OnTradeEnded(this, null);   
+                }
             });
 
             pollThread.Start();
         }
 
-        private void CheckTradeTimeout (Trade trade)
+        private bool CheckTradeTimeout (Trade trade)
         {
             var now = DateTime.Now;
 
@@ -338,9 +337,6 @@ namespace SteamTrade
 
             if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
             {
-                // stop thread
-                IsTradeThreadRunning = false;
-
                 DebugPrint ("timed out...");
 
                 if (OnTimeout != null)
@@ -349,12 +345,15 @@ namespace SteamTrade
                 }
 
                 trade.CancelTrade ();
+
+                return true;
             }
             else if (untilActionTimeout <= 20 && secsSinceLastTimeoutMessage >= 10)
             {
                 trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
                 lastTimeoutMessage = now;
             }
+            return false;
         }
 
         [Conditional ("DEBUG_TRADE_MANAGER")]
