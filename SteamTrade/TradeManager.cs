@@ -289,14 +289,21 @@ namespace SteamTrade
                     DebugPrint("Trade thread shutting down.");
                     try
                     {
-                        if(trade.HasTradeCompletedOk)
-                            trade.FireOnSuccessEvent();
+                        try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
+                        {
+                            if(trade.HasTradeCompletedOk)
+                                trade.FireOnSuccessEvent();
+                        }
+                        finally
+                        {
+                            //Make sure OnClose is always fired after OnSuccess, even if OnSuccess throws an exception
+                            //(which it NEVER should, but...)
+                            trade.FireOnCloseEvent();
+                        }
                     }
-                    finally
+                    catch(Exception ex)
                     {
-                        //Make sure OnClose is always fired, even if OnSuccess throws an exception
-                        //(which it NEVER should, but...)
-                        trade.FireOnCloseEvent();
+                        trade.FireOnErrorEvent("Unknown error occurred DURING CLEANUP(!?): " + ex.ToString());
                     }
                 }
             });
