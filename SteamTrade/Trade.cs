@@ -193,10 +193,11 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Adds a specified item by its itemid.
+        /// Adds a specified TF2 item by its itemid.
+        /// If the item is not a TF2 item, use the AddItem(ulong itemid, int appid, long contextid) overload
         /// </summary>
-        /// <returns><c>false</c> if the item was not found in the inventory.</returns>
-        public bool AddItem (ulong itemid)//TF2 Default
+        /// <returns><c>false</c> if the tf2 item was not found in the inventory.</returns>
+        public bool AddItem (ulong itemid)
         {
             if (MyInventory.GetItem(itemid) == null)
             {
@@ -350,21 +351,22 @@ namespace SteamTrade
         /// <returns>Number of items removed.</returns>
         public uint RemoveAllItems()
         {
-            uint removed = 0;
+            uint numRemoved = 0;
 
-            var copy = new Dictionary<int, ulong>(myOfferedItems);
-
-            foreach (var id in copy)
+            foreach(var id in myOfferedItems.Values.ToList())
             {
-                Inventory.Item item = MyInventory.GetItem(id.Value);
+                Inventory.Item item = MyInventory.GetItem(id);
 
-                bool success = RemoveItem(item.Id);
+                if(item != null)
+                {
+                    bool wasRemoved = RemoveItem(item.Id);
 
-                if (success)
-                    removed++;
+                    if(wasRemoved)
+                        numRemoved++;
+                }
             }
 
-            return removed;
+            return numRemoved;
         }
 
         /// <summary>

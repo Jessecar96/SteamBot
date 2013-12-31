@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -68,27 +69,12 @@ namespace SteamTrade
 
         public Item GetItem (ulong id)
         {
-            foreach (Item item in Items)
-            {
-                if (item.Id == id)
-                {
-                    return item;
-                }
-            }
-            return null;
+            return (Items == null ? null : Items.FirstOrDefault(item => item.Id == id));
         }
 
         public List<Item> GetItemsByDefindex (int defindex)
         {
-            var items = new List<Item> ();
-            foreach (Item item in Items)
-            {
-                if (item.Defindex == defindex)
-                {
-                    items.Add(item);
-                }
-            }
-            return items;
+            return Items.Where(item => item.Defindex == defindex).ToList();
         }
 
         public class Item
