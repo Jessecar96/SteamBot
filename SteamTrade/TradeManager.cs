@@ -17,7 +17,6 @@ namespace SteamTrade
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
-        private Trade trade;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -130,11 +129,6 @@ namespace SteamTrade
         /// </summary>
         public EventHandler OnTimeout;
 
-        /// <summary>
-        /// Occurs When the trade ends either by timeout, error, cancellation, or acceptance.
-        /// </summary>
-        public EventHandler OnTradeEnded;
-
         #endregion Public Events
 
         #region Public Methods
@@ -182,9 +176,6 @@ namespace SteamTrade
             t.OnClose += delegate
             {
                 IsTradeThreadRunning = false;
-
-                if (OnTradeEnded != null)
-                    OnTradeEnded (this, null);
             };
 
             return t;
@@ -252,8 +243,6 @@ namespace SteamTrade
         /// </summary>
         public void StartTradeThread (Trade trade)
         {
-            this.trade = trade;
-
             // initialize data to use in thread
             tradeStartTime = DateTime.Now;
             lastOtherActionTime = DateTime.Now;
@@ -302,9 +291,6 @@ namespace SteamTrade
                         trade.FireOnSuccessEvent();
 
                     trade.FireOnCloseEvent();
-
-                    if(OnTradeEnded != null)
-                        OnTradeEnded(this, null);   
                 }
             });
 

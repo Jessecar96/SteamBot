@@ -218,11 +218,6 @@ namespace SteamBot
             GetUserHandler (CurrentTrade.OtherSID).OnTradeTimeout();
         }
 
-        void OnTradeEnded (object sender, EventArgs e)
-        {
-            CloseTrade();
-        }
-
         public void HandleBotCommand(string command)
         {
             try
@@ -367,7 +362,6 @@ namespace SteamBot
                         tradeManager = new TradeManager(apiKey, sessionId, token);
                         tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
                         tradeManager.OnTimeout += OnTradeTimeout;
-                        tradeManager.OnTradeEnded += OnTradeEnded;
                         break;
                     }
                     else
