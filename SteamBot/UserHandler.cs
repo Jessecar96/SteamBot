@@ -111,7 +111,7 @@ namespace SteamBot
 
         public abstract void OnTradeTimeout ();
 
-        public abstract void OnTradeComplete ();
+        public abstract void OnTradeSuccess ();
 
         public virtual void OnTradeClose ()
         {

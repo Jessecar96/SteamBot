@@ -143,7 +143,7 @@ namespace SteamTrade
         /// <summary>
         /// Called when the trade completes successfully.
         /// </summary>
-        public event CompleteHandler OnComplete;
+        public event CompleteHandler OnSuccess;
         
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -193,8 +193,8 @@ namespace SteamTrade
         {
             bool success = RetryWebRequest(session.CancelTradeWebCmd);
             
-            if (success && OnClose != null)
-                OnClose ();
+            if (success)
+                FireOnCloseEvent();
 
             return success;
         }
@@ -690,12 +690,12 @@ namespace SteamTrade
             }
         }
 
-        internal void FireOnCompleteEvent()
+        internal void FireOnSuccessEvent()
         {
-            var onCompleteEvent = OnComplete;
+            var onSuccessEvent = OnSuccess;
 
-            if (onCompleteEvent != null)
-                onCompleteEvent();
+            if (onSuccessEvent != null)
+                onSuccessEvent();
         }
 
         internal void FireOnCloseEvent()
