@@ -282,6 +282,7 @@ namespace SteamTrade
                     // ok then we should stop polling...
                     IsTradeThreadRunning = false;
                     DebugPrint("[TRADEMANAGER] general error caught: " + ex);
+                    trade.FireOnErrorEvent("Unknown error occurred: " + ex.ToString());
                 }
                 finally
                 {

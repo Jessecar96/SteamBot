@@ -471,10 +471,7 @@ namespace SteamTrade
 
                 // All other known values (3, 4) correspond to trades closing.
                 default:
-                    if (OnError != null)
-                    {
-                        OnError("Trade was closed by other user. Trade status: " + status.trade_status);
-                    }
+                    FireOnErrorEvent("Trade was closed by other user. Trade status: " + status.trade_status);
                     OtherUserCancelled = true;
                     return false;
             }
@@ -538,8 +535,7 @@ namespace SteamTrade
                         break;
                     default:
                         // Todo: add an OnWarning or similar event
-                        if (OnError != null)
-                            OnError("Unknown Event ID: " + tradeEvent.action);
+                        FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
                         break;
                 }
             }
@@ -699,6 +695,14 @@ namespace SteamTrade
 
             if (onCloseEvent != null)
                 onCloseEvent();
+        }
+
+        internal void FireOnErrorEvent(string errorMessage)
+        {
+            var onErrorEvent = OnError;
+
+            if(onErrorEvent != null)
+                onErrorEvent(errorMessage);
         }
 
         private int NextTradeSlot()
