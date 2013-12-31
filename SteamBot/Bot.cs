@@ -252,7 +252,12 @@ namespace SteamBot
             try
             {
                 tradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other);
+                CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
+                CurrentTrade.OnClose += CloseTrade;
+                SubscribeTrade(CurrentTrade, GetUserHandler(other));
+
+                tradeManager.StartTradeThread(CurrentTrade);
+                return true;
             }
             catch (SteamTrade.Exceptions.InventoryFetchException ie)
             {
@@ -278,11 +283,6 @@ namespace SteamBot
                 CurrentTrade = null;
                 return false;
             }
-            
-            CurrentTrade.OnClose += CloseTrade;
-            SubscribeTrade (CurrentTrade, GetUserHandler (other));
-
-            return true;
         }
 
         public void SetGamePlaying(int id)
