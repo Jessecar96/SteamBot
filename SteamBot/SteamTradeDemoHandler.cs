@@ -281,7 +281,7 @@ namespace SteamBot
         public bool Validate()
         {
             List<string> errors = new List<string>();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're and Admin.");
+            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're an Admin.");
 
             // send the errors
             if (errors.Count != 0)
