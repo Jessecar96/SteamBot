@@ -66,9 +66,6 @@ namespace SteamBot
         
         public override void OnTradeReady (bool ready) 
         {
-            //Because SetReady must use its own version, it's important
-            //we poll the trade to make sure everything is up-to-date.
-            Trade.Poll();
             if (!ready)
             {
                 Trade.SetReady (false);
@@ -83,7 +80,7 @@ namespace SteamBot
             }
         }
 
-        public override void OnTradeComplete()
+        public override void OnTradeSuccess()
         {
             // Trade completed successfully
             Log.Success("Trade Complete.");

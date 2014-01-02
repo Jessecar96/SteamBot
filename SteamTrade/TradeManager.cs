@@ -8,15 +8,15 @@ namespace SteamTrade
 {
     public class TradeManager
     {
-        const int MaxGapTimeDefault = 15;
-        const int MaxTradeTimeDefault = 180;
-        const int TradePollingIntervalDefault = 800;
-        string apiKey;
-        string sessionId;
-        string token;
-        DateTime tradeStartTime;
-        DateTime lastOtherActionTime;
-        Trade trade;
+        private const int MaxGapTimeDefault = 15;
+        private const int MaxTradeTimeDefault = 180;
+        private const int TradePollingIntervalDefault = 800;
+        private readonly string apiKey;
+        private readonly string sessionId;
+        private readonly string token;
+        private DateTime tradeStartTime;
+        private DateTime lastOtherActionTime;
+        private DateTime lastTimeoutMessage;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -129,11 +129,6 @@ namespace SteamTrade
         /// </summary>
         public EventHandler OnTimeout;
 
-        /// <summary>
-        /// Occurs When the trade ends either by timeout, error, cancellation, or acceptance.
-        /// </summary>
-        public EventHandler OnTradeEnded;
-
         #endregion Public Events
 
         #region Public Methods
@@ -156,8 +151,8 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Creates a trade object, starts the trade, and returns it for use. 
-        /// Call <see cref="FetchInventories"/> before using this method.
+        /// Creates a trade object and returns it for use. 
+        /// Call <see cref="InitializeTrade"/> before using this method.
         /// </summary>
         /// <returns>
         /// The trade object to use to interact with the Steam trade.
@@ -171,7 +166,7 @@ namespace SteamTrade
         /// <remarks>
         /// If the needed inventories are <c>null</c> then they will be fetched.
         /// </remarks>
-        public Trade StartTrade (SteamID  me, SteamID other)
+        public Trade CreateTrade (SteamID  me, SteamID other)
         {
             if (OtherInventory == null || MyInventory == null)
                 InitializeTrade (me, other);
@@ -181,14 +176,7 @@ namespace SteamTrade
             t.OnClose += delegate
             {
                 IsTradeThreadRunning = false;
-
-                if (OnTradeEnded != null)
-                    OnTradeEnded (this, null);
             };
-
-            trade = t;
-
-            StartTradeThread ();
 
             return t;
         }
@@ -202,7 +190,7 @@ namespace SteamTrade
         /// </remarks>            
         public void StopTrade ()
         {
-            // TODO: something to check that trade was the Trade returned from StartTrade
+            // TODO: something to check that trade was the Trade returned from CreateTrade
             OtherInventory = null;
             MyInventory = null;
 
@@ -220,7 +208,7 @@ namespace SteamTrade
         /// </param>
         /// <remarks>
         /// This should be done anytime a new user is traded with or the inventories are out of date. It should
-        /// be done sometime before calling <see cref="StartTrade"/>.
+        /// be done sometime before calling <see cref="CreateTrade"/>.
         /// </remarks>
         public void InitializeTrade (SteamID me, SteamID other)
         {
@@ -250,11 +238,15 @@ namespace SteamTrade
 
         #endregion Public Methods
 
-        private void StartTradeThread ()
+        /// <summary>
+        /// Starts the actual trade-polling thread.
+        /// </summary>
+        public void StartTradeThread (Trade trade)
         {
             // initialize data to use in thread
             tradeStartTime = DateTime.Now;
             lastOtherActionTime = DateTime.Now;
+            lastTimeoutMessage = DateTime.Now.AddSeconds(-1000);
 
             var pollThread = new Thread (() =>
             {
@@ -263,51 +255,63 @@ namespace SteamTrade
                 DebugPrint ("Trade thread starting.");
                 
                 // main thread loop for polling
-                while (IsTradeThreadRunning)
+                try
                 {
-                    Thread.Sleep (TradePollingInterval);
-                    
-                    try
+                    while(IsTradeThreadRunning)
                     {
-                        bool action = trade.Poll ();
+                        bool action = trade.Poll();
 
-                        if (action)
+                        if(action)
                             lastOtherActionTime = DateTime.Now;
-                        
-                        if (trade.OtherUserCancelled || trade.HasTradeCompletedOk)
+
+                        if(trade.OtherUserCancelled || trade.HasTradeCompletedOk || CheckTradeTimeout(trade))
                         {
                             IsTradeThreadRunning = false;
-
-                            if (trade.HasTradeCompletedOk)
-                                trade.FireOnCompleteEvent();
-
-                            trade.FireOnCloseEvent();
+                            break;
                         }
 
-                        CheckTradeTimeout (trade);
-                    }
-                    catch (Exception ex)
-                    {
-                        // TODO: find a new way to do this w/o the trade events
-                        //if (OnError != null)
-                        //    OnError("Error Polling Trade: " + e);
-                        
-                        // ok then we should stop polling...
-                        IsTradeThreadRunning = false;
-                        DebugPrint ("[TRADEMANAGER] general error caught: " + ex);
+                        Thread.Sleep(TradePollingInterval);
                     }
                 }
+                catch(Exception ex)
+                {
+                    // TODO: find a new way to do this w/o the trade events
+                    //if (OnError != null)
+                    //    OnError("Error Polling Trade: " + e);
 
-                DebugPrint ("Trade thread shutting down.");
-
-                if (OnTradeEnded != null)
-                    OnTradeEnded (this, null);
+                    // ok then we should stop polling...
+                    IsTradeThreadRunning = false;
+                    DebugPrint("[TRADEMANAGER] general error caught: " + ex);
+                    trade.FireOnErrorEvent("Unknown error occurred: " + ex.ToString());
+                }
+                finally
+                {
+                    DebugPrint("Trade thread shutting down.");
+                    try
+                    {
+                        try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
+                        {
+                            if(trade.HasTradeCompletedOk)
+                                trade.FireOnSuccessEvent();
+                        }
+                        finally
+                        {
+                            //Make sure OnClose is always fired after OnSuccess, even if OnSuccess throws an exception
+                            //(which it NEVER should, but...)
+                            trade.FireOnCloseEvent();
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        trade.FireOnErrorEvent("Unknown error occurred DURING CLEANUP(!?): " + ex.ToString());
+                    }
+                }
             });
 
             pollThread.Start();
         }
 
-        void CheckTradeTimeout (Trade trade)
+        private bool CheckTradeTimeout (Trade trade)
         {
             var now = DateTime.Now;
 
@@ -319,11 +323,10 @@ namespace SteamTrade
             DateTime tradeTimeout = tradeStartTime.AddSeconds (MaxTradeTimeSec);
             int untilTradeTimeout = (int)Math.Round ((tradeTimeout - now).TotalSeconds);
 
+            double secsSinceLastTimeoutMessage = (now - lastTimeoutMessage).TotalSeconds;
+
             if (untilActionTimeout <= 0 || untilTradeTimeout <= 0)
             {
-                // stop thread
-                IsTradeThreadRunning = false;
-
                 DebugPrint ("timed out...");
 
                 if (OnTimeout != null)
@@ -332,15 +335,19 @@ namespace SteamTrade
                 }
 
                 trade.CancelTrade ();
+
+                return true;
             }
-            else if (untilActionTimeout <= 20 && untilActionTimeout % 10 == 0)
+            else if (untilActionTimeout <= 20 && secsSinceLastTimeoutMessage >= 10)
             {
                 trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                lastTimeoutMessage = now;
             }
+            return false;
         }
 
         [Conditional ("DEBUG_TRADE_MANAGER")]
-        void DebugPrint (string output)
+        private static void DebugPrint (string output)
         {
             // I don't really want to add the Logger as a dependecy to TradeManager so I 
             // print using the console directly. To enable this for debugging put this:
