@@ -18,9 +18,10 @@ namespace SteamTrade
         {
             OnGoing = 0,
             CompletedSuccessfully = 1,
-            //2 is unknown
+            CancelledByBot = 2,
             CancelledByUser = 3,
-            SessionExpired = 4
+            SessionExpired = 4,
+            TradeFailed = 5
         }
         #endregion
 
@@ -510,6 +511,12 @@ namespace SteamTrade
                     break;
                 case TradeStatusType.SessionExpired:
                     errorType = "expired";
+                    break;
+                case TradeStatusType.CancelledByBot:
+                    errorType = "was cancelled by bot";
+                    break;
+                case TradeStatusType.TradeFailed:
+                    errorType = "failed unexpectedly";
                     break;
                 default:
                     errorType = "closed for unknown reason " + status.trade_status;
