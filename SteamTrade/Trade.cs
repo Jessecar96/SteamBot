@@ -115,6 +115,8 @@ namespace SteamTrade
 
         public delegate void CloseHandler ();
 
+        public delegate void CompleteHandler ();
+
         public delegate void ErrorHandler (string error);
 
         public delegate void TimeoutHandler ();
@@ -137,6 +139,11 @@ namespace SteamTrade
         /// to close the trade.
         /// </summary>
         public event CloseHandler OnClose;
+
+        /// <summary>
+        /// Called when the trade completes successfully.
+        /// </summary>
+        public event CompleteHandler OnSuccess;
         
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -184,12 +191,7 @@ namespace SteamTrade
         /// </summary>
         public bool CancelTrade ()
         {
-            bool success = RetryWebRequest(session.CancelTradeWebCmd);
-            
-            if (success && OnClose != null)
-                OnClose ();
-
-            return success;
+            return RetryWebRequest(session.CancelTradeWebCmd);
         }
 
         /// <summary>
@@ -469,10 +471,7 @@ namespace SteamTrade
 
                 // All other known values (3, 4) correspond to trades closing.
                 default:
-                    if (OnError != null)
-                    {
-                        OnError("Trade was closed by other user. Trade status: " + status.trade_status);
-                    }
+                    FireOnErrorEvent("Trade was closed by other user. Trade status: " + status.trade_status);
                     OtherUserCancelled = true;
                     return false;
             }
@@ -536,8 +535,7 @@ namespace SteamTrade
                         break;
                     default:
                         // Todo: add an OnWarning or similar event
-                        if (OnError != null)
-                            OnError("Unknown Event ID: " + tradeEvent.action);
+                        FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
                         break;
                 }
             }
@@ -683,12 +681,28 @@ namespace SteamTrade
             }
         }
 
+        internal void FireOnSuccessEvent()
+        {
+            var onSuccessEvent = OnSuccess;
+
+            if (onSuccessEvent != null)
+                onSuccessEvent();
+        }
+
         internal void FireOnCloseEvent()
         {
             var onCloseEvent = OnClose;
 
             if (onCloseEvent != null)
                 onCloseEvent();
+        }
+
+        internal void FireOnErrorEvent(string errorMessage)
+        {
+            var onErrorEvent = OnError;
+
+            if(onErrorEvent != null)
+                onErrorEvent(errorMessage);
         }
 
         private int NextTradeSlot()

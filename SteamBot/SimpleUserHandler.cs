@@ -79,7 +79,13 @@ namespace SteamBot
                 Trade.SendMessage ("Scrap: " + ScrapPutUp);
             }
         }
-        
+
+        public override void OnTradeSuccess()
+        {
+            // Trade completed successfully
+            Log.Success("Trade Complete.");
+        }
+
         public override void OnTradeAccept() 
         {
             if (Validate() || IsAdmin)
@@ -87,13 +93,12 @@ namespace SteamBot
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
                 try {
-                    Trade.AcceptTrade();
+                    if (Trade.AcceptTrade())
+                        Log.Success("Trade Accepted!");
                 }
                 catch {
                     Log.Warn ("The trade might have failed, but we can't be sure.");
                 }
-
-                Log.Success ("Trade Complete!");
             }
 
             OnTradeClose ();

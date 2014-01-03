@@ -122,19 +122,26 @@ namespace SteamBot
             Trade.SetReady(true);
         }
 
+        public override void OnTradeSuccess()
+        {
+            // Trade completed successfully
+            Log.Success("Trade Complete.");
+        }
+
         public override void OnTradeAccept()
         {
             if (IsAdmin)
             {
-                bool ok = Trade.AcceptTrade();
-
-                if (ok)
+                //Even if it is successful, AcceptTrade can fail on
+                //trades with a lot of items so we use a try-catch
+                try
                 {
-                    Log.Success("Trade was Successful!");
+                    if (Trade.AcceptTrade())
+                        Log.Success("Trade Accepted!");
                 }
-                else
+                catch
                 {
-                    Log.Warn("Trade might have failed.");
+                    Log.Warn("The trade might have failed, but we can't be sure.");
                 }
             }
         }

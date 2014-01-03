@@ -218,11 +218,6 @@ namespace SteamBot
             GetUserHandler (CurrentTrade.OtherSID).OnTradeTimeout();
         }
 
-        void OnTradeEnded (object sender, EventArgs e)
-        {
-            CloseTrade();
-        }
-
         public void HandleBotCommand(string command)
         {
             try
@@ -252,7 +247,12 @@ namespace SteamBot
             try
             {
                 tradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = tradeManager.StartTrade (SteamUser.SteamID, other);
+                CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
+                CurrentTrade.OnClose += CloseTrade;
+                SubscribeTrade(CurrentTrade, GetUserHandler(other));
+
+                tradeManager.StartTradeThread(CurrentTrade);
+                return true;
             }
             catch (SteamTrade.Exceptions.InventoryFetchException ie)
             {
@@ -278,11 +278,6 @@ namespace SteamBot
                 CurrentTrade = null;
                 return false;
             }
-            
-            CurrentTrade.OnClose += CloseTrade;
-            SubscribeTrade (CurrentTrade, GetUserHandler (other));
-
-            return true;
         }
 
         public void SetGamePlaying(int id)
@@ -367,7 +362,6 @@ namespace SteamBot
                         tradeManager = new TradeManager(apiKey, sessionId, token);
                         tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
                         tradeManager.OnTimeout += OnTradeTimeout;
-                        tradeManager.OnTradeEnded += OnTradeEnded;
                         break;
                     }
                     else
@@ -646,6 +640,7 @@ namespace SteamBot
         /// </summary>
         public void SubscribeTrade (Trade trade, UserHandler handler)
         {
+            trade.OnSuccess += handler.OnTradeSuccess;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
             //trade.OnTimeout += OnTradeTimeout;
@@ -662,6 +657,7 @@ namespace SteamBot
         /// </summary>
         public void UnsubscribeTrade (UserHandler handler, Trade trade)
         {
+            trade.OnSuccess -= handler.OnTradeSuccess;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
             //Trade.OnTimeout -= OnTradeTimeout;
