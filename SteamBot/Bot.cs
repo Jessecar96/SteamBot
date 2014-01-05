@@ -423,11 +423,11 @@ namespace SteamBot
                             {
                                 if (GetUserHandler(friend.SteamID).OnGroupAdd())
                                 {
-                                    AcceptClanInvite(friend.SteamID);
+                                    AcceptGroupInvite(friend.SteamID);
                                 }
                                 else
                                 {
-                                    DeclineClanInvite(friend.SteamID);
+                                    DeclineGroupInvite(friend.SteamID);
                                 }
                             }
                         }
@@ -787,13 +787,13 @@ namespace SteamBot
             }
         }
 
-        #region Clan Methods
+        #region Group Methods
 
         /// <summary>
-        /// Accepts the invite from a clan (aka group).
+        /// Accepts the invite to a Steam Group
         /// </summary>
         /// <param name="group">SteamID of the group to accept the invite from.</param>
-        private void AcceptClanInvite(SteamID group)
+        private void AcceptGroupInvite(SteamID group)
         {
             var AcceptInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
 
@@ -805,10 +805,10 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Declines the invite of a clan (aka group).
+        /// Declines the invite to a Steam Group
         /// </summary>
         /// <param name="group">SteamID of the group to decline the invite from.</param>
-        private void DeclineClanInvite(SteamID group)
+        private void DeclineGroupInvite(SteamID group)
         {
             var DeclineInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
 
@@ -819,15 +819,15 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Invites a use to the specified clan (aka group).
+        /// Invites a use to the specified Steam Group
         /// </summary>
         /// <param name="user">SteamID of the user to invite.</param>
-        /// <param name="clan">SteamID of the clan to invite the user to.</param>
-        public void InviteUserToClan(SteamID user, SteamID clan)
+        /// <param name="groupId">SteamID of the group to invite the user to.</param>
+        public void InviteUserToGroup(SteamID user, SteamID groupId)
         {
             var InviteUser = new ClientMsg<CMsgInviteUserToGroup>((int)EMsg.ClientInviteUserToClan);
 
-            InviteUser.Body.GroupID = clan.ConvertToUInt64();
+            InviteUser.Body.GroupID = groupId.ConvertToUInt64();
             InviteUser.Body.Invitee = user.ConvertToUInt64();
             InviteUser.Body.UnknownInfo = true;
 
