@@ -102,6 +102,11 @@ namespace SteamBot
             throw new NotImplementedException();
         }
 
+        public override bool OnGroupAdd()
+        {
+            return false;
+        }
+
         public override bool OnFriendAdd()
         {
             Bot.log.Success(Bot.SteamFriends.GetFriendPersonaName(OtherSID) + " (" + OtherSID.ToString() + ") added me!");
