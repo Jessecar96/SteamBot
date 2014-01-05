@@ -7,6 +7,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.ComponentModel;
+using SteamBot.SteamGroups;
 using SteamKit2;
 using SteamTrade;
 using SteamKit2.Internal;
