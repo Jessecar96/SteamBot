@@ -41,7 +41,7 @@ namespace SteamBot
         /// <returns>
         /// Whether to accept.
         /// </returns>
-        public override bool OnClanAdd()
+        public override bool OnGroupAdd()
         {
             return false;
         }

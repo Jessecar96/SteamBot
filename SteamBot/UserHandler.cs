@@ -53,12 +53,12 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Triggered when a clan invites the bot.
+        /// Called when the bot is invited to a Steam group
         /// </summary>
         /// <returns>
         /// Whether to accept.
         /// </returns>
-        public abstract bool OnClanAdd();
+        public abstract bool OnGroupAdd();
 
         /// <summary>
         /// Called when the user adds the bot as a friend.

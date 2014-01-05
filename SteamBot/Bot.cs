@@ -50,8 +50,8 @@ namespace SteamBot
 
         List<SteamID> friends = new List<SteamID>();
 
-        // List of Steam clans the bot is in.
-        private readonly List<SteamID> clans = new List<SteamID>();
+        // List of Steam groups the bot is in.
+        private readonly List<SteamID> groups = new List<SteamID>();
 
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
@@ -407,9 +407,9 @@ namespace SteamBot
                 {
                     if (friend.SteamID.AccountType == EAccountType.Clan)
                     {
-                        if (!clans.Contains(friend.SteamID))
+                        if (!groups.Contains(friend.SteamID))
                         {
-                            clans.Add(friend.SteamID);
+                            groups.Add(friend.SteamID);
                             if (friend.Relationship == EFriendRelationship.RequestRecipient)
                             {
                                 if (GetUserHandler(friend.SteamID).OnGroupAdd())
@@ -426,7 +426,7 @@ namespace SteamBot
                         {
                             if (friend.Relationship == EFriendRelationship.None)
                             {
-                                clans.Remove(friend.SteamID);
+                                groups.Remove(friend.SteamID);
                             }
                         }
                     }
@@ -767,7 +767,7 @@ namespace SteamBot
         /// <param name="group">SteamID of the group to accept the invite from.</param>
         private void AcceptClanInvite(SteamID group)
         {
-            var AcceptInvite = new ClientMsg<CMsgClanInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+            var AcceptInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
 
             AcceptInvite.Body.GroupID = group.ConvertToUInt64();
             AcceptInvite.Body.AcceptInvite = true;
@@ -782,7 +782,7 @@ namespace SteamBot
         /// <param name="group">SteamID of the group to decline the invite from.</param>
         private void DeclineClanInvite(SteamID group)
         {
-            var DeclineInvite = new ClientMsg<CMsgClanInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
+            var DeclineInvite = new ClientMsg<CMsgGroupInviteAction>((int)EMsg.ClientAcknowledgeClanInvite);
 
             DeclineInvite.Body.GroupID = group.ConvertToUInt64();
             DeclineInvite.Body.AcceptInvite = false;
@@ -797,7 +797,7 @@ namespace SteamBot
         /// <param name="clan">SteamID of the clan to invite the user to.</param>
         public void InviteUserToClan(SteamID user, SteamID clan)
         {
-            var InviteUser = new ClientMsg<CMsgInviteUserToClan>((int)EMsg.ClientInviteUserToClan);
+            var InviteUser = new ClientMsg<CMsgInviteUserToGroup>((int)EMsg.ClientInviteUserToClan);
 
             InviteUser.Body.GroupID = clan.ConvertToUInt64();
             InviteUser.Body.Invitee = user.ConvertToUInt64();

@@ -17,14 +17,14 @@ namespace SteamBot
     /// <summary>
     /// Message used to invite a user to a group(clan).
     /// </summary>
-    public class CMsgInviteUserToClan : ISteamSerializableMessage, ISteamSerializable
+    public class CMsgInviteUserToGroup : ISteamSerializableMessage, ISteamSerializable
     {
         EMsg ISteamSerializableMessage.GetEMsg()
         {
             return EMsg.ClientInviteUserToClan;
         }
 
-        public CMsgInviteUserToClan()
+        public CMsgInviteUserToGroup()
         {
 
         }
@@ -79,14 +79,14 @@ namespace SteamBot
     /// <summary>
     /// Message used to Accept or Decline a group(clan) invite.
     /// </summary>
-    public class CMsgClanInviteAction : ISteamSerializableMessage, ISteamSerializable
+    public class CMsgGroupInviteAction : ISteamSerializableMessage, ISteamSerializable
     {
         EMsg ISteamSerializableMessage.GetEMsg()
         {
             return EMsg.ClientAcknowledgeClanInvite;
         }
 
-        public CMsgClanInviteAction()
+        public CMsgGroupInviteAction()
         {
 
         }
