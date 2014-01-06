@@ -552,9 +552,6 @@ namespace SteamBot
                 {
                     log.Warn ("Trade failed: {0}", callback.Response);
                     CloseTrade ();
-                    if(callback.Response == EEconTradeResponse.Declined && CurrentTrade != null)
-                    {
-                        GetUserHandler(CurrentTrade.OtherSID).OnBotsTradeRequestRejected();                    }
                     GetUserHandler(callback.OtherClient).OnTradeRequestReply(false, callback.Response.ToString());
                 }
 

@@ -101,11 +101,6 @@ namespace SteamBot
         public abstract bool OnTradeRequest ();
 
         /// <summary>
-        /// Called when the bot sends a trade request to the user, and the user rejects it
-        /// </summary>
-        public virtual void OnBotsTradeRequestRejected() {}
-
-        /// <summary>
         /// Called when a chat message is sent in a chatroom
         /// </summary>
         /// <param name="chatID">The SteamID of the group chat</param>
