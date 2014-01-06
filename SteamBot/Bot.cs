@@ -546,6 +546,7 @@ namespace SteamBot
                 {
                     log.Debug ("Trade Status: {0}", callback.Response);
                     log.Info ("Trade Accepted!");
+                    GetUserHandler(callback.OtherClient).OnTradeRequestReply(true, callback.Response.ToString());
                 }
                 else
                 {
@@ -553,8 +554,8 @@ namespace SteamBot
                     CloseTrade ();
                     if(callback.Response == EEconTradeResponse.Declined && CurrentTrade != null)
                     {
-                        GetUserHandler(CurrentTrade.OtherSID).OnBotsTradeRequestRejected();
-                    }
+                        GetUserHandler(CurrentTrade.OtherSID).OnBotsTradeRequestRejected();                    }
+                    GetUserHandler(callback.OtherClient).OnTradeRequestReply(false, callback.Response.ToString());
                 }
 
             });
