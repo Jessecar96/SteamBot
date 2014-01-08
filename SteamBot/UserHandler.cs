@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using SteamKit2;
 using SteamTrade;
 using System.Threading.Tasks;
@@ -190,7 +191,15 @@ namespace SteamBot
             {
                 await Task.Delay(delayMs);
             }
-            Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, message);
+
+            try
+            {
+                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, message);
+            }
+            catch(Exception ex)
+            {
+                Log.Error("Error occurred in SendChatMessage().  Message: \"{0}\" \nException: {1} ", message, ex.ToString());
+            }
         }
 
         /// <summary>
@@ -204,7 +213,15 @@ namespace SteamBot
             {
                 await Task.Delay(delayMs);
             }
-            Trade.SendMessage(message);
+
+            try
+            {
+                Trade.SendMessage(message);
+            }
+            catch(Exception ex)
+            {
+                Log.Error("Error occurred in SendTradeMessage().  Message: \"{0}\" \nException: {1} ", message, ex.ToString());
+            }
         }
 
         /// <summary>
