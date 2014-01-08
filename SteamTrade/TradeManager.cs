@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
 
@@ -17,6 +18,8 @@ namespace SteamTrade
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
+        private Task<Inventory> myInventoryTask;
+        private Task<Inventory> otherInventoryTask;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -91,8 +94,14 @@ namespace SteamTrade
         /// </value>
         public Inventory MyInventory
         {
-            get;
-            private set;
+            get
+            {
+                if(myInventoryTask == null)
+                    return null;
+
+                myInventoryTask.Wait();
+                return myInventoryTask.Result;
+        }
         }
 
         /// <summary>
@@ -103,8 +112,14 @@ namespace SteamTrade
         /// </value>
         public Inventory OtherInventory
         {
-            get;
-            private set;
+            get
+            {
+                if(otherInventoryTask == null)
+                    return null;
+
+                otherInventoryTask.Wait();
+                return otherInventoryTask.Result;
+        }
         }
 
         /// <summary>
@@ -168,10 +183,10 @@ namespace SteamTrade
         /// </remarks>
         public Trade CreateTrade (SteamID  me, SteamID other)
         {
-            if (OtherInventory == null || MyInventory == null)
+            if (otherInventoryTask == null || myInventoryTask == null)
                 InitializeTrade (me, other);
 
-            var t = new Trade (me, other, sessionId, token, MyInventory, OtherInventory);
+            var t = new Trade (me, other, sessionId, token, myInventoryTask, otherInventoryTask);
 
             t.OnClose += delegate
             {
@@ -191,8 +206,8 @@ namespace SteamTrade
         public void StopTrade ()
         {
             // TODO: something to check that trade was the Trade returned from CreateTrade
-            OtherInventory = null;
-            MyInventory = null;
+            otherInventoryTask = null;
+            myInventoryTask = null;
 
             IsTradeThreadRunning = false;
         }
@@ -213,7 +228,7 @@ namespace SteamTrade
         public void InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
-            OtherInventory = Inventory.FetchInventory (other.ConvertToUInt64 (), apiKey);
+            otherInventoryTask = Task.Run(() => Inventory.FetchInventory (other.ConvertToUInt64 (), apiKey));
 
             //if (OtherInventory == null)
             //{
@@ -221,12 +236,7 @@ namespace SteamTrade
             //}
             
             // fetch our inventory from the Steam API.
-            MyInventory = Inventory.FetchInventory (me.ConvertToUInt64 (), apiKey);
-
-            if (MyInventory == null)
-            {
-                throw new InventoryFetchException (me);
-            }
+            myInventoryTask = Task.Run(() => Inventory.FetchInventory (me.ConvertToUInt64 (), apiKey));
             
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
