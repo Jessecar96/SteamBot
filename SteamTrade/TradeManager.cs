@@ -228,7 +228,7 @@ namespace SteamTrade
         public void InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
-            otherInventoryTask = Task.Run(() => Inventory.FetchInventory (other.ConvertToUInt64 (), apiKey));
+            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(other.ConvertToUInt64(), apiKey));
 
             //if (OtherInventory == null)
             //{
@@ -236,7 +236,7 @@ namespace SteamTrade
             //}
             
             // fetch our inventory from the Steam API.
-            myInventoryTask = Task.Run(() => Inventory.FetchInventory (me.ConvertToUInt64 (), apiKey));
+            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(me.ConvertToUInt64(), apiKey));
             
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
