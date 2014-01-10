@@ -14,6 +14,11 @@ namespace SteamBot
 
         public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
+        public override bool OnGroupAdd()
+        {
+            return false;
+        }
+
         public override bool OnFriendAdd () 
         {
             return true;
