@@ -16,12 +16,14 @@ namespace SteamTrade
     {
         public static string Fetch (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
         {
-            HttpWebResponse response = Request (url, method, data, cookies, ajax);
-            using(Stream responseStream = response.GetResponseStream())
+            using(HttpWebResponse response = Request(url, method, data, cookies, ajax))
             {
-                using(StreamReader reader = new StreamReader(responseStream))
+                using(Stream responseStream = response.GetResponseStream())
                 {
-                    return reader.ReadToEnd();
+                    using(StreamReader reader = new StreamReader(responseStream))
+                    {
+                        return reader.ReadToEnd();
+                    }
                 }
             }
         }
