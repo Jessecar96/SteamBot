@@ -735,10 +735,25 @@ namespace SteamBot
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
         {
+            CallbackMsg msg;
+
             while (!backgroundWorker.CancellationPending)
             {
-                CallbackMsg msg = SteamClient.WaitForCallback(true);
-                HandleSteamMessage(msg);
+                try
+                {
+                    msg = SteamClient.WaitForCallback(true);
+                    HandleSteamMessage(msg);
+                }
+                catch (WebException e)
+                {
+                    log.Error("URI: " + (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown") + " >> " + e.ToString());
+                    System.Threading.Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
+                }
+                catch (Exception e)
+                {
+                    log.Error(e.ToString());
+                    log.Warn("Restarting bot...");
+                }
             }
         }
 
