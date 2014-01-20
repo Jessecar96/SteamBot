@@ -112,6 +112,16 @@ namespace SteamBot
 
         }
 
+        /// <summary>
+        /// Called when user accepts or denies bot's trade request.
+        /// </summary>
+        /// <param name="accepted">True if user accepted bot's request, false if not.</param>
+        /// <param name="response">String response of the callback.</param>
+        public virtual void OnTradeRequestReply(bool accepted, string response)
+        {
+
+        }
+
         #region Trade events
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 

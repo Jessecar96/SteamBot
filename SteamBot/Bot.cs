@@ -543,11 +543,13 @@ namespace SteamBot
                 {
                     log.Debug ("Trade Status: " + callback.Response);
                     log.Info ("Trade Accepted!");
+                    GetUserHandler(callback.OtherClient).OnTradeRequestReply(true, callback.Response.ToString());
                 }
                 else
                 {
                     log.Warn ("Trade failed: " + callback.Response);
                     CloseTrade ();
+                    GetUserHandler(callback.OtherClient).OnTradeRequestReply(false, callback.Response.ToString());
                 }
 
             });
