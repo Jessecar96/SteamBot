@@ -115,7 +115,7 @@ namespace SteamBot
             DisplayNamePrefix = config.DisplayNamePrefix;
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
-            this.apiKey  = apiKey;
+            this.apiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             this.isprocess = process;
             try
             {
