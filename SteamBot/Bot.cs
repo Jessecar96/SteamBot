@@ -36,6 +36,7 @@ namespace SteamBot
         public SteamTrading SteamTrade;
         public SteamUser SteamUser;
         public SteamGameCoordinator SteamGameCoordinator;
+        public SteamNotifications SteamNotifications;
 
         // The current trade; if the bot is not in a trade, this is
         // null.
@@ -135,10 +136,12 @@ namespace SteamBot
 
             log.Debug ("Initializing Steam Bot...");
             SteamClient = new SteamClient();
+            SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
+            SteamNotifications = SteamClient.GetHandler<SteamNotifications>();
 
             backgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
@@ -568,6 +571,28 @@ namespace SteamBot
                 CloseTrade ();
                 log.Warn ("Disconnected from Steam Network!");
                 SteamClient.Connect ();
+            });
+            #endregion
+
+            #region Notifications
+            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(callback =>
+            {
+                //currently only appears to be of trade offer
+                if (callback.Notifications.Count != 0)
+                {
+                    foreach (var notification in callback.Notifications)
+                    {
+                        log.Info(notification.UserNotificationType + " notification");
+                    }
+                }
+            });
+            msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
+            {
+                //various types of comment notifications on profile/activity feed etc
+                //log.Info("received CommentNotificationCallback");
+                //log.Info("New Commments " + callback.CommentNotifications.CountNewComments);
+                //log.Info("New Commments Owners " + callback.CommentNotifications.CountNewCommentsOwner);
+                //log.Info("New Commments Subscriptions" + callback.CommentNotifications.CountNewCommentsSubscriptions);
             });
             #endregion
         }
