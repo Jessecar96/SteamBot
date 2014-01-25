@@ -12,6 +12,7 @@ using SteamBot.SteamGroups;
 using SteamKit2;
 using SteamTrade;
 using SteamKit2.Internal;
+using SteamTrade.TradeOffer;
 
 namespace SteamBot
 {
@@ -89,6 +90,7 @@ namespace SteamBot
         SteamUser.LogOnDetails logOnDetails;
 
         TradeManager tradeManager;
+        private TradeOfferManager tradeOfferManager;
         private Task<Inventory> myInventoryTask;
 
         public Inventory MyInventory
@@ -231,6 +233,27 @@ namespace SteamBot
         {
             // ignore event params and just null out the trade.
             GetUserHandler (CurrentTrade.OtherSID).OnTradeTimeout();
+        }
+
+        /// <summary>
+        /// Create a new trade offer with the specified partner
+        /// </summary>
+        /// <param name="other">SteamId of the partner</param>
+        /// <returns></returns>
+        public TradeOffer NewTradeOffer(SteamID other)
+        {
+            return tradeOfferManager.NewOffer(other);
+        }
+
+        /// <summary>
+        /// Try to get a specific trade offer using the offerid
+        /// </summary>
+        /// <param name="offerId"></param>
+        /// <param name="tradeOffer"></param>
+        /// <returns></returns>
+        public bool TryGetTradeOffer(string offerId, out TradeOffer tradeOffer)
+        {
+            return tradeOfferManager.GetOffer(offerId, out tradeOffer);
         }
 
         public void HandleBotCommand(string command)
@@ -377,6 +400,9 @@ namespace SteamBot
                         tradeManager = new TradeManager(apiKey, sessionId, token);
                         tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
                         tradeManager.OnTimeout += OnTradeTimeout;
+
+                        tradeOfferManager = new TradeOfferManager(apiKey, sessionId, token);
+                        SubscribeTradeOffer(tradeOfferManager);
                         break;
                     }
                     else
@@ -585,6 +611,8 @@ namespace SteamBot
                         log.Info(notification.UserNotificationType + " notification");
                     }
                 }
+                //check for updates on offers
+                tradeOfferManager.GetOffers();
             });
             msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
             {
@@ -700,6 +728,24 @@ namespace SteamBot
         public void GetOtherInventory(SteamID OtherSID)
         {
             Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
+        }
+
+        public void TradeOfferRouter(TradeOffer offer)
+        {
+            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+            {
+                GetUserHandler(offer.PartnerSteamId).OnNewTradeOffer(offer);
+            }
+        }
+        public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
+        {
+            tradeOfferManager.OnNewTradeOffer += TradeOfferRouter;
+        }
+
+        //todo: should unsubscribe eventually...
+        public void UnsubscribeTradeOffer(TradeOfferManager tradeOfferManager)
+        {
+            tradeOfferManager.OnNewTradeOffer -= TradeOfferRouter;
         }
 
         /// <summary>
