@@ -93,16 +93,6 @@ namespace SteamTrade.TradeOffer
             TimeCreated = offer.TimeCreated;
             TimeUpdated = TimeUpdated;
             Items = new TradeStatus(myAssets, theirAssets);
-            try
-            {
-                string json = JsonConvert.SerializeObject(Items, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
-                Debug.WriteLine("tradeid " + TradeOfferId);
-                Debug.WriteLine(json);
-            }
-            catch (JsonException jsex)
-            {
-                Debug.WriteLine(jsex);
-            }
         }
 
         /// <summary>
