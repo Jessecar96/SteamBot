@@ -453,21 +453,34 @@ namespace SteamTrade
         /// <returns>The result of the function if it succeeded, or default(T) (null/false/0) otherwise</returns>
         private T RetryWebRequest<T>(Func<T> webEvent)
         {
-            for(int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
+            for (int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
             {
                 //Don't make any more requests if the trade has ended!
-                if(HasTradeCompletedOk || OtherUserCancelled)
+                if (HasTradeCompletedOk || OtherUserCancelled)
                     return default(T);
 
+                try
+                {
                 T result = webEvent();
-                if(!EqualityComparer<T>.Default.Equals(result, default(T)))
+
+                    // if the web request returned some error.
+                    if (!EqualityComparer<T>.Default.Equals(result, default(T)))
                     return result;
-                if(i != WEB_REQUEST_MAX_RETRIES)
+                }
+                catch (Exception ex)
+                {
+                    // TODO: log to SteamBot.Log but... see issue #394
+                    // realistically we should not throw anymore
+                    Console.WriteLine(ex);
+                }
+
+                if (i != WEB_REQUEST_MAX_RETRIES)
                 {
                     //This will cause the bot to stop responding while we wait between web requests.  ...Is this really what we want?
                     Thread.Sleep(WEB_REQUEST_TIME_BETWEEN_RETRIES_MS);
                 }
             }
+
             return default(T);
         }
 

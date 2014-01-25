@@ -469,8 +469,7 @@ namespace SteamBot
             {
                 EChatEntryType type = callback.EntryType;
 
-                if (callback.EntryType == EChatEntryType.ChatMsg ||
-                    callback.EntryType == EChatEntryType.Emote)
+                if (callback.EntryType == EChatEntryType.ChatMsg)
                 {
                     log.Info ("Chat Message from {0}: {1}",
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
@@ -656,7 +655,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            myInventoryTask = Task.Run(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
+            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
         }
 
         /// <summary>
@@ -677,7 +676,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory(SteamID OtherSID)
         {
-            Task.Run(() => Inventory.FetchInventory(OtherSID, apiKey));
+            Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
         }
 
         /// <summary>

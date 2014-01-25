@@ -113,7 +113,7 @@ namespace SteamTrade
         public void load(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             List<long> contextIdsCopy = contextIds.ToList();
-            _loadTask = Task.Run(() => loadImplementation(appid, contextIdsCopy, steamid));
+            _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
         }
 
         public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
