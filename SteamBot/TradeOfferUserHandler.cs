@@ -18,8 +18,8 @@ namespace SteamBot
             {
                 //parse inventories of bot and other partner
                 //either with webapi or generic inventory
-                Bot.GetInventory();
-                Bot.GetOtherInventory(OtherSID);
+                //Bot.GetInventory();
+                //Bot.GetOtherInventory(OtherSID);
 
                 var myItems = offer.Items.GetMyItems();
                 var theirItems = offer.Items.GetTheirItems();
