@@ -89,6 +89,7 @@ namespace SteamBot
 
         TradeManager tradeManager;
         private Task<Inventory> myInventoryTask;
+        private Task<Inventory> otherInventoryTask;
 
         public Inventory MyInventory
         {
@@ -96,6 +97,15 @@ namespace SteamBot
             {
                 myInventoryTask.Wait();
                 return myInventoryTask.Result;
+            }
+        }
+
+        public Inventory OtherInventory
+        {
+            get
+            {
+                otherInventoryTask.Wait();
+                return otherInventoryTask.Result;
             }
         }
 
@@ -674,7 +684,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory(SteamID OtherSID)
         {
-            Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
+            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
         }
 
         /// <summary>
