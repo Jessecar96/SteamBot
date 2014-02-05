@@ -41,34 +41,46 @@ namespace SteamBot
             _FileStream.Dispose();
         }
 
+        public void Do_Output(LogLevel level, string line) 
+        {
+            if (!(_FileStream.BaseStream == null) && !(_FileStream == null))
+            {
+                _OutputLine(level, line);
+            }
+            else 
+            {
+                Console.WriteLine("Failed to log.");
+            }
+        }
+
         // This outputs a log entry of the level info.
         public void Info (string data)
         {
-            _OutputLine (LogLevel.Info, data);
+            Do_Output(LogLevel.Info, data);
         }
 
         // This outputs a log entry of the level debug.
         public void Debug (string data)
         {
-            _OutputLine (LogLevel.Debug, data);
+            Do_Output(LogLevel.Debug, data);
         }
 
         // This outputs a log entry of the level success.
         public void Success (string data)
         {
-            _OutputLine (LogLevel.Success, data);
+            Do_Output(LogLevel.Success, data);
         }
 
         // This outputs a log entry of the level warn.
         public void Warn (string data)
         {
-            _OutputLine (LogLevel.Warn, data);
+            Do_Output(LogLevel.Warn, data);
         }
 
         // This outputs a log entry of the level error.
         public void Error (string data)
         {
-            _OutputLine (LogLevel.Error, data);
+            Do_Output(LogLevel.Error, data);
         }
 
         // This outputs a log entry of the level interface;
@@ -76,7 +88,7 @@ namespace SteamBot
         // is required.
         public void Interface (string data)
         {
-            _OutputLine (LogLevel.Interface, data);
+            Do_Output(LogLevel.Interface, data);
         }
 
         // Outputs a line to both the log and the console, if
@@ -150,4 +162,3 @@ namespace SteamBot
         }
     }
 }
-
