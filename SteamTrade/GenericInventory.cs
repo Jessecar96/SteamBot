@@ -105,7 +105,7 @@ namespace SteamTrade
             }
             catch (Exception e)
             {
-                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}",id,e.Message));
+                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}",id,e.ToString()));
                 return null;
             }
         }
