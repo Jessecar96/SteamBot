@@ -31,9 +31,9 @@ namespace SteamTrade.TradeOffer
             this.apiKey = apiKey;
             this.sessionId = sessionId;
             this.token = token;
-            this.session = new OfferSession(this.sessionId, this.token);
 
-            webApi = new TradeOfferWebAPI(apiKey);
+            webApi = new TradeOfferWebAPI(this.apiKey);
+            session = new OfferSession(this.sessionId, this.token, webApi);
         }
 
         public delegate void NewOfferHandler(TradeOffer offer);
@@ -64,14 +64,14 @@ namespace SteamTrade.TradeOffer
                         else
                         {
                             var resp = webApi.GetTradeOffer(offer.TradeOfferId);
-                            if (IsOfferValid(offer))
+                            if (IsOfferValid(resp.Offer))
                             {
-                                SendOfferToHandler(offer);
+                                SendOfferToHandler(resp.Offer);
                             }
                             else
                             {
                                 //todo: log steam api is giving us invalid offers.
-                                Debug.WriteLine("Offer returned from steam api is not valid : " + offer.TradeOfferId);
+                                Debug.WriteLine("Offer returned from steam api is not valid : " + resp.Offer.TradeOfferId);
                             }
                         }
                     }
@@ -103,14 +103,14 @@ namespace SteamTrade.TradeOffer
                         else
                         {
                             var resp = webApi.GetTradeOffer(offer.TradeOfferId);
-                            if (IsOfferValid(offer))
+                            if (IsOfferValid(resp.Offer))
                             {
-                                SendOfferToHandler(offer);
+                                SendOfferToHandler(resp.Offer);
                             }
                             else
                             {
                                 //todo: log steam api is giving us invalid offers.
-                                Debug.WriteLine("Offer returned from steam api is not valid : " + offer.TradeOfferId);
+                                Debug.WriteLine("Offer returned from steam api is not valid : " + resp.Offer.TradeOfferId);
                             }
                         }
                     }

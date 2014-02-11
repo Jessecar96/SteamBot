@@ -18,12 +18,15 @@ namespace SteamTrade.TradeOffer
 
         public string SteamLogin { get; private set; }
 
-        public OfferSession(string sessionId, string token)
+        private TradeOfferWebAPI WebApi { get; set; }
+
+        public OfferSession(string sessionId, string token, TradeOfferWebAPI webApi)
         {
             Cookies.Add(new Cookie("sessionid", sessionId, String.Empty, "steamcommunity.com"));
             Cookies.Add(new Cookie("steamLogin", token, String.Empty, "steamcommunity.com"));
             SessionId = sessionId;
             SteamLogin = token;
+            this.WebApi = webApi;
         }
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = false, string referer = "")
@@ -31,17 +34,26 @@ namespace SteamTrade.TradeOffer
             try
             {
                 HttpWebResponse response = SteamWeb.Request(url, method, data, Cookies, ajax, referer);
-                using (Stream responseStream = response.GetResponseStream())
-                {
-                    using (StreamReader reader = new StreamReader(responseStream))
-                    {
-                        return reader.ReadToEnd();
-                    }
-                }
+                return ReadWebStream(response);
             }
             catch (WebException we)
             {
                 Debug.WriteLine(we);
+                return ReadWebStream(we.Response);
+            }
+        }
+
+        private static string ReadWebStream(WebResponse webResponse)
+        {
+            using (var stream = webResponse.GetResponseStream())
+            {
+                if (stream != null)
+                {
+                    using (var reader = new StreamReader(stream))
+                    {
+                        return reader.ReadToEnd();
+                    }
+                }
             }
             return null;
         }
@@ -76,6 +88,14 @@ namespace SteamTrade.TradeOffer
                     Debug.WriteLine(jsex);
                 }
             }
+            else
+            {
+                var state = WebApi.GetOfferState(tradeOfferId);
+                if (state == TradeOfferState.TradeOfferStateAccepted)
+                {
+                    return true;
+                }
+            }
             return false;
         }
 
@@ -106,6 +126,14 @@ namespace SteamTrade.TradeOffer
                     Debug.WriteLine(jsex);
                 }
             }
+            else
+            {
+                var state = WebApi.GetOfferState(tradeOfferId);
+                if (state == TradeOfferState.TradeOfferStateDeclined)
+                {
+                    return true;
+                }
+            }
             return false;
         }
 
@@ -133,6 +161,14 @@ namespace SteamTrade.TradeOffer
                 catch (JsonException jsex)
                 {
                     Debug.WriteLine(jsex);
+                }
+            }
+            else
+            {
+                var state = WebApi.GetOfferState(tradeOfferId);
+                if (state == TradeOfferState.TradeOfferStateCanceled)
+                {
+                    return true;
                 }
             }
             return false;
@@ -183,6 +219,14 @@ namespace SteamTrade.TradeOffer
                 catch (JsonException jsex)
                 {
                     Debug.WriteLine(jsex);
+                }
+            }
+            else if (!String.IsNullOrEmpty(tradeOfferId))
+            {
+                var state = WebApi.GetOfferState(tradeOfferId);
+                if (state == TradeOfferState.TradeOfferStateCountered)
+                {
+                    return true;
                 }
             }
             return false;

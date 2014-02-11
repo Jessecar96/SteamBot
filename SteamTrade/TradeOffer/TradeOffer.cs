@@ -446,6 +446,24 @@ namespace SteamTrade.TradeOffer
                 return Assets.ContainsKey(asset);
             }
 
+            public class ValueStringConverter : JsonConverter
+            {
+                public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+                {
+                    writer.WriteValue(value.ToString());
+                    writer.Flush();
+                }
+
+                public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+                {
+                    throw new NotImplementedException();
+                }
+
+                public override bool CanConvert(Type objectType)
+                {
+                    return true;
+                }
+            }
             public class TradeAsset
             {
                 [JsonProperty("appid")]
@@ -457,10 +475,10 @@ namespace SteamTrade.TradeOffer
                 [JsonProperty("amount")]
                 public long Amount { get; set; }
 
-                [JsonProperty("assetid")]
+                [JsonProperty("assetid"), JsonConverter(typeof(ValueStringConverter))]
                 public long AssetId { get; set; }
 
-                [JsonProperty("currencyid")]
+                [JsonProperty("currencyid"), JsonConverter(typeof(ValueStringConverter))]
                 public long CurrencyId { get; set; }
 
                 public void CreateItemAsset(long appId, long contextId, long assetId, long amount)

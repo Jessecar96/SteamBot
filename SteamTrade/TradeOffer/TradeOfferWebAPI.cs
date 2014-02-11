@@ -38,6 +38,16 @@ namespace SteamTrade.TradeOffer
             return new OfferResponse();
         }
 
+        public TradeOfferState GetOfferState(string tradeofferid)
+        {
+            var resp = GetTradeOffer(tradeofferid);
+            if (resp != null && resp.Offer != null)
+            {
+                return resp.Offer.TradeOfferState;
+            }
+            return TradeOfferState.TradeOfferStateUnknown;
+        }
+
         public OffersResponse GetTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, bool activeOnly, bool historicalOnly, string timeHistoricalCutoff = "1389106496", string language = "en_us")
         {
             if (!getSentOffers && !getReceivedOffers)
