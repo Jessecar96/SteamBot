@@ -215,8 +215,6 @@ namespace SteamBot
 
                 Log.Success ("Trade Complete!");
             }
-
-            OnTradeClose ();
         }
 
         public bool Validate ()
