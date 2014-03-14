@@ -20,7 +20,6 @@ namespace SteamTrade
         private DateTime lastTimeoutMessage;
         private Task<Inventory> myInventoryTask;
         private Task<Inventory> otherInventoryTask;
-        private bool checkForTimeout = true;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -211,7 +210,6 @@ namespace SteamTrade
             myInventoryTask = null;
 
             IsTradeThreadRunning = false;
-            checkForTimeout = true;
         }
 
         /// <summary>
@@ -276,9 +274,6 @@ namespace SteamTrade
                         if(action)
                             lastOtherActionTime = DateTime.Now;
 
-                        if(trade.OtherUserAccepted)
-                            checkForTimeout = false;
-
                         if(trade.OtherUserCancelled || trade.HasTradeCompletedOk || CheckTradeTimeout(trade))
                         {
                             IsTradeThreadRunning = false;
@@ -329,7 +324,7 @@ namespace SteamTrade
         private bool CheckTradeTimeout (Trade trade)
         {
             // User has accepted the trade. Disregard time out.
-            if (checkForTimeout == false)
+            if (trade.OtherUserAccepted)
                 return false;
 
             var now = DateTime.Now;
