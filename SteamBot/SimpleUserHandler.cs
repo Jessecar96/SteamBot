@@ -101,8 +101,6 @@ namespace SteamBot
                     Log.Warn ("The trade might have failed, but we can't be sure.");
                 }
             }
-
-            OnTradeClose ();
         }
 
         public bool Validate ()

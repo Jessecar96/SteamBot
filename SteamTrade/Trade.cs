@@ -147,6 +147,11 @@ namespace SteamTrade
         /// </summary>
         public bool HasTradeCompletedOk { get; private set; }
 
+        /// <summary>
+        /// Gets a value indicating if the remote trading partner accepted the trade.
+        /// </summary>
+        public bool OtherUserAccepted { get; private set; }
+
         #endregion
                 
         #region Public Events
@@ -564,8 +569,15 @@ namespace SteamTrade
                 throw new TradeException("The trade version does not match. Aborting.");
             }
 
-            var events = status.GetAllEvents();
+            // Update Local Variables
+            if (status.them != null)
+            {
+                OtherIsReady = status.them.ready == 1;
+                MeIsReady = status.me.ready == 1;
+                OtherUserAccepted = status.them.confirmed == 1;
+            }
 
+            var events = status.GetAllEvents();
             foreach(var tradeEvent in events)
             {
                 if(eventList.Contains(tradeEvent))
@@ -591,11 +603,9 @@ namespace SteamTrade
                         FireOnUserRemoveItem(tradeEvent);
                         break;
                     case TradeEventType.UserSetReady:
-                        OtherIsReady = true;
                         OnUserSetReady(true);
                         break;
                     case TradeEventType.UserSetUnReady:
-                        OtherIsReady = false;
                         OnUserSetReady(false);
                         break;
                     case TradeEventType.UserAccept:
@@ -611,12 +621,6 @@ namespace SteamTrade
                 }
             }
 
-            // Update Local Variables
-            if(status.them != null)
-            {
-                OtherIsReady = status.them.ready == 1;
-                MeIsReady = status.me.ready == 1;
-            }
 
             if(status.logpos != 0)
             {

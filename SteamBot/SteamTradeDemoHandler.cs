@@ -265,7 +265,7 @@ namespace SteamBot
                 mySteamInventory.items.Clear();
                 Bot.log.Success("description/items me cleared Complete!");
             }
-            OnTradeClose();
+            OnTradeClose ();
         }
 
         public override void OnTradeClose()
