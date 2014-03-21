@@ -323,6 +323,10 @@ namespace SteamTrade
 
         private bool CheckTradeTimeout (Trade trade)
         {
+            // User has accepted the trade. Disregard time out.
+            if (trade.OtherUserAccepted)
+                return false;
+
             var now = DateTime.Now;
 
             DateTime actionTimeout = lastOtherActionTime.AddSeconds (MaxActionGapSec);
