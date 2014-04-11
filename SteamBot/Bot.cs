@@ -89,6 +89,7 @@ namespace SteamBot
 
         TradeManager tradeManager;
         private Task<Inventory> myInventoryTask;
+        private Dictionary<SteamID, Task<Inventory>> otherInventoryTask = new Dictionary<SteamID,Task<Inventory>>();
 
         public Inventory MyInventory
         {
@@ -97,6 +98,12 @@ namespace SteamBot
                 myInventoryTask.Wait();
                 return myInventoryTask.Result;
             }
+        }
+
+        public Inventory OtherInventory(SteamID OtherSID)
+        {
+            otherInventoryTask[OtherSID].Wait();
+            return otherInventoryTask[OtherSID].Result;
         }
 
         private BackgroundWorker backgroundWorker;
@@ -663,7 +670,7 @@ namespace SteamBot
         /// <example> This sample shows how to find items in the other user's inventory from a user handler.
         /// <code>
         /// Bot.GetOtherInventory(OtherSID); // Get the inventory first
-        /// foreach (var item in Bot.OtherInventory.Items)
+        /// foreach (var item in Bot.OtherInventory(OtherSID).Items)
         /// {
         ///     if (item.Defindex == 5021)
         ///     {
@@ -674,7 +681,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory(SteamID OtherSID)
         {
-            Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
+            otherInventoryTask[OtherSID] = Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
         }
 
         /// <summary>
