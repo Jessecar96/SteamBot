@@ -48,6 +48,30 @@ namespace SteamTrade.TradeOffer
             return TradeOfferState.TradeOfferStateUnknown;
         }
 
+        public OffersResponse GetActiveTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, string language = "en_us")
+        {
+            if (!getSentOffers && !getReceivedOffers)
+            {
+                throw new ArgumentException("getSentOffers and getReceivedOffers can't be both false");
+            }
+
+            string options = string.Format("?key={0}&get_sent_offers={1}&get_received_offers={2}&get_descriptions={3}&language={4}&active_only={5}",
+                ApiKey, BoolConverter(getSentOffers), BoolConverter(getReceivedOffers), BoolConverter(getDescriptions), language, BoolConverter(true));
+            string url = string.Format(BaseUrl, "GetTradeOffers", "v1", options);
+            string response = SteamWeb.Fetch(url, "GET", null, null, false);
+            try
+            {
+                var result = JsonConvert.DeserializeObject<ApiResponse<OffersResponse>>(response);
+                return result.Response;
+            }
+            catch (Exception ex)
+            {
+                //todo log
+                Debug.WriteLine(ex);
+            }
+            return new OffersResponse();
+        }
+
         public OffersResponse GetTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, bool activeOnly, bool historicalOnly, string timeHistoricalCutoff = "1389106496", string language = "en_us")
         {
             if (!getSentOffers && !getReceivedOffers)

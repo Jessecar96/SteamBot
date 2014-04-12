@@ -5,8 +5,6 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Text;
-using System.Web;
 
 namespace SteamTrade.TradeOffer
 {
@@ -20,6 +18,10 @@ namespace SteamTrade.TradeOffer
 
         private TradeOfferWebAPI WebApi { get; set; }
 
+        internal JsonSerializerSettings JsonSerializerSettings { get; set; }
+
+        internal const string SendUrl = "https://steamcommunity.com/tradeoffer/new/send";
+
         public OfferSession(string sessionId, string token, TradeOfferWebAPI webApi)
         {
             Cookies.Add(new Cookie("sessionid", sessionId, String.Empty, "steamcommunity.com"));
@@ -27,6 +29,10 @@ namespace SteamTrade.TradeOffer
             SessionId = sessionId;
             SteamLogin = token;
             this.WebApi = webApi;
+
+            JsonSerializerSettings = new JsonSerializerSettings();
+            JsonSerializerSettings.PreserveReferencesHandling = PreserveReferencesHandling.None;
+            JsonSerializerSettings.Formatting = Formatting.None;
         }
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = false, string referer = "")
@@ -70,7 +76,7 @@ namespace SteamTrade.TradeOffer
 
             string resp = Fetch(url, "POST", data, false, referer);
 
-            if (resp != null)
+            if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
@@ -111,7 +117,7 @@ namespace SteamTrade.TradeOffer
 
             var resp = Fetch(url, "POST", data, false, referer);
 
-            if (resp != null)
+            if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
@@ -148,7 +154,7 @@ namespace SteamTrade.TradeOffer
 
             var resp = Fetch(url, "POST", data, false, referer);
 
-            if (resp != null)
+            if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
@@ -174,33 +180,104 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
-        public bool CounterOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, out string newTradeOfferId, string tradeOfferId = "")
+        /// <summary>
+        /// Creates a new counter offer
+        /// </summary>
+        /// <param name="message">A message to include with the trade offer</param>
+        /// <param name="otherSteamId">The SteamID of the partner we are trading with</param>
+        /// <param name="status">The list of items we and they are going to trade</param>
+        /// <param name="newTradeOfferId">The trade offer Id that will be created if successful</param>
+        /// <param name="tradeOfferId">The trade offer Id of the offer being countered</param>
+        /// <returns></returns>
+        public bool CounterOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, out string newTradeOfferId, string tradeOfferId)
         {
-            newTradeOfferId = "";
-            string jsonStatus = JsonConvert.SerializeObject(status, Formatting.None,
-                new JsonSerializerSettings() { PreserveReferencesHandling = PreserveReferencesHandling.None });
+            if (String.IsNullOrEmpty(tradeOfferId))
+            {
+                throw new ArgumentNullException("tradeOfferId", "Trade Offer Id must be set for counter offers.");
+            }
 
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
             data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
             data.Add("tradeoffermessage", message);
-            data.Add("json_tradeoffer", jsonStatus);
-            if (!String.IsNullOrEmpty(tradeOfferId))
-            {
-                data.Add("tradeofferid_countered", tradeOfferId);
-            }
-            else
-            {
-                data.Add("trade_offer_create_params", "{}");
-            }
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("tradeofferid_countered", tradeOfferId);
+            data.Add("trade_offer_create_params", "{}");
 
-            string url = "https://steamcommunity.com/tradeoffer/new/send";
-            string referer = String.IsNullOrEmpty(tradeOfferId)
-                ? string.Format("http://steamcommunity.com/tradeoffer/new/?partner={0}", otherSteamId.AccountID)
-                : string.Format("http://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
+            string referer = string.Format("http://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
+
+            if (!Request(SendUrl, data, referer, tradeOfferId, out newTradeOfferId))
+            {
+                var state = WebApi.GetOfferState(tradeOfferId);
+                if (state == TradeOfferState.TradeOfferStateCountered)
+                {
+                    return true;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Creates a new trade offer
+        /// </summary>
+        /// <param name="message">A message to include with the trade offer</param>
+        /// <param name="otherSteamId">The SteamID of the partner we are trading with</param>
+        /// <param name="status">The list of items we and they are going to trade</param>
+        /// <param name="newTradeOfferId">The trade offer Id that will be created if successful</param>
+        /// <returns>True if successfully returns a newTradeOfferId, else false</returns>
+        public bool SendTradeOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, out string newTradeOfferId)
+        {
+            var data = new NameValueCollection();
+            data.Add("sessionid", SessionId);
+            data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
+            data.Add("tradeoffermessage", message);
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("trade_offer_create_params", "{}");
+
+            string referer = string.Format("http://steamcommunity.com/tradeoffer/new/?partner={0}",
+                otherSteamId.AccountID);
+
+            return Request(SendUrl, data, referer, null, out newTradeOfferId);
+        }
+
+        /// <summary>
+        /// Creates a new trade offer with a token
+        /// </summary>
+        /// <param name="message">A message to include with the trade offer</param>
+        /// <param name="otherSteamId">The SteamID of the partner we are trading with</param>
+        /// <param name="status">The list of items we and they are going to trade</param>
+        /// <param name="token">The token of the partner we are trading with</param>
+        /// <param name="newTradeOfferId">The trade offer Id that will be created if successful</param>
+        /// <returns>True if successfully returns a newTradeOfferId, else false</returns>
+        public bool SendTradeOfferWithToken(string message, SteamID otherSteamId, TradeOffer.TradeStatus status,
+            string token, out string newTradeOfferId)
+        {
+            if (String.IsNullOrEmpty(token))
+            {
+                throw new ArgumentNullException("token", "Partner trade offer token is missing");
+            }
+            var offerToken = new OfferAccessToken() {TradeOfferAccessToken = token};
+
+            var data = new NameValueCollection();
+            data.Add("sessionid", SessionId);
+            data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
+            data.Add("tradeoffermessage", message);
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("trade_offer_create_params", JsonConvert.SerializeObject(offerToken, JsonSerializerSettings));
+            
+            string referer = string.Format("http://steamcommunity.com/tradeoffer/new/?partner={0}&token={1}",
+                        otherSteamId.AccountID, token);
+
+            return Request(SendUrl, data, referer, null, out newTradeOfferId);
+        }
+
+        internal bool Request(string url, NameValueCollection data, string referer, string tradeOfferId, out string newTradeOfferId)
+        {
+            newTradeOfferId = "";
 
             string resp = Fetch(url, "POST", data, false, referer);
-            if (resp != null)
+            if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
@@ -221,28 +298,7 @@ namespace SteamTrade.TradeOffer
                     Debug.WriteLine(jsex);
                 }
             }
-            else if (!String.IsNullOrEmpty(tradeOfferId))
-            {
-                var state = WebApi.GetOfferState(tradeOfferId);
-                if (state == TradeOfferState.TradeOfferStateCountered)
-                {
-                    return true;
-                }
-            }
             return false;
-        }
-
-        /// <summary>
-        /// Creates a new trade offer
-        /// </summary>
-        /// <param name="message">A message to include with the trade offer</param>
-        /// <param name="otherSteamId">The SteamID of the partner we are trading with</param>
-        /// <param name="status">The list of items we and they are going to trade</param>
-        /// <param name="newTradeOfferId">The trade offer id that will be created if successful</param>
-        /// <returns>True if successfully returns a newTradeOfferId, else false</returns>
-        public bool SendTradeOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, out string newTradeOfferId)
-        {
-            return CounterOffer(message, otherSteamId, status, out newTradeOfferId);
         }
     }
 
@@ -255,6 +311,12 @@ namespace SteamTrade.TradeOffer
         public string TradeError { get; set; }
     }
 
+    public class OfferAccessToken
+    {
+        [JsonProperty("trade_offer_access_token")]
+        public string TradeOfferAccessToken { get; set; }
+    }
+
     public class TradeOfferAcceptResponse
     {
         [JsonProperty("tradeid")]
@@ -262,5 +324,11 @@ namespace SteamTrade.TradeOffer
 
         [JsonProperty("strError")]
         public string TradeError { get; set; }
+
+        public TradeOfferAcceptResponse()
+        {
+            TradeId = String.Empty;
+            TradeError = String.Empty;
+        }
     }
 }

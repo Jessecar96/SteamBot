@@ -116,8 +116,8 @@ namespace SteamTrade.TradeOffer
         /// <summary>
         /// Send a new trade offer
         /// </summary>
-        /// <param name="offerId">The trade offer id if successully created.</param>
-        /// <param name="message">Optional currently not being used by steam.</param>
+        /// <param name="offerId">The trade offer id if successully created</param>
+        /// <param name="message">Optional message to included with the trade offer</param>
         /// <returns>true if successfully sent, otherwise false</returns>
         public bool Send(out string offerId, string message = "")
         {
@@ -127,7 +127,26 @@ namespace SteamTrade.TradeOffer
                 return Session.SendTradeOffer(message, PartnerSteamId, this.Items, out offerId);
             }
             //todo: log
-            Debug.WriteLine("Can't send a trade that allready exists");
+            Debug.WriteLine("Can't send a trade offer that allready exists");
+            return false;
+        }
+
+        /// <summary>
+        /// Send a new trade offer using a token
+        /// </summary>
+        /// <param name="offerId">The trade offer id if successully created</param>
+        /// <param name="token">The token of the partner</param>
+        /// <param name="message">Optional message to included with the trade offer</param>
+        /// <returns></returns>
+        public bool SendWithToken(out string offerId, string token, string message = "")
+        {
+            offerId = String.Empty;
+            if (TradeOfferId == null)
+            {
+                return Session.SendTradeOfferWithToken(message, PartnerSteamId, this.Items, token, out offerId);
+            }
+            //todo: log
+            Debug.WriteLine("Can't send a trade offer that allready exists");
             return false;
         }
 
@@ -320,7 +339,15 @@ namespace SteamTrade.TradeOffer
                     ContextId = contextId
                 };
                 asset = new TradeStatusUser.TradeAsset();
-                return MyOfferedItems.Assets.TryGetValue(tradeAsset, out asset);
+                foreach (var item in MyOfferedItems.Assets)
+                {
+                    if (item.Equals(tradeAsset))
+                    {
+                        asset = item;
+                        return true;
+                    }
+                }
+                return false;
             }
 
             public bool TryGetTheirItem(int appId, long contextId, long assetId, long amount, out TradeStatusUser.TradeAsset asset)
@@ -333,7 +360,15 @@ namespace SteamTrade.TradeOffer
                     ContextId = contextId
                 };
                 asset = new TradeStatusUser.TradeAsset();
-                return TheirOfferedItems.Assets.TryGetValue(tradeAsset, out asset);
+                foreach (var item in TheirOfferedItems.Assets)
+                {
+                    if (item.Equals(tradeAsset))
+                    {
+                        asset = item;
+                        return true;
+                    }
+                }
+                return false;
             }
 
             public bool TryGetMyCurrencyItem(int appId, long contextId, long currencyId, long amount, out TradeStatusUser.TradeAsset asset)
@@ -346,7 +381,15 @@ namespace SteamTrade.TradeOffer
                     ContextId = contextId
                 };
                 asset = new TradeStatusUser.TradeAsset();
-                return MyOfferedItems.Currency.TryGetValue(tradeAsset, out asset);
+                foreach (var item in MyOfferedItems.Currency)
+                {
+                    if (item.Equals(tradeAsset))
+                    {
+                        asset = item;
+                        return true;
+                    }
+                }
+                return false;
             }
 
             public bool TryGetTheirCurrencyItem(int appId, long contextId, long currencyId, long amount, out TradeStatusUser.TradeAsset asset)
@@ -359,15 +402,23 @@ namespace SteamTrade.TradeOffer
                     ContextId = contextId
                 };
                 asset = new TradeStatusUser.TradeAsset();
-                return TheirOfferedItems.Currency.TryGetValue(tradeAsset, out asset);
+                foreach (var item in TheirOfferedItems.Currency)
+                {
+                    if (item.Equals(tradeAsset))
+                    {
+                        asset = item;
+                        return true;
+                    }
+                }
+                return false;
             }
 
-            public Dictionary<TradeStatusUser.TradeAsset, TradeStatusUser.TradeAsset> GetMyItems()
+            public List<TradeStatusUser.TradeAsset> GetMyItems()
             {
                 return MyOfferedItems.Assets;
             }
 
-            public Dictionary<TradeStatusUser.TradeAsset, TradeStatusUser.TradeAsset> GetTheirItems()
+            public List<TradeStatusUser.TradeAsset> GetTheirItems()
             {
                 return TheirOfferedItems.Assets;
             }
@@ -395,27 +446,27 @@ namespace SteamTrade.TradeOffer
 
         public class TradeStatusUser
         {
-            [JsonProperty("assets"), JsonConverter(typeof(TradeAssetsConverter))]
-            public Dictionary<TradeAsset, TradeAsset> Assets { get; set; }
+            [JsonProperty("assets")]
+            public List<TradeAsset> Assets { get; set; }
 
-            [JsonProperty("currency"), JsonConverter(typeof(TradeAssetsConverter))]
-            public Dictionary<TradeAsset, TradeAsset> Currency { get; set; }
+            [JsonProperty("currency")]
+            public List<TradeAsset> Currency { get; set; }
 
             [JsonProperty("ready")]
             public bool IsReady { get; set; }
 
             public TradeStatusUser()
             {
-                Assets = new Dictionary<TradeAsset, TradeAsset>();
+                Assets = new List<TradeAsset>();
                 IsReady = false;
-                Currency = new Dictionary<TradeAsset, TradeAsset>();
+                Currency = new List<TradeAsset>();
             }
 
             internal bool AddItem(TradeAsset asset)
             {
-                if (!Assets.ContainsKey(asset))
+                if (!Assets.Contains(asset))
                 {
-                    Assets.Add(asset, asset);
+                    Assets.Add(asset);
                     return true;
                 }
                 return false;
@@ -423,9 +474,9 @@ namespace SteamTrade.TradeOffer
 
             internal bool AddCurrencyItem(TradeAsset asset)
             {
-                if (!Currency.ContainsKey(asset))
+                if (!Currency.Contains(asset))
                 {
-                    Currency.Add(asset, asset);
+                    Currency.Add(asset);
                     return true;
                 }
                 return false;
@@ -433,17 +484,17 @@ namespace SteamTrade.TradeOffer
 
             internal bool RemoveItem(TradeAsset asset)
             {
-                return Assets.ContainsKey(asset) && Assets.Remove(asset);
+                return Assets.Contains(asset) && Assets.Remove(asset);
             }
 
             internal bool RemoveCurrencyItem(TradeAsset asset)
             {
-                return Currency.ContainsKey(asset) && Currency.Remove(asset);
+                return Currency.Contains(asset) && Currency.Remove(asset);
             }
 
             public bool ContainsItem(TradeAsset asset)
             {
-                return Assets.ContainsKey(asset);
+                return Assets.Contains(asset);
             }
 
             public class ValueStringConverter : JsonConverter
@@ -464,7 +515,7 @@ namespace SteamTrade.TradeOffer
                     return true;
                 }
             }
-            public class TradeAsset
+            public class TradeAsset : IEquatable<TradeAsset>
             {
                 [JsonProperty("appid")]
                 public long AppId { get; set; }
@@ -487,6 +538,7 @@ namespace SteamTrade.TradeOffer
                     this.ContextId = contextId;
                     this.AssetId = assetId;
                     this.Amount = amount;
+                    this.CurrencyId = 0;
                 }
 
                 public void CreateCurrencyAsset(long appId, long contextId, long currencyId, long amount)
@@ -495,6 +547,7 @@ namespace SteamTrade.TradeOffer
                     this.ContextId = contextId;
                     this.CurrencyId = currencyId;
                     this.Amount = amount;
+                    this.AssetId = 0;
                 }
 
                 public bool ShouldSerializeAssetId()
@@ -505,6 +558,17 @@ namespace SteamTrade.TradeOffer
                 public bool ShouldSerializeCurrencyId()
                 {
                     return CurrencyId != 0;
+                }
+
+                public bool Equals(TradeAsset other)
+                {
+                    if (this.AppId == other.AppId && this.ContextId == other.ContextId &&
+                        this.CurrencyId == other.CurrencyId && this.AssetId == other.AssetId &&
+                        this.Amount == other.Amount)
+                    {
+                        return true;
+                    }
+                    return false;
                 }
             }
         }

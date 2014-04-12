@@ -77,6 +77,20 @@ namespace SteamBot
                         Log.Success("Trade offer sent : Offer ID " + newOfferId);
                     }
                 }
+
+                //creating a new trade offer with token
+                var offerWithToken = Bot.NewTradeOffer(OtherSID);
+
+                //offer.Items.AddMyItem(0, 0, 0);
+                if (offerWithToken.Items.NewVersion)
+                {
+                    string newOfferId;
+                    // "token" should be replaced with the actual token from the other user
+                    if (offerWithToken.SendWithToken(out newOfferId, "token"))
+                    {
+                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                    }
+                }
             }
         }
 
@@ -108,7 +122,7 @@ namespace SteamBot
 
         public override void OnTradeAccept() { }
 
-        private bool DummyValidation(Dictionary<TradeAsset, TradeAsset> myAssets, Dictionary<TradeAsset, TradeAsset> theirAssets)
+        private bool DummyValidation(List<TradeAsset> myAssets, List<TradeAsset> theirAssets)
         {
             //compare items etc
             if (myAssets.Count == theirAssets.Count)

@@ -49,7 +49,7 @@ namespace SteamTrade.TradeOffer
         /// <returns></returns>
         public bool GetActiveTradeOffers()
         {
-            var offers = webApi.GetTradeOffers(false, true, false, true, false);
+            var offers = webApi.GetActiveTradeOffers(false, true, false);
             if (offers != null && offers.TradeOffersReceived != null)
             {
                 foreach (var offer in offers.TradeOffersReceived)
