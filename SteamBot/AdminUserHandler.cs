@@ -19,12 +19,7 @@ namespace SteamBot
         private const string AddAllSubCmd = "all";
         private const string HelpCmd = "help";
 
-        public AdminUserHandler(Bot bot, SteamID sid)
-            : base(bot, sid)
-        {
-            Bot.GetInventory();
-            Bot.GetOtherInventory(OtherSID);
-        }
+        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) {}
 
         #region Overrides of UserHandler
 
@@ -296,7 +291,7 @@ namespace SteamBot
             foreach (var schemaItem in l)
             {
                 ushort defindex = schemaItem.Defindex;
-                invItems.AddRange(Bot.MyInventory.GetItemsByDefindex(defindex));
+                invItems.AddRange(Trade.MyInventory.GetItemsByDefindex(defindex));
             }
 
             uint added = 0;

@@ -66,7 +66,7 @@ namespace SteamBot
         public int CurrentGame = 0;
 
         // The Steam Web API key.
-        string apiKey;
+        public string apiKey;
 
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
@@ -89,7 +89,6 @@ namespace SteamBot
 
         TradeManager tradeManager;
         private Task<Inventory> myInventoryTask;
-        private Dictionary<SteamID, Task<Inventory>> otherInventoryTask = new Dictionary<SteamID,Task<Inventory>>();
 
         public Inventory MyInventory
         {
@@ -98,12 +97,6 @@ namespace SteamBot
                 myInventoryTask.Wait();
                 return myInventoryTask.Result;
             }
-        }
-
-        public Inventory OtherInventory(SteamID OtherSID)
-        {
-            otherInventoryTask[OtherSID].Wait();
-            return otherInventoryTask[OtherSID].Result;
         }
 
         private BackgroundWorker backgroundWorker;
@@ -661,27 +654,6 @@ namespace SteamBot
         public void GetInventory()
         {
             myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
-        }
-
-        /// <summary>
-        /// Gets the other user's inventory and stores it in OtherInventory.
-        /// </summary>
-        /// <param name="OtherSID">The SteamID of the other user</param>
-        /// <example> This sample shows how to find items in the other user's inventory from a user handler.
-        /// <code>
-        /// Bot.GetOtherInventory(OtherSID); // Get the inventory first
-        /// foreach (var item in Bot.OtherInventory(OtherSID).Items)
-        /// {
-        ///     if (item.Defindex == 5021)
-        ///     {
-        ///         // User has a key in its inventory
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public void GetOtherInventory(SteamID OtherSID)
-        {
-            otherInventoryTask[OtherSID] = Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, apiKey));
         }
 
         /// <summary>
