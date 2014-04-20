@@ -35,7 +35,12 @@ namespace SteamTrade
                     foreach (var context in app.Value.RgContexts)
                     {
                         long contextId = context.Key;
-                        tasks.Add(Task.Factory.StartNew(() => Load(appId, contextId, steamId)));
+                        tasks.Add(Task.Factory.StartNew(() => {
+                            var inventory = GetInventory(appId, contextId, steamId) ?? new Inventory();
+                            if (!inventories.ContainsKey(appId))
+                                inventories[appId] = new Dictionary<long, Inventory>();
+                            inventories[appId].Add(contextId, inventory);
+                        }));
                     }
                 }
                 Task.WaitAll(tasks.ToArray());
@@ -70,21 +75,19 @@ namespace SteamTrade
             }
         }
 
-        private void Load(int appId, long contextId, SteamID steamId)
+        private Inventory GetInventory(int appId, long contextId, SteamID steamId)
         {
             string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
             string response = SteamWeb.Fetch(inventoryUrl, "GET");
             try
             {
-                var inventory = JsonConvert.DeserializeObject<Inventory>(response);
-                if (!inventories.ContainsKey(appId))
-                    inventories[appId] = new Dictionary<long, Inventory>();
-                inventories[appId].Add(contextId, inventory);
+                return JsonConvert.DeserializeObject<Inventory>(response);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Failed to deserialize {0}:{1}.", appId, contextId);
                 Console.WriteLine(ex);
+                return null;
             }
         }
 

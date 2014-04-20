@@ -70,35 +70,15 @@ namespace SteamBot
             Trade.SendMessage("Trade successfully initialized.");
         }
 
-        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
+        public override void OnTradeAddItem(GenericInventory.Inventory.RgDescription inventoryItem)
         {
-            Trade.SendMessage("Object AppID: " + inventoryItem.AppId);
-            Trade.SendMessage("Object ContextId: " + inventoryItem.ContextId);
 
-            switch (inventoryItem.AppId)
-            {
-                case 440:
-                    Trade.SendMessage("TF2 Item Added.");
-                    Trade.SendMessage("Name: " + schemaItem.Name);
-                    Trade.SendMessage("Quality: " + inventoryItem.Quality);
-                    Trade.SendMessage("Level: " + inventoryItem.Level);
-                    Trade.SendMessage("Craftable: " + (inventoryItem.IsNotCraftable ? "No" : "Yes"));
-                    break;
-
-                case 753:
-                    var tmpDescription = OtherSteamInventory.GetItem(inventoryItem.AppId, inventoryItem.ContextId, inventoryItem.Id);
-                    Trade.SendMessage("Steam Inventory Item Added.");
-                    Trade.SendMessage("Type: " + tmpDescription.Type);
-                    Trade.SendMessage("Marketable: " + tmpDescription.IsMarketable);
-                    break;
-
-                default:
-                    Trade.SendMessage("Unknown item");
-                    break;
-            }
         }
 
-        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
+        public override void OnTradeRemoveItem(GenericInventory.Inventory.RgDescription inventoryItem)
+        {
+
+        }
 
         public override void OnTradeMessage(string message)
         {

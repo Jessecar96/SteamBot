@@ -151,15 +151,16 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
+        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid, int amount)
         {
             var data = new NameValueCollection ();
 
-            data.Add ("sessionid", sessionIdEsc);
+            data.Add("sessionid", sessionIdEsc);
             data.Add("appid", "" + appid);
             data.Add("contextid", "" + contextid);
-            data.Add ("itemid", "" + itemid);
-            data.Add ("slot", "" + slot);
+            data.Add("itemid", "" + itemid);
+            data.Add("slot", "" + slot);
+            data.Add("amount", "" + amount);
 
             string result = Fetch (baseTradeURL + "removeitem", "POST", data);
 

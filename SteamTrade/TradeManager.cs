@@ -20,6 +20,8 @@ namespace SteamTrade
         private DateTime lastTimeoutMessage;
         private Task<Inventory> myInventoryTask;
         private Task<Inventory> otherInventoryTask;
+        private GenericInventory myInventory;
+        private GenericInventory otherInventory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SteamTrade.TradeManager"/> class.
@@ -183,10 +185,10 @@ namespace SteamTrade
         /// </remarks>
         public Trade CreateTrade (SteamID  me, SteamID other)
         {
-            if (otherInventoryTask == null || myInventoryTask == null)
-                InitializeTrade (me, other);
+            if (myInventory == null || otherInventory == null)
+                InitializeTrade(me, other);
 
-            var t = new Trade (me, other, sessionId, token, myInventoryTask, otherInventoryTask);
+            var t = new Trade(me, other, sessionId, token, myInventory, otherInventory);
 
             t.OnClose += delegate
             {
@@ -228,16 +230,11 @@ namespace SteamTrade
         public void InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
-            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(other.ConvertToUInt64(), apiKey));
-
-            //if (OtherInventory == null)
-            //{
-            //    throw new InventoryFetchException (other);
-            //}
+            otherInventory = new GenericInventory(other);
             
             // fetch our inventory from the Steam API.
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(me.ConvertToUInt64(), apiKey));
-            
+            myInventory = new GenericInventory(me);
+
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
                 Trade.CurrentSchema = Schema.FetchSchema (apiKey);
