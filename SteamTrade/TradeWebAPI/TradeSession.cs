@@ -91,11 +91,16 @@ namespace SteamTrade.TradeWebAPI
         }
         internal dynamic GetForiegnInventory(SteamID otherId, long contextId, int appid)
         {
+            var data = new NameValueCollection();
+
+            data.Add("sessionid", sessionIdEsc);
+            data.Add("steamid", "" + otherId.ConvertToUInt64());
+            data.Add("appid", "" + appid);
+            data.Add("contextid", "" + contextId);
+
             try
             {
-                string path = string.Format("foreigninventory/?sessionid={0}&steamid={1}&appid={2}&contextid={3}",
-                    sessionIdEsc, otherId.ConvertToUInt64(), appid, contextId);
-                string response = Fetch(baseTradeURL + path, "GET");
+                string response = Fetch(baseTradeURL + "foreigninventory", "GET", data);
                 return JsonConvert.DeserializeObject(response);
             }
             catch (Exception)
