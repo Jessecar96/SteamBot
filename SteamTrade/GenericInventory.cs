@@ -1,199 +1,390 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
+using System.Text.RegularExpressions;
 
 namespace SteamTrade
 {
-    
     /// <summary>
     /// Generic Steam Backpack Interface
     /// </summary>
     public class GenericInventory
     {
-        public Dictionary<ulong, Item> items
+        Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
+
+        public GenericInventory(SteamID steamId)
         {
-            get
-            {
-                if(_loadTask == null)
-                    return null;
-                _loadTask.Wait();
-                return _items;
-            }
-        }
-
-        public Dictionary<string, ItemDescription> descriptions
-        {
-            get
-            {
-                if(_loadTask == null)
-                    return null;
-                _loadTask.Wait();
-                return _descriptions;
-            }
-        }
-
-        public List<string> errors
-        {
-            get
-            {
-                if(_loadTask == null)
-                    return null;
-                _loadTask.Wait();
-                return _errors;
-            }
-        }
-
-        public bool isLoaded = false;
-
-        private Task _loadTask;
-        private Dictionary<string, ItemDescription> _descriptions = new Dictionary<string, ItemDescription>();
-        private Dictionary<ulong, Item> _items = new Dictionary<ulong, Item>();
-        private List<string> _errors = new List<string>();
-
-        public class Item : TradeUserAssets
-        {
-            public string descriptionid { get; set; }
-
-            public override string  ToString()
-            {
-                return string.Format("id:{0}, appid:{1}, contextid:{2}, amount:{3}, descriptionid:{4}",
-                    assetid, appid, contextid, amount, descriptionid);
-            }
-        }
-
-        public class ItemDescription
-        {
-            public string name { get; set; }
-            public string type { get; set; }
-            public bool tradable { get; set; }
-            public bool marketable { get; set; }
-
-            public Dictionary<string, string> app_data{ get; set; }
-
-            public void debug_app_data()
-            {
-                Console.WriteLine("\n\""+name+"\"");
-                if (app_data == null)
-                {
-                    Console.WriteLine("Doesn't have app_data");
-                    return;
-                }
-
-                foreach (var value in app_data)
-                {
-                    Console.WriteLine(string.Format("{0} = {1}",value.Key,value.Value));
-                }
-                Console.WriteLine("");
-            }
-        }
-
-        public ItemDescription getDescription(ulong id)
-        {
-            if(_loadTask == null)
-                return null;
-            _loadTask.Wait();
-
+            string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
+            string response = SteamWeb.Fetch(inventoryUrl, "GET");
+            Regex reg = new Regex("var g_rgAppContextData = (.*?);");
+            Match m = reg.Match(response);
+            string json = m.Groups[1].Value;
             try
             {
-                return _descriptions[_items[id].descriptionid];
+                var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
+                List<Task> tasks = new List<Task>();
+                foreach (var app in schemaResult)
+                {
+                    int appId = app.Key;
+                    foreach (var context in app.Value.RgContexts)
+                    {
+                        long contextId = context.Key;
+                        tasks.Add(Task.Factory.StartNew(() => Load(appId, contextId, steamId)));
+                    }
+                }
+                Task.WaitAll(tasks.ToArray());
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}",id,e.Message));
+                Console.WriteLine(ex);
+            }
+        }
+
+        private void Test()
+        {
+            Console.WriteLine("{0} inventories loaded.\r\n", inventories.Count);
+            foreach (var app in inventories)
+            {
+                Console.WriteLine("AppId {0} has {1} contexts.", app.Key, app.Value.Count);
+                foreach (var context in app.Value)
+                {
+                    Console.WriteLine("\tContext {0} has {1} items.", context.Key, context.Value.RgInventory.Count);
+                    try
+                    {
+                        var item = context.Value.RgInventory.First().Value;
+                        var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
+                        var inventoryItem = context.Value.RgDescriptions[key];
+                        Console.WriteLine("\t\tFirst item in context {0}: {1}", context.Key, inventoryItem.Name);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("\t\tFirst item in context {0}: N/A", context.Key);
+                    }
+                }
+            }
+        }
+
+        private void Load(int appId, long contextId, SteamID steamId)
+        {
+            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+            string response = SteamWeb.Fetch(inventoryUrl, "GET");
+            try
+            {
+                var inventory = JsonConvert.DeserializeObject<Inventory>(response);
+                if (!inventories.ContainsKey(appId))
+                    inventories[appId] = new Dictionary<long, Inventory>();
+                inventories[appId].Add(contextId, inventory);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to deserialize {0}:{1}.", appId, contextId);
+                Console.WriteLine(ex);
+            }
+        }
+
+        public Inventory.RgDescription GetItem(int appId, long contextId, ulong id)
+        {
+            try
+            {
+                var inventory = inventories[appId];
+                var item = inventory[contextId].RgInventory[id.ToString()];
+                var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
+                var inventoryItem = inventory[contextId].RgDescriptions[key];
+                return inventoryItem;
+            }
+            catch
+            {
                 return null;
             }
         }
 
-        public void load(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        public class GenericItem
         {
-            List<long> contextIdsCopy = contextIds.ToList();
-            _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
+            public int AppId { get; private set; }
+            public long ContextId { get; private set; }
+            public ulong ItemId { get; private set; }
+
+            public GenericItem(int appId, long contextId, ulong itemId)
+            {
+                this.AppId = appId;
+                this.ContextId = contextId;
+                this.ItemId = itemId;
+            }
         }
 
-        public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        public class InventoryApps
         {
-            dynamic invResponse;
-            isLoaded = false;
-            Dictionary<string, string> tmpAppData;
+            [JsonProperty("appid")]
+            public int AppId { get; set; }
 
-            _items.Clear();
-            _descriptions.Clear();
-            _errors.Clear();
+            [JsonProperty("name")]
+            public string Name { get; set; }
 
-            try
+            [JsonProperty("icon")]
+            public string Icon { get; set; }
+
+            [JsonProperty("link")]
+            public string Link { get; set; }
+
+            [JsonProperty("asset_count")]
+            public int AssetCount { get; set; }
+
+            [JsonProperty("inventory_logo")]
+            public string InventoryLogo { get; set; }
+
+            [JsonProperty("trade_permissions")]
+            public string TradePermissions { get; set; }
+
+            [JsonProperty("rgContexts")]
+            public Dictionary<long, RgContext> RgContexts { get; set; }
+
+            public class RgContext
             {
-                foreach(long contextId in contextIds)
-                {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, null, true);
-                    invResponse = JsonConvert.DeserializeObject(response);
+                [JsonProperty("asset_count")]
+                public int AssetCount { get; set; }
 
-                    if (invResponse.success == false)
-                    {
-                        _errors.Add("Fail to open backpack: " + invResponse.Error);
-                        continue;
-                    }
+                [JsonProperty("id")]
+                public string Id { get; set; }
 
-                    //rgInventory = Items on Steam Inventory 
-                    foreach (var item in invResponse.rgInventory)
-                    {
-
-                        foreach (var itemId in item)
-                        {
-                            _items.Add((ulong)itemId.id, new Item()
-                            {
-                                appid = appid,
-                                contextid = contextId,
-                                assetid = itemId.id,
-                                descriptionid = itemId.classid + "_" + itemId.instanceid
-                            });
-                            break;
-                        }
-                    }
-
-                    // rgDescriptions = Item Schema (sort of)
-                    foreach (var description in invResponse.rgDescriptions)
-                    {
-                        foreach (var class_instance in description)// classid + '_' + instenceid 
-                        {
-                            if (class_instance.app_data != null)
-                            {
-                                tmpAppData = new Dictionary<string, string>();
-                                foreach (var value in class_instance.app_data)
-                                {
-                                    tmpAppData.Add(""+value.Name,""+value.Value);
-                                }
-                            }
-                            else
-                            {
-                                tmpAppData= null;
-                            }
-
-                            _descriptions.Add("" + (class_instance.classid??'0') + "_" + (class_instance.instanceid??'0'), 
-                                new ItemDescription()
-                                    {
-                                        name = class_instance.name,
-                                        type = class_instance.type,
-                                        marketable = (bool) class_instance.marketable,
-                                        tradable = (bool)class_instance.tradable,
-                                        app_data = tmpAppData
-                                    }
-                            );
-                            break;
-                        }
-                    }
-                    
-                }//end for (contextId)
-            }//end try
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                _errors.Add("Exception: " + e.Message);
+                [JsonProperty("name")]
+                public string Name { get; set; }
             }
-            isLoaded = true;
+        }
+
+        public class Inventory
+        {
+            [JsonProperty("success")]
+            public bool Success { get; set; }
+
+            [JsonProperty("rgInventory")]
+            private dynamic rgInventory { get; set; }
+            public Dictionary<string, RgInventoryItems> RgInventory
+            {
+                // for some games rgInventory will be an empty array instead of a dictionary (e.g. [])
+                // this try-catch handles that
+                get
+                {
+                    try
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, RgInventoryItems>>(Convert.ToString(rgInventory));
+                        return dictionary;
+                    }
+                    catch
+                    {
+                        return new Dictionary<string, RgInventoryItems>();
+                    }
+                }
+                set
+                {
+                    rgInventory = value;
+                }
+            }
+
+            [JsonProperty("rgCurrency")]
+            private dynamic rgCurrency { get; set; }
+            public Dictionary<string, RgCurrency> RgCurrencies
+            {
+                // for some games rgCurrency will be an empty array instead of a dictionary (e.g. [])
+                // this try-catch handles that
+                get
+                {
+                    try
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, RgCurrency>>(Convert.ToString(rgCurrency));
+                        return dictionary;
+                    }
+                    catch
+                    {
+                        return new Dictionary<string, RgCurrency>();
+                    }
+                }
+                set
+                {
+                    rgCurrency = value;
+                }
+            }
+
+            [JsonProperty("rgDescriptions")]
+            private dynamic rgDescriptions { get; set; }
+            public Dictionary<string, RgDescription> RgDescriptions
+            {
+                // for some games rgDescriptions will be an empty array instead of a dictionary (e.g. [])
+                // this try-catch handles that
+                get
+                {
+                    try
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, RgDescription>>(Convert.ToString(rgDescriptions));
+                        return dictionary;
+                    }
+                    catch
+                    {
+                        return new Dictionary<string, RgDescription>();
+                    }
+                }
+                set
+                {
+                    rgDescriptions = value;
+                }
+            }
+
+            [JsonProperty("more")]
+            public bool More { get; set; }
+
+            [JsonProperty("more_start")]
+            public bool MoreStart { get; set; }
+
+            public class RgInventoryItems
+            {
+                [JsonProperty("id")]
+                public ulong Id { get; set; }
+
+                [JsonProperty("classid")]
+                public ulong ClassId { get; set; }
+
+                [JsonProperty("instanceid")]
+                public ulong InstanceId { get; set; }
+
+                [JsonProperty("amount")]
+                public int Amount { get; set; }
+
+                [JsonProperty("pos")]
+                public int Position { get; set; }
+            }
+
+            public class RgCurrency
+            {
+                [JsonProperty("id")]
+                public ulong Id { get; set; }
+
+                [JsonProperty("classid")]
+                public ulong ClassId { get; set; }
+
+                [JsonProperty("amount")]
+                public int Amount { get; set; }
+
+                [JsonProperty("is_currency")]
+                public bool IsCurrency { get; set; }
+
+                [JsonProperty("pos")]
+                public int Position { get; set; }
+            }
+
+            public class RgDescription
+            {
+                [JsonProperty("appid")]
+                public int AppId { get; set; }
+
+                [JsonProperty("classid")]
+                public ulong ClassId { get; set; }
+
+                [JsonProperty("instanceid")]
+                public ulong InstanceId { get; set; }
+
+                [JsonProperty("icon_url")]
+                public string IconUrl { get; set; }
+
+                [JsonProperty("icon_url_large")]
+                public string IconUrlLarge { get; set; }
+
+                [JsonProperty("icon_drag_url")]
+                public string IconDragUrl { get; set; }
+
+                [JsonProperty("name")]
+                public string Name { get; set; }
+
+                [JsonProperty("market_hash_name")]
+                public string MarketHashName { get; set; }
+
+                [JsonProperty("market_name")]
+                public string MarketName { get; set; }
+
+                [JsonProperty("name_color")]
+                public string NameColor { get; set; }
+
+                [JsonProperty("background_color")]
+                public string BackgroundColor { get; set; }
+
+                [JsonProperty("type")]
+                public string Type { get; set; }
+
+                [JsonProperty("tradable")]
+                private short isTradable { get; set; }
+                public bool IsTradable { get { return isTradable == 1; } set { isTradable = Convert.ToInt16(value); } }
+
+                [JsonProperty("marketable")]
+                private short isMarketable { get; set; }
+                public bool IsMarketable { get { return isMarketable == 1; } set { isMarketable = Convert.ToInt16(value); } }
+
+                [JsonProperty("market_fee_app")]
+                public int MarketFeeApp { get; set; }
+
+                [JsonProperty("descriptions")]
+                public Description[] Descriptions { get; set; }
+
+                [JsonProperty("actions")]
+                public Action[] Actions { get; set; }
+
+                [JsonProperty("owner_actions")]
+                public Action[] OwnerActions { get; set; }
+
+                [JsonProperty("tags")]
+                public Tag[] Tags { get; set; }
+
+                [JsonProperty("app_data")]
+                public App_Data AppData { get; set; }
+
+                public class Description
+                {
+                    [JsonProperty("type")]
+                    public string Type { get; set; }
+
+                    [JsonProperty("value")]
+                    public string Value { get; set; }
+                }
+
+                public class Action
+                {
+                    [JsonProperty("name")]
+                    public string Name { get; set; }
+
+                    [JsonProperty("link")]
+                    public string Link { get; set; }
+                }
+
+                public class Tag
+                {
+                    [JsonProperty("internal_name")]
+                    public string InternalName { get; set; }
+
+                    [JsonProperty("name")]
+                    public string Name { get; set; }
+
+                    [JsonProperty("category")]
+                    public string Category { get; set; }
+
+                    [JsonProperty("color")]
+                    public string Color { get; set; }
+
+                    [JsonProperty("category_name")]
+                    public string CategoryName { get; set; }
+                }
+
+                public class App_Data
+                {
+                    [JsonProperty("def_index")]
+                    public int Defindex { get; set; }
+
+                    [JsonProperty("quality")]
+                    public int Quality { get; set; }
+                }
+            }
         }
     }
 }
