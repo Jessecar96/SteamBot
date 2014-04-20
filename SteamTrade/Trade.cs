@@ -45,6 +45,9 @@ namespace SteamTrade
             steamMyOfferedItems = new Dictionary<int, ulong>();
             MyOfferedItems = new List<ulong>();
 
+            OtherOfferedItemsGeneric = new List<GenericInventory.GenericItem>();
+            MyOfferedItemsGeneric = new List<GenericInventory.GenericItem>();
+
             this.otherInventoryTask = otherInventoryTask;
             this.myInventoryTask = myInventoryTask;
         }
@@ -112,6 +115,9 @@ namespace SteamTrade
         /// The bot offered items.
         /// </value>
         public List<ulong> MyOfferedItems { get; private set; }
+
+        public List<GenericInventory.GenericItem> OtherOfferedItemsGeneric { get; private set; }
+        public List<GenericInventory.GenericItem> MyOfferedItemsGeneric { get; private set; }
 
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
@@ -245,9 +251,9 @@ namespace SteamTrade
                 return AddItem(new TradeUserAssets() { assetid = itemid, appid = 440, contextid = 2 });
             }
         }
-        public bool AddItem(ulong itemid, int appid, long contextid)
+        public bool AddItem(ulong itemid, int appid, long contextid, int amount)
         {
-            return AddItem(new TradeUserAssets() { assetid = itemid, appid = appid, contextid = contextid });
+            return AddItem(new TradeUserAssets() { assetid = itemid, appid = appid, contextid = contextid, amount = amount });
         }
         public bool AddItem(TradeUserAssets item)
         {
@@ -605,6 +611,8 @@ namespace SteamTrade
         {
             CopyNewAssets(OtherOfferedItems, status.them.GetAssets());
             CopyNewAssets(MyOfferedItems, status.me.GetAssets());
+            CopyNewAssets(OtherOfferedItemsGeneric, status.them.GetAssets());
+            CopyNewAssets(MyOfferedItemsGeneric, status.me.GetAssets());
         }
 
         private void CopyNewAssets(List<ulong> dest, IEnumerable<TradeUserAssets> assetList)
@@ -614,6 +622,19 @@ namespace SteamTrade
 
             dest.Clear();
             dest.AddRange(assetList.Select(asset => asset.assetid));
+        }
+
+        private void CopyNewAssets(List<GenericInventory.GenericItem> dest, IEnumerable<TradeUserAssets> assetList)
+        {
+            if (assetList == null)
+                return;
+
+            dest.Clear();
+            foreach (var asset in assetList)
+            {
+                var genericItem = new GenericInventory.GenericItem(asset.appid, asset.contextid, asset.assetid, asset.amount);
+                dest.Add(genericItem);
+            }
         }
 
         /// <summary>

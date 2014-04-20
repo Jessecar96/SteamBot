@@ -109,12 +109,14 @@ namespace SteamTrade
             public int AppId { get; private set; }
             public long ContextId { get; private set; }
             public ulong ItemId { get; private set; }
+            public int Amount { get; private set; }
 
-            public GenericItem(int appId, long contextId, ulong itemId)
+            public GenericItem(int appId, long contextId, ulong itemId, int amount)
             {
                 this.AppId = appId;
                 this.ContextId = contextId;
                 this.ItemId = itemId;
+                this.Amount = amount;
             }
         }
 

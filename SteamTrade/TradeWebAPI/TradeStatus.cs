@@ -147,7 +147,7 @@ namespace SteamTrade.TradeWebAPI
         /// <summary>itemid</summary>
         public ulong assetid { get; set; }
         public int appid { get; set; }
-        public int amount = 1;
+        public int amount { get; set; }
 
         public override string ToString()
         {
