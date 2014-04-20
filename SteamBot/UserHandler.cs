@@ -15,11 +15,33 @@ namespace SteamBot
         protected Bot Bot;
         protected SteamID OtherSID;
         private bool _lastMessageWasFromTrade;
+        protected Inventory OtherInventory;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
+            OtherInventory = GetOtherInventory();
+        }
+
+        /// <summary>
+        /// Gets the other's inventory and stores it in OtherInventory.
+        /// </summary>
+        /// <example> This sample shows how to find items in the other's inventory from a user handler.
+        /// <code>
+        /// GetInventory(); // Not necessary unless you know the user's inventory has changed
+        /// foreach (var item in OtherInventory)
+        /// {
+        ///     if (item.Defindex == 5021)
+        ///     {
+        ///         // Bot has a key in its inventory
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public Inventory GetOtherInventory()
+        {
+            return Inventory.FetchInventory(OtherSID, Bot.apiKey);
         }
 
         /// <summary>
