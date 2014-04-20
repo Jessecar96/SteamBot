@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
@@ -663,7 +664,7 @@ namespace SteamTrade
         {
             ulong itemID = tradeEvent.assetid;
 
-            if (OtherInventory != null)
+            if (OtherInventory != null && !OtherInventory.IsPrivate)
             {
                 Inventory.Item item = OtherInventory.GetItem(itemID);
                 if (item != null)
@@ -705,13 +706,16 @@ namespace SteamTrade
         {
             if (OtherPrivateInventory == null)
             {
-                // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
-                OtherPrivateInventory = new ForeignInventory(f);
+                dynamic foreignInventory = session.GetForeignInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
+                if (foreignInventory == null || foreignInventory.success == null || !foreignInventory.success.Value)
+                {
+                    return null;
+                }
+
+                OtherPrivateInventory = new ForeignInventory(foreignInventory);
             }
 
             ushort defindex = OtherPrivateInventory.GetDefIndex(itemID);
-
             Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
         }
