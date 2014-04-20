@@ -669,7 +669,7 @@ namespace SteamTrade
         {
             if (OtherPrivateInventory == null)
             {
-                dynamic foreignInventory = session.GetForiegnInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
+                dynamic foreignInventory = session.GetForeignInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
                 if (foreignInventory == null || foreignInventory.success == null || !foreignInventory.success.Value)
                 {
                     return null;

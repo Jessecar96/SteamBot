@@ -80,16 +80,15 @@ namespace SteamTrade.TradeWebAPI
 
 
         /// <summary>
-        /// Gets the foriegn inventory.
+        /// Gets the foreign inventory.
         /// </summary>
         /// <param name="otherId">The other id.</param>
         /// <returns>A dynamic JSON object.</returns>
-
-        internal dynamic GetForiegnInventory(SteamID otherId)
+        internal dynamic GetForeignInventory(SteamID otherId)
         {
-            return GetForiegnInventory(otherId, 440, 2);
+            return GetForeignInventory(otherId, 440, 2);
         }
-        internal dynamic GetForiegnInventory(SteamID otherId, long contextId, int appid)
+        internal dynamic GetForeignInventory(SteamID otherId, long contextId, int appid)
         {
             var data = new NameValueCollection();
 
