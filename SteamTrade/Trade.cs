@@ -35,10 +35,8 @@ namespace SteamTrade
         // current bot's sid
         private readonly SteamID mySteamId;
 
-        private readonly List<ulong> steamMyOfferedItems;
+        private readonly Dictionary<int, ulong> steamMyOfferedItems;
         private readonly string otherUserName;
-        private readonly Dictionary<int, ulong> myOfferedItems;
-        private readonly List<ulong> steamMyOfferedItems;
         private readonly TradeSession session;
         private readonly Task<Inventory> myInventoryTask;
         private readonly Task<Inventory> otherInventoryTask;
@@ -68,8 +66,6 @@ namespace SteamTrade
 
         /// <summary>Gets the other user's steam ID.</summary> 
         public SteamID OtherSID { get; private set; }
-
-        public ICollection<ulong> MyOfferedItems { get { return myOfferedItems.Values;  } }
 
         /// <summary>
         /// Gets the bot's Steam ID.
