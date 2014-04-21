@@ -25,9 +25,7 @@ namespace SteamTrade
         private readonly SteamID mySteamId;
 
         private readonly Dictionary<int, GenericInventory.GenericItem> steamMyOfferedItems;
-        private readonly TradeSession session;
-        private readonly GenericInventory myInventory;
-        private readonly GenericInventory otherInventory;
+        private readonly TradeSession session;                
 
         internal Trade(SteamID me, SteamID other, string sessionId, string token, GenericInventory myInventory, GenericInventory otherInventory)
         {
@@ -45,8 +43,8 @@ namespace SteamTrade
             MyOfferedItems = new List<GenericInventory.GenericItem>();
             steamMyOfferedItems = new Dictionary<int, GenericInventory.GenericItem>();
 
-            this.myInventory = myInventory;
-            this.otherInventory = otherInventory;
+            MyInventory = myInventory;
+            OtherInventory = otherInventory;
         }
 
         #region Public Properties
@@ -62,10 +60,20 @@ namespace SteamTrade
             get { return mySteamId; }
         }
 
+        /// <summary>
+        /// Gets the inventory of the bot
+        /// </summary>
+        public readonly GenericInventory MyInventory;
+
+        /// <summary>
+        /// Gets the inventory of the other user
+        /// </summary>
+        public readonly GenericInventory OtherInventory;
+
         /// <summary> 
         /// Gets the private inventory of the other user. 
         /// </summary>
-        public ForeignInventory OtherPrivateInventory { get; private set; }
+        public ForeignInventory OtherPrivateInventory { get; private set; }        
 
         /// <summary>
         /// Gets the items the user has offered
@@ -478,7 +486,7 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
-            var item = otherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
             OnUserAddItem(item);
         }
 
@@ -505,7 +513,7 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            var item = otherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
             OnUserRemoveItem(item);
         }
 

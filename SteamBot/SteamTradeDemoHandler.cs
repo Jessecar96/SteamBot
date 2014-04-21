@@ -66,8 +66,6 @@ namespace SteamBot
 
         public override void OnTradeInit()
         {
-            MySteamInventory = new GenericInventory(Bot.SteamUser.SteamID);
-            OtherSteamInventory = new GenericInventory(OtherSID);
             Trade.SendMessage("Trade successfully initialized.");
         }
 
