@@ -243,7 +243,7 @@ namespace SteamBot
                 Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
                 if (!this.IsRunning)
                 {
-                    Console.WriteLine("The Bot is no longer running and could not write to the log. Try Starting this bot first.");
+                    Console.WriteLine("The Bot is no longer running and could not write to the log. Try starting this bot first.");
                 }
             }
             catch (Exception e)
