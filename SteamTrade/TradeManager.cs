@@ -18,8 +18,8 @@ namespace SteamTrade
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
-        private Task<Inventory> myInventoryTask;
-        private Task<Inventory> otherInventoryTask;
+        private Task<TF2Inventory> myInventoryTask;
+        private Task<TF2Inventory> otherInventoryTask;
         private GenericInventory myInventory;
         private GenericInventory otherInventory;
 
@@ -94,7 +94,7 @@ namespace SteamTrade
         /// <value>
         /// The bot's inventory fetched via Steam Web API.
         /// </value>
-        public Inventory MyInventory
+        public TF2Inventory MyInventory
         {
             get
             {
@@ -112,7 +112,7 @@ namespace SteamTrade
         /// <value>
         /// The other trade partner's inventory fetched via Steam Web API.
         /// </value>
-        public Inventory OtherInventory
+        public TF2Inventory OtherInventory
         {
             get
             {

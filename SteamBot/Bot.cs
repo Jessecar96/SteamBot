@@ -88,9 +88,9 @@ namespace SteamBot
         SteamUser.LogOnDetails logOnDetails;
 
         TradeManager tradeManager;
-        private Task<Inventory> myInventoryTask;
+        private Task<TF2Inventory> myInventoryTask;
 
-        public Inventory MyInventory
+        public TF2Inventory MyInventory
         {
             get
             {
@@ -658,7 +658,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
+            myInventoryTask = Task.Factory.StartNew(() => TF2Inventory.FetchInventory(SteamUser.SteamID, apiKey));
         }
 
         /// <summary>

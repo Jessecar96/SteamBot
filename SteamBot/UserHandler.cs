@@ -12,7 +12,7 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
-        protected Inventory OtherInventory;
+        protected TF2Inventory OtherInventory;
 
         public UserHandler (Bot bot, SteamID sid)
         {
@@ -36,9 +36,9 @@ namespace SteamBot
         /// }
         /// </code>
         /// </example>
-        public Inventory GetOtherInventory()
+        public TF2Inventory GetOtherInventory()
         {
-            return Inventory.FetchInventory(OtherSID, Bot.apiKey);
+            return TF2Inventory.FetchInventory(OtherSID, Bot.apiKey);
         }
 
         /// <summary>
