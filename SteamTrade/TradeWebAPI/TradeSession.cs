@@ -130,15 +130,16 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,long contextid)
+        internal bool AddItemWebCmd(ulong itemid, int slot, int appid, long contextid, int amount)
         {
             var data = new NameValueCollection ();
 
-            data.Add ("sessionid", sessionIdEsc);
+            data.Add("sessionid", sessionIdEsc);
             data.Add("appid", "" + appid);
-            data.Add ("contextid", "" + contextid);
-            data.Add ("itemid", "" + itemid);
-            data.Add ("slot", "" + slot);
+            data.Add("contextid", "" + contextid);
+            data.Add("itemid", "" + itemid);
+            data.Add("slot", "" + slot);
+            data.Add("amount", "" + amount);
 
             string result = Fetch(baseTradeURL + "additem", "POST", data);
 

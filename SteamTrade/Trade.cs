@@ -206,7 +206,7 @@ namespace SteamTrade
         public bool AddItem(TradeUserAssets item)
         {
             var slot = NextTradeSlot();
-            bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid));
+            bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid, item.amount));
 
             if (success)
                 steamMyOfferedItems[slot] = new GenericInventory.GenericItem(item.appid, item.contextid, item.assetid, item.amount);
