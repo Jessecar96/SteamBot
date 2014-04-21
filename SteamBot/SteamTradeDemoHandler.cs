@@ -23,7 +23,7 @@ namespace SteamBot
 
         public override bool OnFriendAdd()
         {
-            return true;
+            return false;
         }
 
         public override void OnLoginCompleted() { }
@@ -43,7 +43,8 @@ namespace SteamBot
 
         public override bool OnTradeRequest()
         {
-            return true;
+            if (IsAdmin) return true;
+            return false;
         }
 
         public override void OnTradeError(string error)
@@ -70,14 +71,14 @@ namespace SteamBot
             Trade.SendMessage("Trade successfully initialized.");
         }
 
-        public override void OnTradeAddItem(GenericInventory.Inventory.RgDescription inventoryItem)
+        public override void OnTradeAddItem(GenericInventory.Inventory.Item inventoryItem)
         {
-        
+            Log.Info(inventoryItem.Name + " was added.");
         }
 
-        public override void OnTradeRemoveItem(GenericInventory.Inventory.RgDescription inventoryItem)
+        public override void OnTradeRemoveItem(GenericInventory.Inventory.Item inventoryItem)
         {
-
+            Log.Info(inventoryItem.Name + " was removed.");
         }
 
         public override void OnTradeMessage(string message)

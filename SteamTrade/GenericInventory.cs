@@ -38,10 +38,11 @@ namespace SteamTrade
                     {
                         long contextId = context.Key;
                         tasks.Add(Task.Factory.StartNew(() => {
-                            var inventory = GetInventory(appId, contextId, steamId) ?? new Inventory();
+                            var inventory = GetInventory(appId, contextId, steamId);
                             if (!Inventories.ContainsKey(appId))
                                 Inventories[appId] = new Dictionary<long, Inventory>();
-                            Inventories[appId].Add(contextId, inventory);
+                            if (inventory != null)
+                                Inventories[appId].Add(contextId, inventory);
                         }));
                     }
                 }
@@ -98,7 +99,7 @@ namespace SteamTrade
             }
         }
 
-        public Inventory.RgDescription GetItem(int appId, long contextId, ulong id)
+        public Inventory.Item GetItem(int appId, long contextId, ulong id)
         {
             try
             {
@@ -176,7 +177,7 @@ namespace SteamTrade
 
             [JsonProperty("rgInventory")]
             private dynamic rgInventory { get; set; }
-            public Dictionary<string, RgInventoryItems> RgInventory
+            public Dictionary<string, ItemInfo> RgInventory
             {
                 // for some games rgInventory will be an empty array instead of a dictionary (e.g. [])
                 // this try-catch handles that
@@ -184,12 +185,12 @@ namespace SteamTrade
                 {
                     try
                     {
-                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, RgInventoryItems>>(Convert.ToString(rgInventory));
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, ItemInfo>>(Convert.ToString(rgInventory));
                         return dictionary;
                     }
                     catch
                     {
-                        return new Dictionary<string, RgInventoryItems>();
+                        return new Dictionary<string, ItemInfo>();
                     }
                 }
                 set
@@ -200,7 +201,7 @@ namespace SteamTrade
 
             [JsonProperty("rgCurrency")]
             private dynamic rgCurrency { get; set; }
-            public Dictionary<string, RgCurrency> RgCurrencies
+            public Dictionary<string, CurrencyItem> RgCurrencies
             {
                 // for some games rgCurrency will be an empty array instead of a dictionary (e.g. [])
                 // this try-catch handles that
@@ -208,12 +209,12 @@ namespace SteamTrade
                 {
                     try
                     {
-                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, RgCurrency>>(Convert.ToString(rgCurrency));
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, CurrencyItem>>(Convert.ToString(rgCurrency));
                         return dictionary;
                     }
                     catch
                     {
-                        return new Dictionary<string, RgCurrency>();
+                        return new Dictionary<string, CurrencyItem>();
                     }
                 }
                 set
@@ -224,7 +225,7 @@ namespace SteamTrade
 
             [JsonProperty("rgDescriptions")]
             private dynamic rgDescriptions { get; set; }
-            public Dictionary<string, RgDescription> RgDescriptions
+            public Dictionary<string, Item> RgDescriptions
             {
                 // for some games rgDescriptions will be an empty array instead of a dictionary (e.g. [])
                 // this try-catch handles that
@@ -232,12 +233,12 @@ namespace SteamTrade
                 {
                     try
                     {
-                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, RgDescription>>(Convert.ToString(rgDescriptions));
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, Item>>(Convert.ToString(rgDescriptions));
                         return dictionary;
                     }
                     catch
                     {
-                        return new Dictionary<string, RgDescription>();
+                        return new Dictionary<string, Item>();
                     }
                 }
                 set
@@ -252,7 +253,7 @@ namespace SteamTrade
             [JsonProperty("more_start")]
             public bool MoreStart { get; set; }
 
-            public class RgInventoryItems
+            public class ItemInfo
             {
                 [JsonProperty("id")]
                 public ulong Id { get; set; }
@@ -270,7 +271,7 @@ namespace SteamTrade
                 public int Position { get; set; }
             }
 
-            public class RgCurrency
+            public class CurrencyItem
             {
                 [JsonProperty("id")]
                 public ulong Id { get; set; }
@@ -288,7 +289,7 @@ namespace SteamTrade
                 public int Position { get; set; }
             }
 
-            public class RgDescription
+            public class Item
             {
                 [JsonProperty("appid")]
                 public int AppId { get; set; }

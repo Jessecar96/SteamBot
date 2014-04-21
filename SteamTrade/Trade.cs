@@ -128,9 +128,9 @@ namespace SteamTrade
 
         public delegate void SuccessfulInit();
 
-        public delegate void UserAddItemHandler(GenericInventory.Inventory.RgDescription inventoryItem);
+        public delegate void UserAddItemHandler(GenericInventory.Inventory.Item inventoryItem);
 
-        public delegate void UserRemoveItemHandler(GenericInventory.Inventory.RgDescription inventoryItem);
+        public delegate void UserRemoveItemHandler(GenericInventory.Inventory.Item inventoryItem);
 
         public delegate void MessageHandler(string msg);
 
