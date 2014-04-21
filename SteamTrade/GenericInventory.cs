@@ -18,7 +18,8 @@ namespace SteamTrade
     public class GenericInventory
     {
         Dictionary<int, Dictionary<long, Inventory>> Inventories = new Dictionary<int, Dictionary<long, Inventory>>();
-        static CookieContainer Cookies = null;
+        Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
+        static CookieContainer Cookies = null;        
 
         public GenericInventory(SteamID steamId)
         {
@@ -30,23 +31,22 @@ namespace SteamTrade
             try
             {
                 var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
-                List<Task> tasks = new List<Task>();
                 foreach (var app in schemaResult)
                 {
                     int appId = app.Key;
+                    InventoryTasks[appId] = new Dictionary<long, Task>();
                     foreach (var context in app.Value.RgContexts)
                     {
                         long contextId = context.Key;
-                        tasks.Add(Task.Factory.StartNew(() => {
+                        InventoryTasks[appId][contextId] = Task.Factory.StartNew(() => {
                             var inventory = GetInventory(appId, contextId, steamId);
                             if (!Inventories.ContainsKey(appId))
                                 Inventories[appId] = new Dictionary<long, Inventory>();
                             if (inventory != null)
                                 Inventories[appId].Add(contextId, inventory);
-                        }));
+                        });
                     }
                 }
-                Task.WaitAll(tasks.ToArray());
             }
             catch (Exception ex)
             {
@@ -57,30 +57,6 @@ namespace SteamTrade
         public static void SetCookie(CookieContainer cookies)
         {
             Cookies = cookies;
-        }
-
-        private void Test()
-        {
-            Console.WriteLine("{0} inventories loaded.\r\n", Inventories.Count);
-            foreach (var app in Inventories)
-            {
-                Console.WriteLine("AppId {0} has {1} contexts.", app.Key, app.Value.Count);
-                foreach (var context in app.Value)
-                {
-                    Console.WriteLine("\tContext {0} has {1} items.", context.Key, context.Value.RgInventory.Count);
-                    try
-                    {
-                        var item = context.Value.RgInventory.First().Value;
-                        var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
-                        var inventoryItem = context.Value.RgDescriptions[key];
-                        Console.WriteLine("\t\tFirst item in context {0}: {1}", context.Key, inventoryItem.Name);
-                    }
-                    catch
-                    {
-                        Console.WriteLine("\t\tFirst item in context {0}: N/A", context.Key);
-                    }
-                }
-            }
         }
 
         private Inventory GetInventory(int appId, long contextId, SteamID steamId)
@@ -103,6 +79,7 @@ namespace SteamTrade
         {
             try
             {
+                InventoryTasks[appId][contextId].Wait();
                 var inventory = Inventories[appId];
                 var item = inventory[contextId].RgInventory[id.ToString()];
                 var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
