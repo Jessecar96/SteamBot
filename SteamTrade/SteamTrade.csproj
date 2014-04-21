@@ -54,9 +54,9 @@
     <Compile Include="Exceptions\TradeException.cs" />
     <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
+    <Compile Include="Inventory.cs" />
     <Compile Include="Trade.cs" />
     <Compile Include="Schema.cs" />
-    <Compile Include="Inventory.cs" />
     <Compile Include="SteamWeb.cs" />
     <Compile Include="TradeWebAPI\TradeStatus.cs" />
     <Compile Include="TradeWebAPI\TradeSession.cs" />

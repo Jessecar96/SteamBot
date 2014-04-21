@@ -100,6 +100,7 @@ namespace SteamBot
         }
 
         private BackgroundWorker backgroundWorker;
+        public CookieContainer botCookies;
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
@@ -396,6 +397,10 @@ namespace SteamBot
                 log.Success ("Steam Bot Logged In Completely!");
 
                 IsLoggedIn = true;
+
+                botCookies = new CookieContainer();
+                botCookies.SetCookies(new Uri("http://steamcommunity.com"), string.Format("steamLogin={0}; sessionid={1}", token, sessionId));
+                GenericInventory.SetCookie(botCookies);
 
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });

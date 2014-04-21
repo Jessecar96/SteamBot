@@ -72,7 +72,7 @@ namespace SteamBot
 
         public override void OnTradeAddItem(GenericInventory.Inventory.RgDescription inventoryItem)
         {
-
+        
         }
 
         public override void OnTradeRemoveItem(GenericInventory.Inventory.RgDescription inventoryItem)

@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
 using System.Text.RegularExpressions;
+using System.Net;
 
 namespace SteamTrade
 {
@@ -16,12 +17,13 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
-        Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
+        Dictionary<int, Dictionary<long, Inventory>> Inventories = new Dictionary<int, Dictionary<long, Inventory>>();
+        static CookieContainer Cookies = null;
 
         public GenericInventory(SteamID steamId)
         {
             string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-            string response = SteamWeb.Fetch(inventoryUrl, "GET");
+            string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
             Regex reg = new Regex("var g_rgAppContextData = (.*?);");
             Match m = reg.Match(response);
             string json = m.Groups[1].Value;
@@ -37,9 +39,9 @@ namespace SteamTrade
                         long contextId = context.Key;
                         tasks.Add(Task.Factory.StartNew(() => {
                             var inventory = GetInventory(appId, contextId, steamId) ?? new Inventory();
-                            if (!inventories.ContainsKey(appId))
-                                inventories[appId] = new Dictionary<long, Inventory>();
-                            inventories[appId].Add(contextId, inventory);
+                            if (!Inventories.ContainsKey(appId))
+                                Inventories[appId] = new Dictionary<long, Inventory>();
+                            Inventories[appId].Add(contextId, inventory);
                         }));
                     }
                 }
@@ -51,10 +53,15 @@ namespace SteamTrade
             }
         }
 
+        public static void SetCookie(CookieContainer cookies)
+        {
+            Cookies = cookies;
+        }
+
         private void Test()
         {
-            Console.WriteLine("{0} inventories loaded.\r\n", inventories.Count);
-            foreach (var app in inventories)
+            Console.WriteLine("{0} inventories loaded.\r\n", Inventories.Count);
+            foreach (var app in Inventories)
             {
                 Console.WriteLine("AppId {0} has {1} contexts.", app.Key, app.Value.Count);
                 foreach (var context in app.Value)
@@ -78,7 +85,7 @@ namespace SteamTrade
         private Inventory GetInventory(int appId, long contextId, SteamID steamId)
         {
             string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-            string response = SteamWeb.Fetch(inventoryUrl, "GET");
+            string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
             try
             {
                 return JsonConvert.DeserializeObject<Inventory>(response);
@@ -95,7 +102,7 @@ namespace SteamTrade
         {
             try
             {
-                var inventory = inventories[appId];
+                var inventory = Inventories[appId];
                 var item = inventory[contextId].RgInventory[id.ToString()];
                 var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
                 var inventoryItem = inventory[contextId].RgDescriptions[key];
