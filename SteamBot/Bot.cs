@@ -263,7 +263,6 @@ namespace SteamBot
                 CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
                 CurrentTrade.OnClose += CloseTrade;
                 SubscribeTrade(CurrentTrade, GetUserHandler(other));
-
                 tradeManager.StartTradeThread(CurrentTrade);
                 return true;
             }

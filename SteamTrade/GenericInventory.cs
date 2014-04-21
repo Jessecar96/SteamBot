@@ -19,39 +19,44 @@ namespace SteamTrade
     {
         Dictionary<int, Dictionary<long, Inventory>> Inventories = new Dictionary<int, Dictionary<long, Inventory>>();
         Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
+        Task ConstructTask = null;
         static CookieContainer Cookies = null;        
 
         public GenericInventory(SteamID steamId)
         {
-            string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-            string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
-            Regex reg = new Regex("var g_rgAppContextData = (.*?);");
-            Match m = reg.Match(response);
-            string json = m.Groups[1].Value;
-            try
+            ConstructTask = Task.Factory.StartNew(() =>
             {
-                var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
-                foreach (var app in schemaResult)
+                string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
+                string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
+                Regex reg = new Regex("var g_rgAppContextData = (.*?);");
+                Match m = reg.Match(response);
+                string json = m.Groups[1].Value;
+                try
                 {
-                    int appId = app.Key;
-                    InventoryTasks[appId] = new Dictionary<long, Task>();
-                    foreach (var context in app.Value.RgContexts)
+                    var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
+                    foreach (var app in schemaResult)
                     {
-                        long contextId = context.Key;
-                        InventoryTasks[appId][contextId] = Task.Factory.StartNew(() => {
-                            var inventory = GetInventory(appId, contextId, steamId);
-                            if (!Inventories.ContainsKey(appId))
-                                Inventories[appId] = new Dictionary<long, Inventory>();
-                            if (inventory != null)
-                                Inventories[appId].Add(contextId, inventory);
-                        });
+                        int appId = app.Key;
+                        InventoryTasks[appId] = new Dictionary<long, Task>();
+                        foreach (var context in app.Value.RgContexts)
+                        {
+                            long contextId = context.Key;
+                            InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
+                            {
+                                var inventory = GetInventory(appId, contextId, steamId);
+                                if (!Inventories.ContainsKey(appId))
+                                    Inventories[appId] = new Dictionary<long, Inventory>();
+                                if (inventory != null)
+                                    Inventories[appId].Add(contextId, inventory);
+                            });
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+            });       
         }
 
         public static void SetCookie(CookieContainer cookies)
@@ -79,6 +84,7 @@ namespace SteamTrade
         {
             try
             {
+                ConstructTask.Wait();
                 InventoryTasks[appId][contextId].Wait();
                 var inventory = Inventories[appId];
                 var item = inventory[contextId].RgInventory[id.ToString()];
