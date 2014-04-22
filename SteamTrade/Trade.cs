@@ -12,7 +12,7 @@ namespace SteamTrade
     public partial class Trade
     {
         #region Static Public data
-        public static Schema CurrentSchema = null;
+        public static TF2Schema CurrentSchema = null;
         #endregion
 
         private const int WEB_REQUEST_MAX_RETRIES = 3;
@@ -372,14 +372,14 @@ namespace SteamTrade
 
                 // Successful trade
                 case 1:
-                    HasTradeCompletedOk = true;
-                    return false;
+                    HasTradeCompletedOk = true;                    
+                    break;
 
                 // All other known values (3, 4) correspond to trades closing.
                 default:
-                    FireOnErrorEvent("Trade was closed by other user. Trade status: " + status.trade_status);
+                    EnqueueAction(() => FireOnErrorEvent("Trade was closed by other user. Trade status: " + status.trade_status));
                     OtherUserCancelled = true;
-                    return false;
+                    break;
             }
 
             if (status.newversion)
@@ -427,26 +427,33 @@ namespace SteamTrade
                 switch ((TradeEventType)tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
-                        FireOnUserAddItem(tradeEvent);
+                        EnqueueAction(() => FireOnUserAddItem(tradeEvent));
+                        //FireOnUserAddItem(tradeEvent);
                         break;
                     case TradeEventType.ItemRemoved:
-                        FireOnUserRemoveItem(tradeEvent);
+                        EnqueueAction(() => FireOnUserRemoveItem(tradeEvent));
+                        //FireOnUserRemoveItem(tradeEvent);
                         break;
                     case TradeEventType.UserSetReady:
-                        OnUserSetReady(true);
+                        EnqueueAction(() => OnUserSetReady(true));
+                        //OnUserSetReady(true);
                         break;
                     case TradeEventType.UserSetUnReady:
-                        OnUserSetReady(false);
+                        EnqueueAction(() => OnUserSetReady(false));
+                        //OnUserSetReady(false);
                         break;
                     case TradeEventType.UserAccept:
-                        OnUserAccept();
+                        EnqueueAction(() => OnUserAccept());
+                        //OnUserAccept();
                         break;
                     case TradeEventType.UserChat:
-                        OnMessage(tradeEvent.text);
+                        EnqueueAction(() => OnMessage(tradeEvent.text));
+                        //OnMessage(tradeEvent.text);
                         break;
                     default:
                         // Todo: add an OnWarning or similar event
-                        FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
+                        EnqueueAction(() => FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action));
+                        //FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
                         break;
                 }
             }
@@ -457,6 +464,20 @@ namespace SteamTrade
             }
 
             return otherDidSomething;
+        }
+
+        private object queueLock = new object();
+        private Task latestTask;
+
+        public void EnqueueAction(System.Action action)
+        {
+            lock (queueLock)
+            {
+                if (latestTask == null)
+                    latestTask = Task.Factory.StartNew(action);
+                else
+                    latestTask = latestTask.ContinueWith(tsk => action());
+            }
         }
 
         private void HandleTradeVersionChange(TradeStatus status)
@@ -490,7 +511,7 @@ namespace SteamTrade
             OnUserAddItem(item);
         }
 
-        private Schema.Item GetItemFromPrivateBp(TradeEvent tradeEvent, ulong itemID)
+        private TF2Schema.Item GetItemFromPrivateBp(TradeEvent tradeEvent, ulong itemID)
         {
             if (OtherPrivateInventory == null)
             {
@@ -501,7 +522,7 @@ namespace SteamTrade
 
             ushort defindex = OtherPrivateInventory.GetDefIndex(itemID);
 
-            Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
+            TF2Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
         }
 

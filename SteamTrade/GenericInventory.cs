@@ -17,10 +17,22 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
-        Dictionary<int, Dictionary<long, Inventory>> Inventories = new Dictionary<int, Dictionary<long, Inventory>>();
+        Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
         Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
         Task ConstructTask = null;
-        static CookieContainer Cookies = null;        
+        static CookieContainer Cookies = null;
+
+        /// <summary>
+        /// Gets the content of all inventories listed in http://steamcommunity.com/profiles/STEAM_ID/inventory/
+        /// </summary>
+        public Dictionary<int, Dictionary<long, Inventory>> Inventories
+        {
+            get
+            {
+                WaitAllTasks();
+                return inventories;
+            }            
+        }
 
         public GenericInventory(SteamID steamId)
         {
@@ -43,11 +55,11 @@ namespace SteamTrade
                             long contextId = context.Key;
                             InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                             {
-                                var inventory = GetInventory(appId, contextId, steamId);
-                                if (!Inventories.ContainsKey(appId))
-                                    Inventories[appId] = new Dictionary<long, Inventory>();
+                                var inventory = FetchInventory(appId, contextId, steamId);
+                                if (!inventories.ContainsKey(appId))
+                                    inventories[appId] = new Dictionary<long, Inventory>();
                                 if (inventory != null)
-                                    Inventories[appId].Add(contextId, inventory);
+                                    inventories[appId].Add(contextId, inventory);
                             });
                         }
                     }
@@ -64,13 +76,43 @@ namespace SteamTrade
             Cookies = cookies;
         }
 
-        private Inventory GetInventory(int appId, long contextId, SteamID steamId)
+        public Dictionary<string, GenericInventory.Inventory.Item>.ValueCollection GetInventory(int appId, int contextId)
+        {
+            return Inventories[appId][contextId].RgDescriptions.Values;
+        }
+
+        private Inventory FetchInventory(int appId, long contextId, SteamID steamId)
         {
             string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
             string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
             try
             {
-                return JsonConvert.DeserializeObject<Inventory>(response);
+                var inventory = JsonConvert.DeserializeObject<Inventory>(response);
+                foreach (var dictItem in inventory.RgInventory)
+                {
+                    var item = dictItem.Value;
+                    var classId = item.ClassId;
+                    var instanceId = item.InstanceId;
+                    var key = string.Format("{0}_{1}", classId, instanceId);
+                    var inventoryItem = inventory.RgDescriptions[key];
+                    inventoryItem.Id = item.Id;
+                    inventoryItem.Amount = item.Amount;
+                    inventoryItem.IsCurrency = false;
+                    inventoryItem.Position = item.Position;
+                }
+                foreach (var dictItem in inventory.RgCurrencies)
+                {
+                    var item = dictItem.Value;
+                    var classId = item.ClassId;
+                    var instanceId = 0;
+                    var key = string.Format("{0}_{1}", classId, instanceId);
+                    var inventoryItem = inventory.RgDescriptions[key];
+                    inventoryItem.Id = item.Id;
+                    inventoryItem.Amount = item.Amount;
+                    inventoryItem.IsCurrency = item.IsCurrency;
+                    inventoryItem.Position = item.Position;
+                }
+                return inventory;
             }
             catch (Exception ex)
             {
@@ -86,15 +128,31 @@ namespace SteamTrade
             {
                 ConstructTask.Wait();
                 InventoryTasks[appId][contextId].Wait();
-                var inventory = Inventories[appId];
-                var item = inventory[contextId].RgInventory[id.ToString()];
-                var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
-                var inventoryItem = inventory[contextId].RgDescriptions[key];
-                return inventoryItem;
+                var inventory = inventories[appId];
+                Inventory.ItemInfo item = null;
+                if (inventory[contextId].RgInventory.ContainsKey(id.ToString()))
+                    item = inventory[contextId].RgInventory[id.ToString()];
+                Inventory.CurrencyItem currencyItem = null;
+                if (inventory[contextId].RgCurrencies.ContainsKey(id.ToString()))
+                    currencyItem = inventory[contextId].RgCurrencies[id.ToString()];
+                var key = string.Format("{0}_{1}", item == null ? currencyItem.ClassId : item.ClassId, item == null ? 0 : item.InstanceId);
+                return inventory[contextId].RgDescriptions[key];
             }
             catch
             {
                 return null;
+            }
+        }
+
+        private void WaitAllTasks()
+        {
+            ConstructTask.Wait();
+            foreach (var task in InventoryTasks)
+            {
+                foreach (var contextTask in task.Value)
+                {
+                    contextTask.Value.Wait();
+                }
             }
         }
 
@@ -210,8 +268,6 @@ namespace SteamTrade
             private dynamic rgDescriptions { get; set; }
             public Dictionary<string, Item> RgDescriptions
             {
-                // for some games rgDescriptions will be an empty array instead of a dictionary (e.g. [])
-                // this try-catch handles that
                 get
                 {
                     try
@@ -274,6 +330,11 @@ namespace SteamTrade
 
             public class Item
             {
+                public ulong Id { get; set; }
+                public int Amount { get; set; }
+                public bool IsCurrency { get; set; }
+                public int Position { get; set; }
+
                 [JsonProperty("appid")]
                 public int AppId { get; set; }
 

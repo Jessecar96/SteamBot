@@ -81,7 +81,7 @@ namespace SteamBot
 
         public override void OnTradeMessage(string message)
         {
-
+            Trade.SendMessage("Message received.");
         }
 
         public override void OnTradeReady(bool ready)

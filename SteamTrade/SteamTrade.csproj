@@ -55,8 +55,10 @@
     <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
     <Compile Include="Inventories\TF2Inventory.cs" />
+    <Compile Include="Schemas\Dota2Schema.cs" />
+    <Compile Include="Schemas\Schema.cs" />
     <Compile Include="Trade.cs" />
-    <Compile Include="Schema.cs" />
+    <Compile Include="Schemas\TF2Schema.cs" />
     <Compile Include="SteamWeb.cs" />
     <Compile Include="TradeWebAPI\TradeStatus.cs" />
     <Compile Include="TradeWebAPI\TradeSession.cs" />

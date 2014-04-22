@@ -237,7 +237,7 @@ namespace SteamTrade
 
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
-                Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                Trade.CurrentSchema = TF2Schema.FetchSchema (apiKey);
 
             if (Trade.CurrentSchema == null)
                 throw new TradeException ("Could not download the latest item schema.");
@@ -289,7 +289,7 @@ namespace SteamTrade
                     // ok then we should stop polling...
                     IsTradeThreadRunning = false;
                     DebugPrint("[TRADEMANAGER] general error caught: " + ex);
-                    trade.FireOnErrorEvent("Unknown error occurred: " + ex.ToString());
+                    trade.EnqueueAction(() => trade.FireOnErrorEvent("Unknown error occurred: " + ex.ToString()));
                 }
                 finally
                 {
@@ -298,19 +298,19 @@ namespace SteamTrade
                     {
                         try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
                         {
-                            if(trade.HasTradeCompletedOk)
-                                trade.FireOnSuccessEvent();
+                            if (trade.HasTradeCompletedOk)
+                                trade.EnqueueAction(() => trade.FireOnSuccessEvent());
                         }
                         finally
                         {
                             //Make sure OnClose is always fired after OnSuccess, even if OnSuccess throws an exception
                             //(which it NEVER should, but...)
-                            trade.FireOnCloseEvent();
+                            trade.EnqueueAction(() => trade.FireOnCloseEvent());
                         }
                     }
                     catch(Exception ex)
                     {
-                        trade.FireOnErrorEvent("Unknown error occurred DURING CLEANUP(!?): " + ex.ToString());
+                        trade.EnqueueAction(() => trade.FireOnErrorEvent("Unknown error occurred DURING CLEANUP(!?): " + ex.ToString()));
                     }
                 }
             });
@@ -342,17 +342,20 @@ namespace SteamTrade
 
                 if (OnTimeout != null)
                 {
-                    OnTimeout (this, null);
+                    trade.EnqueueAction(() => OnTimeout(this, null));
                 }
 
-                trade.CancelTrade ();
+                trade.EnqueueAction(() => trade.CancelTrade());
 
                 return true;
             }
             else if (untilActionTimeout <= 20 && secsSinceLastTimeoutMessage >= 10)
             {
-                trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
-                lastTimeoutMessage = now;
+                trade.EnqueueAction(() => 
+                {
+                    trade.SendMessage("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                    lastTimeoutMessage = now;
+                });                
             }
             return false;
         }

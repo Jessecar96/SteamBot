@@ -386,7 +386,7 @@ namespace SteamBot
                 if (Trade.CurrentSchema == null)
                 {
                     log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                    Trade.CurrentSchema = TF2Schema.FetchSchema (apiKey);
                     log.Success ("Schema Downloaded!");
                 }
 
