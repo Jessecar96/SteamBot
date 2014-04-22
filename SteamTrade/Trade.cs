@@ -428,32 +428,25 @@ namespace SteamTrade
                 {
                     case TradeEventType.ItemAdded:
                         EnqueueAction(() => FireOnUserAddItem(tradeEvent));
-                        //FireOnUserAddItem(tradeEvent);
                         break;
                     case TradeEventType.ItemRemoved:
                         EnqueueAction(() => FireOnUserRemoveItem(tradeEvent));
-                        //FireOnUserRemoveItem(tradeEvent);
                         break;
                     case TradeEventType.UserSetReady:
                         EnqueueAction(() => OnUserSetReady(true));
-                        //OnUserSetReady(true);
                         break;
                     case TradeEventType.UserSetUnReady:
                         EnqueueAction(() => OnUserSetReady(false));
-                        //OnUserSetReady(false);
                         break;
                     case TradeEventType.UserAccept:
                         EnqueueAction(() => OnUserAccept());
-                        //OnUserAccept();
                         break;
                     case TradeEventType.UserChat:
                         EnqueueAction(() => OnMessage(tradeEvent.text));
-                        //OnMessage(tradeEvent.text);
                         break;
                     default:
                         // Todo: add an OnWarning or similar event
                         EnqueueAction(() => FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action));
-                        //FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
                         break;
                 }
             }

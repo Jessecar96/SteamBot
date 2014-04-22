@@ -18,8 +18,6 @@ namespace SteamTrade
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
-        private Task<TF2Inventory> myInventoryTask;
-        private Task<TF2Inventory> otherInventoryTask;
         private GenericInventory myInventory;
         private GenericInventory otherInventory;
 
@@ -86,42 +84,6 @@ namespace SteamTrade
         {
             get;
             private set;
-        }
-
-        /// <summary>
-        /// Gets the inventory of the bot.
-        /// </summary>
-        /// <value>
-        /// The bot's inventory fetched via Steam Web API.
-        /// </value>
-        public TF2Inventory MyInventory
-        {
-            get
-            {
-                if(myInventoryTask == null)
-                    return null;
-
-                myInventoryTask.Wait();
-                return myInventoryTask.Result;
-        }
-        }
-
-        /// <summary>
-        /// Gets the inventory of the other trade partner.
-        /// </summary>
-        /// <value>
-        /// The other trade partner's inventory fetched via Steam Web API.
-        /// </value>
-        public TF2Inventory OtherInventory
-        {
-            get
-            {
-                if(otherInventoryTask == null)
-                    return null;
-
-                otherInventoryTask.Wait();
-                return otherInventoryTask.Result;
-        }
         }
 
         /// <summary>
@@ -208,8 +170,8 @@ namespace SteamTrade
         public void StopTrade ()
         {
             // TODO: something to check that trade was the Trade returned from CreateTrade
-            otherInventoryTask = null;
-            myInventoryTask = null;
+            otherInventory = null;
+            myInventory = null;
 
             IsTradeThreadRunning = false;
         }
@@ -234,13 +196,6 @@ namespace SteamTrade
             
             // fetch our inventory from the Steam API.
             myInventory = new GenericInventory(me);
-
-            // check that the schema was already successfully fetched
-            if (Trade.CurrentSchema == null)
-                Trade.CurrentSchema = TF2Schema.FetchSchema (apiKey);
-
-            if (Trade.CurrentSchema == null)
-                throw new TradeException ("Could not download the latest item schema.");
         }
 
         #endregion Public Methods
