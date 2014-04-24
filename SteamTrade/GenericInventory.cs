@@ -17,10 +17,12 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
-        Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
-        Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
-        Task ConstructTask = null;
-        static CookieContainer Cookies = null;
+        private Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
+        private Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
+        private Task ConstructTask = null;
+        private static CookieContainer Cookies = null;
+        private const int WEB_REQUEST_MAX_RETRIES = 3;
+        private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 1000;
 
         /// <summary>
         /// Gets the content of all inventories listed in http://steamcommunity.com/profiles/STEAM_ID/inventory/
@@ -31,7 +33,7 @@ namespace SteamTrade
             {
                 WaitAllTasks();
                 return inventories;
-            }            
+            }
         }
 
         public GenericInventory(SteamID steamId)
@@ -39,7 +41,7 @@ namespace SteamTrade
             ConstructTask = Task.Factory.StartNew(() =>
             {
                 string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-                string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
+                string response = RetryWebRequest(inventoryUrl);
                 Regex reg = new Regex("var g_rgAppContextData = (.*?);");
                 Match m = reg.Match(response);
                 string json = m.Groups[1].Value;
@@ -76,15 +78,21 @@ namespace SteamTrade
             Cookies = cookies;
         }
 
-        public Dictionary<string, GenericInventory.Inventory.Item>.ValueCollection GetInventory(int appId, int contextId)
+        /// <summary>
+        /// Use this to iterate through items in the inventory.
+        /// </summary>
+        /// <param name="appId">App ID</param>
+        /// <param name="contextId">Context ID</param>
+        /// <returns>A List containing GenericInventory.Inventory.Item elements</returns>
+        public List<GenericInventory.Inventory.Item> GetInventory(int appId, int contextId)
         {
-            return Inventories[appId][contextId].RgDescriptions.Values;
+            return Inventories[appId][contextId].RgDescriptions.Values.ToList();
         }
 
         private Inventory FetchInventory(int appId, long contextId, SteamID steamId)
         {
             string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-            string response = SteamWeb.Fetch(inventoryUrl, "GET", null, Cookies);
+            string response = RetryWebRequest(inventoryUrl);
             try
             {
                 var inventory = JsonConvert.DeserializeObject<Inventory>(response);
@@ -95,7 +103,8 @@ namespace SteamTrade
                     var instanceId = item.InstanceId;
                     var key = string.Format("{0}_{1}", classId, instanceId);
                     var inventoryItem = inventory.RgDescriptions[key];
-                    inventoryItem.Id = item.Id;
+                    inventoryItem.ContextId = contextId;
+                    inventoryItem.Id = item.Id;                    
                     inventoryItem.Amount = item.Amount;
                     inventoryItem.IsCurrency = false;
                     inventoryItem.Position = item.Position;
@@ -107,6 +116,7 @@ namespace SteamTrade
                     var instanceId = 0;
                     var key = string.Format("{0}_{1}", classId, instanceId);
                     var inventoryItem = inventory.RgDescriptions[key];
+                    inventoryItem.ContextId = contextId;
                     inventoryItem.Id = item.Id;
                     inventoryItem.Amount = item.Amount;
                     inventoryItem.IsCurrency = item.IsCurrency;
@@ -141,7 +151,7 @@ namespace SteamTrade
             catch
             {
                 return null;
-            }
+            }            
         }
 
         private void WaitAllTasks()
@@ -156,6 +166,32 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Calls the given function multiple times, until we get a non-null/non-false/non-zero result, or we've made at least
+        /// WEB_REQUEST_MAX_RETRIES attempts (with WEB_REQUEST_TIME_BETWEEN_RETRIES_MS between attempts)
+        /// </summary>
+        /// <returns>The result of the function if it succeeded, or an empty string otherwise</returns>
+        private string RetryWebRequest(string url)
+        {
+            for (int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
+            {
+                try
+                {
+                    return SteamWeb.Fetch(url, "GET", null, Cookies);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+
+                if (i != WEB_REQUEST_MAX_RETRIES)
+                {
+                    System.Threading.Thread.Sleep(WEB_REQUEST_TIME_BETWEEN_RETRIES_MS);
+                }
+            }
+            return "";
+        }
+       
         public class GenericItem
         {
             public int AppId { get; private set; }
@@ -334,6 +370,7 @@ namespace SteamTrade
                 public int Amount { get; set; }
                 public bool IsCurrency { get; set; }
                 public int Position { get; set; }
+                public long ContextId { get; set; }
 
                 [JsonProperty("appid")]
                 public int AppId { get; set; }

@@ -202,6 +202,10 @@ namespace SteamTrade
             return RetryWebRequest(session.CancelTradeWebCmd);
         }
 
+        public bool AddItem(GenericInventory.Inventory.Item item)
+        {
+            return AddItem(new TradeUserAssets() { assetid = item.Id, appid = item.AppId, contextid = item.ContextId, amount = item.Amount });
+        }
         public bool AddItem(ulong itemid, int appid, long contextid, int amount)
         {
             return AddItem(new TradeUserAssets() { assetid = itemid, appid = appid, contextid = contextid, amount = amount });
