@@ -6,14 +6,19 @@ namespace SteamBot
 {
     public class SteamTradeDemoHandler : UserHandler
     {
-        private GenericInventory MySteamInventory;
-        private GenericInventory OtherSteamInventory;
+        GenericInventory MyInventory;
+        GenericInventory OtherInventory;
+
+        TF2Inventory MyTF2Inventory;
+        TF2Inventory OtherTF2Inventory;
+        Dota2Inventory MyDota2Inventory;
+        Dota2Inventory OtherDota2Inventory;
 
         public SteamTradeDemoHandler(Bot bot, SteamID sid)
             : base(bot, sid)
         {
-            MySteamInventory = new GenericInventory(bot.SteamUser.SteamID);
-            OtherSteamInventory = new GenericInventory(OtherSID);
+            MyInventory = new GenericInventory(MySID);
+            OtherInventory = new GenericInventory(OtherSID);
         }
 
         public override bool OnGroupAdd()
@@ -26,7 +31,11 @@ namespace SteamBot
             return false;
         }
 
-        public override void OnLoginCompleted() { }
+        public override void OnLoginCompleted()
+        {
+            new TF2Schema(Bot.apiKey);
+            new Dota2Schema(Bot.apiKey);
+        }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
@@ -67,11 +76,31 @@ namespace SteamBot
         public override void OnTradeInit()
         {
             Trade.SendMessage("Trade successfully initialized.");
+
+            MyTF2Inventory = TF2Inventory.FetchInventory(MySID, Bot.apiKey);
+            OtherTF2Inventory = TF2Inventory.FetchInventory(OtherSID, Bot.apiKey);
+            MyDota2Inventory = Dota2Inventory.FetchInventory(MySID, Bot.apiKey);
+            OtherDota2Inventory = Dota2Inventory.FetchInventory(OtherSID, Bot.apiKey);
         }
 
         public override void OnTradeAddItem(GenericInventory.Inventory.Item inventoryItem)
         {
             Log.Info(inventoryItem.Name + " was added.");
+            switch (inventoryItem.AppId)
+            {
+                case 440:
+                {
+                    var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
+                    var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);
+                    break;
+                }                    
+                case 570:
+                {
+                    var item = OtherDota2Inventory.GetItem(inventoryItem.Id);
+                    var schemaItem = Dota2Schema.Schema.GetItem(item.Defindex);
+                    break;
+                }
+            }
         }
 
         public override void OnTradeRemoveItem(GenericInventory.Inventory.Item inventoryItem)
@@ -81,7 +110,7 @@ namespace SteamBot
 
         public override void OnTradeMessage(string message)
         {
-            Trade.SendMessage("Message received.");
+
         }
 
         public override void OnTradeReady(bool ready)

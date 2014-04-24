@@ -12,33 +12,13 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
-        protected TF2Inventory OtherInventory;
+        protected SteamID MySID;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
-            OtherInventory = GetOtherInventory();
-        }
-
-        /// <summary>
-        /// Gets the other's inventory and stores it in OtherInventory.
-        /// </summary>
-        /// <example> This sample shows how to find items in the other's inventory from a user handler.
-        /// <code>
-        /// GetInventory(); // Not necessary unless you know the user's inventory has changed
-        /// foreach (var item in OtherInventory)
-        /// {
-        ///     if (item.Defindex == 5021)
-        ///     {
-        ///         // Bot has a key in its inventory
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public TF2Inventory GetOtherInventory()
-        {
-            return TF2Inventory.FetchInventory(OtherSID, Bot.apiKey);
+            MySID = bot.SteamUser.SteamID;
         }
 
         /// <summary>

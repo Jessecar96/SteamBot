@@ -504,21 +504,6 @@ namespace SteamTrade
             OnUserAddItem(item);
         }
 
-        private TF2Schema.Item GetItemFromPrivateBp(TradeEvent tradeEvent, ulong itemID)
-        {
-            if (OtherPrivateInventory == null)
-            {
-                // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
-                OtherPrivateInventory = new ForeignInventory(f);
-            }
-
-            ushort defindex = OtherPrivateInventory.GetDefIndex(itemID);
-
-            TF2Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
-            return schemaItem;
-        }
-
         /// <summary>
         /// Gets an item from a TradeEvent, and passes it into the UserHandler's implemented OnUserRemoveItem([...]) routine.
         /// Passes in null items if something went wrong.

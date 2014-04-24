@@ -54,6 +54,7 @@
     <Compile Include="Exceptions\TradeException.cs" />
     <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
+    <Compile Include="Inventories\Dota2Inventory.cs" />
     <Compile Include="Inventories\TF2Inventory.cs" />
     <Compile Include="Schemas\Dota2Schema.cs" />
     <Compile Include="Trade.cs" />

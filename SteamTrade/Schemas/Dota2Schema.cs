@@ -14,9 +14,16 @@ namespace SteamTrade
     /// </summary>
     public class Dota2Schema
     {
+        public static Dota2Schema Schema;
+
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
         private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_570/GetSchema/v0001/?key=";
         private const string cachefile = "dota2_schema.cache";
+
+        public Dota2Schema(string apiKey)
+        {
+            Schema = FetchSchema(apiKey);
+        }
 
         /// <summary>
         /// Fetches the Dota 2 Item schema.

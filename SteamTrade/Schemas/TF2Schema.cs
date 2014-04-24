@@ -14,9 +14,16 @@ namespace SteamTrade
     /// </summary>
     public class TF2Schema
     {
+        public static TF2Schema Schema;
+
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
         private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
         private const string cachefile = "tf_schema.cache";
+
+        public TF2Schema(string apiKey)
+        {
+            Schema = FetchSchema(apiKey);
+        }
 
         /// <summary>
         /// Fetches the Tf2 Item schema.
