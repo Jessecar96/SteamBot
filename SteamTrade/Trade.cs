@@ -68,12 +68,7 @@ namespace SteamTrade
         /// <summary>
         /// Gets the inventory of the other user
         /// </summary>
-        public readonly GenericInventory OtherInventory;
-
-        /// <summary> 
-        /// Gets the private inventory of the other user. 
-        /// </summary>
-        public ForeignInventory OtherPrivateInventory { get; private set; }        
+        public readonly GenericInventory OtherInventory;    
 
         /// <summary>
         /// Gets the items the user has offered

@@ -14,11 +14,16 @@ namespace SteamBot
         protected SteamID OtherSID;
         protected SteamID MySID;
 
+        public GenericInventory MyInventory;
+        public GenericInventory OtherInventory;
+
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
             MySID = bot.SteamUser.SteamID;
+            MyInventory = new GenericInventory(MySID);
+            OtherInventory = new GenericInventory(OtherSID);
         }
 
         /// <summary>
