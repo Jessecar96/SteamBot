@@ -42,33 +42,40 @@ namespace SteamTrade
             {
                 string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
                 string response = RetryWebRequest(inventoryUrl);
-                Regex reg = new Regex("var g_rgAppContextData = (.*?);");
+                Regex reg = new Regex("var g_rgAppContextData = (.*?);");                
                 Match m = reg.Match(response);
-                string json = m.Groups[1].Value;
-                try
+                if (m.Success)
                 {
-                    var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
-                    foreach (var app in schemaResult)
+                    string json = m.Groups[1].Value;
+                    try
                     {
-                        int appId = app.Key;
-                        InventoryTasks[appId] = new Dictionary<long, Task>();
-                        foreach (var context in app.Value.RgContexts)
+                        var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
+                        foreach (var app in schemaResult)
                         {
-                            long contextId = context.Key;
-                            InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
+                            int appId = app.Key;
+                            InventoryTasks[appId] = new Dictionary<long, Task>();
+                            foreach (var context in app.Value.RgContexts)
                             {
-                                var inventory = FetchInventory(appId, contextId, steamId);
-                                if (!inventories.ContainsKey(appId))
-                                    inventories[appId] = new Dictionary<long, Inventory>();
-                                if (inventory != null)
-                                    inventories[appId].Add(contextId, inventory);
-                            });
+                                long contextId = context.Key;
+                                InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
+                                {
+                                    var inventory = FetchInventory(appId, contextId, steamId);
+                                    if (!inventories.ContainsKey(appId))
+                                        inventories[appId] = new Dictionary<long, Inventory>();
+                                    if (inventory != null)
+                                        inventories[appId].Add(contextId, inventory);
+                                });
+                            }
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex);
+                    IsPrivate = true;
                 }
             });       
         }
@@ -191,7 +198,9 @@ namespace SteamTrade
             }
             return "";
         }
-       
+
+        public bool IsPrivate { get { return false; } private set; }
+
         public class GenericItem
         {
             public int AppId { get; private set; }
