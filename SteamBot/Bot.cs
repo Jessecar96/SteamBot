@@ -88,16 +88,6 @@ namespace SteamBot
         SteamUser.LogOnDetails logOnDetails;
 
         TradeManager tradeManager;
-        private Task<TF2Inventory> myInventoryTask;
-
-        public TF2Inventory MyInventory
-        {
-            get
-            {
-                myInventoryTask.Wait();
-                return myInventoryTask.Result;
-            }
-        }
 
         private BackgroundWorker backgroundWorker;
         public CookieContainer botCookies;
@@ -524,16 +514,6 @@ namespace SteamBot
                     SteamTrade.RespondToTrade(callback.TradeID, false);
                     return;
                 }
-
-                //if (tradeManager.OtherInventory.IsPrivate)
-                //{
-                //    SteamFriends.SendChatMessage(callback.OtherClient, 
-                //                                 EChatEntryType.ChatMsg,
-                //                                 "Trade declined. Your backpack cannot be private.");
-
-                //    SteamTrade.RespondToTrade (callback.TradeID, false);
-                //    return;
-                //}
 
                 if (CurrentTrade == null && GetUserHandler (callback.OtherClient).OnTradeRequest ())
                     SteamTrade.RespondToTrade (callback.TradeID, true);
