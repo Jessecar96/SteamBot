@@ -94,7 +94,7 @@ namespace SteamTrade
                     sessionId = cookie.Value;
                 }
             }
-            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", sessionId, steamId.ConvertToUInt64(), appId, contextId);
+            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", steamId.ConvertToUInt64(), sessionId, steamId.ConvertToUInt64(), appId, contextId);
             var inventory = FetchInventory(inventoryUrl, appId, contextId, steamId);
             if (!inventories.ContainsKey(appId))
                 inventories[appId] = new Dictionary<long, Inventory>();
@@ -164,7 +164,6 @@ namespace SteamTrade
         {
             try
             {
-                ConstructTask.Wait();
                 InventoryTasks[appId][contextId].Wait();
                 var inventory = inventories[appId];
                 Inventory.ItemInfo item = null;
