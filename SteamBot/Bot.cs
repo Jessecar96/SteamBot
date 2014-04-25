@@ -373,13 +373,6 @@ namespace SteamBot
                     }
                 }
 
-                if (Trade.CurrentSchema == null)
-                {
-                    log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = TF2Schema.FetchSchema (apiKey);
-                    log.Success ("Schema Downloaded!");
-                }
-
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.Online);
 

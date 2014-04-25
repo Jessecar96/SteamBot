@@ -11,10 +11,6 @@ namespace SteamTrade
 {
     public partial class Trade
     {
-        #region Static Public data
-        public static TF2Schema CurrentSchema = null;
-        #endregion
-
         private const int WEB_REQUEST_MAX_RETRIES = 3;
         private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 600;
 
