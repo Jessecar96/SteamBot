@@ -641,26 +641,6 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Gets the bot's inventory and stores it in MyInventory.
-        /// </summary>
-        /// <example> This sample shows how to find items in the bot's inventory from a user handler.
-        /// <code>
-        /// Bot.GetInventory(); // Get the inventory first
-        /// foreach (var item in Bot.MyInventory.Items)
-        /// {
-        ///     if (item.Defindex == 5021)
-        ///     {
-        ///         // Bot has a key in its inventory
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public void GetInventory()
-        {
-            myInventoryTask = Task.Factory.StartNew(() => TF2Inventory.FetchInventory(SteamUser.SteamID, apiKey));
-        }
-
-        /// <summary>
         /// Subscribes all listeners of this to the trade.
         /// </summary>
         public void SubscribeTrade (Trade trade, UserHandler handler)

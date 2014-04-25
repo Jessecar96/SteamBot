@@ -12,7 +12,13 @@ namespace SteamBot
         Dota2Inventory MyDota2Inventory;
         Dota2Inventory OtherDota2Inventory;
 
-        public SimpleUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
+        public SimpleUserHandler(Bot bot, SteamID sid) : base(bot, sid)
+        {
+            MyTF2Inventory = TF2Inventory.FetchInventory(MySID, bot.apiKey);
+            OtherTF2Inventory = TF2Inventory.FetchInventory(OtherSID, bot.apiKey);
+            MyDota2Inventory = Dota2Inventory.FetchInventory(MySID, bot.apiKey);
+            OtherDota2Inventory = Dota2Inventory.FetchInventory(OtherSID, bot.apiKey);
+        }
 
         public override bool OnGroupAdd()
         {
@@ -26,7 +32,11 @@ namespace SteamBot
 
         public override void OnLoginCompleted()
         {
+            // Planning on trading items from certain games?
+            // Create or remove schema instances as necessary.
+            Log.Info("Fetching TF2 schema...");
             new TF2Schema(Bot.apiKey);
+            Log.Info("Fetching Dota 2 schema...");
             new Dota2Schema(Bot.apiKey);
         }
 
@@ -69,11 +79,6 @@ namespace SteamBot
         public override void OnTradeInit()
         {
             Trade.SendMessage("Trade successfully initialized.");
-
-            MyTF2Inventory = TF2Inventory.FetchInventory(MySID, Bot.apiKey);
-            OtherTF2Inventory = TF2Inventory.FetchInventory(OtherSID, Bot.apiKey);
-            MyDota2Inventory = Dota2Inventory.FetchInventory(MySID, Bot.apiKey);
-            OtherDota2Inventory = Dota2Inventory.FetchInventory(OtherSID, Bot.apiKey);
         }
 
         public override void OnTradeAddItem(GenericInventory.Inventory.Item inventoryItem)
