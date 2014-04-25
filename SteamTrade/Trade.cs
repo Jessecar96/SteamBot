@@ -497,8 +497,10 @@ namespace SteamTrade
         {
             var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
             if (item == null)
+            {
                 OtherInventory.FetchForeignInventory(new SteamID(tradeEvent.steamid), tradeEvent.appid, tradeEvent.contextid);
-            item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+                item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+            }            
             OnUserAddItem(item);
         }
 
