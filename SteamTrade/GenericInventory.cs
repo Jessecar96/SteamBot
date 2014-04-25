@@ -70,11 +70,13 @@ namespace SteamTrade
                     }
                     catch (Exception ex)
                     {
+                        Success = false;
                         Console.WriteLine(ex);
                     }
                 }
                 else
                 {
+                    Success = false;
                     IsPrivate = true;
                 }
             });       
@@ -199,6 +201,7 @@ namespace SteamTrade
             return "";
         }
 
+        public bool Success { get { return true; } private set; }
         public bool IsPrivate { get { return false; } private set; }
 
         public class GenericItem
