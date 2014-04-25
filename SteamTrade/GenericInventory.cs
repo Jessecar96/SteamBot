@@ -473,7 +473,7 @@ namespace SteamTrade
                 public class App_Data
                 {
                     [JsonProperty("def_index")]
-                    public int Defindex { get; set; }
+                    public ushort Defindex { get; set; }
 
                     [JsonProperty("quality")]
                     public int Quality { get; set; }
