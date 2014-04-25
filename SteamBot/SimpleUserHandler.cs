@@ -35,6 +35,7 @@ namespace SteamBot
             // Planning on trading items from certain games?
             // Create or remove schema instances as necessary.
             Log.Info("Fetching TF2 schema...");
+            System.Console.WriteLine(Bot.apiKey);
             new TF2Schema(Bot.apiKey);
             Log.Info("Fetching Dota 2 schema...");
             new Dota2Schema(Bot.apiKey);

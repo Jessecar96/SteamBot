@@ -22,7 +22,14 @@ namespace SteamTrade
 
         public TF2Schema(string apiKey)
         {
-            Schema = FetchSchema(apiKey);
+            try
+            {
+                Schema = FetchSchema(apiKey);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         /// <summary>
