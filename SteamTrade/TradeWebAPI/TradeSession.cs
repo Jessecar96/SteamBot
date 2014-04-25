@@ -78,32 +78,6 @@ namespace SteamTrade.TradeWebAPI
             return JsonConvert.DeserializeObject<TradeStatus> (response);
         }
 
-
-        /// <summary>
-        /// Gets the foriegn inventory.
-        /// </summary>
-        /// <param name="otherId">The other id.</param>
-        /// <returns>A dynamic JSON object.</returns>
-
-        internal dynamic GetForiegnInventory(SteamID otherId)
-        {
-            return GetForiegnInventory(otherId, 440, 2);
-        }
-        internal dynamic GetForiegnInventory(SteamID otherId, long contextId, int appid)
-        {
-            try
-            {
-                string path = string.Format("foreigninventory/?sessionid={0}&steamid={1}&appid={2}&contextid={3}",
-                    sessionIdEsc, otherId.ConvertToUInt64(), appid, contextId);
-                string response = Fetch(baseTradeURL + path, "GET");
-                return JsonConvert.DeserializeObject(response);
-            }
-            catch (Exception)
-            {
-                return JsonConvert.DeserializeObject("{\"success\":\"false\"}");
-            }
-        }
-
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>

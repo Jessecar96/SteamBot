@@ -500,6 +500,9 @@ namespace SteamTrade
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
             var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+            if (item == null)
+                OtherInventory.FetchForeignInventory(new SteamID(tradeEvent.steamid), tradeEvent.appid, tradeEvent.contextid);
+            item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
             OnUserAddItem(item);
         }
 
@@ -511,7 +514,7 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);            
             OnUserRemoveItem(item);
         }
 

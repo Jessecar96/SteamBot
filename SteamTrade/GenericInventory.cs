@@ -40,8 +40,8 @@ namespace SteamTrade
         {
             ConstructTask = Task.Factory.StartNew(() =>
             {
-                string inventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-                string response = RetryWebRequest(inventoryUrl);
+                string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
+                string response = RetryWebRequest(baseInventoryUrl);
                 Regex reg = new Regex("var g_rgAppContextData = (.*?);");                
                 Match m = reg.Match(response);
                 if (m.Success)
@@ -59,7 +59,8 @@ namespace SteamTrade
                                 long contextId = context.Key;
                                 InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                                 {
-                                    var inventory = FetchInventory(appId, contextId, steamId);
+                                    string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+                                    var inventory = FetchInventory(inventoryUrl, appId, contextId, steamId);
                                     if (!inventories.ContainsKey(appId))
                                         inventories[appId] = new Dictionary<long, Inventory>();
                                     if (inventory != null)
@@ -82,6 +83,25 @@ namespace SteamTrade
             });       
         }
 
+        public void FetchForeignInventory(SteamID steamId, int appId, long contextId)
+        {
+            var cookies = Cookies.GetCookies(new Uri("http://steamcommunity.com"));
+            string sessionId = "";
+            foreach (Cookie cookie in cookies)
+            {
+                if (cookie.Name == "sessionid")
+                {
+                    sessionId = cookie.Value;
+                }
+            }
+            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", sessionId, steamId.ConvertToUInt64(), appId, contextId);
+            var inventory = FetchInventory(inventoryUrl, appId, contextId, steamId);
+            if (!inventories.ContainsKey(appId))
+                inventories[appId] = new Dictionary<long, Inventory>();
+            if (inventory != null)
+                inventories[appId].Add(contextId, inventory);
+        }
+
         public static void SetCookie(CookieContainer cookies)
         {
             Cookies = cookies;
@@ -98,9 +118,8 @@ namespace SteamTrade
             return Inventories[appId][contextId].RgDescriptions.Values.ToList();
         }
 
-        private Inventory FetchInventory(int appId, long contextId, SteamID steamId)
-        {
-            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+        private Inventory FetchInventory(string inventoryUrl, int appId, long contextId, SteamID steamId)
+        {            
             string response = RetryWebRequest(inventoryUrl);
             try
             {
@@ -201,8 +220,8 @@ namespace SteamTrade
             return "";
         }
 
-        public bool Success { get { return true; } private set; }
-        public bool IsPrivate { get { return false; } private set; }
+        public bool Success = true;
+        public bool IsPrivate = false;
 
         public class GenericItem
         {

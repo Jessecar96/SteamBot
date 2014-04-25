@@ -52,7 +52,6 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Exceptions\TradeException.cs" />
-    <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
     <Compile Include="Inventories\Dota2Inventory.cs" />
     <Compile Include="Inventories\TF2Inventory.cs" />
