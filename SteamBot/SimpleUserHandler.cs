@@ -35,10 +35,9 @@ namespace SteamBot
             // Planning on trading items from certain games?
             // Create or remove schema instances as necessary.
             Log.Info("Fetching TF2 schema...");
-            System.Console.WriteLine(Bot.apiKey);
-            new TF2Schema(Bot.apiKey);
+            TF2Schema.Schema = TF2Schema.FetchSchema(Bot.apiKey);
             Log.Info("Fetching Dota 2 schema...");
-            new Dota2Schema(Bot.apiKey);
+            Dota2Schema.Schema = Dota2Schema.FetchSchema(Bot.apiKey);
         }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
@@ -56,6 +55,7 @@ namespace SteamBot
 
         public override bool OnTradeRequest()
         {
+            System.Console.Clear();
             if (IsAdmin) return true;
             return false;
         }
@@ -78,7 +78,7 @@ namespace SteamBot
         }
 
         public override void OnTradeInit()
-        {
+        {            
             Trade.SendMessage("Trade successfully initialized.");
         }
 
@@ -89,8 +89,15 @@ namespace SteamBot
             {
                 case 440:
                 {
-                    var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
-                    var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);
+                    try
+                    {
+                        var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
+                        var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Console.WriteLine(ex);
+                    }                    
                     break;
                 }
                 case 570:

@@ -18,19 +18,7 @@ namespace SteamTrade
 
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
         private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_570/GetSchema/v0001/?key=";
-        private const string cachefile = "dota2_schema.cache";
-
-        public Dota2Schema(string apiKey)
-        {
-            try
-            {
-                Schema = FetchSchema(apiKey);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-        }
+        private const string cachefile = "schema_dota2.cache";
 
         /// <summary>
         /// Fetches the Dota 2 Item schema.
@@ -62,14 +50,9 @@ namespace SteamTrade
             }
 
             HttpWebResponse response = SteamWeb.Request(url, "GET");
-
             DateTime schemaLastModified = response.LastModified;
-
             string result = GetSchemaString(response, schemaLastModified);
-
             response.Close();
-
-            // were done here. let others read.
             mre.Set();
 
             SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
