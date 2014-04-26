@@ -57,6 +57,12 @@ namespace SteamTrade.TradeWebAPI
 
         public ulong assetid { get; set; }
 
+        public int oldamount { get; set; }
+
+        public int amount { get; set; }
+
+        public ulong currencyid { get; set; }
+
         /// <summary>
         /// Determins if the TradeEvent is equal to another.
         /// </summary>
@@ -67,7 +73,10 @@ namespace SteamTrade.TradeWebAPI
             return this.steamid == other.steamid && this.action == other.action
                    && this.timestamp == other.timestamp && this.appid == other.appid
                    && this.text == other.text && this.contextid == other.contextid
-                   && this.assetid == other.assetid;
+                   && this.assetid == other.assetid
+                   && this.oldamount == other.oldamount
+                   && this.amount == other.amount
+                   && this.currencyid == other.currencyid;
         }
     }
 
@@ -163,7 +172,7 @@ namespace SteamTrade.TradeWebAPI
         UserSetUnReady = 3,
         UserAccept = 4,
         //5 = ?? Maybe some sort of cancel?
-        //6 = ??
+        CurrencyItemAdded = 6,
         UserChat = 7 //message = "text"
     }
 }

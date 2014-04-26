@@ -68,6 +68,8 @@ namespace SteamTrade
         {
             TF2,
             Dota2,
+            CSGO,
+            SpiralKnights,
             SteamGifts,
             SteamCoupons,
             SteamCommunity,
@@ -83,6 +85,12 @@ namespace SteamTrade
                     break;
                 case InventoryTypes.Dota2:
                     AddInventoriesToFetch(570, 2);
+                    break;
+                case InventoryTypes.CSGO:
+                    AddInventoriesToFetch(730, 2);
+                    break;
+                case InventoryTypes.SpiralKnights:
+                    AddInventoriesToFetch(99900, 4298934795);
                     break;
                 case InventoryTypes.SteamGifts:
                     AddInventoriesToFetch(753, 1);
@@ -181,19 +189,27 @@ namespace SteamTrade
             }
         }
 
-        public Inventory.Item GetItem(int appId, long contextId, ulong id)
+        public Inventory.Item GetItem(int appId, long contextId, ulong id, bool isCurrency)
         {
             try
             {
                 var inventory = Inventories[appId];
-                Inventory.ItemInfo item = null;
-                if (inventory[contextId].RgInventory.ContainsKey(id.ToString()))
-                    item = inventory[contextId].RgInventory[id.ToString()];
-                Inventory.CurrencyItem currencyItem = null;
-                if (inventory[contextId].RgCurrencies.ContainsKey(id.ToString()))
-                    currencyItem = inventory[contextId].RgCurrencies[id.ToString()];
-                var key = string.Format("{0}_{1}", item == null ? currencyItem.ClassId : item.ClassId, item == null ? 0 : item.InstanceId);
-                return inventory[contextId].RgDescriptions[key];
+                if (isCurrency)
+                {
+                    Inventory.CurrencyItem currencyItem = null;
+                    if (inventory[contextId].RgCurrencies.ContainsKey(id.ToString()))
+                        currencyItem = inventory[contextId].RgCurrencies[id.ToString()];
+                    var key = string.Format("{0}_{1}", currencyItem.ClassId, 0);
+                    return inventory[contextId].RgDescriptions[key];
+                }
+                else
+                {
+                    Inventory.ItemInfo item = null;
+                    if (inventory[contextId].RgInventory.ContainsKey(id.ToString()))
+                        item = inventory[contextId].RgInventory[id.ToString()];
+                    var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
+                    return inventory[contextId].RgDescriptions[key];
+                }                
             }
             catch
             {

@@ -45,6 +45,7 @@ namespace SteamBot
             // Add which inventory types you'll be doing trades with.
             GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.TF2);
             GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.Dota2);
+            GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.SpiralKnights);
         }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
@@ -118,6 +119,15 @@ namespace SteamBot
                             else
                             {
                                 // Item is from private inventory. Use 'inventoryItem' properties to get the info you need instead.
+                            }
+                            break;
+                        }
+                    case 99900:
+                        {
+                            if (inventoryItem.IsCurrency)
+                            {
+                                // This is always the total amount added, not the amount just added
+                                int amountAdded = inventoryItem.Amount;
                             }
                             break;
                         }

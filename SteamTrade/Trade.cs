@@ -423,9 +423,15 @@ namespace SteamTrade
                 {
                     case TradeEventType.ItemAdded:
                         EnqueueAction(() => FireOnUserAddItem(tradeEvent));
-                        break;
+                        break;                    
                     case TradeEventType.ItemRemoved:
                         EnqueueAction(() => FireOnUserRemoveItem(tradeEvent));
+                        break;
+                    case TradeEventType.CurrencyItemAdded:
+                        if (tradeEvent.amount == 0)
+                            EnqueueAction(() => FireOnUserRemoveItem(tradeEvent));
+                        else
+                            EnqueueAction(() => FireOnUserAddItem(tradeEvent));
                         break;
                     case TradeEventType.UserSetReady:
                         EnqueueAction(() => OnUserSetReady(true));
@@ -495,7 +501,9 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
-            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+            bool isCurrency = tradeEvent.currencyid != 0;
+            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, isCurrency ? tradeEvent.currencyid : tradeEvent.assetid, isCurrency);
+            item.Amount = tradeEvent.amount;
             OnUserAddItem(item);
         }
 
@@ -507,7 +515,8 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);            
+            bool isCurrency = tradeEvent.currencyid != 0;
+            var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, isCurrency ? tradeEvent.currencyid : tradeEvent.assetid, isCurrency);
             OnUserRemoveItem(item);
         }
 
