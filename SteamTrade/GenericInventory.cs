@@ -135,7 +135,7 @@ namespace SteamTrade
                     inventoryItem.Id = item.Id;                    
                     inventoryItem.Amount = item.Amount;
                     inventoryItem.IsCurrency = false;
-                    inventoryItem.Position = item.Position;                    
+                    inventoryItem.Position = item.Position;
                 }
                 foreach (var element in inventory.RgCurrencies)
                 {
@@ -163,9 +163,8 @@ namespace SteamTrade
         public Inventory.Item GetItem(int appId, long contextId, ulong id)
         {
             try
-            {
-                InventoryTasks[appId][contextId].Wait();
-                var inventory = inventories[appId];
+            {                
+                var inventory = Inventories[appId];
                 Inventory.ItemInfo item = null;
                 if (inventory[contextId].RgInventory.ContainsKey(id.ToString()))
                     item = inventory[contextId].RgInventory[id.ToString()];
@@ -427,13 +426,13 @@ namespace SteamTrade
                 public string IconDragUrl { get; set; }
 
                 [JsonProperty("name")]
-                public string Name { get; set; }
+                public string DisplayName { get; set; }
 
                 [JsonProperty("market_hash_name")]
                 public string MarketHashName { get; set; }
 
                 [JsonProperty("market_name")]
-                public string MarketName { get; set; }
+                public string Name { get; set; }
 
                 [JsonProperty("name_color")]
                 public string NameColor { get; set; }

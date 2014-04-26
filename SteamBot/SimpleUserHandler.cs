@@ -36,8 +36,10 @@ namespace SteamBot
             // Create or remove schema instances as necessary.
             Log.Info("Fetching TF2 schema...");
             TF2Schema.Schema = TF2Schema.FetchSchema(Bot.apiKey);
+            Log.Info("Finished fetching TF2 schema!");
             Log.Info("Fetching Dota 2 schema...");
             Dota2Schema.Schema = Dota2Schema.FetchSchema(Bot.apiKey);
+            Log.Info("Finished fetching Dota 2 schema!");
         }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
@@ -88,14 +90,28 @@ namespace SteamBot
             {
                 case 440:
                 {
-                    var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
-                    var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);                   
+                    if (!OtherTF2Inventory.IsPrivate)
+                    {
+                        var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
+                        var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);                   
+                    }
+                    else
+                    {
+                        Log.Warn(inventoryItem.Name + " is from a private inventory; there is no way to get app-specific information about it.");
+                    }
                     break;
                 }
                 case 570:
                 {
-                    var item = OtherDota2Inventory.GetItem(inventoryItem.Id);
-                    var schemaItem = Dota2Schema.Schema.GetItem(item.Defindex);
+                    if (!OtherDota2Inventory.IsPrivate)
+                    {
+                        var item = OtherDota2Inventory.GetItem(inventoryItem.Id);
+                        var schemaItem = Dota2Schema.Schema.GetItem(item.Defindex);
+                    }
+                    else
+                    {
+                        Log.Warn(inventoryItem.Name + " is from a private inventory; there is no way to get app-specific information about it.");
+                    }
                     break;
                 }
             }
