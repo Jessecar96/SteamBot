@@ -12,7 +12,8 @@ namespace SteamBot
         Dota2Inventory MyDota2Inventory;
         Dota2Inventory OtherDota2Inventory;
 
-        public SimpleUserHandler(Bot bot, SteamID sid) : base(bot, sid)
+        public SimpleUserHandler(Bot bot, SteamID sid)
+            : base(bot, sid)
         {
             MyTF2Inventory = TF2Inventory.FetchInventory(MySID, bot.apiKey);
             OtherTF2Inventory = TF2Inventory.FetchInventory(OtherSID, bot.apiKey);
@@ -40,6 +41,10 @@ namespace SteamBot
             Log.Info("Fetching Dota 2 schema...");
             Dota2Schema.Schema = Dota2Schema.FetchSchema(Bot.apiKey);
             Log.Info("Finished fetching Dota 2 schema!");
+
+            // Add which inventory types you'll be doing trades with.
+            GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.TF2);
+            GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.Dota2);
         }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
@@ -79,47 +84,63 @@ namespace SteamBot
         }
 
         public override void OnTradeInit()
-        {            
+        {
             Trade.SendMessage("Trade successfully initialized.");
         }
 
         public override void OnTradeAddItem(GenericInventory.Inventory.Item inventoryItem)
         {
-            Log.Info(inventoryItem.Name + " was added.");
-            switch (inventoryItem.AppId)
+            try
             {
-                case 440:
+                Log.Info(inventoryItem.Name + " was added.");
+                switch (inventoryItem.AppId)
                 {
-                    if (!OtherTF2Inventory.IsPrivate)
-                    {
-                        var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
-                        var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);                   
-                    }
-                    else
-                    {
-                        Log.Warn(inventoryItem.Name + " is from a private inventory; there is no way to get app-specific information about it.");
-                    }
-                    break;
+                    case 440:
+                        {
+                            if (!OtherTF2Inventory.IsPrivate)
+                            {
+                                var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
+                                var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);
+                            }
+                            else
+                            {
+                                // Item is from private inventory. Use 'inventoryItem' properties to get the info you need instead.
+                            }
+                            break;
+                        }
+                    case 570:
+                        {
+                            if (!OtherDota2Inventory.IsPrivate)
+                            {
+                                var item = OtherDota2Inventory.GetItem(inventoryItem.Id);
+                                var schemaItem = Dota2Schema.Schema.GetItem(item.Defindex);
+                            }
+                            else
+                            {
+                                // Item is from private inventory. Use 'inventoryItem' properties to get the info you need instead.
+                            }
+                            break;
+                        }
                 }
-                case 570:
-                {
-                    if (!OtherDota2Inventory.IsPrivate)
-                    {
-                        var item = OtherDota2Inventory.GetItem(inventoryItem.Id);
-                        var schemaItem = Dota2Schema.Schema.GetItem(item.Defindex);
-                    }
-                    else
-                    {
-                        Log.Warn(inventoryItem.Name + " is from a private inventory; there is no way to get app-specific information about it.");
-                    }
-                    break;
-                }
+            }
+            catch
+            {
+                // User added an item from an app we are not interested in.
+                // You need to attempt to access a property of inventoryItem for this exception to be thrown
             }
         }
 
         public override void OnTradeRemoveItem(GenericInventory.Inventory.Item inventoryItem)
         {
-            Log.Info(inventoryItem.Name + " was removed.");
+            try
+            {
+                Log.Info(inventoryItem.Name + " was removed.");
+            }
+            catch
+            {
+                // User removed an item from an app we are not interested in
+                // You need to attempt to access a property of inventoryItem for this exception to be thrown
+            }
         }
 
         public override void OnTradeMessage(string message)

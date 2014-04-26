@@ -17,6 +17,7 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
+        private static List<KeyValuePair<int, long>> InventoriesToFetch = new List<KeyValuePair<int, long>>();
         private Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
         private Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
         private Task ConstructTask = null;
@@ -36,75 +37,89 @@ namespace SteamTrade
             }
         }
 
-        public GenericInventory(SteamID steamId)
+        public GenericInventory(SteamID steamId, bool inTrade = false)
         {
             ConstructTask = Task.Factory.StartNew(() =>
             {
-                string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-                string response = RetryWebRequest(baseInventoryUrl);
-                Regex reg = new Regex("var g_rgAppContextData = (.*?);");                
-                Match m = reg.Match(response);
-                if (m.Success)
+                foreach (var pair in InventoriesToFetch)
                 {
-                    string json = m.Groups[1].Value;
-                    try
+                    int appId = pair.Key;
+                    long contextId = pair.Value;
+                    if (!InventoryTasks.ContainsKey(appId))
+                        InventoryTasks[appId] = new Dictionary<long, Task>();
+                    InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                     {
-                        var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
-                        foreach (var app in schemaResult)
-                        {
-                            int appId = app.Key;
-                            InventoryTasks[appId] = new Dictionary<long, Task>();
-                            foreach (var contextId in app.Value.RgContexts.Keys)
-                            {
-                                InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
-                                {
-                                    var now = DateTime.Now;                                    
-                                    string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-                                    var inventory = FetchInventory(inventoryUrl, appId, contextId, steamId);
-                                    if (!inventories.ContainsKey(appId))
-                                        inventories[appId] = new Dictionary<long, Inventory>();
-                                    if (inventory != null && !inventories[appId].ContainsKey(contextId))
-                                        inventories[appId].Add(contextId, inventory);                                  
-                                });
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Success = false;
-                        Console.WriteLine(ex);
-                    }
-                }
-                else
-                {
-                    Success = false;
-                    IsPrivate = true;
+                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+                        Inventory inventory;
+                        if (inTrade)
+                            inventory = FetchForeignInventory(steamId, appId, contextId);
+                        else
+                            inventory = FetchInventory(inventoryUrl, steamId, appId, contextId);
+                        if (!inventories.ContainsKey(appId))
+                            inventories[appId] = new Dictionary<long, Inventory>();
+                        if (inventory != null && !inventories[appId].ContainsKey(contextId))
+                            inventories[appId].Add(contextId, inventory);
+                    });
                 }
             });
         }
 
-        public void FetchForeignInventory(SteamID steamId, int appId, long contextId)
+        public enum InventoryTypes
         {
-            var cookies = Cookies.GetCookies(new Uri("http://steamcommunity.com"));
-            string sessionId = "";
-            foreach (Cookie cookie in cookies)
+            TF2,
+            Dota2,
+            SteamGifts,
+            SteamCoupons,
+            SteamCommunity,
+            SteamItemRewards
+        };
+
+        public static void AddInventoriesToFetch(InventoryTypes type)
+        {
+            switch (type)
             {
-                if (cookie.Name == "sessionid")
-                {
-                    sessionId = cookie.Value;
-                }
+                case InventoryTypes.TF2:
+                    AddInventoriesToFetch(440, 2);
+                    break;
+                case InventoryTypes.Dota2:
+                    AddInventoriesToFetch(570, 2);
+                    break;
+                case InventoryTypes.SteamGifts:
+                    AddInventoriesToFetch(753, 1);
+                    break;
+                case InventoryTypes.SteamCoupons:
+                    AddInventoriesToFetch(753, 3);
+                    break;
+                case InventoryTypes.SteamCommunity:
+                    AddInventoriesToFetch(753, 6);
+                    break;
+                case InventoryTypes.SteamItemRewards:
+                    AddInventoriesToFetch(753, 7);
+                    break;
             }
-            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", steamId.ConvertToUInt64(), sessionId, steamId.ConvertToUInt64(), appId, contextId);
-            var inventory = FetchInventory(inventoryUrl, appId, contextId, steamId);
-            if (!inventories.ContainsKey(appId))
-                inventories[appId] = new Dictionary<long, Inventory>();
-            if (inventory != null)
-                inventories[appId].Add(contextId, inventory);
+        }
+
+        public static void AddInventoriesToFetch(int appId, long contextId)
+        {
+            InventoriesToFetch.Add(new KeyValuePair<int, long>(appId, contextId));
         }
 
         public static void SetCookie(CookieContainer cookies)
         {
             Cookies = cookies;
+        }
+
+        private string GetSessionId()
+        {
+            var cookies = Cookies.GetCookies(new Uri("http://steamcommunity.com"));
+            foreach (Cookie cookie in cookies)
+            {
+                if (cookie.Name == "sessionid")
+                {
+                    return cookie.Value;
+                }
+            }
+            return "";
         }
 
         /// <summary>
@@ -118,21 +133,27 @@ namespace SteamTrade
             return Inventories[appId][contextId].RgDescriptions.Values.ToList();
         }
 
-        private Inventory FetchInventory(string inventoryUrl, int appId, long contextId, SteamID steamId)
-        {            
+        private Inventory FetchForeignInventory(SteamID steamId, int appId, long contextId)
+        {
+            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", steamId.ConvertToUInt64(), GetSessionId(), steamId.ConvertToUInt64(), appId, contextId);
+            return FetchInventory(inventoryUrl, steamId, appId, contextId);
+        }
+
+        private Inventory FetchInventory(string inventoryUrl, SteamID steamId, int appId, long contextId)
+        {
             string response = RetryWebRequest(inventoryUrl);
             try
             {
                 var inventory = JsonConvert.DeserializeObject<Inventory>(response);
                 foreach (var element in inventory.RgInventory)
-                {                    
-                    var item = element.Value;                    
+                {
+                    var item = element.Value;
                     var classId = item.ClassId;
                     var instanceId = item.InstanceId;
                     var key = string.Format("{0}_{1}", classId, instanceId);
                     var inventoryItem = inventory.RgDescriptions[key];
                     inventoryItem.ContextId = contextId;
-                    inventoryItem.Id = item.Id;                    
+                    inventoryItem.Id = item.Id;
                     inventoryItem.Amount = item.Amount;
                     inventoryItem.IsCurrency = false;
                     inventoryItem.Position = item.Position;
@@ -163,7 +184,7 @@ namespace SteamTrade
         public Inventory.Item GetItem(int appId, long contextId, ulong id)
         {
             try
-            {                
+            {
                 var inventory = Inventories[appId];
                 Inventory.ItemInfo item = null;
                 if (inventory[contextId].RgInventory.ContainsKey(id.ToString()))
@@ -177,7 +198,7 @@ namespace SteamTrade
             catch
             {
                 return null;
-            }            
+            }
         }
 
         private void WaitAllTasks()
@@ -432,7 +453,16 @@ namespace SteamTrade
                 public string MarketHashName { get; set; }
 
                 [JsonProperty("market_name")]
-                public string Name { get; set; }
+                private string name { get; set; }
+                public string Name
+                {
+                    get
+                    {
+                        if (string.IsNullOrEmpty(name))
+                            return DisplayName;
+                        return name;
+                    }
+                }
 
                 [JsonProperty("name_color")]
                 public string NameColor { get; set; }
