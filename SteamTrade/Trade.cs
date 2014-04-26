@@ -198,41 +198,68 @@ namespace SteamTrade
             return RetryWebRequest(session.CancelTradeWebCmd);
         }
 
-        public bool AddItem(GenericInventory.Inventory.Item item)
+        /// <summary>
+        /// Add an item to the trade.
+        /// </summary>
+        /// <param name="item">The Inventory.Item instance.</param>
+        /// <param name="amount">An optional amount parameter. Use it if the item is a currency item.</param>
+        /// <returns>True/false if the action was successful or not.</returns>
+        public bool AddItem(GenericInventory.Inventory.Item item, int amount = 0)
         {
-            return AddItem(new TradeUserAssets() { assetid = item.Id, appid = item.AppId, contextid = item.ContextId, amount = item.Amount });
+            amount = item.Amount;
+            return AddItem(new TradeUserAssets() { assetid = item.Id, appid = item.AppId, contextid = item.ContextId, amount = amount, iscurrency = item.IsCurrency });
         }
-        public bool AddItem(ulong itemid, int appid, long contextid, int amount)
+        public bool AddItem(ulong itemid, int appid, long contextid, int amount, bool iscurrency)
         {
-            return AddItem(new TradeUserAssets() { assetid = itemid, appid = appid, contextid = contextid, amount = amount });
+            return AddItem(new TradeUserAssets() { assetid = itemid, appid = appid, contextid = contextid, amount = amount, iscurrency = iscurrency });
         }
         public bool AddItem(TradeUserAssets item)
         {
             var slot = NextTradeSlot();
-            bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid, item.amount));
+            
+            bool success = false;
+
+            if (item.iscurrency)
+                success = RetryWebRequest(() => session.AddCurrencyWebCmd(item.assetid, item.amount, item.appid, item.contextid));
+            else
+                success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid, item.amount));
 
             if (success)
-                steamMyOfferedItems[slot] = new GenericInventory.GenericItem(item.appid, item.contextid, item.assetid, item.amount);
+                steamMyOfferedItems[slot] = new GenericInventory.GenericItem(item.appid, item.contextid, item.assetid, item.amount, item.iscurrency);
 
             return success;
         }
 
+        /// <summary>
+        /// Remove an item from the trade.
+        /// </summary>
+        /// <param name="item">The Inventory.Item instance.</param>
+        /// <returns>True/false if the action was successful or not.</returns>
+        public bool RemoveItem(GenericInventory.Inventory.Item item)
+        {
+            int amount = item.IsCurrency ? 0 : item.Amount;
+            return RemoveItem(item.Id, item.AppId, item.ContextId, amount, item.IsCurrency);
+        }
         public bool RemoveItem(TradeUserAssets item)
         {
-            return RemoveItem(item.assetid, item.appid, item.contextid, item.amount);
+            return RemoveItem(item.assetid, item.appid, item.contextid, item.amount, item.iscurrency);
         }
-
         /// <summary>
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem(ulong itemid, int appid, long contextid, int amount)
+        public bool RemoveItem(ulong itemid, int appid, long contextid, int amount, bool iscurrency)
         {
-            int? slot = GetItemSlot(itemid, appid, contextid, amount);
+            int? slot = GetItemSlot(itemid, appid, contextid, amount, iscurrency);
             if (!slot.HasValue)
                 return false;
 
-            bool success = RetryWebRequest(() => session.RemoveItemWebCmd(itemid, slot.Value, appid, contextid, amount));
+            bool success;
+
+            if (iscurrency)
+                success = RetryWebRequest(() => session.AddCurrencyWebCmd(itemid, 0, appid, contextid));
+            else
+                success = RetryWebRequest(() => session.RemoveItemWebCmd(itemid, slot.Value, appid, contextid, amount));
 
             if (success)
                 steamMyOfferedItems.Remove(slot.Value);
@@ -250,7 +277,7 @@ namespace SteamTrade
 
             foreach (var item in steamMyOfferedItems.Values.ToList())
             {
-                bool wasRemoved = RemoveItem(item.ItemId, item.AppId, item.ContextId, item.Amount);
+                bool wasRemoved = RemoveItem(item.ItemId, item.AppId, item.ContextId, item.Amount, item.IsCurrency);
 
                 if (wasRemoved)
                     numRemoved++;
@@ -488,7 +515,7 @@ namespace SteamTrade
             dest.Clear();
             foreach (var asset in assetList)
             {
-                var genericItem = new GenericInventory.GenericItem(asset.appid, asset.contextid, asset.assetid, asset.amount);
+                var genericItem = new GenericInventory.GenericItem(asset.appid, asset.contextid, asset.assetid, asset.amount, asset.iscurrency);
                 dest.Add(genericItem);
             }
         }
@@ -554,9 +581,9 @@ namespace SteamTrade
             return slot;
         }
 
-        private int? GetItemSlot(ulong itemid, int appid, long contextid, int amount)
+        private int? GetItemSlot(ulong itemid, int appid, long contextid, int amount, bool iscurrency)
         {
-            var item = new GenericInventory.GenericItem(appid, contextid, itemid, amount);
+            var item = new GenericInventory.GenericItem(appid, contextid, itemid, amount, iscurrency);
             foreach (int slot in steamMyOfferedItems.Keys)
             {
                 if (steamMyOfferedItems[slot].Equals(item))

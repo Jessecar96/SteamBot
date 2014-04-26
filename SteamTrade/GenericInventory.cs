@@ -264,13 +264,15 @@ namespace SteamTrade
             public long ContextId { get; private set; }
             public ulong ItemId { get; private set; }
             public int Amount { get; private set; }
+            public bool IsCurrency { get; private set; }
 
-            public GenericItem(int appId, long contextId, ulong itemId, int amount)
+            public GenericItem(int appId, long contextId, ulong itemId, int amount, bool isCurrency)
             {
                 this.AppId = appId;
                 this.ContextId = contextId;
                 this.ItemId = itemId;
                 this.Amount = amount;
+                this.IsCurrency = isCurrency;
             }
         }
 

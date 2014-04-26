@@ -120,6 +120,22 @@ namespace SteamTrade.TradeWebAPI
             dynamic json = JsonConvert.DeserializeObject(result);
             return IsSuccess(json);
         }
+
+        internal bool AddCurrencyWebCmd(ulong currencyid, int amount, int appid, long contextid)
+        {
+            var data = new NameValueCollection();
+
+            data.Add("sessionid", sessionIdEsc);
+            data.Add("appid", "" + appid);
+            data.Add("contextid", "" + contextid);
+            data.Add("currencyid", "" + currencyid);
+            data.Add("amount", "" + amount);
+
+            string result = Fetch(baseTradeURL + "setcurrency", "POST", data);
+
+            dynamic json = JsonConvert.DeserializeObject(result);
+            return IsSuccess(json);
+        }
         
         /// <summary>
         /// Removes an item by its itemid.  Read AddItem about itemids.

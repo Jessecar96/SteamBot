@@ -112,9 +112,10 @@ namespace SteamTrade.TradeWebAPI
                 {
                     tradeUserAssetses.Add(new TradeUserAssets()
                     {
+                        iscurrency = asset.assetid == 0,
                         amount = asset.amount,
                         appid = asset.appid,
-                        assetid = asset.assetid,
+                        assetid = asset.assetid == 0 ? asset.currencyid : asset.assetid,
                         contextid = asset.contextid
                     });
                 }
@@ -137,9 +138,10 @@ namespace SteamTrade.TradeWebAPI
                     dynamic value = obj.Value;
                     tradeUserAssetses.Add(new TradeUserAssets()
                     {
+                        iscurrency = value.assetid == 0,
                         appid = value.appid,
                         amount = value.amount,
-                        assetid = value.assetid,
+                        assetid = value.assetid == 0 ? value.currencyid : value.assetid,
                         contextid = value.contextid
                     });
                 }
@@ -151,12 +153,13 @@ namespace SteamTrade.TradeWebAPI
 
     public class TradeUserAssets
     {
-        /// <summary>Iventory type</summary>
+        /// <summary>Inventory type</summary>
         public long contextid { get; set; }
         /// <summary>itemid</summary>
         public ulong assetid { get; set; }
         public int appid { get; set; }
         public int amount { get; set; }
+        public bool iscurrency { get; set; }
 
         public override string ToString()
         {

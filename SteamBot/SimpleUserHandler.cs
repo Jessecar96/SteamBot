@@ -93,7 +93,7 @@ namespace SteamBot
         {
             try
             {
-                Log.Info(inventoryItem.Name + " was added.");
+                Log.Info(inventoryItem.Name + " was added.");                
                 switch (inventoryItem.AppId)
                 {
                     case 440:
