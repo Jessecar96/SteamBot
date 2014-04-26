@@ -54,17 +54,17 @@ namespace SteamTrade
                         {
                             int appId = app.Key;
                             InventoryTasks[appId] = new Dictionary<long, Task>();
-                            foreach (var context in app.Value.RgContexts)
+                            foreach (var contextId in app.Value.RgContexts.Keys)
                             {
-                                long contextId = context.Key;
                                 InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                                 {
+                                    var now = DateTime.Now;                                    
                                     string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
                                     var inventory = FetchInventory(inventoryUrl, appId, contextId, steamId);
                                     if (!inventories.ContainsKey(appId))
                                         inventories[appId] = new Dictionary<long, Inventory>();
-                                    if (inventory != null)
-                                        inventories[appId].Add(contextId, inventory);
+                                    if (inventory != null && !inventories[appId].ContainsKey(contextId))
+                                        inventories[appId].Add(contextId, inventory);                                  
                                 });
                             }
                         }
@@ -80,7 +80,7 @@ namespace SteamTrade
                     Success = false;
                     IsPrivate = true;
                 }
-            });       
+            });
         }
 
         public void FetchForeignInventory(SteamID steamId, int appId, long contextId)
@@ -124,9 +124,9 @@ namespace SteamTrade
             try
             {
                 var inventory = JsonConvert.DeserializeObject<Inventory>(response);
-                foreach (var dictItem in inventory.RgInventory)
-                {
-                    var item = dictItem.Value;
+                foreach (var element in inventory.RgInventory)
+                {                    
+                    var item = element.Value;                    
                     var classId = item.ClassId;
                     var instanceId = item.InstanceId;
                     var key = string.Format("{0}_{1}", classId, instanceId);
@@ -135,11 +135,11 @@ namespace SteamTrade
                     inventoryItem.Id = item.Id;                    
                     inventoryItem.Amount = item.Amount;
                     inventoryItem.IsCurrency = false;
-                    inventoryItem.Position = item.Position;
+                    inventoryItem.Position = item.Position;                    
                 }
-                foreach (var dictItem in inventory.RgCurrencies)
+                foreach (var element in inventory.RgCurrencies)
                 {
-                    var item = dictItem.Value;
+                    var item = element.Value;
                     var classId = item.ClassId;
                     var instanceId = 0;
                     var key = string.Format("{0}_{1}", classId, instanceId);
@@ -154,7 +154,7 @@ namespace SteamTrade
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to deserialize {0}:{1}.", appId, contextId);
+                Console.WriteLine("Failed to deserialize {0}.", inventoryUrl);
                 Console.WriteLine(ex);
                 return null;
             }
@@ -283,7 +283,8 @@ namespace SteamTrade
             public bool Success { get; set; }
 
             [JsonProperty("rgInventory")]
-            private dynamic rgInventory { get; set; }
+            private dynamic _rgInventory { get; set; }
+            private Dictionary<string, ItemInfo> rgInventory { get; set; }
             public Dictionary<string, ItemInfo> RgInventory
             {
                 // for some games rgInventory will be an empty array instead of a dictionary (e.g. [])
@@ -292,8 +293,9 @@ namespace SteamTrade
                 {
                     try
                     {
-                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, ItemInfo>>(Convert.ToString(rgInventory));
-                        return dictionary;
+                        if (rgInventory == null)
+                            rgInventory = JsonConvert.DeserializeObject<Dictionary<string, ItemInfo>>(Convert.ToString(_rgInventory));
+                        return rgInventory;
                     }
                     catch
                     {
@@ -307,7 +309,8 @@ namespace SteamTrade
             }
 
             [JsonProperty("rgCurrency")]
-            private dynamic rgCurrency { get; set; }
+            private dynamic _rgCurrency { get; set; }
+            private Dictionary<string, CurrencyItem> rgCurrencies { get; set; }
             public Dictionary<string, CurrencyItem> RgCurrencies
             {
                 // for some games rgCurrency will be an empty array instead of a dictionary (e.g. [])
@@ -316,8 +319,9 @@ namespace SteamTrade
                 {
                     try
                     {
-                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, CurrencyItem>>(Convert.ToString(rgCurrency));
-                        return dictionary;
+                        if (rgCurrencies == null)
+                            rgCurrencies = JsonConvert.DeserializeObject<Dictionary<string, CurrencyItem>>(Convert.ToString(_rgCurrency));
+                        return rgCurrencies;
                     }
                     catch
                     {
@@ -326,20 +330,22 @@ namespace SteamTrade
                 }
                 set
                 {
-                    rgCurrency = value;
+                    rgCurrencies = value;
                 }
             }
 
             [JsonProperty("rgDescriptions")]
-            private dynamic rgDescriptions { get; set; }
+            private dynamic _rgDescriptions { get; set; }
+            private Dictionary<string, Item> rgDescriptions { get; set; }
             public Dictionary<string, Item> RgDescriptions
             {
                 get
                 {
                     try
                     {
-                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, Item>>(Convert.ToString(rgDescriptions));
-                        return dictionary;
+                        if (rgDescriptions == null)
+                            rgDescriptions = JsonConvert.DeserializeObject<Dictionary<string, Item>>(Convert.ToString(_rgDescriptions));
+                        return rgDescriptions;
                     }
                     catch
                     {

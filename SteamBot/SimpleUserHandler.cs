@@ -55,7 +55,6 @@ namespace SteamBot
 
         public override bool OnTradeRequest()
         {
-            System.Console.Clear();
             if (IsAdmin) return true;
             return false;
         }
@@ -89,15 +88,8 @@ namespace SteamBot
             {
                 case 440:
                 {
-                    try
-                    {
-                        var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
-                        var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);
-                    }
-                    catch (System.Exception ex)
-                    {
-                        System.Console.WriteLine(ex);
-                    }                    
+                    var item = OtherTF2Inventory.GetItem(inventoryItem.Id);
+                    var schemaItem = TF2Schema.Schema.GetItem(item.Defindex);                   
                     break;
                 }
                 case 570:

@@ -22,8 +22,11 @@ namespace SteamBot
             Bot = bot;
             OtherSID = sid;
             MySID = bot.SteamUser.SteamID;
-            MyInventory = new GenericInventory(MySID);
-            OtherInventory = new GenericInventory(OtherSID);
+            if (MySID != OtherSID)
+            {
+                MyInventory = new GenericInventory(MySID);
+                OtherInventory = new GenericInventory(OtherSID);
+            }            
         }
 
         /// <summary>

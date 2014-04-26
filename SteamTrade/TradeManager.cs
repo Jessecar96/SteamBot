@@ -190,7 +190,7 @@ namespace SteamTrade
         /// be done sometime before calling <see cref="CreateTrade"/>.
         /// </remarks>
         public void InitializeTrade (SteamID me, SteamID other)
-        {
+        {            
             // fetch other player's inventory from the Steam API.
             otherInventory = new GenericInventory(other);
             
