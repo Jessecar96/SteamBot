@@ -41,26 +41,69 @@ namespace SteamTrade
         {
             ConstructTask = Task.Factory.StartNew(() =>
             {
-                foreach (var pair in InventoriesToFetch)
+                if (inTrade)
                 {
-                    int appId = pair.Key;
-                    long contextId = pair.Value;
-                    if (!InventoryTasks.ContainsKey(appId))
-                        InventoryTasks[appId] = new Dictionary<long, Task>();
-                    InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
+                    foreach (var pair in InventoriesToFetch)
                     {
-                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-                        Inventory inventory;
-                        if (inTrade)
-                            inventory = FetchForeignInventory(steamId, appId, contextId);
-                        else
-                            inventory = FetchInventory(inventoryUrl, steamId, appId, contextId);
-                        if (!inventories.ContainsKey(appId))
-                            inventories[appId] = new Dictionary<long, Inventory>();
-                        if (inventory != null && !inventories[appId].ContainsKey(contextId))
-                            inventories[appId].Add(contextId, inventory);
-                    });
+                        int appId = pair.Key;
+                        long contextId = pair.Value;
+                        if (contextId == 0) continue;
+                        if (!InventoryTasks.ContainsKey(appId))
+                            InventoryTasks[appId] = new Dictionary<long, Task>();
+                        InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
+                        {
+                            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+                            Inventory inventory = FetchForeignInventory(steamId, appId, contextId);
+                            if (!inventories.ContainsKey(appId))
+                                inventories[appId] = new Dictionary<long, Inventory>();
+                            if (inventory != null && !inventories[appId].ContainsKey(contextId))
+                                inventories[appId].Add(contextId, inventory);
+                        });
+                    }
                 }
+                else
+                {
+                    string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
+                    string response = RetryWebRequest(baseInventoryUrl);
+                    Regex reg = new Regex("var g_rgAppContextData = (.*?);");
+                    Match m = reg.Match(response);
+                    if (m.Success)
+                    {                        
+                        try
+                        {
+                            string json = m.Groups[1].Value;
+                            var schemaResult = JsonConvert.DeserializeObject<Dictionary<int, InventoryApps>>(json);
+                            foreach (var app in schemaResult)
+                            {
+                                int appId = app.Key;
+                                if (!ShouldFetchInventory(appId)) continue;
+                                InventoryTasks[appId] = new Dictionary<long, Task>();
+                                foreach (var contextId in app.Value.RgContexts.Keys)
+                                {
+                                    InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
+                                    {
+                                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+                                        var inventory = FetchInventory(inventoryUrl, steamId, appId, contextId);
+                                        if (!inventories.ContainsKey(appId))
+                                            inventories[appId] = new Dictionary<long, Inventory>();
+                                        if (inventory != null && !inventories[appId].ContainsKey(contextId))
+                                            inventories[appId].Add(contextId, inventory);
+                                    });
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Success = false;
+                            Console.WriteLine(ex);
+                        }
+                    }
+                    else
+                    {
+                        Success = false;
+                        IsPrivate = true;
+                    }
+                }                                
             });
         }
 
@@ -68,13 +111,23 @@ namespace SteamTrade
         {
             TF2,
             Dota2,
-            CSGO,
+            Portal2,
+            CSGO,            
             SpiralKnights,
             SteamGifts,
             SteamCoupons,
             SteamCommunity,
             SteamItemRewards
         };
+
+        public static bool ShouldFetchInventory(int appId)
+        {
+            foreach (var inventory in InventoriesToFetch)
+            {
+                if (inventory.Key == appId) return true;
+            }
+            return false;
+        }
 
         public static void AddInventoriesToFetch(InventoryTypes type)
         {
@@ -86,11 +139,14 @@ namespace SteamTrade
                 case InventoryTypes.Dota2:
                     AddInventoriesToFetch(570, 2);
                     break;
+                case InventoryTypes.Portal2:
+                    AddInventoriesToFetch(620, 2);
+                    break;
                 case InventoryTypes.CSGO:
                     AddInventoriesToFetch(730, 2);
                     break;
                 case InventoryTypes.SpiralKnights:
-                    AddInventoriesToFetch(99900, 4298934795);
+                    AddInventoriesToFetch(99900, 0);
                     break;
                 case InventoryTypes.SteamGifts:
                     AddInventoriesToFetch(753, 1);
@@ -139,6 +195,15 @@ namespace SteamTrade
         public List<GenericInventory.Inventory.Item> GetInventory(int appId, int contextId)
         {
             return Inventories[appId][contextId].RgDescriptions.Values.ToList();
+        }
+
+        public void AddForeignInventory(SteamID steamId, int appId, long contextId)
+        {
+            Inventory inventory = FetchForeignInventory(steamId, appId, contextId);
+            if (!inventories.ContainsKey(appId))
+                inventories[appId] = new Dictionary<long, Inventory>();
+            if (inventory != null && !inventories[appId].ContainsKey(contextId))
+                inventories[appId].Add(contextId, inventory);
         }
 
         private Inventory FetchForeignInventory(SteamID steamId, int appId, long contextId)
