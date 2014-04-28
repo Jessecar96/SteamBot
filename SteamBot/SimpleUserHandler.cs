@@ -35,6 +35,7 @@ namespace SteamBot
         public override void OnMessage (string message, EChatEntryType type) 
         {
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
+            //TODO: Create awesome chat interaction! Use if statements for this.
         }
 
         public override bool OnTradeRequest() 
