@@ -63,6 +63,25 @@ namespace SteamBot
         }
 
         /// <summary>
+        /// Wrapper for GenericInventory's AddInventoriesToFetch function.
+        /// </summary>
+        /// <param name="type">Type of inventory to fetch</param>
+        public virtual void AddInventoriesToFetch(GenericInventory.InventoryTypes type)
+        {
+            GenericInventory.AddInventoriesToFetch(type, MySID);
+        }
+
+        /// <summary>
+        /// Second wrapper for GenericInventory's AddInventoryToFetch function.
+        /// </summary>
+        /// <param name="appId">App ID of game</param>
+        /// <param name="contextId">Context ID</param>
+        public virtual void AddInventoriesToFetch(int appId, long contextId)
+        {
+            GenericInventory.AddInventoriesToFetch(appId, contextId, MySID);
+        }
+
+        /// <summary>
         /// Called when the bot is invited to a Steam group
         /// </summary>
         /// <returns>

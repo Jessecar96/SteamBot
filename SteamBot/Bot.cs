@@ -382,7 +382,7 @@ namespace SteamBot
 
                 botCookies = new CookieContainer();
                 botCookies.SetCookies(new Uri("http://steamcommunity.com"), string.Format("steamLogin={0}; sessionid={1}", token, sessionId));
-                GenericInventory.SetCookie(botCookies);
+                GenericInventory.SetCookie(botCookies, SteamUser.SteamID);
 
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });

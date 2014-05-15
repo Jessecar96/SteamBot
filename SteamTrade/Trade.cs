@@ -531,8 +531,8 @@ namespace SteamTrade
             bool isCurrency = tradeEvent.currencyid != 0;
             var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, isCurrency ? tradeEvent.currencyid : tradeEvent.assetid, isCurrency);
             if (item == null)
-            {
-                if (GenericInventory.ShouldFetchInventory(tradeEvent.appid))
+            {                
+                if (GenericInventory.ShouldFetchInventory(tradeEvent.appid, MySteamId))
                 {
                     OtherInventory.AddForeignInventory(new SteamID(Convert.ToUInt64(tradeEvent.steamid)), tradeEvent.appid, tradeEvent.contextid);
                     item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, isCurrency ? tradeEvent.currencyid : tradeEvent.assetid, isCurrency);

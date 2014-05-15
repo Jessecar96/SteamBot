@@ -43,9 +43,9 @@ namespace SteamBot
             Log.Info("Finished fetching Dota 2 schema!");
 
             // Add which inventory types you'll be doing trades with.
-            GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.TF2);
-            GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.Dota2);
-            GenericInventory.AddInventoriesToFetch(GenericInventory.InventoryTypes.SpiralKnights);
+            AddInventoriesToFetch(GenericInventory.InventoryTypes.TF2);
+            AddInventoriesToFetch(GenericInventory.InventoryTypes.Dota2);
+            AddInventoriesToFetch(GenericInventory.InventoryTypes.SpiralKnights);
         }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)

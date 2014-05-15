@@ -17,13 +17,14 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
-        private static List<KeyValuePair<int, long>> InventoriesToFetch = new List<KeyValuePair<int, long>>();
+        private static Dictionary<ulong, List<KeyValuePair<int, long>>> InventoriesToFetch = new Dictionary<ulong, List<KeyValuePair<int, long>>>();
+        private static Dictionary<ulong, CookieContainer> Cookies = new Dictionary<ulong, CookieContainer>();
         private Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
-        private Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
-        private Task ConstructTask = null;
-        private static CookieContainer Cookies = null;
+        private Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();        
+        private Task ConstructTask = null;        
         private const int WEB_REQUEST_MAX_RETRIES = 3;
         private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 1000;
+        private SteamID BotId = null;
 
         /// <summary>
         /// Gets the content of all inventories listed in http://steamcommunity.com/profiles/STEAM_ID/inventory/
@@ -37,13 +38,14 @@ namespace SteamTrade
             }
         }
 
-        public GenericInventory(SteamID steamId, bool inTrade = false)
+        public GenericInventory(SteamID botId, bool inTrade = false)
         {
             ConstructTask = Task.Factory.StartNew(() =>
             {
+                BotId = botId;
                 if (inTrade)
                 {
-                    foreach (var pair in InventoriesToFetch)
+                    foreach (var pair in InventoriesToFetch[botId])
                     {
                         int appId = pair.Key;
                         long contextId = pair.Value;
@@ -52,8 +54,8 @@ namespace SteamTrade
                             InventoryTasks[appId] = new Dictionary<long, Task>();
                         InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                         {
-                            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-                            Inventory inventory = FetchForeignInventory(steamId, appId, contextId);
+                            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", botId.ConvertToUInt64(), appId, contextId);
+                            Inventory inventory = FetchForeignInventory(botId, appId, contextId);
                             if (!inventories.ContainsKey(appId))
                                 inventories[appId] = new Dictionary<long, Inventory>();
                             if (inventory != null && !inventories[appId].ContainsKey(contextId))
@@ -63,7 +65,7 @@ namespace SteamTrade
                 }
                 else
                 {
-                    string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
+                    string baseInventoryUrl = "http://steamcommunity.com/profiles/" + botId.ConvertToUInt64() + "/inventory/";
                     string response = RetryWebRequest(baseInventoryUrl);
                     Regex reg = new Regex("var g_rgAppContextData = (.*?);");
                     Match m = reg.Match(response);
@@ -76,14 +78,14 @@ namespace SteamTrade
                             foreach (var app in schemaResult)
                             {
                                 int appId = app.Key;
-                                if (!ShouldFetchInventory(appId)) continue;
+                                if (!ShouldFetchInventory(appId, botId)) continue;
                                 InventoryTasks[appId] = new Dictionary<long, Task>();
                                 foreach (var contextId in app.Value.RgContexts.Keys)
                                 {
                                     InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                                     {
-                                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-                                        var inventory = FetchInventory(inventoryUrl, steamId, appId, contextId);
+                                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", botId.ConvertToUInt64(), appId, contextId);
+                                        var inventory = FetchInventory(inventoryUrl, botId, appId, contextId);
                                         if (!inventories.ContainsKey(appId))
                                             inventories[appId] = new Dictionary<long, Inventory>();
                                         if (inventory != null && !inventories[appId].ContainsKey(contextId))
@@ -120,62 +122,62 @@ namespace SteamTrade
             SteamItemRewards
         };
 
-        public static bool ShouldFetchInventory(int appId)
+        public static bool ShouldFetchInventory(int appId, ulong botId)
         {
-            foreach (var inventory in InventoriesToFetch)
+            foreach (var inventory in InventoriesToFetch[botId])
             {
                 if (inventory.Key == appId) return true;
             }
             return false;
         }
 
-        public static void AddInventoriesToFetch(InventoryTypes type)
+        public static void AddInventoriesToFetch(InventoryTypes type, SteamID botId)
         {
             switch (type)
             {
                 case InventoryTypes.TF2:
-                    AddInventoriesToFetch(440, 2);
+                    AddInventoriesToFetch(440, 2, botId);
                     break;
                 case InventoryTypes.Dota2:
-                    AddInventoriesToFetch(570, 2);
+                    AddInventoriesToFetch(570, 2, botId);
                     break;
                 case InventoryTypes.Portal2:
-                    AddInventoriesToFetch(620, 2);
+                    AddInventoriesToFetch(620, 2, botId);
                     break;
                 case InventoryTypes.CSGO:
-                    AddInventoriesToFetch(730, 2);
+                    AddInventoriesToFetch(730, 2, botId);
                     break;
                 case InventoryTypes.SpiralKnights:
-                    AddInventoriesToFetch(99900, 0);
+                    AddInventoriesToFetch(99900, 0, botId);
                     break;
                 case InventoryTypes.SteamGifts:
-                    AddInventoriesToFetch(753, 1);
+                    AddInventoriesToFetch(753, 1, botId);
                     break;
                 case InventoryTypes.SteamCoupons:
-                    AddInventoriesToFetch(753, 3);
+                    AddInventoriesToFetch(753, 3, botId);
                     break;
                 case InventoryTypes.SteamCommunity:
-                    AddInventoriesToFetch(753, 6);
+                    AddInventoriesToFetch(753, 6, botId);
                     break;
                 case InventoryTypes.SteamItemRewards:
-                    AddInventoriesToFetch(753, 7);
+                    AddInventoriesToFetch(753, 7, botId);
                     break;
             }
         }
 
-        public static void AddInventoriesToFetch(int appId, long contextId)
+        public static void AddInventoriesToFetch(int appId, long contextId, ulong botId)
         {
-            InventoriesToFetch.Add(new KeyValuePair<int, long>(appId, contextId));
+            InventoriesToFetch[botId].Add(new KeyValuePair<int, long>(appId, contextId));
         }
 
-        public static void SetCookie(CookieContainer cookies)
+        public static void SetCookie(CookieContainer cookies, ulong botId)
         {
-            Cookies = cookies;
+            Cookies[botId] = cookies;
         }
 
         private string GetSessionId()
         {
-            var cookies = Cookies.GetCookies(new Uri("http://steamcommunity.com"));
+            var cookies = Cookies[BotId].GetCookies(new Uri("http://steamcommunity.com"));
             foreach (Cookie cookie in cookies)
             {
                 if (cookie.Name == "sessionid")
@@ -305,7 +307,7 @@ namespace SteamTrade
             {
                 try
                 {
-                    return SteamWeb.Fetch(url, "GET", null, Cookies);
+                    return SteamWeb.Fetch(url, "GET", null, Cookies[BotId]);
                 }
                 catch (Exception ex)
                 {
