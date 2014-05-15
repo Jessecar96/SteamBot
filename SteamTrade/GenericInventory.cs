@@ -167,6 +167,8 @@ namespace SteamTrade
 
         public static void AddInventoriesToFetch(int appId, long contextId, ulong botId)
         {
+            if (!InventoriesToFetch.ContainsKey(botId))
+                InventoriesToFetch[botId] = new List<KeyValuePair<int, long>>();
             InventoriesToFetch[botId].Add(new KeyValuePair<int, long>(appId, contextId));
         }
 
