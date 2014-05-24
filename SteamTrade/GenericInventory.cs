@@ -24,7 +24,7 @@ namespace SteamTrade
         private Task ConstructTask = null;        
         private const int WEB_REQUEST_MAX_RETRIES = 3;
         private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 1000;
-        private SteamID BotId = null;
+        private static SteamID BotId = null;
 
         /// <summary>
         /// Gets the content of all inventories listed in http://steamcommunity.com/profiles/STEAM_ID/inventory/
@@ -38,14 +38,14 @@ namespace SteamTrade
             }
         }
 
-        public GenericInventory(SteamID botId, bool inTrade = false)
+        public GenericInventory(SteamID steamId, bool inTrade = false, bool isBot = false)
         {
             ConstructTask = Task.Factory.StartNew(() =>
             {
-                BotId = botId;
+                if (isBot) BotId = steamId;
                 if (inTrade)
                 {
-                    foreach (var pair in InventoriesToFetch[botId])
+                    foreach (var pair in InventoriesToFetch[BotId])
                     {
                         int appId = pair.Key;
                         long contextId = pair.Value;
@@ -54,8 +54,8 @@ namespace SteamTrade
                             InventoryTasks[appId] = new Dictionary<long, Task>();
                         InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                         {
-                            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", botId.ConvertToUInt64(), appId, contextId);
-                            Inventory inventory = FetchForeignInventory(botId, appId, contextId);
+                            string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+                            Inventory inventory = FetchForeignInventory(steamId, appId, contextId);
                             if (!inventories.ContainsKey(appId))
                                 inventories[appId] = new Dictionary<long, Inventory>();
                             if (inventory != null && !inventories[appId].ContainsKey(contextId))
@@ -65,7 +65,7 @@ namespace SteamTrade
                 }
                 else
                 {
-                    string baseInventoryUrl = "http://steamcommunity.com/profiles/" + botId.ConvertToUInt64() + "/inventory/";
+                    string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
                     string response = RetryWebRequest(baseInventoryUrl);
                     Regex reg = new Regex("var g_rgAppContextData = (.*?);");
                     Match m = reg.Match(response);
@@ -78,14 +78,14 @@ namespace SteamTrade
                             foreach (var app in schemaResult)
                             {
                                 int appId = app.Key;
-                                if (!ShouldFetchInventory(appId, botId)) continue;
+                                if (!ShouldFetchInventory(appId, BotId)) continue;
                                 InventoryTasks[appId] = new Dictionary<long, Task>();
                                 foreach (var contextId in app.Value.RgContexts.Keys)
                                 {
                                     InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                                     {
-                                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", botId.ConvertToUInt64(), appId, contextId);
-                                        var inventory = FetchInventory(inventoryUrl, botId, appId, contextId);
+                                        string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
+                                        var inventory = FetchInventory(inventoryUrl, steamId, appId, contextId);
                                         if (!inventories.ContainsKey(appId))
                                             inventories[appId] = new Dictionary<long, Inventory>();
                                         if (inventory != null && !inventories[appId].ContainsKey(contextId))

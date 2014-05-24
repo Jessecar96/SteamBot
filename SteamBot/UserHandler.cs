@@ -22,7 +22,7 @@ namespace SteamBot
             Bot = bot;
             OtherSID = sid;
             MySID = bot.SteamUser.SteamID;
-            if (MySID != OtherSID)
+            if (MySID != OtherSID && bot.IsLoggedIn)
             {
                 MyInventory = new GenericInventory(MySID);
                 OtherInventory = new GenericInventory(OtherSID);
