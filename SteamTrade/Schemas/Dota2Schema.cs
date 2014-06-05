@@ -12,21 +12,23 @@ namespace SteamTrade
     /// This class represents the TF2 Item schema as deserialized from its
     /// JSON representation.
     /// </summary>
-    public class Schema
+    public class Dota2Schema
     {
+        public static Dota2Schema Schema;
+
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
-        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
-        private const string cachefile = "tf_schema.cache";
+        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_570/GetSchema/v0001/?key=";
+        private const string cachefile = "schema_dota2.cache";
 
         /// <summary>
-        /// Fetches the Tf2 Item schema.
+        /// Fetches the Dota 2 Item schema.
         /// </summary>
         /// <param name="apiKey">The API key.</param>
         /// <returns>A  deserialized instance of the Item Schema.</returns>
         /// <remarks>
         /// The schema will be cached for future use if it is updated.
         /// </remarks>
-        public static Schema FetchSchema (string apiKey)
+        public static Dota2Schema FetchSchema (string apiKey)
         {   
             var url = SchemaApiUrlBase + apiKey;
 
@@ -48,14 +50,9 @@ namespace SteamTrade
             }
 
             HttpWebResponse response = SteamWeb.Request(url, "GET");
-
             DateTime schemaLastModified = response.LastModified;
-
             string result = GetSchemaString(response, schemaLastModified);
-
             response.Close();
-
-            // were done here. let others read.
             mre.Set();
 
             SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
@@ -112,16 +109,6 @@ namespace SteamTrade
             return null;
         }
 
-        /// <summary>
-        /// Returns all Items of the given crafting material.
-        /// </summary>
-        /// <param name="material">Item's craft_material_type JSON property.</param>
-        /// <seealso cref="Item"/>
-        public List<Item> GetItemsByCraftingMaterial(string material)
-        {
-            return Items.Where(item => item.CraftMaterialType == material).ToList();
-        }
-
         public List<Item> GetItems()
         {
             return Items.ToList();
@@ -153,27 +140,88 @@ namespace SteamTrade
             [JsonProperty("item_name")]
             public string ItemName { get; set; }
 
-            [JsonProperty("craft_material_type")]
-            public string CraftMaterialType { get; set; }
+            [JsonProperty("item_description")]
+            public string ItemDescription { get; set; }
 
-            [JsonProperty("used_by_classes")]
-            public string[] UsableByClasses { get; set; }
-
-            [JsonProperty("item_slot")]
-            public string ItemSlot { get; set; }
-
-            [JsonProperty("craft_class")]
-            public string CraftClass { get; set; }
+            [JsonProperty("proper_name")]
+            public bool IsProperName { get; set; }
 
             [JsonProperty("item_quality")]
             public int ItemQuality { get; set; }
+
+            [JsonProperty("item_set")]
+            private string itemSet { get; set; }
+            public string ItemSet
+            {
+                get
+                {
+                    return string.IsNullOrEmpty(itemSet) ? "" : itemSet;
+                }
+            }
+
+            [JsonProperty("capabilities")]
+            public Capabilities Capabilities { get; set; }
+        }
+
+        public class Capabilities
+        {
+            [JsonProperty("nameable")]
+            private bool isNameable { get; set; }
+            public bool IsNameable
+            {
+                get
+                {
+                    try
+                    {
+                        return isNameable;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            [JsonProperty("can_craft_mark")]
+            public bool IsCraftable { get; set; }
+
+            [JsonProperty("can_be_restored")]
+            public bool IsRestorable { get; set; }
+
+            [JsonProperty("strange_parts")]
+            public bool HasStrangeParts { get; set; }
+
+            [JsonProperty("paintable_unusual")]
+            public bool IsPaintableUnusual { get; set; }
+
+            [JsonProperty("autograph")]
+            public bool IsAutographable { get; set; }
+
+            [JsonProperty("can_consume")]
+            public bool IsConsumable { get; set; }
+
+            [JsonProperty("can_have_sockets")]
+            private bool isSocketable { get; set; }
+            public bool IsSocketable
+            {
+                get
+                {
+                    try
+                    {
+                        return isSocketable;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }                
+            }            
         }
 
         protected class SchemaResult
         {
-            public Schema result { get; set; }
+            public Dota2Schema result { get; set; }
         }
-
     }
 }
 

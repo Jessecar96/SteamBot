@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
 
 namespace SteamTrade
 {
-    public class Inventory
+    public class TF2Inventory
     {
         /// <summary>
         /// Fetches the inventory for the given Steam ID using the Steam API.
@@ -14,35 +15,12 @@ namespace SteamTrade
         /// <returns>The give users inventory.</returns>
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
-        public static Inventory FetchInventory (ulong steamId, string apiKey)
+        public static TF2Inventory FetchInventory(ulong steamId, string apiKey)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
             string response = SteamWeb.Fetch (url, "GET", null, null, false);
             InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
-            return new Inventory(result.result);
-        }
-
-        /// <summary>
-        /// Gets the inventory for the given Steam ID using the Steam Community website.
-        /// </summary>
-        /// <returns>The inventory for the given user. </returns>
-        /// <param name='steamid'>The Steam identifier. </param>
-        public static dynamic GetInventory (SteamID steamid)
-        {
-            string url = String.Format (
-                "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
-                steamid.ConvertToUInt64 ()
-            );
-            
-            try
-            {
-                string response = SteamWeb.Fetch (url, "GET", null, null, true);
-                return JsonConvert.DeserializeObject (response);
-            }
-            catch (Exception)
-            {
-                return JsonConvert.DeserializeObject ("{\"success\":\"false\"}");
-            }
+            return new TF2Inventory(result.result);
         }
 
         public uint NumSlots { get; set; }
@@ -50,7 +28,7 @@ namespace SteamTrade
         public bool IsPrivate { get; private set; }
         public bool IsGood { get; private set; }
 
-        protected Inventory (InventoryResult apiInventory)
+        protected TF2Inventory(InventoryResult apiInventory)
         {
             NumSlots = apiInventory.num_backpack_slots;
             Items = apiInventory.items;
@@ -67,12 +45,12 @@ namespace SteamTrade
             return this.NumSlots % 100 == 50;
         }
 
-        public Item GetItem (ulong id)
+        public Item GetItem(ulong id)
         {
             return (Items == null ? null : Items.FirstOrDefault(item => item.Id == id));
         }
 
-        public List<Item> GetItemsByDefindex (int defindex)
+        public List<Item> GetItemsByDefindex(int defindex)
         {
             return Items.Where(item => item.Defindex == defindex).ToList();
         }

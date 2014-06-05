@@ -78,32 +78,6 @@ namespace SteamTrade.TradeWebAPI
             return JsonConvert.DeserializeObject<TradeStatus> (response);
         }
 
-
-        /// <summary>
-        /// Gets the foriegn inventory.
-        /// </summary>
-        /// <param name="otherId">The other id.</param>
-        /// <returns>A dynamic JSON object.</returns>
-
-        internal dynamic GetForiegnInventory(SteamID otherId)
-        {
-            return GetForiegnInventory(otherId, 440, 2);
-        }
-        internal dynamic GetForiegnInventory(SteamID otherId, long contextId, int appid)
-        {
-            try
-            {
-                string path = string.Format("foreigninventory/?sessionid={0}&steamid={1}&appid={2}&contextid={3}",
-                    sessionIdEsc, otherId.ConvertToUInt64(), appid, contextId);
-                string response = Fetch(baseTradeURL + path, "GET");
-                return JsonConvert.DeserializeObject(response);
-            }
-            catch (Exception)
-            {
-                return JsonConvert.DeserializeObject("{\"success\":\"false\"}");
-            }
-        }
-
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
@@ -130,17 +104,34 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,long contextid)
+        internal bool AddItemWebCmd(ulong itemid, int slot, int appid, long contextid, int amount)
         {
             var data = new NameValueCollection ();
 
-            data.Add ("sessionid", sessionIdEsc);
+            data.Add("sessionid", sessionIdEsc);
             data.Add("appid", "" + appid);
-            data.Add ("contextid", "" + contextid);
-            data.Add ("itemid", "" + itemid);
-            data.Add ("slot", "" + slot);
+            data.Add("contextid", "" + contextid);
+            data.Add("itemid", "" + itemid);
+            data.Add("slot", "" + slot);
+            data.Add("amount", "" + amount);
 
             string result = Fetch(baseTradeURL + "additem", "POST", data);
+
+            dynamic json = JsonConvert.DeserializeObject(result);
+            return IsSuccess(json);
+        }
+
+        internal bool AddCurrencyWebCmd(ulong currencyid, int amount, int appid, long contextid)
+        {
+            var data = new NameValueCollection();
+
+            data.Add("sessionid", sessionIdEsc);
+            data.Add("appid", "" + appid);
+            data.Add("contextid", "" + contextid);
+            data.Add("currencyid", "" + currencyid);
+            data.Add("amount", "" + amount);
+
+            string result = Fetch(baseTradeURL + "setcurrency", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
             return IsSuccess(json);
@@ -151,15 +142,16 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
+        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid, int amount)
         {
             var data = new NameValueCollection ();
 
-            data.Add ("sessionid", sessionIdEsc);
+            data.Add("sessionid", sessionIdEsc);
             data.Add("appid", "" + appid);
             data.Add("contextid", "" + contextid);
-            data.Add ("itemid", "" + itemid);
-            data.Add ("slot", "" + slot);
+            data.Add("itemid", "" + itemid);
+            data.Add("slot", "" + slot);
+            data.Add("amount", "" + amount);
 
             string result = Fetch (baseTradeURL + "removeitem", "POST", data);
 

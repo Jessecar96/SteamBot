@@ -88,18 +88,9 @@ namespace SteamBot
         SteamUser.LogOnDetails logOnDetails;
 
         TradeManager tradeManager;
-        private Task<Inventory> myInventoryTask;
-
-        public Inventory MyInventory
-        {
-            get
-            {
-                myInventoryTask.Wait();
-                return myInventoryTask.Result;
-            }
-        }
 
         private BackgroundWorker backgroundWorker;
+        public CookieContainer botCookies;
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
@@ -242,7 +233,7 @@ namespace SteamBot
                 Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
                 if (!this.IsRunning)
                 {
-                    Console.WriteLine("The Bot is no longer running and could not write to the log. Try Starting this bot first.");
+                    Console.WriteLine("The Bot is no longer running and could not write to the log. Try starting this bot first.");
                 }
             }
             catch (Exception e)
@@ -262,7 +253,6 @@ namespace SteamBot
                 CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
                 CurrentTrade.OnClose += CloseTrade;
                 SubscribeTrade(CurrentTrade, GetUserHandler(other));
-
                 tradeManager.StartTradeThread(CurrentTrade);
                 return true;
             }
@@ -383,19 +373,16 @@ namespace SteamBot
                     }
                 }
 
-                if (Trade.CurrentSchema == null)
-                {
-                    log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (apiKey);
-                    log.Success ("Schema Downloaded!");
-                }
-
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.Online);
 
                 log.Success ("Steam Bot Logged In Completely!");
 
                 IsLoggedIn = true;
+
+                botCookies = new CookieContainer();
+                botCookies.SetCookies(new Uri("http://steamcommunity.com"), string.Format("steamLogin={0}; sessionid={1}", token, sessionId));
+                GenericInventory.SetCookie(botCookies, SteamUser.SteamID);
 
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });
@@ -521,16 +508,6 @@ namespace SteamBot
                     return;
                 }
 
-                //if (tradeManager.OtherInventory.IsPrivate)
-                //{
-                //    SteamFriends.SendChatMessage(callback.OtherClient, 
-                //                                 EChatEntryType.ChatMsg,
-                //                                 "Trade declined. Your backpack cannot be private.");
-
-                //    SteamTrade.RespondToTrade (callback.TradeID, false);
-                //    return;
-                //}
-
                 if (CurrentTrade == null && GetUserHandler (callback.OtherClient).OnTradeRequest ())
                     SteamTrade.RespondToTrade (callback.TradeID, true);
                 else
@@ -634,26 +611,6 @@ namespace SteamBot
             
             // send off our response
             SteamUser.SendMachineAuthResponse (authResponse);
-        }
-
-        /// <summary>
-        /// Gets the bot's inventory and stores it in MyInventory.
-        /// </summary>
-        /// <example> This sample shows how to find items in the bot's inventory from a user handler.
-        /// <code>
-        /// Bot.GetInventory(); // Get the inventory first
-        /// foreach (var item in Bot.MyInventory.Items)
-        /// {
-        ///     if (item.Defindex == 5021)
-        ///     {
-        ///         // Bot has a key in its inventory
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public void GetInventory()
-        {
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
         }
 
         /// <summary>

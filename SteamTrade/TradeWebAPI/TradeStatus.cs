@@ -57,6 +57,12 @@ namespace SteamTrade.TradeWebAPI
 
         public ulong assetid { get; set; }
 
+        public int oldamount { get; set; }
+
+        public int amount { get; set; }
+
+        public ulong currencyid { get; set; }
+
         /// <summary>
         /// Determins if the TradeEvent is equal to another.
         /// </summary>
@@ -67,7 +73,10 @@ namespace SteamTrade.TradeWebAPI
             return this.steamid == other.steamid && this.action == other.action
                    && this.timestamp == other.timestamp && this.appid == other.appid
                    && this.text == other.text && this.contextid == other.contextid
-                   && this.assetid == other.assetid;
+                   && this.assetid == other.assetid
+                   && this.oldamount == other.oldamount
+                   && this.amount == other.amount
+                   && this.currencyid == other.currencyid;
         }
     }
 
@@ -103,9 +112,10 @@ namespace SteamTrade.TradeWebAPI
                 {
                     tradeUserAssetses.Add(new TradeUserAssets()
                     {
+                        iscurrency = asset.assetid == 0,
                         amount = asset.amount,
                         appid = asset.appid,
-                        assetid = asset.assetid,
+                        assetid = asset.assetid == 0 ? asset.currencyid : asset.assetid,
                         contextid = asset.contextid
                     });
                 }
@@ -128,9 +138,10 @@ namespace SteamTrade.TradeWebAPI
                     dynamic value = obj.Value;
                     tradeUserAssetses.Add(new TradeUserAssets()
                     {
+                        iscurrency = value.assetid == 0,
                         appid = value.appid,
                         amount = value.amount,
-                        assetid = value.assetid,
+                        assetid = value.assetid == 0 ? value.currencyid : value.assetid,
                         contextid = value.contextid
                     });
                 }
@@ -142,12 +153,13 @@ namespace SteamTrade.TradeWebAPI
 
     public class TradeUserAssets
     {
-        /// <summary>Iventory type</summary>
+        /// <summary>Inventory type</summary>
         public long contextid { get; set; }
         /// <summary>itemid</summary>
         public ulong assetid { get; set; }
         public int appid { get; set; }
-        public int amount = 1;
+        public int amount { get; set; }
+        public bool iscurrency { get; set; }
 
         public override string ToString()
         {
@@ -163,7 +175,7 @@ namespace SteamTrade.TradeWebAPI
         UserSetUnReady = 3,
         UserAccept = 4,
         //5 = ?? Maybe some sort of cancel?
-        //6 = ??
+        CurrencyItemAdded = 6,
         UserChat = 7 //message = "text"
     }
 }

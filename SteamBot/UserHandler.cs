@@ -12,33 +12,21 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
-        protected Inventory OtherInventory;
+        protected SteamID MySID;
+
+        public GenericInventory MyInventory;
+        public GenericInventory OtherInventory;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
-            OtherInventory = GetOtherInventory();
-        }
-
-        /// <summary>
-        /// Gets the other's inventory and stores it in OtherInventory.
-        /// </summary>
-        /// <example> This sample shows how to find items in the other's inventory from a user handler.
-        /// <code>
-        /// GetInventory(); // Not necessary unless you know the user's inventory has changed
-        /// foreach (var item in OtherInventory)
-        /// {
-        ///     if (item.Defindex == 5021)
-        ///     {
-        ///         // Bot has a key in its inventory
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public Inventory GetOtherInventory()
-        {
-            return Inventory.FetchInventory(OtherSID, Bot.apiKey);
+            MySID = bot.SteamUser.SteamID;
+            if (MySID != OtherSID && bot.IsLoggedIn)
+            {
+                MyInventory = new GenericInventory(MySID, MySID);
+                OtherInventory = new GenericInventory(OtherSID, MySID);
+            }            
         }
 
         /// <summary>
@@ -72,6 +60,25 @@ namespace SteamBot
         protected bool IsAdmin
         {
             get { return Bot.Admins.Contains (OtherSID); }
+        }
+
+        /// <summary>
+        /// Wrapper for GenericInventory's AddInventoriesToFetch function.
+        /// </summary>
+        /// <param name="type">Type of inventory to fetch</param>
+        public virtual void AddInventoriesToFetch(GenericInventory.InventoryTypes type)
+        {
+            GenericInventory.AddInventoriesToFetch(type, MySID);
+        }
+
+        /// <summary>
+        /// Second wrapper for GenericInventory's AddInventoryToFetch function.
+        /// </summary>
+        /// <param name="appId">App ID of game</param>
+        /// <param name="contextId">Context ID</param>
+        public virtual void AddInventoriesToFetch(int appId, long contextId)
+        {
+            GenericInventory.AddInventoriesToFetch(appId, contextId, MySID);
         }
 
         /// <summary>
@@ -161,9 +168,9 @@ namespace SteamBot
 
         public abstract void OnTradeInit ();
 
-        public abstract void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public abstract void OnTradeAddItem (GenericInventory.Inventory.Item inventoryItem);
 
-        public abstract void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public abstract void OnTradeRemoveItem(GenericInventory.Inventory.Item inventoryItem);
 
         public abstract void OnTradeMessage (string message);
 
