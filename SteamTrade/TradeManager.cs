@@ -191,11 +191,11 @@ namespace SteamTrade
         /// </remarks>
         public void InitializeTrade(SteamID me, SteamID other)
         {
-            // fetch other player's inventory from the Steam API.
-            otherInventory = new GenericInventory(other, true);
-
             // fetch our inventory from the Steam API.
-            myInventory = new GenericInventory(me, true);
+            myInventory = new GenericInventory(me, me);
+
+            // fetch other player's inventory from the Steam API.
+            otherInventory = new GenericInventory(other, me);            
         }
 
         #endregion Public Methods

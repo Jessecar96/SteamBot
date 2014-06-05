@@ -449,7 +449,7 @@ namespace SteamTrade
                 switch ((TradeEventType)tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
-                        EnqueueAction(() => FireOnUserAddItem(tradeEvent));
+                        EnqueueAction(() => FireOnUserAddItem(tradeEvent, MySteamId));
                         break;                    
                     case TradeEventType.ItemRemoved:
                         EnqueueAction(() => FireOnUserRemoveItem(tradeEvent));
@@ -458,7 +458,7 @@ namespace SteamTrade
                         if (tradeEvent.amount == 0)
                             EnqueueAction(() => FireOnUserRemoveItem(tradeEvent));
                         else
-                            EnqueueAction(() => FireOnUserAddItem(tradeEvent));
+                            EnqueueAction(() => FireOnUserAddItem(tradeEvent, MySteamId));
                         break;
                     case TradeEventType.UserSetReady:
                         EnqueueAction(() => OnUserSetReady(true));
@@ -526,7 +526,7 @@ namespace SteamTrade
         /// </summary>
         /// <param name="tradeEvent">TradeEvent to get item from</param>
         /// <returns></returns>
-        private void FireOnUserAddItem(TradeEvent tradeEvent)
+        private void FireOnUserAddItem(TradeEvent tradeEvent, SteamID botId)
         {
             bool isCurrency = tradeEvent.currencyid != 0;
             var item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, isCurrency ? tradeEvent.currencyid : tradeEvent.assetid, isCurrency);
@@ -534,7 +534,7 @@ namespace SteamTrade
             {                
                 if (GenericInventory.ShouldFetchInventory(tradeEvent.appid, MySteamId))
                 {
-                    OtherInventory.AddForeignInventory(new SteamID(Convert.ToUInt64(tradeEvent.steamid)), tradeEvent.appid, tradeEvent.contextid);
+                    OtherInventory.AddForeignInventory(new SteamID(Convert.ToUInt64(tradeEvent.steamid)), botId, tradeEvent.appid, tradeEvent.contextid);
                     item = OtherInventory.GetItem(tradeEvent.appid, tradeEvent.contextid, isCurrency ? tradeEvent.currencyid : tradeEvent.assetid, isCurrency);
                 }                
             }

@@ -20,11 +20,10 @@ namespace SteamTrade
         private static Dictionary<ulong, List<KeyValuePair<int, long>>> InventoriesToFetch = new Dictionary<ulong, List<KeyValuePair<int, long>>>();
         private static Dictionary<ulong, CookieContainer> Cookies = new Dictionary<ulong, CookieContainer>();
         private Dictionary<int, Dictionary<long, Inventory>> inventories = new Dictionary<int, Dictionary<long, Inventory>>();
-        private Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();        
-        private Task ConstructTask = null;        
+        private Dictionary<int, Dictionary<long, Task>> InventoryTasks = new Dictionary<int, Dictionary<long, Task>>();
+        private Task ConstructTask = null;
         private const int WEB_REQUEST_MAX_RETRIES = 3;
         private const int WEB_REQUEST_TIME_BETWEEN_RETRIES_MS = 1000;
-        private static SteamID BotId = null;
 
         /// <summary>
         /// Gets the content of all inventories listed in http://steamcommunity.com/profiles/STEAM_ID/inventory/
@@ -38,14 +37,13 @@ namespace SteamTrade
             }
         }
 
-        public GenericInventory(SteamID steamId, bool inTrade = false, bool isBot = false)
+        public GenericInventory(SteamID steamId, SteamID botId, bool inTrade = false)
         {
             ConstructTask = Task.Factory.StartNew(() =>
             {
-                if (isBot) BotId = steamId;
                 if (inTrade)
                 {
-                    foreach (var pair in InventoriesToFetch[BotId])
+                    foreach (var pair in InventoriesToFetch[botId])
                     {
                         int appId = pair.Key;
                         long contextId = pair.Value;
@@ -55,7 +53,7 @@ namespace SteamTrade
                         InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                         {
                             string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-                            Inventory inventory = FetchForeignInventory(steamId, appId, contextId);
+                            Inventory inventory = FetchForeignInventory(steamId, botId, appId, contextId);
                             if (!inventories.ContainsKey(appId))
                                 inventories[appId] = new Dictionary<long, Inventory>();
                             if (inventory != null && !inventories[appId].ContainsKey(contextId))
@@ -66,11 +64,11 @@ namespace SteamTrade
                 else
                 {
                     string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-                    string response = RetryWebRequest(baseInventoryUrl);
+                    string response = RetryWebRequest(baseInventoryUrl, botId);
                     Regex reg = new Regex("var g_rgAppContextData = (.*?);");
                     Match m = reg.Match(response);
                     if (m.Success)
-                    {                        
+                    {
                         try
                         {
                             string json = m.Groups[1].Value;
@@ -78,14 +76,14 @@ namespace SteamTrade
                             foreach (var app in schemaResult)
                             {
                                 int appId = app.Key;
-                                if (!ShouldFetchInventory(appId, BotId)) continue;
+                                if (!ShouldFetchInventory(appId, botId)) continue;
                                 InventoryTasks[appId] = new Dictionary<long, Task>();
                                 foreach (var contextId in app.Value.RgContexts.Keys)
                                 {
                                     InventoryTasks[appId][contextId] = Task.Factory.StartNew(() =>
                                     {
                                         string inventoryUrl = string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamId.ConvertToUInt64(), appId, contextId);
-                                        var inventory = FetchInventory(inventoryUrl, steamId, appId, contextId);
+                                        var inventory = FetchInventory(inventoryUrl, steamId, botId, appId, contextId);
                                         if (!inventories.ContainsKey(appId))
                                             inventories[appId] = new Dictionary<long, Inventory>();
                                         if (inventory != null && !inventories[appId].ContainsKey(contextId))
@@ -105,7 +103,7 @@ namespace SteamTrade
                         Success = false;
                         IsPrivate = true;
                     }
-                }                                
+                }
             });
         }
 
@@ -114,7 +112,7 @@ namespace SteamTrade
             TF2,
             Dota2,
             Portal2,
-            CSGO,            
+            CSGO,
             SpiralKnights,
             SteamGifts,
             SteamCoupons,
@@ -124,9 +122,12 @@ namespace SteamTrade
 
         public static bool ShouldFetchInventory(int appId, ulong botId)
         {
-            foreach (var inventory in InventoriesToFetch[botId])
+            if (InventoriesToFetch.ContainsKey(botId))
             {
-                if (inventory.Key == appId) return true;
+                foreach (var inventory in InventoriesToFetch[botId])
+                {
+                    if (inventory.Key == appId) return true;
+                }
             }
             return false;
         }
@@ -177,9 +178,9 @@ namespace SteamTrade
             Cookies[botId] = cookies;
         }
 
-        private string GetSessionId()
+        private string GetSessionId(SteamID botId)
         {
-            var cookies = Cookies[BotId].GetCookies(new Uri("http://steamcommunity.com"));
+            var cookies = Cookies[botId].GetCookies(new Uri("http://steamcommunity.com"));
             foreach (Cookie cookie in cookies)
             {
                 if (cookie.Name == "sessionid")
@@ -201,24 +202,24 @@ namespace SteamTrade
             return Inventories[appId][contextId].RgDescriptions.Values.ToList();
         }
 
-        public void AddForeignInventory(SteamID steamId, int appId, long contextId)
+        public void AddForeignInventory(SteamID steamId, SteamID botId, int appId, long contextId)
         {
-            Inventory inventory = FetchForeignInventory(steamId, appId, contextId);
+            Inventory inventory = FetchForeignInventory(steamId, botId, appId, contextId);
             if (!inventories.ContainsKey(appId))
                 inventories[appId] = new Dictionary<long, Inventory>();
             if (inventory != null && !inventories[appId].ContainsKey(contextId))
                 inventories[appId].Add(contextId, inventory);
         }
 
-        private Inventory FetchForeignInventory(SteamID steamId, int appId, long contextId)
+        private Inventory FetchForeignInventory(SteamID steamId, SteamID botId, int appId, long contextId)
         {
-            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", steamId.ConvertToUInt64(), GetSessionId(), steamId.ConvertToUInt64(), appId, contextId);
-            return FetchInventory(inventoryUrl, steamId, appId, contextId);
+            string inventoryUrl = string.Format("http://steamcommunity.com/trade/{0}/foreigninventory/?sessionid={1}&steamid={2}&appid={3}&contextid={4}", steamId.ConvertToUInt64(), GetSessionId(botId), steamId.ConvertToUInt64(), appId, contextId);
+            return FetchInventory(inventoryUrl, steamId, botId, appId, contextId);
         }
 
-        private Inventory FetchInventory(string inventoryUrl, SteamID steamId, int appId, long contextId)
+        private Inventory FetchInventory(string inventoryUrl, SteamID steamId, SteamID botId, int appId, long contextId)
         {
-            string response = RetryWebRequest(inventoryUrl);
+            string response = RetryWebRequest(inventoryUrl, botId);
             try
             {
                 var inventory = JsonConvert.DeserializeObject<Inventory>(response);
@@ -278,7 +279,7 @@ namespace SteamTrade
                         item = inventory[contextId].RgInventory[id.ToString()];
                     var key = string.Format("{0}_{1}", item.ClassId, item.InstanceId);
                     return inventory[contextId].RgDescriptions[key];
-                }                
+                }
             }
             catch
             {
@@ -303,13 +304,13 @@ namespace SteamTrade
         /// WEB_REQUEST_MAX_RETRIES attempts (with WEB_REQUEST_TIME_BETWEEN_RETRIES_MS between attempts)
         /// </summary>
         /// <returns>The result of the function if it succeeded, or an empty string otherwise</returns>
-        private string RetryWebRequest(string url)
+        private string RetryWebRequest(string url, SteamID botId)
         {
             for (int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
             {
                 try
                 {
-                    return SteamWeb.Fetch(url, "GET", null, Cookies[BotId]);
+                    return SteamWeb.Fetch(url, "GET", null, Cookies[botId]);
                 }
                 catch (Exception ex)
                 {
@@ -509,10 +510,28 @@ namespace SteamTrade
 
             public class Item
             {
-                public ulong Id { get; set; }
+                /// <summary>
+                /// Not available in Inventory History
+                /// </summary>
                 public int Amount { get; set; }
+                /// <summary>
+                /// Not available in Inventory History
+                /// </summary>
                 public bool IsCurrency { get; set; }
+
+                [JsonProperty("id")]
+                public ulong Id { get; set; }
+
+                /// <summary>
+                /// Only available in Inventory History
+                /// </summary>
+                [JsonProperty("owner")]
+                public ulong OwnerId { get; set; }
+
+                [JsonProperty("pos")]
                 public int Position { get; set; }
+
+                [JsonProperty("contextid")]
                 public long ContextId { get; set; }
 
                 [JsonProperty("appid")]
@@ -567,6 +586,10 @@ namespace SteamTrade
                 [JsonProperty("marketable")]
                 private short isMarketable { get; set; }
                 public bool IsMarketable { get { return isMarketable == 1; } set { isMarketable = Convert.ToInt16(value); } }
+
+                [JsonProperty("commodity")]
+                private short isCommodity { get; set; }
+                public bool IsCommodity { get { return isCommodity == 1; } set { isCommodity = Convert.ToInt16(value); } }
 
                 [JsonProperty("market_fee_app")]
                 public int MarketFeeApp { get; set; }
