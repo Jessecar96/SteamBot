@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
 using System.Threading.Tasks;
@@ -15,13 +16,13 @@ namespace SteamBot
         protected Bot Bot;
         protected SteamID OtherSID;
         private bool _lastMessageWasFromTrade;
-        protected Inventory OtherInventory;
+        private Task<Inventory> otherInventoryTask;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
-            OtherInventory = GetOtherInventory();
+            GetOtherInventory();
         }
 
         /// <summary>
@@ -39,9 +40,18 @@ namespace SteamBot
         /// }
         /// </code>
         /// </example>
-        public Inventory GetOtherInventory()
+        public void GetOtherInventory()
         {
-            return Inventory.FetchInventory(OtherSID, Bot.apiKey);
+            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.apiKey));
+        }
+
+        public Inventory OtherInventory
+        {
+            get
+            {
+                otherInventoryTask.Wait();
+                return otherInventoryTask.Result;
+            }
         }
 
         /// <summary>
