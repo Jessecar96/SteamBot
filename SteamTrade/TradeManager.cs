@@ -101,7 +101,7 @@ namespace SteamTrade
 
                 myInventoryTask.Wait();
                 return myInventoryTask.Result;
-        }
+            }
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace SteamTrade
 
                 otherInventoryTask.Wait();
                 return otherInventoryTask.Result;
-        }
+            }
         }
 
         /// <summary>
@@ -178,15 +178,16 @@ namespace SteamTrade
         /// <param name='other'>
         /// The <see cref="SteamID"/> of the other trade partner.
         /// </param>
+        /// <param name="otherUserName">The trade partner's username</param>
         /// <remarks>
         /// If the needed inventories are <c>null</c> then they will be fetched.
         /// </remarks>
-        public Trade CreateTrade (SteamID  me, SteamID other)
+        public Trade CreateTrade (SteamID  me, SteamID other, string otherUserName)
         {
             if (otherInventoryTask == null || myInventoryTask == null)
                 InitializeTrade (me, other);
 
-            var t = new Trade (me, other, sessionId, token, myInventoryTask, otherInventoryTask);
+            var t = new Trade (me, other, otherUserName, sessionId, token, myInventoryTask, otherInventoryTask);
 
             t.OnClose += delegate
             {

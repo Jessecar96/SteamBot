@@ -1,6 +1,9 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
+using System.Threading.Tasks;
 
 namespace SteamBot
 {
@@ -12,13 +15,14 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
-        protected Inventory OtherInventory;
+        private bool _lastMessageWasFromTrade;
+        private Task<Inventory> otherInventoryTask;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
-            OtherInventory = GetOtherInventory();
+            GetOtherInventory();
         }
 
         /// <summary>
@@ -36,9 +40,18 @@ namespace SteamBot
         /// }
         /// </code>
         /// </example>
-        public Inventory GetOtherInventory()
+        public void GetOtherInventory()
         {
-            return Inventory.FetchInventory(OtherSID, Bot.apiKey);
+            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.apiKey));
+        }
+
+        public Inventory OtherInventory
+        {
+            get
+            {
+                otherInventoryTask.Wait();
+                return otherInventoryTask.Result;
+            }
         }
 
         /// <summary>
@@ -95,11 +108,17 @@ namespace SteamBot
         /// </summary>
         public abstract void OnFriendRemove ();
 
+        public void OnMessageHandler(string message, EChatEntryType type)
+        {
+            _lastMessageWasFromTrade = false;
+            OnMessage(message, type);
+        }
+
         /// <summary>
         /// Called whenever a message is sent to the bot.
         /// This is limited to regular and emote messages.
         /// </summary>
-        public abstract void OnMessage (string message, EChatEntryType type);
+        protected abstract void OnMessage (string message, EChatEntryType type);
 
         /// <summary>
         /// Called when the bot is fully logged in.
@@ -155,7 +174,6 @@ namespace SteamBot
 
         public virtual void OnTradeClose ()
         {
-            Bot.log.Warn ("[USERHANDLER] TRADE CLOSED");
             Bot.CloseTrade ();
         }
 
@@ -165,7 +183,13 @@ namespace SteamBot
 
         public abstract void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public abstract void OnTradeMessage (string message);
+        public void OnTradeMessageHandler(string message)
+        {
+            _lastMessageWasFromTrade = true;
+            OnTradeMessage(message);
+        }
+
+        protected abstract void OnTradeMessage (string message);
 
         public void OnTradeReadyHandler(bool ready)
         {
@@ -187,5 +211,67 @@ namespace SteamBot
         public abstract void OnTradeAccept();
 
         #endregion Trade events
+
+        /// <summary>
+        /// A helper method for sending a chat message to the other user in the chat window (as opposed to the trade window)
+        /// </summary>
+        /// <param name="message">The message to send to the other user</param>
+        /// <param name="delayMs">Optional.  The delay before sending the message, in milliseconds.</param>
+        protected virtual async void SendChatMessage(string message, int delayMs = 0)
+        {
+            if(delayMs != 0)
+            {
+                await Task.Delay(delayMs);
+            }
+
+            try
+            {
+                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, message);
+            }
+            catch(Exception ex)
+            {
+                Log.Error("Error occurred in SendChatMessage().  Message: \"{0}\" \nException: {1} ", message, ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// A helper method for sending a chat message to the other user in the trade window.
+        /// </summary>
+        /// <param name="message">The message to send to the other user</param>
+        /// <param name="delayMs">Optional.  The delay before sending the message, in milliseconds.</param>
+        protected virtual async void SendTradeMessage(string message, int delayMs = 0)
+        {
+            if(delayMs != 0)
+            {
+                await Task.Delay(delayMs);
+            }
+
+            try
+            {
+                Trade.SendMessage(message);
+            }
+            catch(Exception ex)
+            {
+                Log.Error("Error occurred in SendTradeMessage().  Message: \"{0}\" \nException: {1} ", message, ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Sends a message to the user in either the chat window or the trade window, depending on which screen
+        /// the user sent a message from last.  Useful for responding to commands.
+        /// </summary>
+        /// <param name="message">The message to send to the other user</param>
+        /// <param name="delayMs">Optional.  The delay before sending the message, in milliseconds.</param>
+        protected virtual void SendReplyMessage(string message, int delayMs = 0)
+        {
+            if(_lastMessageWasFromTrade && Trade != null)
+            {
+                SendTradeMessage(message, delayMs);
+            }
+            else
+            {
+                SendChatMessage(message, delayMs);
+            }
+        }
     }
 }

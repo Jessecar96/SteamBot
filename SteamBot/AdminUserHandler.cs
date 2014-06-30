@@ -67,7 +67,7 @@ namespace SteamBot
         /// Called whenever a message is sent to the bot.
         /// This is limited to regular and emote messages.
         /// </summary>
-        public override void OnMessage(string message, EChatEntryType type)
+        protected override void OnMessage(string message, EChatEntryType type)
         {
             // TODO: magic command system
         }
@@ -111,7 +111,7 @@ namespace SteamBot
             // whatever.
         }
 
-        public override void OnTradeMessage(string message)
+        protected override void OnTradeMessage(string message)
         {
             ProcessTradeMessage(message);
         }

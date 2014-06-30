@@ -50,10 +50,12 @@ namespace SteamBot
         public UserHandlerCreator CreateHandler;
         Dictionary<ulong, UserHandler> userHandlers = new Dictionary<ulong, UserHandler>();
 
-        List<SteamID> friends = new List<SteamID>();
+        private readonly List<SteamID> friends = new List<SteamID>();
+        public IEnumerable<SteamID> FriendsList { get { return friends; } } 
 
         // List of Steam groups the bot is in.
         private readonly List<SteamID> groups = new List<SteamID>();
+        public IEnumerable<SteamID> GroupsList { get { return groups; } } 
 
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
@@ -259,7 +261,7 @@ namespace SteamBot
             try
             {
                 tradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
+                CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other, SteamFriends.GetFriendPersonaName(other));
                 CurrentTrade.OnClose += CloseTrade;
                 SubscribeTrade(CurrentTrade, GetUserHandler(other));
 
@@ -285,7 +287,7 @@ namespace SteamBot
                                              EChatEntryType.ChatMsg,
                                              response);
 
-                log.Info ("Bot sent other: " + response);
+                log.Info ("Bot sent other: {0}", response);
                 
                 CurrentTrade = null;
                 return false;
@@ -314,7 +316,7 @@ namespace SteamBot
             #region Login
             msg.Handle<SteamClient.ConnectedCallback> (callback =>
             {
-                log.Debug ("Connection Callback: " + callback.Result);
+                log.Debug ("Connection Callback: {0}", callback.Result);
 
                 if (callback.Result == EResult.OK)
                 {
@@ -330,7 +332,7 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoggedOnCallback> (callback =>
             {
-                log.Debug ("Logged On Callback: " + callback.Result);
+                log.Debug ("Logged On Callback: {0}", callback.Result);
 
                 if (callback.Result == EResult.OK)
                 {
@@ -338,7 +340,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    log.Error ("Login Error: " + callback.Result);
+                    log.Error ("Login Error: {0}", callback.Result);
                 }
 
                 if (callback.Result == EResult.AccountLogonDenied)
@@ -441,24 +443,25 @@ namespace SteamBot
                     }
                     else if (friend.SteamID.AccountType != EAccountType.Clan)
                     {
-                    if (!friends.Contains(friend.SteamID))
-                    {
-                        friends.Add(friend.SteamID);
-                        if (friend.Relationship == EFriendRelationship.RequestRecipient &&
-                            GetUserHandler(friend.SteamID).OnFriendAdd())
+                        if (!friends.Contains(friend.SteamID))
                         {
-                            SteamFriends.AddFriend(friend.SteamID);
+                            friends.Add(friend.SteamID);
+                            if (friend.Relationship == EFriendRelationship.RequestRecipient &&
+                                GetUserHandler(friend.SteamID).OnFriendAdd())
+                            {
+                                SteamFriends.AddFriend(friend.SteamID);
+                            }
+                        }
+                        else
+                        {
+                            if (friend.Relationship == EFriendRelationship.None)
+                            {
+                                friends.Remove(friend.SteamID);
+                                GetUserHandler(friend.SteamID).OnFriendRemove();
+                                RemoveUserHandler(friend.SteamID);
+                            }
                         }
                     }
-                    else
-                    {
-                        if (friend.Relationship == EFriendRelationship.None)
-                        {
-                            friends.Remove(friend.SteamID);
-                            GetUserHandler(friend.SteamID).OnFriendRemove();
-                        }
-                    }
-                }
                 }
             });
 
@@ -469,11 +472,11 @@ namespace SteamBot
 
                 if (callback.EntryType == EChatEntryType.ChatMsg)
                 {
-                    log.Info (String.Format ("Chat Message from {0}: {1}",
+                    log.Info ("Chat Message from {0}: {1}",
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
                                          callback.Message
-                                         ));
-                    GetUserHandler(callback.Sender).OnMessage(callback.Message, type);
+                                         );
+                    GetUserHandler(callback.Sender).OnMessageHandler(callback.Message, type);
                 }
             });
             #endregion
@@ -541,13 +544,13 @@ namespace SteamBot
             {
                 if (callback.Response == EEconTradeResponse.Accepted)
                 {
-                    log.Debug ("Trade Status: " + callback.Response);
+                    log.Debug ("Trade Status: {0}", callback.Response);
                     log.Info ("Trade Accepted!");
                     GetUserHandler(callback.OtherClient).OnTradeRequestReply(true, callback.Response.ToString());
                 }
                 else
                 {
-                    log.Warn ("Trade failed: " + callback.Response);
+                    log.Warn ("Trade failed: {0}", callback.Response);
                     CloseTrade ();
                     GetUserHandler(callback.OtherClient).OnTradeRequestReply(false, callback.Response.ToString());
                 }
@@ -559,7 +562,7 @@ namespace SteamBot
             msg.Handle<SteamUser.LoggedOffCallback> (callback =>
             {
                 IsLoggedIn = false;
-                log.Warn ("Logged Off: " + callback.Result);
+                log.Warn ("Logged Off: {0}", callback.Result);
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
@@ -587,13 +590,21 @@ namespace SteamBot
             SteamUser.LogOn(logOnDetails);
         }
 
-        UserHandler GetUserHandler (SteamID sid)
+        UserHandler GetUserHandler(SteamID sid)
         {
-            if (!userHandlers.ContainsKey (sid))
+            if (!userHandlers.ContainsKey(sid))
             {
-                userHandlers [sid.ConvertToUInt64 ()] = CreateHandler (this, sid);
+                userHandlers[sid.ConvertToUInt64()] = CreateHandler(this, sid);
             }
-            return userHandlers [sid.ConvertToUInt64 ()];
+            return userHandlers[sid.ConvertToUInt64()];
+        }
+
+        void RemoveUserHandler(SteamID sid)
+        {
+            if (userHandlers.ContainsKey(sid))
+            {
+                userHandlers.Remove(sid);
+            }
         }
 
         static byte [] SHAHash (byte[] input)
@@ -668,7 +679,7 @@ namespace SteamBot
             trade.OnAfterInit += handler.OnTradeInit;
             trade.OnUserAddItem += handler.OnTradeAddItem;
             trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
-            trade.OnMessage += handler.OnTradeMessage;
+            trade.OnMessage += handler.OnTradeMessageHandler;
             trade.OnUserSetReady += handler.OnTradeReadyHandler;
             trade.OnUserAccept += handler.OnTradeAcceptHandler;
         }
@@ -685,7 +696,7 @@ namespace SteamBot
             trade.OnAfterInit -= handler.OnTradeInit;
             trade.OnUserAddItem -= handler.OnTradeAddItem;
             trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
-            trade.OnMessage -= handler.OnTradeMessage;
+            trade.OnMessage -= handler.OnTradeMessageHandler;
             trade.OnUserSetReady -= handler.OnTradeReadyHandler;
             trade.OnUserAccept -= handler.OnTradeAcceptHandler;
         }
@@ -727,7 +738,7 @@ namespace SteamBot
                 }
                 catch (WebException e)
                 {
-                    log.Error("URI: " + (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown") + " >> " + e.ToString());
+                    log.Error("URI: {0} >> {1}", (e.Response != null && e.Response.ResponseUri != null ? e.Response.ResponseUri.ToString() : "unknown"), e.ToString());
                     System.Threading.Thread.Sleep(45000);//Steam is down, retry in 45 seconds.
                 }
                 catch (Exception e)
