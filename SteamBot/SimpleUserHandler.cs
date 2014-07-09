@@ -32,7 +32,7 @@ namespace SteamBot
 
         public override void OnFriendRemove () {}
         
-        public override void OnMessage (string message, EChatEntryType type) 
+        protected override void OnMessage (string message, EChatEntryType type) 
         {
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
@@ -44,17 +44,13 @@ namespace SteamBot
         
         public override void OnTradeError (string error) 
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
-                                              EChatEntryType.ChatMsg,
-                                              "Oh, there was an error: " + error + "."
-                                              );
+            SendChatMessage ("Oh, there was an error: " + error + ".");
             Bot.log.Warn (error);
         }
         
         public override void OnTradeTimeout () 
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, EChatEntryType.ChatMsg,
-                                              "Sorry, but you were AFK and the trade was canceled.");
+            SendChatMessage ("Sorry, but you were AFK and the trade was canceled.");
             Bot.log.Info ("User was kicked because he was AFK.");
         }
         
@@ -67,7 +63,7 @@ namespace SteamBot
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
-        public override void OnTradeMessage (string message) {}
+        protected override void OnTradeMessage (string message) {}
         
         public override void OnTradeReady (bool ready) 
         {

@@ -16,20 +16,33 @@ namespace SteamTrade
     {
         public static string Fetch (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
         {
-            HttpWebResponse response = Request (url, method, data, cookies, ajax);
-            using(Stream responseStream = response.GetResponseStream())
+            using(HttpWebResponse response = Request(url, method, data, cookies, ajax))
             {
-                using(StreamReader reader = new StreamReader(responseStream))
+                using(Stream responseStream = response.GetResponseStream())
                 {
-                    return reader.ReadToEnd();
+                    using(StreamReader reader = new StreamReader(responseStream))
+                    {
+                        return reader.ReadToEnd();
+                    }
                 }
             }
         }
 
         public static HttpWebResponse Request (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
         {
-            HttpWebRequest request = WebRequest.Create (url) as HttpWebRequest;
+            //Append the data to the URL for GET-requests
+            bool isGetMethod = (method.ToLower() == "get");
+            string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key =>
+                String.Format("{0}={1}", HttpUtility.UrlEncode(key), HttpUtility.UrlEncode(data[key]))
+            )));
 
+            if (isGetMethod && !String.IsNullOrEmpty(dataString))
+            {
+                url += (url.Contains("?") ? "&" : "?") + dataString;
+            }
+
+            //Setup the request
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create(url);
             request.Method = method;
             request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -47,13 +60,9 @@ namespace SteamTrade
             // Cookies
             request.CookieContainer = cookies ?? new CookieContainer ();
 
-            // Request data
-            if (data != null)
+            // Write the data to the body for POST and other methods
+            if (!isGetMethod && !String.IsNullOrEmpty(dataString))
             {
-                string dataString = String.Join ("&", Array.ConvertAll (data.AllKeys, key =>
-                    String.Format ("{0}={1}", HttpUtility.UrlEncode (key), HttpUtility.UrlEncode (data [key]))
-                ));
-
                 byte[] dataBytes = Encoding.UTF8.GetBytes (dataString);
                 request.ContentLength = dataBytes.Length;
 
