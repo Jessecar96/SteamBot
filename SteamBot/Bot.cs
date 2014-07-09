@@ -441,24 +441,25 @@ namespace SteamBot
                     }
                     else if (friend.SteamID.AccountType != EAccountType.Clan)
                     {
-                    if (!friends.Contains(friend.SteamID))
-                    {
-                        friends.Add(friend.SteamID);
-                        if (friend.Relationship == EFriendRelationship.RequestRecipient &&
-                            GetUserHandler(friend.SteamID).OnFriendAdd())
+                        if (!friends.Contains(friend.SteamID))
                         {
-                            SteamFriends.AddFriend(friend.SteamID);
+                            friends.Add(friend.SteamID);
+                            if (friend.Relationship == EFriendRelationship.RequestRecipient &&
+                                GetUserHandler(friend.SteamID).OnFriendAdd())
+                            {
+                                SteamFriends.AddFriend(friend.SteamID);
+                            }
+                        }
+                        else
+                        {
+                            if (friend.Relationship == EFriendRelationship.None)
+                            {
+                                friends.Remove(friend.SteamID);
+                                GetUserHandler(friend.SteamID).OnFriendRemove();
+                                RemoveUserHandler(friend.SteamID);
+                            }
                         }
                     }
-                    else
-                    {
-                        if (friend.Relationship == EFriendRelationship.None)
-                        {
-                            friends.Remove(friend.SteamID);
-                            GetUserHandler(friend.SteamID).OnFriendRemove();
-                        }
-                    }
-                }
                 }
             });
 
@@ -587,13 +588,21 @@ namespace SteamBot
             SteamUser.LogOn(logOnDetails);
         }
 
-        UserHandler GetUserHandler (SteamID sid)
+        UserHandler GetUserHandler(SteamID sid)
         {
-            if (!userHandlers.ContainsKey (sid))
+            if (!userHandlers.ContainsKey(sid))
             {
-                userHandlers [sid.ConvertToUInt64 ()] = CreateHandler (this, sid);
+                userHandlers[sid.ConvertToUInt64()] = CreateHandler(this, sid);
             }
-            return userHandlers [sid.ConvertToUInt64 ()];
+            return userHandlers[sid.ConvertToUInt64()];
+        }
+
+        void RemoveUserHandler(SteamID sid)
+        {
+            if (userHandlers.ContainsKey(sid))
+            {
+                userHandlers.Remove(sid);
+            }
         }
 
         static byte [] SHAHash (byte[] input)
