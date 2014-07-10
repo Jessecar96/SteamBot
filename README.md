@@ -29,6 +29,7 @@ A list of contributors (add yourself if you want to):
 - [geel9](http://steamcommunity.com/id/geel9)
 - [cwhelchel](http://steamcommunity.com/id/cmw69krinkle)
 - [Lagg](http://lagg.me)
+- [BlueRaja](https://github.com/blueraja)
 
 ## Wanna Contribute?
 Please read [CONTRIBUTING.md].
