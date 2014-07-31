@@ -41,33 +41,40 @@ namespace SteamTrade.TradeWebAPI
         }
     }
 
-    public class TradeEvent : IEquatable<TradeEvent>
+    public class TradeEvent : UserAsset
     {
+        public ulong assetid { get { return Id; } set { Id = value; } }
         public string steamid { get; set; }
 
         public int action { get; set; }
 
         public ulong timestamp { get; set; }
 
-        public int appid { get; set; }
-
         public string text { get; set; }
 
-        public long contextid { get; set; }
-
-        public ulong assetid { get; set; }
+        public override int GetHashCode()
+        {
+            return string.Format("{0}-{1}-{2}-{3}-{4}-{5}-{6}", 
+                Id, AppId, ContextId, Amount, steamid, action, timestamp).GetHashCode();
+        }
 
         /// <summary>
         /// Determins if the TradeEvent is equal to another.
         /// </summary>
         /// <param name="other">TradeEvent to compare to</param>
         /// <returns>True if equal, false if not</returns>
-        public bool Equals(TradeEvent other)
+        /// 
+        public override bool Equals(object obj)
         {
+            if (!(obj is TradeEvent))
+                return false;
+
+            TradeEvent other = (TradeEvent)obj;
+
             return this.steamid == other.steamid && this.action == other.action
-                   && this.timestamp == other.timestamp && this.appid == other.appid
-                   && this.text == other.text && this.contextid == other.contextid
-                   && this.assetid == other.assetid;
+                   && this.timestamp == other.timestamp && this.AppId == other.AppId
+                   && this.text == other.text && this.ContextId == other.ContextId
+                   && this.Id == other.Id;
         }
     }
 
@@ -86,9 +93,9 @@ namespace SteamTrade.TradeWebAPI
         /// of the <see cref="assets"/> property directly.
         /// </summary>
         /// <returns>An array of <see cref="TradeUserAssets"/></returns>
-        public TradeUserAssets[] GetAssets()
+        public UserAsset[] GetAssets()
         {
-            var tradeUserAssetses = new List<TradeUserAssets>();
+            var tradeUserAssetses = new List<UserAsset>();
 
             // if items were added in trade the type is an array like so:
             // a normal JSON array
@@ -101,12 +108,12 @@ namespace SteamTrade.TradeWebAPI
             {
                 foreach (var asset in assets)
                 {
-                    tradeUserAssetses.Add(new TradeUserAssets()
+                    tradeUserAssetses.Add(new UserAsset()
                     {
-                        amount = asset.amount,
-                        appid = asset.appid,
-                        assetid = asset.assetid,
-                        contextid = asset.contextid
+                        Amount = asset.amount,
+                        AppId = asset.appid,
+                        Id = asset.assetid,
+                        ContextId = asset.contextid
                     });
                 }
             }
@@ -126,32 +133,17 @@ namespace SteamTrade.TradeWebAPI
                 foreach (JProperty obj in assets)
                 {
                     dynamic value = obj.Value;
-                    tradeUserAssetses.Add(new TradeUserAssets()
+                    tradeUserAssetses.Add(new UserAsset()
                     {
-                        appid = value.appid,
-                        amount = value.amount,
-                        assetid = value.assetid,
-                        contextid = value.contextid
+                        AppId = value.appid,
+                        Amount = value.amount,
+                        Id = value.assetid,
+                        ContextId = value.contextid
                     });
                 }
             }
 
             return tradeUserAssetses.ToArray();
-        }
-    }
-
-    public class TradeUserAssets
-    {
-        /// <summary>Iventory type</summary>
-        public long contextid { get; set; }
-        /// <summary>itemid</summary>
-        public ulong assetid { get; set; }
-        public int appid { get; set; }
-        public int amount = 1;
-
-        public override string ToString()
-        {
-            return string.Format("id:{0}, appid:{1}, contextid:{2}, amount:{3}",assetid,appid,contextid,amount);
         }
     }
 

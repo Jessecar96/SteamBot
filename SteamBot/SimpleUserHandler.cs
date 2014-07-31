@@ -113,9 +113,9 @@ namespace SteamBot
             
             List<string> errors = new List<string> ();
             
-            foreach (ulong id in Trade.OtherOfferedItems)
+            foreach (UserAsset OfferedItem in Trade.OtherOfferedItems)
             {
-                var item = Trade.OtherInventory.GetItem (id);
+                var item = Trade.OtherInventory.GetItem(OfferedItem.Id);
                 if (item.Defindex == 5000)
                     ScrapPutUp++;
                 else if (item.Defindex == 5001)
