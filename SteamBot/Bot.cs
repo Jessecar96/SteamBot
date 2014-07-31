@@ -31,11 +31,13 @@ namespace SteamBot
 
         // A list of SteamIDs that this bot recognizes as admins.
         public ulong[] Admins;
+
         public SteamFriends SteamFriends;
         public SteamClient SteamClient;
         public SteamTrading SteamTrade;
         public SteamUser SteamUser;
         public SteamGameCoordinator SteamGameCoordinator;
+        public SteamID MySID { get { return SteamUser.SteamID; } }
 
         // The current trade; if the bot is not in a trade, this is
         // null.
@@ -66,7 +68,8 @@ namespace SteamBot
         public int CurrentGame = 0;
 
         // The Steam Web API key.
-        public string apiKey;
+        string apiKey;
+        public string ApiKey { get { return apiKey; } }
 
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
@@ -79,7 +82,10 @@ namespace SteamBot
 
         public string MyLoginKey;
         string sessionId;
+        public string SessionId { get { return sessionId; } }
         string token;
+        public string Token { get { return token; } }
+
         bool isprocess;
         public bool IsRunning = false;
 

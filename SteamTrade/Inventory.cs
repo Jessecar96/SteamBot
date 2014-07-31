@@ -6,6 +6,9 @@ using SteamKit2;
 
 namespace SteamTrade
 {
+    /// <summary>
+    /// Official Web API Inventory
+    /// </summary>
     public class Inventory
     {
         /// <summary>
@@ -14,9 +17,9 @@ namespace SteamTrade
         /// <returns>The give users inventory.</returns>
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
-        public static Inventory FetchInventory (ulong steamId, string apiKey)
+        public static Inventory FetchInventory (ulong steamId, string apiKey, int appId = 440)
         {
-            var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+            var url = string.Format("http://api.steampowered.com/IEconItems_{0}/GetPlayerItems/v0001/?key={1}&steamid={2}", appId, apiKey, steamId);
             string response = SteamWeb.Fetch (url, "GET", null, null, false);
             InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
@@ -27,21 +30,18 @@ namespace SteamTrade
         /// </summary>
         /// <returns>The inventory for the given user. </returns>
         /// <param name='steamid'>The Steam identifier. </param>
-        public static dynamic GetInventory (SteamID steamid)
+        public static dynamic GetInventory(SteamID steamid, int appId = 440, int ContextId = 2)
         {
-            string url = String.Format (
-                "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
-                steamid.ConvertToUInt64 ()
-            );
-            
+            string url = String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/?trading=1", steamid.ConvertToUInt64(), appId, ContextId);
+
             try
             {
-                string response = SteamWeb.Fetch (url, "GET", null, null, true);
-                return JsonConvert.DeserializeObject (response);
+                string response = SteamWeb.Fetch(url, "GET", null, null, true);
+                return JsonConvert.DeserializeObject(response);
             }
             catch (Exception)
             {
-                return JsonConvert.DeserializeObject ("{\"success\":\"false\"}");
+                return JsonConvert.DeserializeObject("{\"success\":\"false\"}");
             }
         }
 
@@ -50,12 +50,18 @@ namespace SteamTrade
         public bool IsPrivate { get; private set; }
         public bool IsGood { get; private set; }
 
-        protected Inventory (InventoryResult apiInventory)
+        public Inventory (InventoryResult apiInventory)
         {
             NumSlots = apiInventory.num_backpack_slots;
             Items = apiInventory.items;
             IsPrivate = (apiInventory.status == "15");
             IsGood = (apiInventory.status == "1");
+        }
+
+        public Inventory()
+        {
+            NumSlots = 0;
+            IsGood = false;
         }
 
         /// <summary>
@@ -77,14 +83,8 @@ namespace SteamTrade
             return Items.Where(item => item.Defindex == defindex).ToList();
         }
 
-        public class Item
+        public class Item : UserAsset
         {
-            public int AppId = 440;
-            public long ContextId = 2;
-
-            [JsonProperty("id")]
-            public ulong Id { get; set; }
-
             [JsonProperty("original_id")]
             public ulong OriginalId { get; set; }
 
@@ -146,7 +146,7 @@ namespace SteamTrade
             public string PersonaName { get; set; }
         }
 
-        protected class InventoryResult
+        public class InventoryResult
         {
             public string status { get; set; }
 

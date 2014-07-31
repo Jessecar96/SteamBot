@@ -130,14 +130,14 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,long contextid)
+        internal bool AddItemWebCmd(UserAsset item, int slot)
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", "" + appid);
-            data.Add ("contextid", "" + contextid);
-            data.Add ("itemid", "" + itemid);
+            data.Add("appid", "" + item.AppId);
+            data.Add ("contextid", "" + item.ContextId);
+            data.Add ("itemid", "" + item.Id);
             data.Add ("slot", "" + slot);
 
             string result = Fetch(baseTradeURL + "additem", "POST", data);
@@ -151,14 +151,14 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
+        internal bool RemoveItemWebCmd(UserAsset item, int slot)
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", "" + appid);
-            data.Add("contextid", "" + contextid);
-            data.Add ("itemid", "" + itemid);
+            data.Add("appid", "" + item.AppId);
+            data.Add("contextid", "" + item.ContextId);
+            data.Add ("itemid", "" + item.Id);
             data.Add ("slot", "" + slot);
 
             string result = Fetch (baseTradeURL + "removeitem", "POST", data);

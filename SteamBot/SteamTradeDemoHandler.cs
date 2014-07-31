@@ -1,4 +1,5 @@
 using SteamKit2;
+using System;
 using System.Collections.Generic;
 using SteamTrade;
 
@@ -6,13 +7,21 @@ namespace SteamBot
 {
     public class SteamTradeDemoHandler : UserHandler
     {
-        // NEW ------------------------------------------------------------------
-        private GenericInventory mySteamInventory = new GenericInventory();
-        private GenericInventory OtherSteamInventory = new GenericInventory();
-        private bool tested;
-        // ----------------------------------------------------------------------
+        AsyncGenericInventory MySteamInventory = new AsyncGenericInventory();
+        AsyncGenericInventory OtherSteamInventory = new AsyncGenericInventory();
+        AsyncGenericInventory OtherDota2Inventory = new AsyncGenericInventory();
 
-        public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
+        bool tested;
+        bool ready = false;
+
+
+        public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) 
+        {
+            //Call InventoryLoaded when Inventory is loaded
+            MySteamInventory.OnLoadCompleted += InventoryLoaded;
+            OtherSteamInventory.OnLoadCompleted += InventoryLoaded;
+            OtherDota2Inventory.OnLoadCompleted += InventoryLoaded;
+        }
 
         public override bool OnGroupAdd()
         {
@@ -24,7 +33,7 @@ namespace SteamBot
             return true;
         }
 
-        public override void OnLoginCompleted() {}
+        public override void OnLoginCompleted() { }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
@@ -63,55 +72,96 @@ namespace SteamBot
         
         public override void OnTradeInit() 
         {
-            // NEW -------------------------------------------------------------------------------
-            List<long> contextId = new List<long>();
-            tested = false;
-
             /*************************************************************************************
              * 
              * SteamInventory AppId = 753 
              * 
              *  Context Id      Description
-             *      1           Gifts (Games), must be public on steam profile in order to work.
-             *      6           Trading Cards, Emoticons & Backgrounds. 
+             *      1           Gifts (Games), must be public on steam profile in order to work
+             *                  (steamcommunity.com/my/edit/settings).
+             *      3           Coupons
+             *      6           Trading Cards, Emoticons & Backgrounds.
+             *      7           Steam Holiday Sale 2013 Rewards
              *  
              ************************************************************************************/
+            int[] ContextIds = new int[] { 1, 3, 6, 7 };
+            tested = false;
 
-            contextId.Add(1);
-            contextId.Add(6);
-
-            mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
-            OtherSteamInventory.load(753, contextId, OtherSID);
-
-            if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
-            {
-                Trade.SendMessage("Couldn't open an inventory, type 'errors' for more info.");
-            }
-
-            Trade.SendMessage("Type 'test' to start.");
+            MySteamInventory.Load(Bot.SteamClient.SteamID, 753, ContextIds);
+            OtherSteamInventory.Load(OtherSID, 753, ContextIds);
+            OtherDota2Inventory.Load(OtherSID, 570);
+            
+            Trade.SendMessage("Loading inventories");
             // -----------------------------------------------------------------------------------
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
             // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
-            Trade.SendMessage("Object AppID: " + inventoryItem.AppId);
-            Trade.SendMessage("Object ContextId: " + inventoryItem.ContextId);
+            Trade.SendMessage("ID: " + inventoryItem.Id);
+            Trade.SendMessage("App (Game) ID: " + inventoryItem.AppId);
+            Trade.SendMessage("Context ID: " + inventoryItem.ContextId);
+
+            if (!ready)
+            {
+                Trade.SendMessage("Inventory Not Loaded");
+                return;
+            }
+
+            GenericInventory.ItemDescription tmpDescription;
 
             switch (inventoryItem.AppId)
             {
                 case 440:
                     Trade.SendMessage("TF2 Item Added.");
-                    Trade.SendMessage("Name: " + schemaItem.Name);
+
+                    if (schemaItem != null)
+                        Trade.SendMessage("Name: " + schemaItem.Name);
+                    
                     Trade.SendMessage("Quality: " + inventoryItem.Quality);
                     Trade.SendMessage("Level: " + inventoryItem.Level);
                     Trade.SendMessage("Craftable: " + (inventoryItem.IsNotCraftable?"No":"Yes"));
                     break;
 
+                case 570://DOTA2
+                    Trade.SendMessage("DOTA2 Item Added.");
+
+                    tmpDescription = OtherDota2Inventory.GetDescription(inventoryItem);
+
+                    if (tmpDescription == null)
+                    {
+                        Trade.SendMessage("Description Not Found?");
+                        break;
+                    }
+
+                    foreach (GenericInventory.Attribute attribute in tmpDescription.Attributes)
+                    {
+                        switch (attribute.CategoryName)
+                        {
+                            case "Rarity":
+                                Trade.SendMessage(attribute.Name + " item");
+                                break;
+
+                            case "Quality":
+                                Trade.SendMessage("Quality: " + attribute.Name);
+                                break;
+                        }
+                    }
+                    tmpDescription.DebugAttributes();
+                    break;
+
                 case 753:
-                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
+                    tmpDescription = OtherSteamInventory.GetDescription(inventoryItem);
+
                     Trade.SendMessage("Steam Inventory Item Added.");
-                    Trade.SendMessage("Type: " + tmpDescription.type);
-                    Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
+
+                    if (tmpDescription == null)
+                    {
+                        Trade.SendMessage("Description Not Found?");
+                        break;
+                    }
+
+                    Trade.SendMessage("Type: " + tmpDescription.Type);
+                    Trade.SendMessage("Marketable: " + (tmpDescription.IsMarketable?"Yes":"No"));
                     break;
 
                 default:
@@ -123,41 +173,58 @@ namespace SteamBot
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
-        public override void OnTradeMessage (string message) {
+        public override void OnTradeMessage (string message) 
+        {
             switch (message.ToLower())
             {
                 case "errors":
-                    if (OtherSteamInventory.errors.Count > 0)
+                    if (OtherSteamInventory.Errors.Count > 0)
                     {
-                        Trade.SendMessage("User Errors:");
-                        foreach (string error in OtherSteamInventory.errors)
+                        Trade.SendMessage("User Steam Inventory Errors:");
+                        foreach (string error in OtherSteamInventory.Errors)
                         {
                             Trade.SendMessage(" * " + error);
                         }
                     }
 
-                    if (mySteamInventory.errors.Count > 0)
+                    if (MySteamInventory.Errors.Count > 0)
                     {
-                        Trade.SendMessage("Bot Errors:");
-                        foreach (string error in mySteamInventory.errors)
+                        Trade.SendMessage("Bot Steam Inventory Errors:");
+                        foreach (string error in MySteamInventory.Errors)
                         {
                             Trade.SendMessage(" * " + error);
                         }
                     }
+
+                    if (OtherDota2Inventory.Errors.Count > 0)
+                    {
+                        Trade.SendMessage("Dota2 Inventory Bot Errors:");
+                        foreach (string error in MySteamInventory.Errors)
+                        {
+                            Trade.SendMessage(" * " + error);
+                        }
+                    }
+
                 break;
 
                 case "test":
+                    if (!ready)
+                    {
+                        Trade.SendMessage("Inventory Not Loaded");
+                        return;
+                    }
+
                     if (tested)
                     {
-                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+                        foreach (GenericInventory.Item item in MySteamInventory.Items.Values)
                         {
                             Trade.RemoveItem(item);
                         }
                     }
                     else
                     {
-                        Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
-                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+                        Trade.SendMessage("Items on my bp: " + MySteamInventory.Items.Count);
+                        foreach (GenericInventory.Item item in MySteamInventory.Items.Values)
                         {
                             Trade.AddItem(item);
                         }
@@ -168,10 +235,8 @@ namespace SteamBot
                 break;
 
                 case "remove":
-                    foreach (var item in mySteamInventory.items)
-                    {
-                        Trade.RemoveItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
-                    }
+                    Trade.RemoveAllItems();
+                    tested = false;
                 break;
             }
         }
@@ -187,9 +252,9 @@ namespace SteamBot
             }
             else
             {
-                if(Validate () | IsAdmin)
+                if (IsAdmin || Validate())
                 {
-                    Trade.SetReady (true);
+                    Trade.SetReady(true);
                 }
             }
         }
@@ -202,7 +267,7 @@ namespace SteamBot
 
         public override void OnTradeAccept() 
         {
-            if (Validate() | IsAdmin)
+            if (IsAdmin || Validate())
             {
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
@@ -220,7 +285,8 @@ namespace SteamBot
         public bool Validate ()
         {            
             List<string> errors = new List<string> ();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're an Admin.");
+            errors.Add("This demo is meant to show you how to load and handle Items.");
+            errors.Add("The trade cannot be completed, unless you're an Admin.");
 
             // send the errors
             if (errors.Count != 0)
@@ -233,7 +299,20 @@ namespace SteamBot
             
             return errors.Count == 0;
         }
-        
+
+        void InventoryLoaded(object sender, EventArgs args)
+        {
+            if (MySteamInventory.IsLoaded && OtherSteamInventory.IsLoaded && OtherDota2Inventory.IsLoaded)
+            {
+                Trade.SendMessage("Ready!, Type 'test' to start.");
+                ready = true;
+            }
+
+            if (MySteamInventory.Errors.Count > 0 || OtherSteamInventory.Errors.Count > 0 || OtherDota2Inventory.Errors.Count > 0)
+            {
+                Trade.SendMessage("Couldn't open Inventory, type 'errors' for more info.");
+            }
+        }
     }
  
 }

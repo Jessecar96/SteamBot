@@ -23,8 +23,6 @@ namespace SteamTrade
 
         // current bot's sid
         private readonly SteamID mySteamId;
-
-        private readonly Dictionary<int, ulong> steamMyOfferedItems;
         private readonly TradeSession session;
         private readonly Task<Inventory> myInventoryTask;
         private readonly Task<Inventory> otherInventoryTask;
@@ -41,9 +39,9 @@ namespace SteamTrade
 
             this.eventList = new List<TradeEvent>();
 
-            OtherOfferedItems = new List<ulong>();
-            steamMyOfferedItems = new Dictionary<int, ulong>();
-            MyOfferedItems = new List<ulong>();
+            OtherOfferedItems = new List<UserAsset>();
+            MyOfferedItems = new List<UserAsset>();
+            MyOfferedItemsBySlot = new Dictionary<int, UserAsset>();
 
             this.otherInventoryTask = otherInventoryTask;
             this.myInventoryTask = myInventoryTask;
@@ -98,20 +96,23 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Gets the items the user has offered, by itemid.
+        /// Gets the items the user has offered.
         /// </summary>
         /// <value>
         /// The other offered items.
         /// </value>
-        public List<ulong> OtherOfferedItems { get; private set; }
+        public List<UserAsset> OtherOfferedItems { get; private set; }
 
         /// <summary>
-        /// Gets the items the bot has offered, by itemid.
+        /// Gets the items the bot has offered.
         /// </summary>
         /// <value>
-        /// The bot offered items.
+        /// Bot offered items.
         /// </value>
-        public List<ulong> MyOfferedItems { get; private set; }
+        public List<UserAsset> MyOfferedItems { get; private set; }
+        
+        
+        public Dictionary<int, UserAsset> MyOfferedItemsBySlot { get; private set; }
 
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
@@ -236,26 +237,28 @@ namespace SteamTrade
         /// <returns><c>false</c> if the tf2 item was not found in the inventory.</returns>
         public bool AddItem(ulong itemid)
         {
-            if (MyInventory.GetItem(itemid) == null)
+            Inventory.Item item = MyInventory.GetItem(itemid);
+
+            if (item == null || item.IsNotTradeable)
             {
                 return false;
             }
             else
             {
-                return AddItem(new TradeUserAssets() { assetid = itemid, appid = 440, contextid = 2 });
+                return AddItem(item);
             }
         }
         public bool AddItem(ulong itemid, int appid, long contextid)
         {
-            return AddItem(new TradeUserAssets() { assetid = itemid, appid = appid, contextid = contextid });
+            return AddItem(new UserAsset() { Id = itemid, AppId = appid, ContextId = contextid });
         }
-        public bool AddItem(TradeUserAssets item)
+        public bool AddItem(UserAsset item)
         {
             var slot = NextTradeSlot();
-            bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid));
+            bool success = RetryWebRequest(() => session.AddItemWebCmd(item, slot));
 
             if (success)
-                steamMyOfferedItems[slot] = item.assetid;
+                MyOfferedItemsBySlot.Add(slot, item);
 
             return success;
         }
@@ -272,9 +275,9 @@ namespace SteamTrade
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !steamMyOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
+                if (item != null && !MyOfferedItems.Contains(item) && !item.IsNotTradeable)
                 {
-                    return AddItem(item.Id);
+                    return AddItem(item);
                 }
             }
             return false;
@@ -295,11 +298,9 @@ namespace SteamTrade
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !steamMyOfferedItems.ContainsValue(item.Id) && !item.IsNotTradeable)
+                if (!MyOfferedItems.Contains(item) && !item.IsNotTradeable)
                 {
-                    bool success = AddItem(item.Id);
-
-                    if (success)
+                    if (AddItem(item))
                         added++;
 
                     if (numToAdd > 0 && added >= numToAdd)
@@ -311,25 +312,33 @@ namespace SteamTrade
         }
 
 
-        public bool RemoveItem(TradeUserAssets item)
-        {
-            return RemoveItem(item.assetid, item.appid, item.contextid);
-        }
-
         /// <summary>
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem(ulong itemid, int appid = 440, long contextid = 2)
+        public bool RemoveItem(ulong itemid)//Default item
         {
-            int? slot = GetItemSlot(itemid);
+            Inventory.Item item = MyInventory.GetItem(itemid);
+
+            if (item == null || item.IsNotTradeable)
+                return false;
+            else
+                return RemoveItem(item);
+        }
+        public bool RemoveItem(ulong itemid, int appid, long contextid)
+        {
+            return RemoveItem(new UserAsset() { Id = itemid, AppId = appid, ContextId = contextid });
+        }
+        public bool RemoveItem(UserAsset item)
+        {
+            int? slot = GetItemSlot(item);
             if (!slot.HasValue)
                 return false;
 
-            bool success = RetryWebRequest(() => session.RemoveItemWebCmd(itemid, slot.Value, appid, contextid));
+            bool success = RetryWebRequest(() => session.RemoveItemWebCmd(item, slot.Value));
 
             if (success)
-                steamMyOfferedItems.Remove(slot.Value);
+                MyOfferedItemsBySlot.Remove(slot.Value);
 
             return success;
         }
@@ -342,12 +351,12 @@ namespace SteamTrade
         /// </returns>
         public bool RemoveItemByDefindex(int defindex)
         {
-            foreach (ulong id in steamMyOfferedItems.Values)
+            foreach (UserAsset offeredItem in MyOfferedItems)
             {
-                Inventory.Item item = MyInventory.GetItem(id);
+                Inventory.Item item = MyInventory.GetItem(offeredItem.Id);
                 if (item != null && item.Defindex == defindex)
                 {
-                    return RemoveItem(item.Id);
+                    return RemoveItem(item);
                 }
             }
             return false;
@@ -367,9 +376,9 @@ namespace SteamTrade
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && steamMyOfferedItems.ContainsValue(item.Id))
+                if (MyOfferedItems.Contains(item))
                 {
-                    bool success = RemoveItem(item.Id);
+                    bool success = RemoveItem(item);
 
                     if (success)
                         removed++;
@@ -389,17 +398,18 @@ namespace SteamTrade
         public uint RemoveAllItems()
         {
             uint numRemoved = 0;
+            List<UserAsset> offeredItems = new List<UserAsset>(MyOfferedItems);
 
-            foreach (var id in steamMyOfferedItems.Values.ToList())
+            foreach (UserAsset item in offeredItems)
             {
-                Inventory.Item item = MyInventory.GetItem(id);
-
-                if (item != null)
+                if (RemoveItem(item))
                 {
-                    bool wasRemoved = RemoveItem(item.Id);
-
-                    if (wasRemoved)
-                        numRemoved++;
+                    Console.WriteLine("Item removed");
+                    numRemoved++;
+                }
+                else
+                {
+                    Console.WriteLine("Couldn't remove item " + item.ToString());
                 }
             }
 
@@ -517,7 +527,13 @@ namespace SteamTrade
                     HasTradeCompletedOk = true;
                     return false;
 
-                // All other known values (3, 4) correspond to trades closing.
+                //Trade Closed
+                case 3:
+                case 4:
+                    OtherUserCancelled = true;
+                    return false;
+
+                // All other known values.
                 default:
                     FireOnErrorEvent("Trade was closed by other user. Trade status: " + status.trade_status);
                     OtherUserCancelled = true;
@@ -603,17 +619,8 @@ namespace SteamTrade
 
         private void HandleTradeVersionChange(TradeStatus status)
         {
-            CopyNewAssets(OtherOfferedItems, status.them.GetAssets());
-            CopyNewAssets(MyOfferedItems, status.me.GetAssets());
-        }
-
-        private void CopyNewAssets(List<ulong> dest, IEnumerable<TradeUserAssets> assetList)
-        {
-            if (assetList == null)
-                return;
-
-            dest.Clear();
-            dest.AddRange(assetList.Select(asset => asset.assetid));
+            OtherOfferedItems = new List<UserAsset>(status.them.GetAssets());
+            MyOfferedItems = new List<UserAsset>(status.me.GetAssets());
         }
 
         /// <summary>
@@ -624,14 +631,14 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserAddItem(TradeEvent tradeEvent)
         {
-            ulong itemID = tradeEvent.assetid;
-
             if (OtherInventory != null)
             {
-                Inventory.Item item = OtherInventory.GetItem(itemID);
+                Inventory.Item item = OtherInventory.GetItem(tradeEvent.Id);
+                Schema.Item schemaItem;
+
                 if (item != null)
                 {
-                    Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
+                    schemaItem = CurrentSchema.GetItem(item.Defindex);
                     if (schemaItem == null)
                     {
                         Console.WriteLine("User added an unknown item to the trade.");
@@ -643,9 +650,9 @@ namespace SteamTrade
                 {
                     item = new Inventory.Item
                     {
-                        Id = itemID,
-                        AppId = tradeEvent.appid,
-                        ContextId = tradeEvent.contextid
+                        Id = tradeEvent.Id,
+                        AppId = tradeEvent.AppId,
+                        ContextId = tradeEvent.ContextId
                     };
                     //Console.WriteLine("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
@@ -653,7 +660,7 @@ namespace SteamTrade
             }
             else
             {
-                var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
+                var schemaItem = GetItemFromPrivateBp(tradeEvent);
                 if (schemaItem == null)
                 {
                     Console.WriteLine("User added an unknown item to the trade.");
@@ -664,16 +671,16 @@ namespace SteamTrade
             }
         }
 
-        private Schema.Item GetItemFromPrivateBp(TradeEvent tradeEvent, ulong itemID)
+        private Schema.Item GetItemFromPrivateBp(TradeEvent tradeEvent)
         {
             if (OtherPrivateInventory == null)
             {
                 // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, tradeEvent.contextid, tradeEvent.appid);
+                var f = session.GetForiegnInventory(OtherSID, tradeEvent.ContextId, tradeEvent.AppId);
                 OtherPrivateInventory = new ForeignInventory(f);
             }
 
-            ushort defindex = OtherPrivateInventory.GetDefIndex(itemID);
+            ushort defindex = OtherPrivateInventory.GetDefIndex(tradeEvent.Id);
 
             Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
@@ -687,11 +694,9 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeEvent tradeEvent)
         {
-            ulong itemID = tradeEvent.assetid;
-
             if (OtherInventory != null)
             {
-                Inventory.Item item = OtherInventory.GetItem(itemID);
+                Inventory.Item item = OtherInventory.GetItem(tradeEvent.Id);
                 if (item != null)
                 {
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
@@ -707,16 +712,16 @@ namespace SteamTrade
                     // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
                     item = new Inventory.Item()
                     {
-                        Id = itemID,
-                        AppId = tradeEvent.appid,
-                        ContextId = tradeEvent.contextid
+                        Id = tradeEvent.Id,
+                        AppId = tradeEvent.AppId,
+                        ContextId = tradeEvent.ContextId
                     };
                     OnUserRemoveItem(null, item);
                 }
             }
             else
             {
-                var schemaItem = GetItemFromPrivateBp(tradeEvent, itemID);
+                var schemaItem = GetItemFromPrivateBp(tradeEvent);
                 if (schemaItem == null)
                 {
                     // TODO: Add log (counldn't find item in CurrentSchema)
@@ -753,36 +758,62 @@ namespace SteamTrade
         private int NextTradeSlot()
         {
             int slot = 0;
-            while (steamMyOfferedItems.ContainsKey(slot))
+            while (MyOfferedItemsBySlot.ContainsKey(slot))
             {
                 slot++;
             }
             return slot;
         }
 
-        private int? GetItemSlot(ulong itemid)
+        private int? GetItemSlot(UserAsset item)
         {
-            foreach (int slot in steamMyOfferedItems.Keys)
+            foreach (int slot in MyOfferedItemsBySlot.Keys)
             {
-                if (steamMyOfferedItems[slot] == itemid)
-                {
+                if (MyOfferedItemsBySlot[slot].Equals(item))
                     return slot;
-                }
             }
             return null;
         }
 
         private void ValidateLocalTradeItems()
         {
-            if (steamMyOfferedItems.Count != MyOfferedItems.Count)
+            if (MyOfferedItemsBySlot.Values.Count != MyOfferedItems.Count)
             {
                 throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
             }
 
-            if (steamMyOfferedItems.Values.Any(id => !MyOfferedItems.Contains(id)))
+            if (MyOfferedItemsBySlot.Values.Any(asset => !MyOfferedItems.Contains(asset)))
             {
                 throw new TradeException("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
             }
+
         }
+
+        public Inventory.Item GetFirstItem(int defindex)
+        {
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
+            foreach (Inventory.Item item in items)
+            {
+                if (!(MyOfferedItems.Contains(item) || item.IsNotTradeable))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        public Inventory.Item GetFirstOfferedItem(int defindex)
+        {
+            List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
+            foreach (Inventory.Item item in items)
+            {
+                if (MyOfferedItems.Contains(item))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
     }
 }
