@@ -25,10 +25,12 @@ namespace SteamTrade
         // current bot's sid
         private readonly SteamID mySteamId;
 
-        private readonly Dictionary<int, ulong> myOfferedItemsLocalCopy;
+        private readonly Dictionary<int, TradeUserAssets> myOfferedItemsLocalCopy;
         private readonly TradeSession session;
         private readonly Task<Inventory> myInventoryTask;
         private readonly Task<Inventory> otherInventoryTask;
+        private List<TradeUserAssets> myOfferedItems;
+        private List<TradeUserAssets> otherOfferedItems;
 
         internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
@@ -42,9 +44,9 @@ namespace SteamTrade
 
             this.eventList = new List<TradeEvent>();
 
-            OtherOfferedItems = new List<ulong>();
-            myOfferedItemsLocalCopy = new Dictionary<int, ulong>();
-            MyOfferedItems = new List<ulong>();
+            myOfferedItemsLocalCopy = new Dictionary<int, TradeUserAssets>();
+            otherOfferedItems = new List<TradeUserAssets>();
+            myOfferedItems = new List<TradeUserAssets>();
 
             this.otherInventoryTask = otherInventoryTask;
             this.myInventoryTask = myInventoryTask;
@@ -104,7 +106,9 @@ namespace SteamTrade
         /// <value>
         /// The other offered items.
         /// </value>
-        public List<ulong> OtherOfferedItems { get; private set; }
+        public IEnumerable<TradeUserAssets> OtherOfferedItems {
+            get { return otherOfferedItems; }
+        }
 
         /// <summary>
         /// Gets the items the bot has offered, by itemid.
@@ -112,7 +116,9 @@ namespace SteamTrade
         /// <value>
         /// The bot offered items.
         /// </value>
-        public List<ulong> MyOfferedItems { get; private set; }
+        public IEnumerable<TradeUserAssets> MyOfferedItems {
+            get { return myOfferedItems; }
+        }
 
         /// <summary>
         /// Gets a value indicating if the other user is ready to trade.
@@ -256,7 +262,7 @@ namespace SteamTrade
             bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid));
 
             if (success)
-                myOfferedItemsLocalCopy[slot] = item.assetid;
+                myOfferedItemsLocalCopy[slot] = item;
 
             return success;
         }
@@ -273,7 +279,7 @@ namespace SteamTrade
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !myOfferedItemsLocalCopy.ContainsValue(item.Id) && !item.IsNotTradeable)
+                if (item != null && myOfferedItemsLocalCopy.Values.All(o => o.assetid != item.Id) && !item.IsNotTradeable)
                 {
                     return AddItem(item.Id);
                 }
@@ -296,7 +302,7 @@ namespace SteamTrade
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && !myOfferedItemsLocalCopy.ContainsValue(item.Id) && !item.IsNotTradeable)
+                if (item != null && myOfferedItemsLocalCopy.Values.All(o => o.assetid != item.Id) && !item.IsNotTradeable)
                 {
                     bool success = AddItem(item.Id);
 
@@ -343,9 +349,9 @@ namespace SteamTrade
         /// </returns>
         public bool RemoveItemByDefindex(int defindex)
         {
-            foreach (ulong id in myOfferedItemsLocalCopy.Values)
+            foreach (TradeUserAssets asset in myOfferedItemsLocalCopy.Values)
             {
-                Inventory.Item item = MyInventory.GetItem(id);
+                Inventory.Item item = MyInventory.GetItem(asset.assetid);
                 if (item != null && item.Defindex == defindex)
                 {
                     return RemoveItem(item.Id);
@@ -368,7 +374,7 @@ namespace SteamTrade
 
             foreach (Inventory.Item item in items)
             {
-                if (item != null && myOfferedItemsLocalCopy.ContainsValue(item.Id))
+                if (item != null && myOfferedItemsLocalCopy.Values.Any(o => o.assetid == item.Id))
                 {
                     bool success = RemoveItem(item.Id);
 
@@ -391,9 +397,9 @@ namespace SteamTrade
         {
             uint numRemoved = 0;
 
-            foreach (var id in myOfferedItemsLocalCopy.Values.ToList())
+            foreach (TradeUserAssets asset in myOfferedItemsLocalCopy.Values.ToList())
             {
-                Inventory.Item item = MyInventory.GetItem(id);
+                Inventory.Item item = MyInventory.GetItem(asset.assetid);
 
                 if (item != null)
                 {
@@ -603,17 +609,8 @@ namespace SteamTrade
 
         private void HandleTradeVersionChange(TradeStatus status)
         {
-            CopyNewAssets(OtherOfferedItems, status.them.GetAssets());
-            CopyNewAssets(MyOfferedItems, status.me.GetAssets());
-        }
-
-        private void CopyNewAssets(List<ulong> dest, IEnumerable<TradeUserAssets> assetList)
-        {
-            if (assetList == null)
-                return;
-
-            dest.Clear();
-            dest.AddRange(assetList.Select(asset => asset.assetid));
+            otherOfferedItems = status.them.GetAssets().ToList();
+            myOfferedItems = status.me.GetAssets().ToList();
         }
 
         /// <summary>
@@ -757,7 +754,7 @@ namespace SteamTrade
         {
             foreach (int slot in myOfferedItemsLocalCopy.Keys)
             {
-                if (myOfferedItemsLocalCopy[slot] == itemid)
+                if (myOfferedItemsLocalCopy[slot].assetid == itemid)
                 {
                     return slot;
                 }
@@ -767,7 +764,7 @@ namespace SteamTrade
 
         private void ValidateLocalTradeItems()
         {
-            if (myOfferedItemsLocalCopy.Count != MyOfferedItems.Count)
+            if (myOfferedItemsLocalCopy.Count != MyOfferedItems.Count())
             {
                 throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
             }
