@@ -536,11 +536,8 @@ namespace SteamTrade
                     return false;
             }
 
-            if(status.newversion)
+            if (status.newversion)
             {
-                // handle item adding and removing
-                session.Version = status.version;
-
                 HandleTradeVersionChange(status);
                 return true;
             }
@@ -581,10 +578,11 @@ namespace SteamTrade
                 switch((TradeEventType) tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
-                        FireOnUserAddItem(new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid));
+                        //The ItemAdded and ItemRemoved events from Steam cannot be trusted.  See https://github.com/Jessecar96/SteamBot/issues/602
+                        //Instead, we now manually call FireOnUserAddItem/RemoveItem from HandleTradeVersionChange()
                         break;
                     case TradeEventType.ItemRemoved:
-                        FireOnUserRemoveItem(new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid));
+                        //Do nothing; see above comment
                         break;
                     case TradeEventType.UserSetReady:
                         OnUserSetReady(true);
@@ -615,8 +613,27 @@ namespace SteamTrade
 
         private void HandleTradeVersionChange(TradeStatus status)
         {
+            //Figure out which items have been added/removed
+            IEnumerable<TradeUserAssets> otherOfferedItemsUpdated = status.them.GetAssets();
+            IEnumerable<TradeUserAssets> addedItems = otherOfferedItemsUpdated.Except(otherOfferedItems).ToList();
+            IEnumerable<TradeUserAssets> removedItems = otherOfferedItems.Except(otherOfferedItemsUpdated).ToList();
+
+            //Copy of the new items and update the version number
             otherOfferedItems = status.them.GetAssets().ToList();
             myOfferedItems = status.me.GetAssets().ToList();
+            session.Version = status.version;
+
+            //Fire the OnUserRemoveItem events
+            foreach (TradeUserAssets asset in removedItems)
+            {
+                FireOnUserRemoveItem(asset);
+            }
+
+            //Fire the OnUserAddItem events
+            foreach (TradeUserAssets asset in addedItems)
+            {
+                FireOnUserAddItem(asset);
+            }
         }
 
         /// <summary>
@@ -770,14 +787,9 @@ namespace SteamTrade
 
         private void ValidateLocalTradeItems()
         {
-            if (myOfferedItemsLocalCopy.Count != MyOfferedItems.Count())
+            if (!myOfferedItemsLocalCopy.Values.OrderBy(o => o).SequenceEqual(MyOfferedItems.OrderBy(o => o)))
             {
-                throw new TradeException("Error validating local copy of items in the trade: Count mismatch");
-            }
-
-            if (myOfferedItemsLocalCopy.Values.Any(id => !MyOfferedItems.Contains(id)))
-            {
-                throw new TradeException("Error validating local copy of items in the trade: Item was not in the Steam Copy.");
+                throw new TradeException("Error validating local copy of offered items in the trade");
             }
         }
     }
