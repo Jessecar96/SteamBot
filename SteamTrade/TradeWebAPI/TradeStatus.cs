@@ -101,13 +101,7 @@ namespace SteamTrade.TradeWebAPI
             {
                 foreach (var asset in assets)
                 {
-                    tradeUserAssetses.Add(new TradeUserAssets()
-                    {
-                        amount = asset.amount,
-                        appid = asset.appid,
-                        assetid = asset.assetid,
-                        contextid = asset.contextid
-                    });
+                    tradeUserAssetses.Add(new TradeUserAssets((int)asset.appid, (long)asset.contextid, (ulong)asset.assetid, (int)asset.amount));
                 }
             }
             else if (assets.GetType() == typeof(JObject))
@@ -126,13 +120,7 @@ namespace SteamTrade.TradeWebAPI
                 foreach (JProperty obj in assets)
                 {
                     dynamic value = obj.Value;
-                    tradeUserAssetses.Add(new TradeUserAssets()
-                    {
-                        appid = value.appid,
-                        amount = value.amount,
-                        assetid = value.assetid,
-                        contextid = value.contextid
-                    });
+                    tradeUserAssetses.Add(new TradeUserAssets((int)value.appid, (long)value.contextid, (ulong)value.assetid, (int)value.amount));
                 }
             }
 
@@ -140,14 +128,51 @@ namespace SteamTrade.TradeWebAPI
         }
     }
 
-    public class TradeUserAssets
+    public class TradeUserAssets : IEquatable<TradeUserAssets>, IComparable<TradeUserAssets>
     {
         /// <summary>Iventory type</summary>
-        public long contextid { get; set; }
+        public long contextid { get; private set; }
         /// <summary>itemid</summary>
-        public ulong assetid { get; set; }
-        public int appid { get; set; }
-        public int amount = 1;
+        public ulong assetid { get; private set; }
+        public int appid { get; private set; }
+        public int amount { get; private set; }
+
+        public TradeUserAssets(int appid, long contextid, ulong assetid, int amount = 1)
+        {
+            this.appid = appid;
+            this.contextid = contextid;
+            this.assetid = assetid;
+            this.amount = amount;
+        }
+
+        public bool Equals(TradeUserAssets other)
+        {
+            return (CompareTo(other) == 0);
+        }
+
+        public override bool Equals(object other)
+        {
+            TradeUserAssets otherCasted = other as TradeUserAssets;
+            return (otherCasted != null && Equals(otherCasted));
+        }
+
+        public override int GetHashCode()
+        {
+            return contextid.GetHashCode() ^ assetid.GetHashCode() ^ appid.GetHashCode() ^ amount.GetHashCode();
+        }
+
+        public int CompareTo(TradeUserAssets other)
+        {
+            if(appid != other.appid)
+                return (appid < other.appid ? -1 : 1);
+            if(contextid != other.contextid)
+                return (contextid < other.contextid ? -1 : 1);
+            if(assetid != other.assetid)
+                return (assetid < other.assetid ? -1 : 1);
+            if(amount != other.amount)
+                return (amount < other.amount ? -1 : 1);
+            return 0;
+        }
 
         public override string ToString()
         {

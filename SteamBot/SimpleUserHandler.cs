@@ -1,6 +1,7 @@
 using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
+using SteamTrade.TradeWebAPI;
 
 namespace SteamBot
 {
@@ -113,9 +114,9 @@ namespace SteamBot
             
             List<string> errors = new List<string> ();
             
-            foreach (ulong id in Trade.OtherOfferedItems)
+            foreach (TradeUserAssets asset in Trade.OtherOfferedItems)
             {
-                var item = Trade.OtherInventory.GetItem (id);
+                var item = Trade.OtherInventory.GetItem(asset.assetid);
                 if (item.Defindex == 5000)
                     ScrapPutUp++;
                 else if (item.Defindex == 5001)

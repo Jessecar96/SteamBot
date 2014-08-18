@@ -56,7 +56,12 @@ namespace SteamTrade
 
         public class Item : TradeUserAssets
         {
-            public string descriptionid { get; set; }
+            public Item(int appid, long contextid, ulong assetid, string descriptionid, int amount = 1) : base(appid, contextid, assetid, amount)
+            {
+                this.descriptionid = descriptionid;
+            }
+
+            public string descriptionid { get; private set; }
 
             public override string  ToString()
             {
@@ -143,13 +148,8 @@ namespace SteamTrade
 
                         foreach (var itemId in item)
                         {
-                            _items.Add((ulong)itemId.id, new Item()
-                            {
-                                appid = appid,
-                                contextid = contextId,
-                                assetid = itemId.id,
-                                descriptionid = itemId.classid + "_" + itemId.instanceid
-                            });
+                            string descriptionid = itemId.classid + "_" + itemId.instanceid;
+                            _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
                             break;
                         }
                     }
