@@ -685,7 +685,7 @@ namespace SteamTrade
             if(OtherPrivateInventory == null)
             {
                 // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, asset.contextid, asset.appid);
+                var f = session.GetForeignInventory(OtherSID, asset.contextid, asset.appid);
                 OtherPrivateInventory = new ForeignInventory(f);
             }
 
