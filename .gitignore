@@ -19,6 +19,7 @@ Ankh.NoLoad
 #OS junk files
 [Tt]humbs.db
 *.DS_Store
+push.sh
 
 *.userprefs
 *.pidb
