@@ -108,7 +108,7 @@ namespace SteamTrade
                 r = rawJson.rgDescriptions[index].app_data.def_index;
                 return int.Parse(r);
             }
-            catch (Exception e)
+            catch
             {
                 return -1;
             }
