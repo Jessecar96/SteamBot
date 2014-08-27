@@ -41,9 +41,9 @@ namespace SteamTrade
                 case TradeStatusType.UnknownStatus:
                     return "CLOSED FOR UNKNOWN REASONS - WHAT CAUSES THIS STATUS!?";
                 case TradeStatusType.TradeCancelled:
-                    return "was cancelled " + (_tradeCancelledByBot ? "by bot" : "by other user");
+                    return "was cancelled " + (tradeCancelledByBot ? "by bot" : "by other user");
                 case TradeStatusType.SessionExpired:
-                    return String.Format("expired because {0} timed out", (_otherUserTimingOut ? "other user" : "bot"));
+                    return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
                 case TradeStatusType.TradeFailed:
                     return "failed unexpectedly";
                 default:
@@ -68,9 +68,9 @@ namespace SteamTrade
         private readonly Task<Inventory> otherInventoryTask;
         private List<TradeUserAssets> myOfferedItems;
         private List<TradeUserAssets> otherOfferedItems;
-        private bool _otherUserTimingOut;
-        private bool _tradeCancelledByBot;
-        private int _numUnknownStatusUpdates;
+        private bool otherUserTimingOut;
+        private bool tradeCancelledByBot;
+        private int numUnknownStatusUpdates;
 
         internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
@@ -238,7 +238,7 @@ namespace SteamTrade
         public event ErrorHandler OnError;
 
         /// <summary>
-        /// Specically for trade_status errors.
+        /// Specifically for trade_status errors.
         /// </summary>
         public event StatusErrorHandler OnStatusError;
 
@@ -282,7 +282,7 @@ namespace SteamTrade
         /// </summary>
         public bool CancelTrade()
         {
-            _tradeCancelledByBot = true;
+            tradeCancelledByBot = true;
             return RetryWebRequest(session.CancelTradeWebCmd);
         }
 
@@ -577,8 +577,8 @@ namespace SteamTrade
                 //On a status of 2, the Steam web code attempts the request two more times
                 //This is our attempt to do the same.  I (BlueRaja) personally don't think this will work, but we shall see...
                 case TradeStatusType.UnknownStatus:
-                    _numUnknownStatusUpdates++;
-                    if(_numUnknownStatusUpdates < 3)
+                    numUnknownStatusUpdates++;
+                    if(numUnknownStatusUpdates < 3)
                     {
                         return false;
                     }
@@ -616,7 +616,7 @@ namespace SteamTrade
                 OtherUserAccepted = status.them.confirmed == 1;
 
                 //Similar to the logic Steam uses to determine whether or not to show the "waiting" spinner in the trade window
-                _otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
+                otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
             }
 
             var events = status.GetAllEvents();
