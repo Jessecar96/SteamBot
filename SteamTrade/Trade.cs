@@ -642,7 +642,7 @@ namespace SteamTrade
         /// </summary>
         private void FireOnUserAddItem(TradeUserAssets asset)
         {
-            if(OtherInventory != null)
+            if(OtherInventory != null && !OtherInventory.IsPrivate)
             {
                 Inventory.Item item = OtherInventory.GetItem(asset.assetid);
                 if(item != null)
@@ -682,15 +682,18 @@ namespace SteamTrade
 
         private Schema.Item GetItemFromPrivateBp(TradeUserAssets asset)
         {
-            if(OtherPrivateInventory == null)
+            if (OtherPrivateInventory == null)
             {
-                // get the foreign inventory
-                var f = session.GetForeignInventory(OtherSID, asset.contextid, asset.appid);
-                OtherPrivateInventory = new ForeignInventory(f);
+                dynamic foreignInventory = session.GetForeignInventory(OtherSID, asset.contextid, asset.appid);
+                if (foreignInventory == null || foreignInventory.success == null || !foreignInventory.success.Value)
+                {
+                    return null;
+                }
+
+                OtherPrivateInventory = new ForeignInventory(foreignInventory);
             }
 
             ushort defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
-
             Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
         }
