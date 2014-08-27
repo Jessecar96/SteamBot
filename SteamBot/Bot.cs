@@ -474,7 +474,7 @@ namespace SteamBot
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
                                          callback.Message
                                          ));
-                    GetUserHandler(callback.Sender).OnMessage(callback.Message, type);
+                    GetUserHandler(callback.Sender).OnMessageHandler(callback.Message, type);
                 }
             });
             #endregion
@@ -677,7 +677,7 @@ namespace SteamBot
             trade.OnAfterInit += handler.OnTradeInit;
             trade.OnUserAddItem += handler.OnTradeAddItem;
             trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
-            trade.OnMessage += handler.OnTradeMessage;
+            trade.OnMessage += handler.OnTradeMessageHandler;
             trade.OnUserSetReady += handler.OnTradeReadyHandler;
             trade.OnUserAccept += handler.OnTradeAcceptHandler;
         }
@@ -694,7 +694,7 @@ namespace SteamBot
             trade.OnAfterInit -= handler.OnTradeInit;
             trade.OnUserAddItem -= handler.OnTradeAddItem;
             trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
-            trade.OnMessage -= handler.OnTradeMessage;
+            trade.OnMessage -= handler.OnTradeMessageHandler;
             trade.OnUserSetReady -= handler.OnTradeReadyHandler;
             trade.OnUserAccept -= handler.OnTradeAcceptHandler;
         }
