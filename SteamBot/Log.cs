@@ -24,16 +24,18 @@ namespace SteamBot
         protected StreamWriter _FileStream;
         protected string _botName;
         public LogLevel OutputLevel;
+        public LogLevel FileLogLevel;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
         public bool ShowBotName { get; set; }
 
-        public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
+        public Log(string logFile, string botName = "", LogLevel consoleLogLevel = LogLevel.Info, LogLevel fileLogLevel = LogLevel.Debug)
         {
             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
             _FileStream = File.AppendText (Path.Combine("logs",logFile));
             _FileStream.AutoFlush = true;
             _botName = botName;
-            OutputLevel = output;
+            OutputLevel = consoleLogLevel;
+            FileLogLevel = fileLogLevel;
             Console.ForegroundColor = DefaultConsoleColor;
             ShowBotName = true;
         }
@@ -85,9 +87,6 @@ namespace SteamBot
         // applicable.
         protected void _OutputLine(LogLevel level, string line, params object[] formatParams)
         {
-            if(level < OutputLevel)
-                return;
-
             string formattedString = String.Format(
                 "[{0}{1}] {2}: {3}",
                 GetLogBotName(),
@@ -95,8 +94,14 @@ namespace SteamBot
                 _LogLevel(level).ToUpper(), (formatParams != null && formatParams.Any() ? String.Format(line, formatParams) : line)
                 );
 
-            _FileStream.WriteLine(formattedString);
-            _OutputLineToConsole(level, formattedString);
+            if(level >= FileLogLevel)
+            {
+                _FileStream.WriteLine(formattedString);
+            }
+            if(level >= OutputLevel)
+            {
+                _OutputLineToConsole(level, formattedString);
+            }
         }
 
         private string GetLogBotName()
