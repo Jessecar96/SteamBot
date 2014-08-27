@@ -693,7 +693,7 @@ namespace SteamTrade
                 OtherPrivateInventory = new ForeignInventory(foreignInventory);
             }
 
-            ushort defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
+            int defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
             Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
         }

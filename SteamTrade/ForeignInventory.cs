@@ -90,8 +90,8 @@ namespace SteamTrade
         /// Gets the defindex for a given Item ID.
         /// </summary>
         /// <param name="itemId">The item id.</param>
-        /// <returns>A defindex or 0 if there is an error.</returns>
-        public ushort GetDefIndex(ulong itemId)
+        /// <returns>A defindex or -1 if there is an error.</returns>
+        public int GetDefIndex(ulong itemId)
         {
             uint classId = GetClassIdForItemId(itemId);
             ulong iid = GetInstanceIdForItemId(itemId);
@@ -106,14 +106,12 @@ namespace SteamTrade
                 // descriptions object. this may not be the case for all
                 // games and therefore this may be non-portable.
                 r = rawJson.rgDescriptions[index].app_data.def_index;
+                return int.Parse(r);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                return 0;
+                return -1;
             }
-
-            return ushort.Parse(r);
         }
     }
 }
