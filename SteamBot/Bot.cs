@@ -50,12 +50,15 @@ namespace SteamBot
         public UserHandlerCreator CreateHandler;
         Dictionary<ulong, UserHandler> userHandlers = new Dictionary<ulong, UserHandler>();
 
-        private readonly List<SteamID> friends = new List<SteamID>();
-        public IEnumerable<SteamID> FriendsList { get { return friends; } }
-
-        // List of Steam groups the bot is in.
-        private readonly List<SteamID> groups = new List<SteamID>();
-        public IEnumerable<SteamID> GroupsList { get { return groups; } } 
+        private List<SteamID> friends;
+        public IEnumerable<SteamID> FriendsList
+        {
+            get
+            {
+                CreateFriendsListIfNecessary();
+                return friends;
+            }
+        }
 
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
@@ -146,6 +149,18 @@ namespace SteamBot
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
             backgroundWorker.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
             backgroundWorker.RunWorkerAsync();
+        }
+
+        private void CreateFriendsListIfNecessary()
+        {
+            if(friends != null)
+                return;
+
+            friends = new List<SteamID>();
+            for(int i = 0; i < SteamFriends.GetFriendCount(); i++)
+            {
+                friends.Add(SteamFriends.GetFriendByIndex(i));
+            }
         }
 
         /// <summary>
@@ -416,11 +431,9 @@ namespace SteamBot
             {
                 foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
                 {
-                    if (friend.SteamID.AccountType == EAccountType.Clan)
+                    switch(friend.SteamID.AccountType)
                     {
-                        if (!groups.Contains(friend.SteamID))
-                        {
-                            groups.Add(friend.SteamID);
+                        case EAccountType.Clan:
                             if (friend.Relationship == EFriendRelationship.RequestRecipient)
                             {
                                 if (GetUserHandler(friend.SteamID).OnGroupAdd())
@@ -432,35 +445,25 @@ namespace SteamBot
                                     DeclineGroupInvite(friend.SteamID);
                                 }
                             }
-                        }
-                        else
-                        {
-                            if (friend.Relationship == EFriendRelationship.None)
-                            {
-                                groups.Remove(friend.SteamID);
-                            }
-                        }
-                    }
-                    else if (friend.SteamID.AccountType != EAccountType.Clan)
-                    {
-                        if (!friends.Contains(friend.SteamID))
-                        {
-                            friends.Add(friend.SteamID);
-                            if (friend.Relationship == EFriendRelationship.RequestRecipient &&
-                                GetUserHandler(friend.SteamID).OnFriendAdd())
-                            {
-                                SteamFriends.AddFriend(friend.SteamID);
-                            }
-                        }
-                        else
-                        {
+                            break;
+                        default:
+                            CreateFriendsListIfNecessary();
                             if (friend.Relationship == EFriendRelationship.None)
                             {
                                 friends.Remove(friend.SteamID);
                                 GetUserHandler(friend.SteamID).OnFriendRemove();
                                 RemoveUserHandler(friend.SteamID);
                             }
-                        }
+                            else if (!friends.Contains(friend.SteamID))
+                            {
+                                if (friend.Relationship == EFriendRelationship.RequestRecipient &&
+                                    GetUserHandler(friend.SteamID).OnFriendAdd())
+                                {
+                                    friends.Add(friend.SteamID);
+                                    SteamFriends.AddFriend(friend.SteamID);
+                                }
+                            }
+                            break;
                     }
                 }
             });
