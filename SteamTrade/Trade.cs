@@ -614,6 +614,9 @@ namespace SteamTrade
                 OtherIsReady = status.them.ready == 1;
                 MeIsReady = status.me.ready == 1;
                 OtherUserAccepted = status.them.confirmed == 1;
+
+                //Similar to the logic Steam uses to determine whether or not to show the "waiting" spinner in the trade window
+                _otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
             }
 
             var events = status.GetAllEvents();
