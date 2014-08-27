@@ -8,7 +8,7 @@ using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
 {
-    
+
     /// <summary>
     /// Generic Steam Backpack Interface
     /// </summary>
@@ -18,7 +18,7 @@ namespace SteamTrade
         {
             get
             {
-                if(_loadTask == null)
+                if (_loadTask == null)
                     return null;
                 _loadTask.Wait();
                 return _items;
@@ -29,7 +29,7 @@ namespace SteamTrade
         {
             get
             {
-                if(_loadTask == null)
+                if (_loadTask == null)
                     return null;
                 _loadTask.Wait();
                 return _descriptions;
@@ -40,7 +40,7 @@ namespace SteamTrade
         {
             get
             {
-                if(_loadTask == null)
+                if (_loadTask == null)
                     return null;
                 _loadTask.Wait();
                 return _errors;
@@ -63,7 +63,7 @@ namespace SteamTrade
 
             public string descriptionid { get; private set; }
 
-            public override string  ToString()
+            public override string ToString()
             {
                 return string.Format("id:{0}, appid:{1}, contextid:{2}, amount:{3}, descriptionid:{4}",
                     assetid, appid, contextid, amount, descriptionid);
@@ -76,12 +76,14 @@ namespace SteamTrade
             public string type { get; set; }
             public bool tradable { get; set; }
             public bool marketable { get; set; }
+            public string url { get; set; }
+            public long classid { get; set; }
 
-            public Dictionary<string, string> app_data{ get; set; }
+            public Dictionary<string, string> app_data { get; set; }
 
             public void debug_app_data()
             {
-                Console.WriteLine("\n\""+name+"\"");
+                Console.WriteLine("\n\"" + name + "\"");
                 if (app_data == null)
                 {
                     Console.WriteLine("Doesn't have app_data");
@@ -90,7 +92,7 @@ namespace SteamTrade
 
                 foreach (var value in app_data)
                 {
-                    Console.WriteLine(string.Format("{0} = {1}",value.Key,value.Value));
+                    Console.WriteLine(string.Format("{0} = {1}", value.Key, value.Value));
                 }
                 Console.WriteLine("");
             }
@@ -98,7 +100,7 @@ namespace SteamTrade
 
         public ItemDescription getDescription(ulong id)
         {
-            if(_loadTask == null)
+            if (_loadTask == null)
                 return null;
             _loadTask.Wait();
 
@@ -108,7 +110,7 @@ namespace SteamTrade
             }
             catch (Exception e)
             {
-                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}",id,e.Message));
+                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}", id, e.ToString()));
                 return null;
             }
         }
@@ -131,7 +133,7 @@ namespace SteamTrade
 
             try
             {
-                foreach(long contextId in contextIds)
+                foreach (long contextId in contextIds)
                 {
                     string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, null, true);
                     invResponse = JsonConvert.DeserializeObject(response);
@@ -164,28 +166,30 @@ namespace SteamTrade
                                 tmpAppData = new Dictionary<string, string>();
                                 foreach (var value in class_instance.app_data)
                                 {
-                                    tmpAppData.Add(""+value.Name,""+value.Value);
+                                    tmpAppData.Add("" + value.Name, "" + value.Value);
                                 }
                             }
                             else
                             {
-                                tmpAppData= null;
+                                tmpAppData = null;
                             }
 
-                            _descriptions.Add("" + (class_instance.classid??'0') + "_" + (class_instance.instanceid??'0'), 
+                            _descriptions.Add("" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0'),
                                 new ItemDescription()
-                                    {
-                                        name = class_instance.name,
-                                        type = class_instance.type,
-                                        marketable = (bool) class_instance.marketable,
-                                        tradable = (bool)class_instance.tradable,
-                                        app_data = tmpAppData
-                                    }
+                                {
+                                    name = class_instance.name,
+                                    type = class_instance.type,
+                                    marketable = (bool)class_instance.marketable,
+                                    tradable = (bool)class_instance.tradable,
+                                    classid = long.Parse((string)class_instance.classid),
+                                    url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
+                                    app_data = tmpAppData
+                                }
                             );
                             break;
                         }
                     }
-                    
+
                 }//end for (contextId)
             }//end try
             catch (Exception e)
