@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
@@ -158,6 +159,14 @@ namespace SteamBot
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 
         public abstract void OnTradeError (string error);
+
+        public virtual void OnStatusError(Trade.TradeStatusType status)
+        {
+            string otherUserName = Bot.SteamFriends.GetFriendPersonaName(OtherSID);
+            string statusMessage = (Trade != null ? Trade.GetTradeStatusErrorString(status) : "died a horrible death");
+            string errorMessage = String.Format("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64(), statusMessage);
+            OnTradeError(errorMessage);
+        }
 
         public abstract void OnTradeTimeout ();
 

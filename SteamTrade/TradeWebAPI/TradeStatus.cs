@@ -79,6 +79,8 @@ namespace SteamTrade.TradeWebAPI
 
         public int sec_since_touch { get; set; }
 
+        public bool connection_pending { get; set; }
+
         public dynamic assets { get; set; }
 
         /// <summary>
