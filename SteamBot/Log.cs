@@ -22,18 +22,20 @@ namespace SteamBot
 
 
         protected StreamWriter _FileStream;
-        protected string _Bot;
+        protected string _botName;
         public LogLevel OutputLevel;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
+        public bool ShowBotName { get; set; }
 
         public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
         {
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
-            _FileStream = File.AppendText (System.IO.Path.Combine("logs",logFile));
+            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
+            _FileStream = File.AppendText (Path.Combine("logs",logFile));
             _FileStream.AutoFlush = true;
-            _Bot = botName;
+            _botName = botName;
             OutputLevel = output;
             Console.ForegroundColor = DefaultConsoleColor;
+            ShowBotName = true;
         }
 
         public void Dispose()
@@ -88,13 +90,26 @@ namespace SteamBot
 
             string formattedString = String.Format(
                 "[{0} {1}] {2}: {3}",
-                (_Bot ?? "(System)"),
+                GetLogBotName(),
                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 _LogLevel(level).ToUpper(), (formatParams != null && formatParams.Any() ? String.Format(line, formatParams) : line)
                 );
 
             _FileStream.WriteLine(formattedString);
             _OutputLineToConsole(level, formattedString);
+        }
+
+        private string GetLogBotName()
+        {
+            if(_botName == null)
+            {
+                return "(System)";
+            }
+            else if(ShowBotName)
+            {
+                return _botName;
+            }
+            return "";
         }
 
         // Outputs a line to the console, with the correct color
