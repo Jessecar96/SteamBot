@@ -98,6 +98,10 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Returns information (such as item name, etc) about the given item.
+        /// This call can fail, usually when the user's inventory is private.
+        /// </summary>
         public ItemDescription getDescription(ulong id)
         {
             if (_loadTask == null)
@@ -108,9 +112,8 @@ namespace SteamTrade
             {
                 return _descriptions[_items[id].descriptionid];
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(string.Format("ERROR: getDescription({0}) >> {1}", id, e.ToString()));
                 return null;
             }
         }
