@@ -354,7 +354,11 @@ namespace SteamTrade
             }
             else if (untilActionTimeout <= 20 && secsSinceLastTimeoutMessage >= 10)
             {
-                trade.SendMessage ("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                try
+                {
+                    trade.SendMessage("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                }
+                catch { }
                 lastTimeoutMessage = now;
             }
             return false;

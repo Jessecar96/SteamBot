@@ -36,7 +36,7 @@ namespace SteamBot
         
         public override void OnMessage (string message, EChatEntryType type) 
         {
-            Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
+            SendChatMessage(Bot.ChatResponse);
         }
 
         public override bool OnTradeRequest() 
@@ -46,18 +46,13 @@ namespace SteamBot
         
         public override void OnTradeError (string error) 
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
-                                              EChatEntryType.ChatMsg,
-                                              "Oh, there was an error: " + error + "."
-                                              );
+            SendChatMessage("Oh, there was an error: {0}.", error);
             Bot.log.Warn (error);
-
         }
         
         public override void OnTradeTimeout () 
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, EChatEntryType.ChatMsg,
-                                              "Sorry, but you were AFK and the trade was canceled.");
+            SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
             Bot.log.Info ("User was kicked because he was AFK.");
         }
         
@@ -85,37 +80,37 @@ namespace SteamBot
 
             if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
             {
-                Trade.SendMessage("Couldn't open an inventory, type 'errors' for more info.");
+                SendTradeMessage("Couldn't open an inventory, type 'errors' for more info.");
             }
 
-            Trade.SendMessage("Type 'test' to start.");
+            SendTradeMessage("Type 'test' to start.");
             // -----------------------------------------------------------------------------------
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
             // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
-            Trade.SendMessage("Object AppID: " + inventoryItem.AppId);
-            Trade.SendMessage("Object ContextId: " + inventoryItem.ContextId);
+            SendTradeMessage("Object AppID: {0}", inventoryItem.AppId);
+            SendTradeMessage("Object ContextId: {0}", inventoryItem.ContextId);
 
             switch (inventoryItem.AppId)
             {
                 case 440:
-                    Trade.SendMessage("TF2 Item Added.");
-                    Trade.SendMessage("Name: " + schemaItem.Name);
-                    Trade.SendMessage("Quality: " + inventoryItem.Quality);
-                    Trade.SendMessage("Level: " + inventoryItem.Level);
-                    Trade.SendMessage("Craftable: " + (inventoryItem.IsNotCraftable?"No":"Yes"));
+                    SendTradeMessage("TF2 Item Added.");
+                    SendTradeMessage("Name: {0}", schemaItem.Name);
+                    SendTradeMessage("Quality: {0}", inventoryItem.Quality);
+                    SendTradeMessage("Level: {0}", inventoryItem.Level);
+                    SendTradeMessage("Craftable: {0}", (inventoryItem.IsNotCraftable ? "No" : "Yes"));
                     break;
 
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
-                    Trade.SendMessage("Steam Inventory Item Added.");
-                    Trade.SendMessage("Type: " + tmpDescription.type);
-                    Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
+                    SendTradeMessage("Steam Inventory Item Added.");
+                    SendTradeMessage("Type: {0}", tmpDescription.type);
+                    SendTradeMessage("Marketable: {0}", (tmpDescription.marketable ? "Yes" : "No"));
                     break;
 
                 default:
-                    Trade.SendMessage("Unknown item");
+                    SendTradeMessage("Unknown item");
                     break;
             }
             // ------------------------------------------------------------------------------------------------------
@@ -129,19 +124,19 @@ namespace SteamBot
                 case "errors":
                     if (OtherSteamInventory.errors.Count > 0)
                     {
-                        Trade.SendMessage("User Errors:");
+                        SendTradeMessage("User Errors:");
                         foreach (string error in OtherSteamInventory.errors)
                         {
-                            Trade.SendMessage(" * " + error);
+                            SendTradeMessage(" * {0}", error);
                         }
                     }
 
                     if (mySteamInventory.errors.Count > 0)
                     {
-                        Trade.SendMessage("Bot Errors:");
+                        SendTradeMessage("Bot Errors:");
                         foreach (string error in mySteamInventory.errors)
                         {
-                            Trade.SendMessage(" * " + error);
+                            SendTradeMessage(" * {0}", error);
                         }
                     }
                 break;
@@ -156,7 +151,7 @@ namespace SteamBot
                     }
                     else
                     {
-                        Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
+                        SendTradeMessage("Items on my bp: {0}", mySteamInventory.items.Count);
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
                             Trade.AddItem(item);
@@ -224,11 +219,11 @@ namespace SteamBot
 
             // send the errors
             if (errors.Count != 0)
-                Trade.SendMessage("There were errors in your trade: ");
+                SendTradeMessage("There were errors in your trade: ");
 
             foreach (string error in errors)
             {
-                Trade.SendMessage(error);
+                SendTradeMessage(error);
             }
             
             return errors.Count == 0;
