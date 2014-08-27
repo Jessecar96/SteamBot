@@ -70,6 +70,7 @@ namespace SteamTrade
         private List<TradeUserAssets> otherOfferedItems;
         private bool _otherUserTimingOut;
         private bool _tradeCancelledByBot;
+        private int _numUnknownStatusUpdates;
 
         internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
@@ -572,6 +573,16 @@ namespace SteamTrade
                 case TradeStatusType.CompletedSuccessfully:
                     HasTradeCompletedOk = true;
                     return false;
+
+                //On a status of 2, the Steam web code attempts the request two more times
+                //This is our attempt to do the same.  I (BlueRaja) personally don't think this will work, but we shall see...
+                case TradeStatusType.UnknownStatus:
+                    _numUnknownStatusUpdates++;
+                    if(_numUnknownStatusUpdates < 3)
+                    {
+                        return false;
+                    }
+                    break;
             }
 
             FireOnStatusErrorEvent(tradeStatusType);
