@@ -1,11 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 
 namespace SteamBot
 {
     public class Log : IDisposable
     {
-
         public enum LogLevel
         {
             Debug,
@@ -23,7 +23,7 @@ namespace SteamBot
 
         protected StreamWriter _FileStream;
         protected string _Bot;
-        public LogLevel OutputToConsole;
+        public LogLevel OutputLevel;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
 
         public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
@@ -32,7 +32,7 @@ namespace SteamBot
             _FileStream = File.AppendText (System.IO.Path.Combine("logs",logFile));
             _FileStream.AutoFlush = true;
             _Bot = botName;
-            OutputToConsole = output;
+            OutputLevel = output;
             Console.ForegroundColor = DefaultConsoleColor;
         }
 
@@ -42,56 +42,59 @@ namespace SteamBot
         }
 
         // This outputs a log entry of the level info.
-        public void Info (string data)
+        public void Info(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Info, data);
+            _OutputLine(LogLevel.Info, data, formatParams);
         }
 
         // This outputs a log entry of the level debug.
-        public void Debug (string data)
+        public void Debug(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Debug, data);
+            _OutputLine(LogLevel.Debug, data, formatParams);
         }
 
         // This outputs a log entry of the level success.
-        public void Success (string data)
+        public void Success(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Success, data);
+            _OutputLine(LogLevel.Success, data, formatParams);
         }
 
         // This outputs a log entry of the level warn.
-        public void Warn (string data)
+        public void Warn(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Warn, data);
+            _OutputLine(LogLevel.Warn, data, formatParams);
         }
 
         // This outputs a log entry of the level error.
-        public void Error (string data)
+        public void Error(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Error, data);
+            _OutputLine(LogLevel.Error, data, formatParams);
         }
 
         // This outputs a log entry of the level interface;
         // normally, this means that some sort of user interaction
         // is required.
-        public void Interface (string data)
+        public void Interface(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Interface, data);
+            _OutputLine(LogLevel.Interface, data, formatParams);
         }
 
         // Outputs a line to both the log and the console, if
         // applicable.
-        protected void _OutputLine (LogLevel level, string line)
+        protected void _OutputLine(LogLevel level, string line, params object[] formatParams)
         {
-            string formattedString = String.Format (
+            if(level < OutputLevel)
+                return;
+
+            string formattedString = String.Format(
                 "[{0} {1}] {2}: {3}",
-                (_Bot == null ? "(System)" : _Bot),
-                DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss"),
-                _LogLevel (level).ToUpper (), line
+                (_Bot ?? "(System)"),
+                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                _LogLevel(level).ToUpper(), (formatParams != null && formatParams.Any() ? String.Format(line, formatParams) : line)
                 );
-            _FileStream.WriteLine (formattedString);
-            if (level >= OutputToConsole)
-                _OutputLineToConsole (level, formattedString);
+
+            _FileStream.WriteLine(formattedString);
+            _OutputLineToConsole(level, formattedString);
         }
 
         // Outputs a line to the console, with the correct color
