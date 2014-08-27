@@ -89,7 +89,7 @@ namespace SteamBot
                 return;
 
             string formattedString = String.Format(
-                "[{0} {1}] {2}: {3}",
+                "[{0}{1}] {2}: {3}",
                 GetLogBotName(),
                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 _LogLevel(level).ToUpper(), (formatParams != null && formatParams.Any() ? String.Format(line, formatParams) : line)
@@ -103,11 +103,11 @@ namespace SteamBot
         {
             if(_botName == null)
             {
-                return "(System)";
+                return "(System) ";
             }
             else if(ShowBotName)
             {
-                return _botName;
+                return _botName + " ";
             }
             return "";
         }
