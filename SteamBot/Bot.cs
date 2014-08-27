@@ -50,10 +50,12 @@ namespace SteamBot
         public UserHandlerCreator CreateHandler;
         Dictionary<ulong, UserHandler> userHandlers = new Dictionary<ulong, UserHandler>();
 
-        List<SteamID> friends = new List<SteamID>();
+        private readonly List<SteamID> friends = new List<SteamID>();
+        public IEnumerable<SteamID> FriendsList { get { return friends; } }
 
         // List of Steam groups the bot is in.
         private readonly List<SteamID> groups = new List<SteamID>();
+        public IEnumerable<SteamID> GroupsList { get { return groups; } } 
 
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
