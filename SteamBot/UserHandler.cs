@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
+using SteamBot.Commands;
 
 namespace SteamBot
 {
@@ -13,6 +14,7 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
+		protected static CommandHandler handler = null;
         private Task<Inventory> otherInventoryTask;
 
         public UserHandler (Bot bot, SteamID sid)
@@ -20,6 +22,8 @@ namespace SteamBot
             Bot = bot;
             OtherSID = sid;
             GetOtherInventory();
+			if (handler == null)
+				handler = new CommandHandler();
         }
 
         /// <summary>
@@ -109,7 +113,10 @@ namespace SteamBot
         /// Called whenever a message is sent to the bot.
         /// This is limited to regular and emote messages.
         /// </summary>
-        public abstract void OnMessage (string message, EChatEntryType type);
+        public virtual void OnMessage (string message, EChatEntryType type)
+		{
+			handler.OnMessage(message, Bot, OtherSID, false);
+		}
 
         /// <summary>
         /// Called when the bot is fully logged in.
@@ -175,7 +182,10 @@ namespace SteamBot
 
         public abstract void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public abstract void OnTradeMessage (string message);
+		public virtual void OnTradeMessage(string message)
+		{
+			handler.OnMessage(message, Bot, OtherSID, true);
+		}
 
         public void OnTradeReadyHandler(bool ready)
         {
