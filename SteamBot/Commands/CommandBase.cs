@@ -150,7 +150,7 @@ namespace SteamBot.Commands
 		/// </summary>
 		/// <param name="cParams">a reference to the parameters for command.</param>
 		/// <returns>True if command can be successfully used.</returns>
-		public abstract bool OnCommand(ref CommandParams cParams);
+		public abstract bool OnCommand(CommandParams cParams);
 
 		/// <summary>
 		/// Name of command.

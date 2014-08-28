@@ -17,7 +17,7 @@ namespace SteamBot.Commands
 			cmdType = CommandType.TypeBoth;
 		}
 
-		public override bool OnCommand(ref CommandParams cParams)
+		public override bool OnCommand(CommandParams cParams)
 		{
 			if (cParams.handler.Cmds.Count <= 0)
 			{

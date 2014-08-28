@@ -89,7 +89,7 @@ namespace SteamBot.Commands
 						args[i - 1] = splitMSG[i];
 					}
 					CommandParams cParams = new CommandParams(this, user, isTrade, isAdmin, args);
-					if (!cmd.OnCommand(ref cParams))
+					if (!cmd.OnCommand(cParams))
 						ReplyToCommand(isTrade, theBot, user, "The following errors occurred when proccessing a command:");
 					foreach (string msg in cParams.reply)
 					{
