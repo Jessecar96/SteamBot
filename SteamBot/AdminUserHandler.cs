@@ -2,6 +2,7 @@
 using SteamKit2;
 using SteamTrade;
 using System.Collections.Generic;
+using SteamBot.Commands;
 
 namespace SteamBot
 {
@@ -20,6 +21,11 @@ namespace SteamBot
         private const string HelpCmd = "help";
 
         public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) {}
+        
+        private void StockBotFunc(SteamID otherSID)
+		{
+			Bot.OpenTrade(otherSID);
+		}
 
         #region Overrides of UserHandler
 
@@ -28,6 +34,8 @@ namespace SteamBot
         /// </summary>
         public override void OnLoginCompleted()
         {
+        	if (handler != null)
+        		handler.AddCommand(new StockBotCommand(StockBotFunc));
         }
 
         /// <summary>
@@ -69,7 +77,7 @@ namespace SteamBot
         /// </summary>
         public override void OnMessage(string message, EChatEntryType type)
         {
-            // TODO: magic command system
+            base.OnMessage(message, type);
         }
 
         /// <summary>
@@ -114,6 +122,7 @@ namespace SteamBot
         public override void OnTradeMessage(string message)
         {
             ProcessTradeMessage(message);
+            base.OnTradeMessage();
         }
 
         public override void OnTradeReady(bool ready)
