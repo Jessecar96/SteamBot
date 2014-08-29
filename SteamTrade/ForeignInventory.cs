@@ -58,9 +58,8 @@ namespace SteamTrade
             {
                 return rawJson.rgInventory[i].classid;
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e);
                 return 0;    
             }
         }
@@ -78,9 +77,8 @@ namespace SteamTrade
             {
                 return rawJson.rgInventory[i].instanceid;
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e);
                 return 0;
             }
         }
@@ -93,20 +91,22 @@ namespace SteamTrade
         /// <returns>A defindex or -1 if there is an error.</returns>
         public int GetDefIndex(ulong itemId)
         {
-            uint classId = GetClassIdForItemId(itemId);
-            ulong iid = GetInstanceIdForItemId(itemId);
-
-            string index = classId + "_" + iid;
-
-            string r;
-
             try
             {
+                uint classId = GetClassIdForItemId(itemId);
+                ulong iid = GetInstanceIdForItemId(itemId);
+
+                if (classId == 0 || iid == 0)
+                {
+                    return -1;
+                }
+
                 // for tf2 the def index is in the app_data section in the 
                 // descriptions object. this may not be the case for all
                 // games and therefore this may be non-portable.
-                r = rawJson.rgDescriptions[index].app_data.def_index;
-                return int.Parse(r);
+                string index = classId + "_" + iid;
+                string defIndex = rawJson.rgDescriptions[index].app_data.def_index;
+                return int.Parse(defIndex);
             }
             catch
             {
