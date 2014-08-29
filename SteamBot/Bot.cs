@@ -454,7 +454,7 @@ namespace SteamBot
                                 GetUserHandler(friend.SteamID).OnFriendRemove();
                                 RemoveUserHandler(friend.SteamID);
                             }
-                            else if (friend.Relationship == EFriendRelationship.RequestRecipient)
+                            else if (friend.Relationship == EFriendRelationship.RequestRecipient && !friends.Contains(friend.SteamID))
                             {
                                 if (GetUserHandler(friend.SteamID).OnFriendAdd())
                                 {
@@ -464,6 +464,7 @@ namespace SteamBot
                                 else
                                 {
                                     SteamFriends.RemoveFriend(friend.SteamID);
+                                    RemoveUserHandler(friend.SteamID);
                                 }
                             }
                             break;
