@@ -20,7 +20,7 @@ namespace SteamBot
         public string BotControlClass;
         // If the bot is logged in fully or not.  This is only set
         // when it is.
-        public bool IsLoggedIn = false;
+        public bool IsLoggedIn { get; private set; }
 
         // The bot's display name.  Changing this does not mean that
         // the bot's name will change.
@@ -363,25 +363,22 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
             {
-                while (true)
+                while (!IsLoggedIn)
                 {
-                    bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token, MyLoginKey);
+                    IsLoggedIn = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token, MyLoginKey);
 
-                    if (authd)
-                    {
-                        log.Success ("User Authenticated!");
-
-                        tradeManager = new TradeManager(apiKey, sessionId, token);
-                        tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
-                        tradeManager.OnTimeout += OnTradeTimeout;
-                        break;
-                    }
-                    else
+                    if (!IsLoggedIn)
                     {
                         log.Warn ("Authentication failed, retrying in 2s...");
                         Thread.Sleep (2000);
                     }
                 }
+
+                log.Success("User Authenticated!");
+
+                tradeManager = new TradeManager(apiKey, sessionId, token);
+                tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
+                tradeManager.OnTimeout += OnTradeTimeout;
 
                 if (Trade.CurrentSchema == null)
                 {
@@ -394,8 +391,6 @@ namespace SteamBot
                 SteamFriends.SetPersonaState (EPersonaState.Online);
 
                 log.Success ("Steam Bot Logged In Completely!");
-
-                IsLoggedIn = true;
 
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });
@@ -560,14 +555,18 @@ namespace SteamBot
             msg.Handle<SteamUser.LoggedOffCallback> (callback =>
             {
                 IsLoggedIn = false;
-                log.Warn("Logged Off: {0}", callback.Result);
+                log.Warn("Logged off Steam.  Reason: {0}", callback.Result);
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
             {
+                if(IsLoggedIn)
+                {
+                    CloseTrade();
+                    log.Warn("Disconnected from Steam Network!");
+                }
+
                 IsLoggedIn = false;
-                CloseTrade ();
-                log.Warn ("Disconnected from Steam Network!");
                 SteamClient.Connect ();
             });
             #endregion
