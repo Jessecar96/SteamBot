@@ -59,7 +59,7 @@ namespace SteamBot.Commands
 					cParams.reply.Add(String.Format("Command {0} can't be used in this chat window!", cParams.args[0]));
 					return false;
 				}
-				cParams.reply.Add(String.Format("Argument info for {0}", matchedCmd.cmdName));
+				cParams.reply.Add(String.Format("Argument info for {0}", matchedCmd.CmdName));
 				foreach (ArgumentInfo argInfo in matchedCmd.CmdArgs)
 				{
 					cParams.reply.Add(argInfo.ToString());
