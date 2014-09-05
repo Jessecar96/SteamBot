@@ -217,10 +217,15 @@ namespace SteamBot
 
         #region SendChatMessage methods
 
-        private void SendMessage(Action<string> messageFunc, string message, params object[] formatParams)
+        private void SendMessage(Action<string> messageFunc, string message, System.Timers.Timer timer, params object[] formatParams)
         {
             try
             {
+                if(timer != null)
+                {
+                    timer.Dispose();
+                }
+
                 message = (formatParams != null && formatParams.Any() ? String.Format(message, formatParams) : message);
                 messageFunc(message);
             }
@@ -234,7 +239,7 @@ namespace SteamBot
         {
             if (delayMs <= 0)
             {
-                SendMessage(messageFunc, message, formatParams);
+                SendMessage(messageFunc, message, null, formatParams);
                 return;
             }
 
@@ -243,7 +248,7 @@ namespace SteamBot
                 Interval = delayMs,
                 AutoReset = false
             };
-            timer.Elapsed += (sender, args) => SendMessage(messageFunc, message, formatParams);
+            timer.Elapsed += (sender, args) => SendMessage(messageFunc, message, timer, formatParams);
 
             timer.Start();
         }
@@ -255,7 +260,7 @@ namespace SteamBot
         /// <param name="formatParams">Optional.  The format parameters, using the same syntax as String.Format()</param>
         protected virtual void SendChatMessage(string message, params object[] formatParams)
         {
-            SendMessage(SendChatMessageImpl, message, formatParams);
+            SendMessage(SendChatMessageImpl, message, null, formatParams);
         }
 
         /// <summary>
@@ -283,7 +288,7 @@ namespace SteamBot
         /// <param name="formatParams">Optional.  The format parameters, using the same syntax as String.Format()</param>
         protected virtual void SendTradeMessage(string message, params object[] formatParams)
         {
-            SendMessage(SendTradeMessageImpl, message, formatParams);
+            SendMessage(SendTradeMessageImpl, message, null, formatParams);
         }
 
         /// <summary>
