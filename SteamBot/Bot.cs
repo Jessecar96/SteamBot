@@ -562,11 +562,11 @@ namespace SteamBot
             {
                 if(IsLoggedIn)
                 {
+                    IsLoggedIn = false;
                     CloseTrade();
                     log.Warn("Disconnected from Steam Network!");
                 }
 
-                IsLoggedIn = false;
                 SteamClient.Connect ();
             });
             #endregion
