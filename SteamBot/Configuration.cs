@@ -128,6 +128,7 @@ namespace SteamBot
             public string DisplayNamePrefix { get; set; }
             public int TradePollingInterval { get; set; }
             public string LogLevel { get; set; }
+            public string FileLogLevel { get; set; }
             public ulong[] Admins { get; set; }
 
             /// <summary>
