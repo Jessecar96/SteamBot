@@ -47,19 +47,18 @@ namespace SteamTrade
                 }
             }
 
-            HttpWebResponse response = SteamWeb.Request(url, "GET");
+            using(HttpWebResponse response = SteamWeb.Request(url, "GET"))
+            {
+                DateTime schemaLastModified = response.LastModified;
 
-            DateTime schemaLastModified = response.LastModified;
+                string result = GetSchemaString(response, schemaLastModified);
 
-            string result = GetSchemaString(response, schemaLastModified);
+                // were done here. let others read.
+                mre.Set();
 
-            response.Close();
-
-            // were done here. let others read.
-            mre.Set();
-
-            SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult> (result);
-            return schemaResult.result ?? null;
+                SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                return schemaResult.result ?? null;
+            }
         }
 
         // Gets the schema from the web or from the cached file.
@@ -70,18 +69,21 @@ namespace SteamTrade
 
             if (mustUpdateCache)
             {
-                var reader = new StreamReader(response.GetResponseStream());
-                result = reader.ReadToEnd();
+                using(var reader = new StreamReader(response.GetResponseStream()))
+                {
+                    result = reader.ReadToEnd();
 
-                File.WriteAllText(cachefile, result);
-                File.SetCreationTime(cachefile, schemaLastModified);
+                    File.WriteAllText(cachefile, result);
+                    File.SetCreationTime(cachefile, schemaLastModified);
+                }
             }
             else
             {
                 // read previously cached file.
-                TextReader reader = new StreamReader(cachefile);
-                result = reader.ReadToEnd();
-                reader.Close();
+                using(TextReader reader = new StreamReader(cachefile))
+                {
+                    result = reader.ReadToEnd();
+                }
             }
 
             return result;

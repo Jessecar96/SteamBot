@@ -12,7 +12,7 @@ using SteamKit2;
 
 namespace SteamTrade
 {
-    public class SteamWeb
+    public static class SteamWeb
     {
         public static string Fetch(string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
         {
@@ -88,7 +88,7 @@ namespace SteamTrade
 
 
             // Validate
-            if (rsaJSON.success != true)
+            if (!rsaJSON.success)
             {
                 return null;
             }
@@ -154,18 +154,19 @@ namespace SteamTrade
 
                 data.Add("rsatimestamp", time);
 
-                HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, null, false);
+                using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, null, false))
+                {
+                    using(StreamReader reader = new StreamReader(webResponse.GetResponseStream()))
+                    {
+                        string json = reader.ReadToEnd();
+                        loginJson = JsonConvert.DeserializeObject<SteamResult>(json);
+                        cookies = webResponse.Cookies;
+                    }
+                }
+            } while (loginJson.captcha_needed || loginJson.emailauth_needed);
 
-                StreamReader reader = new StreamReader(webResponse.GetResponseStream());
-                string json = reader.ReadToEnd();
 
-                loginJson = JsonConvert.DeserializeObject<SteamResult>(json);
-
-                cookies = webResponse.Cookies;
-            } while (loginJson.captcha_needed == true || loginJson.emailauth_needed == true);
-
-
-            if (loginJson.success == true)
+            if (loginJson.success)
             {
                 CookieContainer c = new CookieContainer();
                 foreach (Cookie cookie in cookies)
@@ -243,7 +244,6 @@ namespace SteamTrade
             w.CookieContainer = cookies;
 
             w.GetResponse().Close();
-            return;
         }
 
         static byte[] HexToByte(string hex)
