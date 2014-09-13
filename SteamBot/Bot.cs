@@ -66,7 +66,9 @@ namespace SteamBot
         public int CurrentGame = 0;
 
         // The Steam Web API key.
-        public string apiKey;
+        public string ApiKey { get; private set; }
+
+        public SteamWeb SteamWeb { get; private set; }
 
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
@@ -115,7 +117,7 @@ namespace SteamBot
             DisplayNamePrefix = config.DisplayNamePrefix;
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
-            this.apiKey  = apiKey;
+            this.ApiKey  = apiKey;
             this.isprocess = process;
             try
             {
@@ -129,6 +131,7 @@ namespace SteamBot
             log          = new Log (config.LogFile, this.DisplayName, LogLevel);
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
+            SteamWeb = new SteamWeb();
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
@@ -365,13 +368,13 @@ namespace SteamBot
             {
                 while (true)
                 {
-                    bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token, MyLoginKey);
+                    bool authd = SteamWeb.Authenticate(callback, SteamClient, MyLoginKey);
 
                     if (authd)
                     {
                         log.Success ("User Authenticated!");
 
-                        tradeManager = new TradeManager(apiKey, sessionId, token);
+                		tradeManager = new TradeManager(ApiKey, SteamWeb);
                         tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
                         tradeManager.OnTimeout += OnTradeTimeout;
                         break;
@@ -386,7 +389,7 @@ namespace SteamBot
                 if (Trade.CurrentSchema == null)
                 {
                     log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
                     log.Success ("Schema Downloaded!");
                 }
 
@@ -662,7 +665,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
+            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb));
         }
 
         /// <summary>

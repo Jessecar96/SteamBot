@@ -7,12 +7,17 @@ namespace SteamBot
     public class SteamTradeDemoHandler : UserHandler
     {
         // NEW ------------------------------------------------------------------
-        private GenericInventory mySteamInventory = new GenericInventory();
-        private GenericInventory OtherSteamInventory = new GenericInventory();
+        private readonly GenericInventory mySteamInventory;
+        private readonly GenericInventory OtherSteamInventory;
+
         private bool tested;
         // ----------------------------------------------------------------------
 
-        public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
+        public SteamTradeDemoHandler(Bot bot, SteamID sid) : base(bot, sid)
+        {
+            mySteamInventory = new GenericInventory(SteamWeb);
+            OtherSteamInventory = new GenericInventory(SteamWeb);
+        }
 
         public override bool OnGroupAdd()
         {

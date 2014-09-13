@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
@@ -14,6 +15,18 @@ namespace SteamBot
         protected Bot Bot;
         protected SteamID OtherSID;
         private Task<Inventory> otherInventoryTask;
+
+        protected SteamWeb SteamWeb
+        {
+            get
+            {
+                if(Bot == null || Bot.SteamWeb == null)
+                {
+                    throw new InvalidOperationException("You cannot use 'SteamWeb' before the Bot has been initialized!");
+                }
+                return Bot.SteamWeb;
+            }
+        }
 
         public UserHandler (Bot bot, SteamID sid)
         {
@@ -39,7 +52,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory()
         {
-            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.apiKey));
+            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.ApiKey, SteamWeb));
         }
 
         public Inventory OtherInventory

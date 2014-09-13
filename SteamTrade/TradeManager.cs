@@ -12,9 +12,8 @@ namespace SteamTrade
         private const int MaxGapTimeDefault = 15;
         private const int MaxTradeTimeDefault = 180;
         private const int TradePollingIntervalDefault = 800;
-        private readonly string apiKey;
-        private readonly string sessionId;
-        private readonly string token;
+        private readonly string ApiKey;
+        private readonly SteamWeb SteamWeb;
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
@@ -27,28 +26,21 @@ namespace SteamTrade
         /// <param name='apiKey'>
         /// The Steam Web API key. Cannot be null.
         /// </param>
-        /// <param name='sessionId'>
-        /// Session identifier. Cannot be null.
+        /// <param name="steamWeb">
+        /// The SteamWeb instances for this bot
         /// </param>
-        /// <param name='token'>
-        /// Session token. Cannot be null.
-        /// </param>
-        public TradeManager (string apiKey, string sessionId, string token)
+        public TradeManager (string apiKey, SteamWeb steamWeb)
         {
             if (apiKey == null)
                 throw new ArgumentNullException ("apiKey");
 
-            if (sessionId == null)
-                throw new ArgumentNullException ("sessionId");
-
-            if (token == null)
-                throw new ArgumentNullException ("token");
+            if (steamWeb == null)
+                throw new ArgumentNullException ("steamWeb");
 
             SetTradeTimeLimits (MaxTradeTimeDefault, MaxGapTimeDefault, TradePollingIntervalDefault);
 
-            this.apiKey = apiKey;
-            this.sessionId = sessionId;
-            this.token = token;
+            ApiKey = apiKey;
+            SteamWeb = steamWeb;
         }
 
         #region Public Properties
@@ -186,7 +178,7 @@ namespace SteamTrade
             if (otherInventoryTask == null || myInventoryTask == null)
                 InitializeTrade (me, other);
 
-            var t = new Trade (me, other, sessionId, token, myInventoryTask, otherInventoryTask);
+            var t = new Trade (me, other, SteamWeb, myInventoryTask, otherInventoryTask);
 
             t.OnClose += delegate
             {
@@ -228,7 +220,7 @@ namespace SteamTrade
         public void InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
-            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(other.ConvertToUInt64(), apiKey));
+            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(other.ConvertToUInt64(), ApiKey, SteamWeb));
 
             //if (OtherInventory == null)
             //{
@@ -236,11 +228,11 @@ namespace SteamTrade
             //}
             
             // fetch our inventory from the Steam API.
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(me.ConvertToUInt64(), apiKey));
+            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(me.ConvertToUInt64(), ApiKey, SteamWeb));
             
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
-                Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
 
             if (Trade.CurrentSchema == null)
                 throw new TradeException ("Could not download the latest item schema.");

@@ -34,7 +34,7 @@ namespace SteamTrade
         private List<TradeUserAssets> myOfferedItems;
         private List<TradeUserAssets> otherOfferedItems;
 
-        internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
+        internal Trade(SteamID me, SteamID other, SteamWeb steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
             TradeStarted = false;
             OtherIsReady = false;
@@ -42,7 +42,7 @@ namespace SteamTrade
             mySteamId = me;
             OtherSID = other;
 
-            session = new TradeSession(sessionId, token, other);
+            session = new TradeSession(other, steamWeb);
 
             this.eventList = new List<TradeEvent>();
 

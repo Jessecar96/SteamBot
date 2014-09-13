@@ -12,11 +12,16 @@ using SteamKit2;
 
 namespace SteamTrade
 {
-    public static class SteamWeb
+    public class SteamWeb
     {
-        public static string Fetch(string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
+        public const string SteamCommunityDomain = "steamcommunity.com";
+        public string Token { get; private set; }
+        public string SessionId { get; private set; }
+        private CookieContainer _cookies = new CookieContainer();
+
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true)
         {
-            using (HttpWebResponse response = Request(url, method, data, cookies, ajax))
+            using (HttpWebResponse response = Request(url, method, data, ajax))
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
@@ -28,7 +33,7 @@ namespace SteamTrade
             }
         }
 
-        public static HttpWebResponse Request(string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true)
         {
             //Append the data to the URL for GET-requests
             bool isGetMethod = (method.ToLower() == "get");
@@ -58,7 +63,7 @@ namespace SteamTrade
             }
 
             // Cookies
-            request.CookieContainer = cookies ?? new CookieContainer();
+            request.CookieContainer = _cookies;
 
             // Write the data to the body for POST and other methods
             if (!isGetMethod && !String.IsNullOrEmpty(dataString))
@@ -79,18 +84,18 @@ namespace SteamTrade
         /// <summary>
         /// Executes the login by using the Steam Website.
         /// </summary>
-        public static CookieCollection DoLogin(string username, string password)
+        public bool DoLogin(string username, string password)
         {
             var data = new NameValueCollection();
             data.Add("username", username);
-            string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, null, false);
+            string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
             GetRsaKey rsaJSON = JsonConvert.DeserializeObject<GetRsaKey>(response);
 
 
             // Validate
             if (!rsaJSON.success)
             {
-                return null;
+                return false;
             }
 
             //RSA Encryption
@@ -108,7 +113,7 @@ namespace SteamTrade
 
 
             SteamResult loginJson = null;
-            CookieCollection cookies;
+            CookieCollection cookieCollection;
             string steamGuardText = "";
             string steamGuardId = "";
             do
@@ -154,13 +159,13 @@ namespace SteamTrade
 
                 data.Add("rsatimestamp", time);
 
-                using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, null, false))
+                using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
                 {
                     using(StreamReader reader = new StreamReader(webResponse.GetResponseStream()))
                     {
                         string json = reader.ReadToEnd();
                         loginJson = JsonConvert.DeserializeObject<SteamResult>(json);
-                        cookies = webResponse.Cookies;
+                        cookieCollection = webResponse.Cookies;
                     }
                 }
             } while (loginJson.captcha_needed || loginJson.emailauth_needed);
@@ -168,18 +173,18 @@ namespace SteamTrade
 
             if (loginJson.success)
             {
-                CookieContainer c = new CookieContainer();
-                foreach (Cookie cookie in cookies)
+                _cookies = new CookieContainer();
+                foreach (Cookie cookie in cookieCollection)
                 {
-                    c.Add(cookie);
+                    _cookies.Add(cookie);
                 }
-                SubmitCookies(c);
-                return cookies;
+                SubmitCookies(_cookies);
+                return true;
             }
             else
             {
                 Console.WriteLine("SteamWeb Error: " + loginJson.message);
-                return null;
+                return false;
             }
 
         }
@@ -189,9 +194,10 @@ namespace SteamTrade
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary> 
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
-        public static bool Authenticate(SteamUser.LoginKeyCallback callback, SteamClient client, out string sessionId, out string token, string MyLoginKey)
+        public bool Authenticate(SteamUser.LoginKeyCallback callback, SteamClient client, string MyLoginKey)
         {
-            sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(callback.UniqueID.ToString()));
+            Token = "";
+            SessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(callback.UniqueID.ToString()));
 
             using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth"))
             {
@@ -225,17 +231,20 @@ namespace SteamTrade
                 }
                 catch (Exception)
                 {
-                    token = null;
                     return false;
                 }
 
-                token = authResult["token"].AsString();
+                Token = authResult["token"].AsString();
+
+                _cookies = new CookieContainer();
+                _cookies.Add(new Cookie("sessionid", SessionId, String.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("steamLogin", Token, String.Empty, SteamCommunityDomain));
 
                 return true;
             }
         }
 
-        static void SubmitCookies(CookieContainer cookies)
+        private void SubmitCookies(CookieContainer cookies)
         {
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 
@@ -246,7 +255,7 @@ namespace SteamTrade
             w.GetResponse().Close();
         }
 
-        static byte[] HexToByte(string hex)
+        private byte[] HexToByte(string hex)
         {
             if (hex.Length % 2 == 1)
                 throw new Exception("The binary key cannot have an odd number of digits");
@@ -262,13 +271,13 @@ namespace SteamTrade
             return arr;
         }
 
-        static int GetHexVal(char hex)
+        private int GetHexVal(char hex)
         {
             int val = (int)hex;
             return val - (val < 58 ? 48 : 55);
         }
 
-        public static bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
+        public bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             // allow all certificates
             return true;

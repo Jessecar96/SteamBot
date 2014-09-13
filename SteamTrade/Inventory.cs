@@ -14,10 +14,11 @@ namespace SteamTrade
         /// <returns>The give users inventory.</returns>
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
-        public static Inventory FetchInventory (ulong steamId, string apiKey)
+        /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
+        public static Inventory FetchInventory (ulong steamId, string apiKey, SteamWeb steamWeb)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-            string response = SteamWeb.Fetch (url, "GET", null, null, false);
+            string response = steamWeb.Fetch (url, "GET", null, false);
             InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
         }
@@ -27,7 +28,8 @@ namespace SteamTrade
         /// </summary>
         /// <returns>The inventory for the given user. </returns>
         /// <param name='steamid'>The Steam identifier. </param>
-        public static dynamic GetInventory (SteamID steamid)
+        /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
+        public static dynamic GetInventory(SteamID steamid, SteamWeb steamWeb)
         {
             string url = String.Format (
                 "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
@@ -36,7 +38,7 @@ namespace SteamTrade
             
             try
             {
-                string response = SteamWeb.Fetch (url, "GET", null, null, true);
+                string response = steamWeb.Fetch (url, "GET");
                 return JsonConvert.DeserializeObject (response);
             }
             catch (Exception)

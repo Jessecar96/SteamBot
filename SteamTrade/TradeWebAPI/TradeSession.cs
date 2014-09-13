@@ -12,28 +12,23 @@ namespace SteamTrade.TradeWebAPI
     /// </summary>
     public class TradeSession
     {
-        private const string SteamCommunityDomain = "steamcommunity.com";
         private const string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
         private string sessionIdEsc;
         private string baseTradeURL;
-        private CookieContainer cookies;
 
-        private readonly string steamLogin;
-        private readonly string sessionId;
+        private readonly SteamWeb SteamWeb;
         private readonly SteamID OtherSID;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TradeSession"/> class.
         /// </summary>
-        /// <param name="sessionId">The session id.</param>
-        /// <param name="steamLogin">The current steam login.</param>
         /// <param name="otherSid">The Steam id of the other trading partner.</param>
-        public TradeSession(string sessionId, string steamLogin, SteamID otherSid)
+        /// <param name="steamWeb">The SteamWeb instance for this bot</param>
+        public TradeSession(SteamID otherSid, SteamWeb steamWeb)
         {
-            this.sessionId = sessionId;
-            this.steamLogin = steamLogin;
             OtherSID = otherSid;
+            SteamWeb = steamWeb;
 
             Init();
         }
@@ -239,18 +234,14 @@ namespace SteamTrade.TradeWebAPI
         
         string Fetch (string url, string method, NameValueCollection data = null)
         {
-            return SteamWeb.Fetch (url, method, data, cookies);
+            return SteamWeb.Fetch (url, method, data);
         }
 
         private void Init()
         {
-            sessionIdEsc = Uri.UnescapeDataString(sessionId);
+            sessionIdEsc = Uri.UnescapeDataString(SteamWeb.SessionId);
 
             Version = 1;
-
-            cookies = new CookieContainer();
-            cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
-            cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64());
         }
