@@ -73,6 +73,7 @@ namespace SteamBot
 
         // Log level to use for this bot
         Log.LogLevel LogLevel;
+        Log.LogLevel FileLogLevel;
 
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
@@ -117,16 +118,28 @@ namespace SteamBot
             Admins       = config.Admins;
             this.apiKey  = apiKey;
             this.isprocess = process;
+
             try
             {
                 LogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
             }
             catch (ArgumentException)
             {
-                Console.WriteLine("Invalid LogLevel provided in configuration. Defaulting to 'INFO'");
+                Console.WriteLine("Invalid Console LogLevel provided in configuration. Defaulting to 'INFO'");
                 LogLevel = Log.LogLevel.Info;
             }
-            log          = new Log (config.LogFile, this.DisplayName, LogLevel);
+
+            try
+            {
+                FileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
+            }
+            catch (ArgumentException)
+            {
+                Console.WriteLine("Invalid File LogLevel provided in configuration. Defaulting to 'INFO'");
+                FileLogLevel = Log.LogLevel.Info;
+            }
+
+            log          = new Log (config.LogFile, this.DisplayName, LogLevel, FileLogLevel);
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
 

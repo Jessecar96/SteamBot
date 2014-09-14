@@ -17,6 +17,7 @@
             "DisplayNamePrefix":"[AutomatedBot] ",
             "TradePollingInterval":800,
             "LogLevel":"Success",
+            "FileLogLevel":"Info",
             "AutoStart": "true"
         }
     ]
