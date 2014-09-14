@@ -125,7 +125,7 @@ namespace SteamBot
             }
             catch (ArgumentException)
             {
-                Console.WriteLine("Invalid Console LogLevel provided in configuration. Defaulting to 'INFO'");
+                Console.WriteLine(@"(Console) LogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
                 LogLevel = Log.LogLevel.Info;
             }
 
@@ -135,7 +135,7 @@ namespace SteamBot
             }
             catch (ArgumentException)
             {
-                Console.WriteLine("Invalid File LogLevel provided in configuration. Defaulting to 'INFO'");
+                Console.WriteLine(@"FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
                 FileLogLevel = Log.LogLevel.Info;
             }
 
