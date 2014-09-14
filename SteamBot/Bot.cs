@@ -454,11 +454,18 @@ namespace SteamBot
                                 GetUserHandler(friend.SteamID).OnFriendRemove();
                                 RemoveUserHandler(friend.SteamID);
                             }
-                            else if (friend.Relationship == EFriendRelationship.RequestRecipient && !friends.Contains(friend.SteamID))
+                            else if (friend.Relationship == EFriendRelationship.RequestRecipient)
                             {
                                 if (GetUserHandler(friend.SteamID).OnFriendAdd())
                                 {
-                                    friends.Add(friend.SteamID);
+                                    if(!friends.Contains(friend.SteamID))
+                                    {
+                                        friends.Add(friend.SteamID);
+                                    }
+                                    else
+                                    {
+                                        log.Error("Friend was added who was already in friends list: " + friend.SteamID);
+                                    }
                                     SteamFriends.AddFriend(friend.SteamID);
                                 }
                                 else
