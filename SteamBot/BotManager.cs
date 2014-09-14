@@ -52,7 +52,7 @@ namespace SteamBot
 
             useSeparateProcesses = ConfigObject.UseSeparateProcesses;
 
-            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug);
+            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug, Log.LogLevel.Debug);
 
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {
