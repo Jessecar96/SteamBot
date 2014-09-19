@@ -72,7 +72,7 @@ namespace SteamBot
         string DisplayNamePrefix;
 
         // Log level to use for this bot
-        Log.LogLevel LogLevel;
+        Log.LogLevel ConsoleLogLevel;
         Log.LogLevel FileLogLevel;
 
         // The number, in milliseconds, between polls for the trade.
@@ -121,12 +121,17 @@ namespace SteamBot
 
             try
             {
-                LogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+                if( config.LogLevel != null )
+                {
+                    ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+                    Console.WriteLine(@"(Console) LogLevel configuration parameter used in bot {0} is depreciated and may be removed in future versions. Please use ConsoleLogLevel instead.", DisplayName);
+                }
+                else ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.ConsoleLogLevel, true);
             }
             catch (ArgumentException)
             {
-                Console.WriteLine(@"(Console) LogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                LogLevel = Log.LogLevel.Info;
+                Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
+                ConsoleLogLevel = Log.LogLevel.Info;
             }
 
             try
@@ -135,11 +140,11 @@ namespace SteamBot
             }
             catch (ArgumentException)
             {
-                Console.WriteLine(@"FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
+                Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
                 FileLogLevel = Log.LogLevel.Info;
             }
 
-            log          = new Log (config.LogFile, this.DisplayName, LogLevel, FileLogLevel);
+            log          = new Log (config.LogFile, this.DisplayName, ConsoleLogLevel, FileLogLevel);
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
 
