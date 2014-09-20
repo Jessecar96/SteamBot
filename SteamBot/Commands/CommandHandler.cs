@@ -36,27 +36,29 @@ namespace SteamBot.Commands
 			return null;
 		}
 
-		private bool CanFireCommand(CommandBase cmd, bool isAdmin, bool isTrade)
+		private bool CanFireCommand(CommandBase cmd, CmdType type, UserHandler theBot)
 		{
 			bool ret = true;
-			if (cmd.CmdType != CommandType.TypeBoth)
-			{
-				if (isTrade && cmd.IsChatCommand)
-					ret = false;
-				else if (!isTrade && cmd.IsTradeCommand)
-					ret = false;
-			}
-			if (!isAdmin && cmd.IsAdminCmd)
+			if (!cmd.IsOfType(type))
+				ret = false;
+			if (!theBot.IsAdmin && cmd.IsAdminCmd)
 				ret = false;
 			return ret;
 		}
 
-		private void ReplyToCommand(bool isTrade, Bot theBot, SteamID user, string message)
+		private void ReplyToCommand(CmdType type, UserHandler theBot, string message, bool isError)
 		{
-			if (isTrade)
-				theBot.CurrentTrade.SendMessage(message);
-			else
-				theBot.SteamFriends.SendChatMessage(user, EChatEntryType.ChatMsg, message);
+			if ((type & CmdType.CmdType_Trade) == CmdType.CmdType_Trade)
+				theBot.Trade.SendMessage(message);
+			else if ((type & CmdType.CmdType_Chat) == CmdType.CmdType_Chat)
+				theBot.Bot.SteamFriends.SendChatMessage(theBot.OtherSID, EChatEntryType.ChatMsg, message);
+			else if ((type & CmdType.CmdType_Console) == CmdType.CmdType_Console)
+			{
+				if (isError)
+					theBot.Log.Error(message);
+				else
+					theBot.Log.Success(message);
+			}
 		}
 
 		/// <summary>
@@ -75,25 +77,25 @@ namespace SteamBot.Commands
 		/// <param name="theBot">Bot object that your handler has.</param>
 		/// <param name="user">The user OtherSID is assigned to.</param>
 		/// <param name="isTrade">Set to true when calling this in callback for trade message.</param>
-		public void OnMessage(string message, Bot theBot, SteamID user, bool isTrade)
-		{;
-			bool isAdmin = theBot.Admins.Contains(user);
+		public void OnMessage(string message, UserHandler theBot, CmdType type)
+		{
 			string[] splitMSG = message.Split(' ');
 			foreach (CommandBase cmd in cmds)
 			{
-				if (CanFireCommand(cmd, isAdmin, isTrade) && splitMSG[0] == cmd.CmdName)
+				if (CanFireCommand(cmd, type, theBot) && splitMSG[0] == cmd.CmdName)
 				{
 					string[] args = new string[splitMSG.Length - 1];
 					for (int i = 1; i < splitMSG.Length; i++)
 					{
 						args[i - 1] = splitMSG[i];
 					}
-					CommandParams cParams = new CommandParams(this, user, isTrade, isAdmin, args);
-					if (!cmd.OnCommand(cParams))
-						ReplyToCommand(isTrade, theBot, user, "The following errors occurred when proccessing a command:");
+					CommandParams cParams = new CommandParams(this, theBot, args, type);
+					bool cmdError = !cmd.OnCommand(cParams);
+					if (cmdError)
+						ReplyToCommand(type, theBot, "The following errors occurred when proccessing a command:", true);
 					foreach (string msg in cParams.reply)
 					{
-						ReplyToCommand(isTrade, theBot, user, msg);
+						ReplyToCommand(type, theBot, msg, cmdError);
 					}
 				}
 			}

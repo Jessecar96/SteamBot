@@ -14,12 +14,14 @@ namespace SteamBot.Commands
 			cmdArgs = new List<ArgumentInfo>();
 			cmdArgs.Add(new ArgumentInfo("cmd", "Command to get more info on.", true));
 			adminCMD = false;
-			cmdType = CommandType.TypeBoth;
+			cmdType = CmdType.CmdType_Chat | CmdType.CmdType_Console | CmdType.CmdType_Trade;
 		}
 
 		public override bool OnCommand(CommandParams cParams)
 		{
-			if (cParams.handler.Cmds.Count <= 0)
+			UserHandler theBot = cParams.botHandler;
+			CommandHandler cmdHandler = cParams.handler;
+			if (cmdHandler.Cmds.Count <= 0)
 			{
 				cParams.reply.Add("No commands available.");
 				return false;
@@ -29,9 +31,9 @@ namespace SteamBot.Commands
 				cParams.reply.Add(String.Format("To get more information about a command, do: help <help>{0}Example: help help", Environment.NewLine));
 				foreach (CommandBase cmd in cParams.handler.Cmds)
 				{
-					if (!cmd.IsAdminCmd || (cmd.IsAdminCmd && cParams.isAdmin))
+					if (!cmd.IsAdminCmd || (cmd.IsAdminCmd && theBot.IsAdmin))
 					{
-						if (cmd.CmdType == CommandType.TypeBoth || (cParams.isTrade && cmd.IsTradeCommand) || (!cParams.isTrade && cmd.IsChatCommand))
+						if (cmd.IsOfType(cParams.cmdActivator))
 							cParams.reply.Add(cmd.ToString());
 					}
 				}
@@ -49,12 +51,12 @@ namespace SteamBot.Commands
 					cParams.reply.Add(String.Format("Command {0} not found!", cParams.args[0]));
 					return false;
 				}
-				else if (matchedCmd.IsAdminCmd && !cParams.isAdmin)
+				else if (matchedCmd.IsAdminCmd && !theBot.IsAdmin)
 				{
 					cParams.reply.Add(String.Format("Command {0} can only be used by admins!", cParams.args[0]));
 					return false;
 				}
-				else if ((cParams.isTrade && matchedCmd.IsChatCommand) || (!cParams.isTrade && matchedCmd.IsTradeCommand))
+				else if (!matchedCmd.IsOfType(cParams.cmdActivator))
 				{
 					cParams.reply.Add(String.Format("Command {0} can't be used in this chat window!", cParams.args[0]));
 					return false;

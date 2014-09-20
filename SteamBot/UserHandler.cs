@@ -115,7 +115,7 @@ namespace SteamBot
         /// </summary>
         public virtual void OnMessage (string message, EChatEntryType type)
 		{
-			handler.OnMessage(message, Bot, OtherSID, false);
+			handler.OnMessage(message, this, CmdType.CmdType_Chat);
 		}
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace SteamBot
         /// <param name="command">The command message.</param>
         public virtual void OnBotCommand(string command)
         {
-
+			handler.OnMessage(command, this, CmdType.CmdType_Console);
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace SteamBot
 
 		public virtual void OnTradeMessage(string message)
 		{
-			handler.OnMessage(message, Bot, OtherSID, true);
+			handler.OnMessage(message, this, CmdType.CmdType_Trade);
 		}
 
         public void OnTradeReadyHandler(bool ready)

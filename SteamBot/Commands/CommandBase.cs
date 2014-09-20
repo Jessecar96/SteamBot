@@ -9,20 +9,12 @@ namespace SteamBot.Commands
 	/// <summary>
 	/// Enum to tell handler where this command can be used.
 	/// </summary>
-	public enum CommandType
+	public enum CmdType
 	{
-		/// <summary>
-		/// Only usable in a steam chat.
-		/// </summary>
-		TypeChat=0,
-		/// <summary>
-		/// Usable in both steam chat and trade chat.
-		/// </summary>
-		TypeBoth=1,
-		/// <summary>
-		/// Only usable in trade chat.
-		/// </summary>
-		TypeTrade=2,
+		CmdType_None = 0,
+		CmdType_Console = (1<<0),
+		CmdType_Chat = (1<<1),
+		CmdType_Trade = (1<<2),
 	}
 	/// <summary>
 	/// Class to handle things commands need.
@@ -35,19 +27,9 @@ namespace SteamBot.Commands
 		public CommandHandler handler { get; private set; }
 
 		/// <summary>
-		/// SteamID of command user.
+		/// The userhandler instance of bot that command was activated from.
 		/// </summary>
-		public SteamID userSID { get; private set; }
-
-		/// <summary>
-		/// Was command called in trade chat?
-		/// </summary>
-		public bool isTrade { get; private set; }
-
-		/// <summary>
-		/// Is command user an admin?
-		/// </summary>
-		public bool isAdmin { get; private set; }
+		public UserHandler botHandler { get; private set; }
 
 		/// <summary>
 		/// Arguments passed to command.
@@ -57,15 +39,20 @@ namespace SteamBot.Commands
 		/// <summary>
 		/// A list of strings to reply to user with.
 		/// </summary>
-		public List<string> reply { get; set; }
+		public List<string> reply { get; private set; }
 
-		public CommandParams(CommandHandler Handler, SteamID UserSID, bool IsTrade, bool IsAdmin, string[] Args)
+		/// <summary>
+		/// This is set with where cmd was activated.
+		/// </summary>
+		/// <remarks>Only 1 of the 3 bitstrings is passed here.</remarks>
+		public CmdType cmdActivator { get; private set; }
+
+		public CommandParams(CommandHandler Handler, UserHandler bot, string[] Args, CmdType activation)
 		{
 			handler = Handler;
-			userSID = UserSID;
-			isTrade = IsTrade;
-			isAdmin = IsAdmin;
+			botHandler = bot;
 			args = Args;
+			cmdActivator = activation;
 			reply = new List<string>();
 		}
 	}
@@ -141,7 +128,7 @@ namespace SteamBot.Commands
 		/// <summary>
 		/// Type of command.
 		/// </summary>
-		protected CommandType cmdType;
+		protected CmdType cmdType;
 
 		public CommandBase() { }
 
@@ -199,7 +186,7 @@ namespace SteamBot.Commands
 		/// <summary>
 		/// Type of command.
 		/// </summary>
-		public CommandType CmdType
+		public CmdType CmdType
 		{
 			get
 			{
@@ -207,26 +194,9 @@ namespace SteamBot.Commands
 			}
 		}
 
-		/// <summary>
-		/// Is command trade chat only?
-		/// </summary>
-		public bool IsTradeCommand
+		public bool IsOfType(CmdType type)
 		{
-			get
-			{
-				return cmdType == CommandType.TypeTrade;
-			}
-		}
-
-		/// <summary>
-		/// Is command steam chat only?
-		/// </summary>
-		public bool IsChatCommand
-		{
-			get
-			{
-				return cmdType == CommandType.TypeChat;
-			}
+			return (cmdType & type) == type;
 		}
 
 		public override string ToString()

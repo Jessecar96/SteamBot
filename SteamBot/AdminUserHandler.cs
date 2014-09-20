@@ -122,7 +122,7 @@ namespace SteamBot
         public override void OnTradeMessage(string message)
         {
             ProcessTradeMessage(message);
-            base.OnTradeMessage();
+            base.OnTradeMessage(message);
         }
 
         public override void OnTradeReady(bool ready)

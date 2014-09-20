@@ -1,6 +1,7 @@
 using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
+using SteamBot.Commands;
 
 namespace SteamBot
 {
@@ -24,7 +25,32 @@ namespace SteamBot
             return true;
         }
 
-        public override void OnLoginCompleted() {}
+        public override void OnLoginCompleted()
+		{
+			if (handler != null)
+				handler.AddCommand(new TestCommand(CmdTestFunc));
+		}
+
+		private void CmdTestFunc(List<string> replies)
+		{
+			if (tested)
+			{
+				foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+				{
+					Trade.RemoveItem(item);
+				}
+			}
+			else
+			{
+				replies.Add("Items in my bp: " + mySteamInventory.items.Count);
+				foreach (GenericInventory.Item item in mySteamInventory.items.Values)
+				{
+					Trade.AddItem(item);
+				}
+			}
+
+			tested = !tested;
+		}
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
@@ -144,27 +170,6 @@ namespace SteamBot
                             Trade.SendMessage(" * " + error);
                         }
                     }
-                break;
-
-                case "test":
-                    if (tested)
-                    {
-                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
-                        {
-                            Trade.RemoveItem(item);
-                        }
-                    }
-                    else
-                    {
-                        Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
-                        foreach (GenericInventory.Item item in mySteamInventory.items.Values)
-                        {
-                            Trade.AddItem(item);
-                        }
-                    }
-
-                    tested = !tested;
-
                 break;
 
                 case "remove":
