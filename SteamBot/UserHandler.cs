@@ -12,12 +12,12 @@ namespace SteamBot
     /// </summary>
     public abstract class UserHandler
     {
-        protected Bot Bot;
-        protected SteamID OtherSID;
+        public Bot Bot { get; private set; }
+        public SteamID OtherSID { get; private set; }
 		protected static CommandHandler handler = null;
         private Task<Inventory> otherInventoryTask;
 
-        public UserHandler (Bot bot, SteamID sid)
+        public UserHandler(Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
@@ -43,7 +43,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory()
         {
-            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.apiKey));
+            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(OtherSID, Bot.apiKey));
         }
 
         public Inventory OtherInventory
@@ -65,27 +65,27 @@ namespace SteamBot
         {
             get
             {
-                return Bot.CurrentTrade; 
+                return Bot.CurrentTrade;
             }
         }
-        
+
         /// <summary>
         /// Gets the log the bot uses for convenience.
         /// </summary>
-        protected Log Log
+        public Log Log
         {
             get { return Bot.log; }
         }
-        
+
         /// <summary>
         /// Gets a value indicating whether the other user is admin.
         /// </summary>
         /// <value>
         /// <c>true</c> if the other user is a configured admin; otherwise, <c>false</c>.
         /// </value>
-        protected bool IsAdmin
+        public bool IsAdmin
         {
-            get { return Bot.Admins.Contains (OtherSID); }
+            get { return Bot.Admins.Contains(OtherSID); }
         }
 
         /// <summary>
@@ -102,12 +102,12 @@ namespace SteamBot
         /// <returns>
         /// Whether to accept.
         /// </returns>
-        public abstract bool OnFriendAdd ();
+        public abstract bool OnFriendAdd();
 
         /// <summary>
         /// Called when the user removes the bot as a friend.
         /// </summary>
-        public abstract void OnFriendRemove ();
+        public abstract void OnFriendRemove();
 
         /// <summary>
         /// Called whenever a message is sent to the bot.
@@ -122,14 +122,14 @@ namespace SteamBot
         /// Called when the bot is fully logged in.
         /// </summary>
         public abstract void OnLoginCompleted();
-       
+
         /// <summary>
         /// Called whenever a user requests a trade.
         /// </summary>
         /// <returns>
         /// Whether to accept the request.
         /// </returns>
-        public abstract bool OnTradeRequest ();
+        public abstract bool OnTradeRequest();
 
         /// <summary>
         /// Called when a chat message is sent in a chatroom
@@ -164,23 +164,23 @@ namespace SteamBot
         #region Trade events
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 
-        public abstract void OnTradeError (string error);
+        public abstract void OnTradeError(string error);
 
-        public abstract void OnTradeTimeout ();
+        public abstract void OnTradeTimeout();
 
-        public abstract void OnTradeSuccess ();
+        public abstract void OnTradeSuccess();
 
-        public virtual void OnTradeClose ()
+        public virtual void OnTradeClose()
         {
-            Bot.log.Warn ("[USERHANDLER] TRADE CLOSED");
-            Bot.CloseTrade ();
+            Bot.log.Warn("[USERHANDLER] TRADE CLOSED");
+            Bot.CloseTrade();
         }
 
-        public abstract void OnTradeInit ();
+        public abstract void OnTradeInit();
 
-        public abstract void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public abstract void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-        public abstract void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem);
+        public abstract void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem);
 
 		public virtual void OnTradeMessage(string message)
 		{
@@ -193,7 +193,7 @@ namespace SteamBot
             OnTradeReady(ready);
         }
 
-        public abstract void OnTradeReady (bool ready);
+        public abstract void OnTradeReady(bool ready);
 
         public void OnTradeAcceptHandler()
         {
