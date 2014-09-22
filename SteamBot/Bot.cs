@@ -82,9 +82,13 @@ namespace SteamBot
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
 
-        public string MyLoginKey;
+        public string MyUserNonce;
+        public string MyUniqueId;
+
         string sessionId;
         string token;
+        bool CookiesAreInvalid = false;
+
         bool isprocess;
         public bool IsRunning = false;
 
@@ -218,7 +222,7 @@ namespace SteamBot
         /// </returns>
         public bool OpenTrade(SteamID other)
         {
-            if (CurrentTrade != null)
+            if (CurrentTrade != null || CheckCookies() == false)
                 return false;
 
             SteamTrade.Trade(other);
@@ -351,7 +355,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK)
                 {
-                    MyLoginKey = callback.WebAPIUserNonce;
+                    MyUserNonce = callback.WebAPIUserNonce;
                 }
                 else
                 {
@@ -380,25 +384,9 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoginKeyCallback>(callback =>
             {
-                while (true)
-                {
-                    bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token, MyLoginKey);
+                MyUniqueId = callback.UniqueID.ToString();
 
-                    if (authd)
-                    {
-                        log.Success("User Authenticated!");
-
-                        tradeManager = new TradeManager(apiKey, sessionId, token);
-                        tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
-                        tradeManager.OnTimeout += OnTradeTimeout;
-                        break;
-                    }
-                    else
-                    {
-                        log.Warn("Authentication failed, retrying in 2s...");
-                        Thread.Sleep(2000);
-                    }
-                }
+                UserWebLogOn();
 
                 if (Trade.CurrentSchema == null)
                 {
@@ -415,6 +403,22 @@ namespace SteamBot
                 IsLoggedIn = true;
 
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
+            });
+
+            msg.Handle<SteamClient.JobCallback<SteamUser.WebAPIUserNonceCallback>>(jobCallback =>
+            {
+                log.Debug("Received new WebAPIUserNonce.");
+
+                if (jobCallback.Callback.Result == EResult.OK)
+                {
+                    MyUserNonce = jobCallback.Callback.Nonce;
+
+                    UserWebLogOn();
+                }
+                else
+                {
+                    log.Error("WebAPIUserNonce Error: " + jobCallback.Callback.Result);
+                }
             });
 
             // handle a special JobCallback differently than the others
@@ -515,6 +519,12 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeProposedCallback>(callback =>
             {
+                if (CheckCookies() == false)
+                {
+                    SteamTrade.RespondToTrade(callback.TradeID, false);
+                    return;
+                }
+
                 try
                 {
                     tradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
@@ -602,6 +612,61 @@ namespace SteamBot
                 logOnDetails.SentryFileHash = null;
 
             SteamUser.LogOn(logOnDetails);
+        }
+
+        void UserWebLogOn()
+        {
+            while (true)
+            {
+                bool authd = SteamWeb.Authenticate(MyUniqueId, SteamClient, out sessionId, out token, MyUserNonce);
+
+                if (authd)
+                {
+                    log.Success("User Authenticated!");
+
+                    tradeManager = new TradeManager(apiKey, sessionId, token);
+                    tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
+                    tradeManager.OnTimeout += OnTradeTimeout;
+
+                    CookiesAreInvalid = false;
+                    break;
+                }
+                else
+                {
+                    log.Warn("Authentication failed, retrying in 2s...");
+                    Thread.Sleep(2000);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if sessionId and token cookies are still valid.
+        /// Sets cookie flag if they are invalid.
+        /// </summary>
+        /// <returns>true if cookies are valid; otherwise false</returns>
+        bool CheckCookies()
+        {
+            // We still haven't re-authenticated
+            if (CookiesAreInvalid)
+                return false;
+
+            // Construct cookie container
+            CookieContainer cookies = new CookieContainer();
+            cookies.Add(new Cookie("sessionid", sessionId, String.Empty, "steamcommunity.com"));
+            cookies.Add(new Cookie("steamLogin", token, String.Empty, "steamcommunity.com"));
+
+            if(!SteamWeb.VerifyCookies(cookies))
+            {
+                // Cookies are no longer valid
+                CookiesAreInvalid = true;
+                log.Warn("Cookies are invalid. Need to re-authenticate.");
+                SteamUser.RequestWebAPIUserNonce();
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         UserHandler GetUserHandler(SteamID sid)
