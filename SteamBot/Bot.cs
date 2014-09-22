@@ -87,7 +87,7 @@ namespace SteamBot
 
         string sessionId;
         string token;
-        bool CookiesAreInvalid = false;
+        bool CookiesAreInvalid = true;
 
         bool isprocess;
         public bool IsRunning = false;
@@ -655,16 +655,25 @@ namespace SteamBot
             cookies.Add(new Cookie("sessionid", sessionId, String.Empty, "steamcommunity.com"));
             cookies.Add(new Cookie("steamLogin", token, String.Empty, "steamcommunity.com"));
 
-            if(!SteamWeb.VerifyCookies(cookies))
+            try
             {
-                // Cookies are no longer valid
-                CookiesAreInvalid = true;
-                log.Warn("Cookies are invalid. Need to re-authenticate.");
-                SteamUser.RequestWebAPIUserNonce();
-                return false;
+                if (!SteamWeb.VerifyCookies(cookies))
+                {
+                    // Cookies are no longer valid
+                    log.Warn("Cookies are invalid. Need to re-authenticate.");
+                    CookiesAreInvalid = true;
+                    SteamUser.RequestWebAPIUserNonce();
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
-            else
+            catch
             {
+                // Even if exception is caught, we should still continue.
+                log.Warn("Cookie check failed. http://steamcommunity.com is possibly down.");
                 return true;
             }
         }

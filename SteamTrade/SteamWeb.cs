@@ -234,10 +234,7 @@ namespace SteamTrade
         {
             using (HttpWebResponse response = Request("http://steamcommunity.com/", "HEAD", null, cookies))
             {
-                if (response.Cookies["steamLogin"] != null && response.Cookies["steamLogin"].Value.Equals("deleted"))
-                    return false;
-                else
-                    return true;
+                return !(response.Cookies["steamLogin"] != null && response.Cookies["steamLogin"].Value.Equals("deleted"));
             }
         }
 
