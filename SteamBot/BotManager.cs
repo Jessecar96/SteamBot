@@ -13,7 +13,7 @@ namespace SteamBot
     /// <summary>
     /// A class that manages SteamBot processes.
     /// </summary>
-    public class BotManager
+    public class BotManager : IDisposable
     {
         private readonly List<RunningBot> botProcs;
         private Log mainLog;
@@ -375,5 +375,10 @@ namespace SteamBot
         }
 
         #endregion Nested RunningBot class
+	    
+		public void Dispose()
+		{
+		    mainLog.Dispose();
+	    }
     }
 }

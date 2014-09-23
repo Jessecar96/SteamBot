@@ -15,7 +15,7 @@ using SteamKit2.Internal;
 
 namespace SteamBot
 {
-    public class Bot
+    public class Bot : IDisposable
     {
         public string BotControlClass;
         // If the bot is logged in fully or not.  This is only set
@@ -836,5 +836,10 @@ namespace SteamBot
         }
 
         #endregion
+		
+		public void Dispose()
+		{
+		    mainLog.Dispose();
+	    }
     }
 }
