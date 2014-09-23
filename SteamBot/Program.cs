@@ -174,7 +174,7 @@ namespace SteamBot
 
                 } while (!isclosing);
             }
-			manager.Dispose();
+            manager.Dispose();
         }
 
         #endregion Bot Modes

@@ -376,13 +376,13 @@ namespace SteamBot
 
         #endregion Nested RunningBot class
 	    
-		public void Dispose()
-		{
-			foreach (RunningBot bot in botProcs)
-			{
-				bot.Stop();
-			}
-		    mainLog.Dispose();
-	    }
+        public void Dispose()
+        {
+            foreach (RunningBot bot in botProcs)
+            {
+                bot.Stop();
+            }
+            mainLog.Dispose();
+        }
     }
 }

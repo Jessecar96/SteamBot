@@ -837,9 +837,9 @@ namespace SteamBot
 
         #endregion
 		
-		public void Dispose()
-		{
-			StopBot();
-	    }
+        public void Dispose()
+        {
+            StopBot();
+        }
     }
 }
