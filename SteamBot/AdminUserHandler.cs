@@ -20,12 +20,12 @@ namespace SteamBot
         private const string AddAllSubCmd = "all";
         private const string HelpCmd = "help";
 
-        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) {}
-        
+        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
+
         private void StockBotFunc(SteamID otherSID)
-		{
-			Bot.OpenTrade(otherSID);
-		}
+        {
+            Bot.OpenTrade(otherSID);
+        }
 
         #region Overrides of UserHandler
 
@@ -34,8 +34,8 @@ namespace SteamBot
         /// </summary>
         public override void OnLoginCompleted()
         {
-        	if (handler != null)
-        		handler.AddCommand(new StockBotCommand(StockBotFunc));
+            if (handler != null)
+                handler.AddCommand(new StockBotCommand(StockBotFunc));
         }
 
         /// <summary>
@@ -200,12 +200,12 @@ namespace SteamBot
             var data = command.Split(' ');
             string typeToAdd;
 
-            bool subCmdOk = GetSubCommand (data, out typeToAdd);
+            bool subCmdOk = GetSubCommand(data, out typeToAdd);
 
             if (!subCmdOk)
                 return;
 
-            uint amount = GetAddAmount (data);
+            uint amount = GetAddAmount(data);
 
             // if user supplies the defindex directly use it to add.
             int defindex;
@@ -311,7 +311,7 @@ namespace SteamBot
                 for (int count = 0; count < item.Attributes.Length; count++)
                 {
                     // FloatValue will give you the crate's series number
-                    crateNum = (int) item.Attributes[count].FloatValue;
+                    crateNum = (int)item.Attributes[count].FloatValue;
 
                     if (crateNum == ser)
                     {
@@ -329,37 +329,37 @@ namespace SteamBot
             }
         }
 
-        bool GetSubCommand (string[] data, out string subCommand)
+        bool GetSubCommand(string[] data, out string subCommand)
         {
             if (data.Length < 2)
             {
-                Trade.SendMessage ("No parameter for cmd");
+                Trade.SendMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }
 
-            if (String.IsNullOrEmpty (data [1]))
+            if (String.IsNullOrEmpty(data[1]))
             {
-                Trade.SendMessage ("No parameter for cmd");
+                Trade.SendMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }
 
-            subCommand = data [1];
+            subCommand = data[1];
 
             return true;
         }
 
-        static uint GetAddAmount (string[] data)
+        static uint GetAddAmount(string[] data)
         {
             uint amount = 0;
 
             if (data.Length > 2)
             {
                 // get the optional amount parameter
-                if (!String.IsNullOrEmpty (data [2]))
+                if (!String.IsNullOrEmpty(data[2]))
                 {
-                    uint.TryParse (data [2], out amount);
+                    uint.TryParse(data[2], out amount);
                 }
             }
 

@@ -6,32 +6,32 @@ using SteamKit2;
 
 namespace SteamBot.Commands
 {
-	public class StockBotCommand : CommandBase
-	{
-		public delegate void StockBot(SteamID otherSID);
+    public class StockBotCommand : CommandBase
+    {
+        public delegate void StockBot(SteamID otherSID);
 
-		private StockBot func;
+        private StockBot func;
 
-		public StockBotCommand(StockBot botFunc)
-		{
-			func = botFunc;
-			cmdName = "stockBot";
-			cmdDescription = "Allows admins to stock bot.";
-			cmdArgs = new List<ArgumentInfo>();
-			adminCMD = true;
-			cmdType = CommandType.TypeChat;
-		}
+        public StockBotCommand(StockBot botFunc)
+        {
+            func = botFunc;
+            cmdName = "stockBot";
+            cmdDescription = "Allows admins to stock bot.";
+            cmdArgs = new List<ArgumentInfo>();
+            adminCMD = true;
+            cmdType = CmdType.CmdType_Chat;
+        }
 
-		public override bool OnCommand(CommandParams cParams)
-		{
-			if (!cParams.isAdmin)
-			{
-				cParams.reply.Add("Command only usable by admins.");
-				return false;
-			}
-			cParams.reply.Add("I sent a trade request.");
-			func(cParams.userSID);
-			return true;
-		}
-	}
+        public override bool OnCommand(CommandParams cParams)
+        {
+            if (!cParams.botHandler.IsAdmin)
+            {
+                cParams.reply.Add("Command only usable by admins.");
+                return false;
+            }
+            cParams.reply.Add("I sent a trade request.");
+            func(cParams.botHandler.OtherSID);
+            return true;
+        }
+    }
 }

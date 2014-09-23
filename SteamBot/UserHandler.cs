@@ -14,7 +14,7 @@ namespace SteamBot
     {
         public Bot Bot { get; private set; }
         public SteamID OtherSID { get; private set; }
-		protected static CommandHandler handler = null;
+        protected static CommandHandler handler = null;
         private Task<Inventory> otherInventoryTask;
 
         public UserHandler(Bot bot, SteamID sid)
@@ -22,8 +22,8 @@ namespace SteamBot
             Bot = bot;
             OtherSID = sid;
             GetOtherInventory();
-			if (handler == null)
-				handler = new CommandHandler();
+            if (handler == null)
+                handler = new CommandHandler();
         }
 
         /// <summary>
@@ -113,10 +113,10 @@ namespace SteamBot
         /// Called whenever a message is sent to the bot.
         /// This is limited to regular and emote messages.
         /// </summary>
-        public virtual void OnMessage (string message, EChatEntryType type)
-		{
-			handler.OnMessage(message, this, CmdType.CmdType_Chat);
-		}
+        public virtual void OnMessage(string message, EChatEntryType type)
+        {
+            handler.OnMessage(message, this, CmdType.CmdType_Chat);
+        }
 
         /// <summary>
         /// Called when the bot is fully logged in.
@@ -148,7 +148,7 @@ namespace SteamBot
         /// <param name="command">The command message.</param>
         public virtual void OnBotCommand(string command)
         {
-			handler.OnMessage(command, this, CmdType.CmdType_Console);
+            handler.OnMessage(command, this, CmdType.CmdType_Console);
         }
 
         /// <summary>
@@ -182,10 +182,10 @@ namespace SteamBot
 
         public abstract void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem);
 
-		public virtual void OnTradeMessage(string message)
-		{
-			handler.OnMessage(message, this, CmdType.CmdType_Trade);
-		}
+        public virtual void OnTradeMessage(string message)
+        {
+            handler.OnMessage(message, this, CmdType.CmdType_Trade);
+        }
 
         public void OnTradeReadyHandler(bool ready)
         {
