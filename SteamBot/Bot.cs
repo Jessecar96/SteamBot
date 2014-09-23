@@ -839,7 +839,7 @@ namespace SteamBot
 		
 		public void Dispose()
 		{
-		    mainLog.Dispose();
+			StopBot();
 	    }
     }
 }

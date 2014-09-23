@@ -295,7 +295,7 @@ namespace SteamBot
                 }
                 else if (TheBot != null && TheBot.IsRunning)
                 {
-                    TheBot.StopBot();
+                    TheBot.Dispose();
                     IsRunning = false;
                 }
             }
@@ -378,6 +378,10 @@ namespace SteamBot
 	    
 		public void Dispose()
 		{
+			foreach (RunningBot bot in botProcs)
+			{
+				bot.Stop();
+			}
 		    mainLog.Dispose();
 	    }
     }

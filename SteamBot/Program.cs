@@ -107,6 +107,7 @@ namespace SteamBot
                     }
                 }
             }
+			b.Dispose();
         }
 
         // This mode is to manage child bot processes and take use command line inputs
@@ -173,6 +174,7 @@ namespace SteamBot
 
                 } while (!isclosing);
             }
+			manager.Dispose();
         }
 
         #endregion Bot Modes
