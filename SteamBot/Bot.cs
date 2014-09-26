@@ -87,6 +87,7 @@ namespace SteamBot
 
         string sessionId;
         string token;
+        string tokensecure;
         bool CookiesAreInvalid = true;
 
         bool isprocess;
@@ -618,7 +619,7 @@ namespace SteamBot
         {
             while (true)
             {
-                bool authd = SteamWeb.Authenticate(MyUniqueId, SteamClient, out sessionId, out token, MyUserNonce);
+                bool authd = SteamWeb.Authenticate(MyUniqueId, SteamClient, out sessionId, out token, out tokensecure, MyUserNonce);
 
                 if (authd)
                 {

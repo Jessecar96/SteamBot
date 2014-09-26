@@ -179,7 +179,7 @@ namespace SteamTrade
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary> 
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
-        public static bool Authenticate(string myUniqueId, SteamClient client, out string sessionId, out string token, string myLoginKey)
+        public static bool Authenticate(string myUniqueId, SteamClient client, out string sessionId, out string token, out string tokensecure, string myLoginKey)
         {
             sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (myUniqueId));
             
@@ -210,16 +210,19 @@ namespace SteamTrade
                         steamid: client.SteamID.ConvertToUInt64 (),
                         sessionkey: HttpUtility.UrlEncode (cryptedSessionKey),
                         encrypted_loginkey: HttpUtility.UrlEncode (cryptedLoginKey),
-                        method: "POST"
+                        method: "POST",
+                        secure: true
                         );
                 }
                 catch (Exception)
                 {
                     token = null;
+                    tokensecure = null;
                     return false;
                 }
                 
                 token = authResult ["token"].AsString ();
+                tokensecure = authResult["tokensecure"].AsString();
                 
                 return true;
             }
