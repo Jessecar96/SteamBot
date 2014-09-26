@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SteamKit2;
+using System.Text.RegularExpressions;
 
 namespace SteamBot.Commands
 {
@@ -79,7 +80,7 @@ namespace SteamBot.Commands
         /// <param name="isTrade">Set to true when calling this in callback for trade message.</param>
         public void OnMessage(string message, UserHandler theBot, CmdType type)
         {
-            string[] splitMSG = message.Split(' ');
+            string[] splitMSG = Regex.Matches(message, @"[\""].+?[\""]|[^ ]+").Cast<Match>().Select(m => m.Value.Replace("\"", "")).ToList().ToArray();
             foreach (CommandBase cmd in cmds)
             {
                 if (CanFireCommand(cmd, type, theBot) && splitMSG[0] == cmd.CmdName)
