@@ -14,7 +14,7 @@ namespace SteamBot
     {
         public Bot Bot { get; private set; }
         public SteamID OtherSID { get; private set; }
-        protected static CommandHandler handler = null;
+        protected CommandHandler handler = null;
         private Task<Inventory> otherInventoryTask;
 
         public UserHandler(Bot bot, SteamID sid)
@@ -22,8 +22,7 @@ namespace SteamBot
             Bot = bot;
             OtherSID = sid;
             GetOtherInventory();
-            if (handler == null)
-                handler = new CommandHandler();
+            handler = new CommandHandler();
         }
 
         /// <summary>

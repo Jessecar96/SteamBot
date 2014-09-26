@@ -13,7 +13,10 @@ namespace SteamBot
         private bool tested;
         // ----------------------------------------------------------------------
 
-        public SteamTradeDemoHandler(Bot bot, SteamID sid) : base(bot, sid) { }
+        public SteamTradeDemoHandler(Bot bot, SteamID sid) : base(bot, sid)
+        {
+            handler.AddCommand(new TestCommand(CmdTestFunc));
+        }
 
         public override bool OnGroupAdd()
         {
@@ -27,8 +30,6 @@ namespace SteamBot
 
         public override void OnLoginCompleted()
         {
-            if (handler != null)
-                handler.AddCommand(new TestCommand(CmdTestFunc));
         }
 
         private void CmdTestFunc(List<string> replies)

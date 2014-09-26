@@ -20,7 +20,10 @@ namespace SteamBot
         private const string AddAllSubCmd = "all";
         private const string HelpCmd = "help";
 
-        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
+        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid)
+        {
+            handler.AddCommand(new StockBotCommand(StockBotFunc));
+        }
 
         private void StockBotFunc(SteamID otherSID)
         {
@@ -34,8 +37,6 @@ namespace SteamBot
         /// </summary>
         public override void OnLoginCompleted()
         {
-            if (handler != null)
-                handler.AddCommand(new StockBotCommand(StockBotFunc));
         }
 
         /// <summary>
