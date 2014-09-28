@@ -89,7 +89,7 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Kills all running bot processes.
+        /// Kills all running bot processes and cleans up loose ends
         /// </summary>
         public void StopBots()
         {
@@ -98,6 +98,9 @@ namespace SteamBot
             {
                 botProc.Stop();
             }
+
+            mainLog.Dispose();
+            mainLog = null;
         }
 
         /// <summary>

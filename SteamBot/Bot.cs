@@ -45,6 +45,7 @@ namespace SteamBot
 
         // The log for the bot.  This logs with the bot's display name.
         public Log log;
+        private string logFile;
 
         public delegate UserHandler UserHandlerCreator(Bot bot, SteamID id);
         public UserHandlerCreator CreateHandler;
@@ -149,7 +150,8 @@ namespace SteamBot
                 FileLogLevel = Log.LogLevel.Info;
             }
 
-            log          = new Log (config.LogFile, this.DisplayName, LogLevel, FileLogLevel);
+            logFile = config.LogFile;
+            CreateLog();
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
 
@@ -167,6 +169,23 @@ namespace SteamBot
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
             backgroundWorker.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
             backgroundWorker.RunWorkerAsync();
+        }
+
+        private void CreateLog()
+        {
+            if(log == null)
+            {
+                log = new Log(logFile, this.DisplayName, LogLevel, FileLogLevel);
+            }
+        }
+
+        private void DisposeLog()
+        {
+            if(log != null)
+            {
+                log.Dispose();
+                log = null;
+            }
         }
 
         private void CreateFriendsListIfNecessary()
@@ -198,6 +217,7 @@ namespace SteamBot
         /// <returns><c>true</c>. See remarks</returns>
         public bool StartBot()
         {
+            CreateLog();
             IsRunning = true;
 
             log.Info("Connecting...");
@@ -225,6 +245,8 @@ namespace SteamBot
             SteamClient.Disconnect();
 
             backgroundWorker.CancelAsync();
+            userHandlers.Clear();
+            DisposeLog();
         }
 
         /// <summary>
