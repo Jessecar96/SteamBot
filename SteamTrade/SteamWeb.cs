@@ -17,6 +17,7 @@ namespace SteamTrade
         public const string SteamCommunityDomain = "steamcommunity.com";
         public string Token { get; private set; }
         public string SessionId { get; private set; }
+        public string TokenSecure { get; private set; }
         private CookieContainer _cookies = new CookieContainer();
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true)
@@ -194,10 +195,11 @@ namespace SteamTrade
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary> 
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
-        public bool Authenticate(SteamUser.LoginKeyCallback callback, SteamClient client, string MyLoginKey)
+        public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
-            Token = "";
-            SessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(callback.UniqueID.ToString()));
+            Token = TokenSecure = "";
+            SessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(myUniqueId));
+            _cookies = new CookieContainer();
 
             using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth"))
             {
@@ -211,9 +213,8 @@ namespace SteamTrade
                     cryptedSessionKey = rsa.Encrypt(sessionKey);
                 }
 
-
                 byte[] loginKey = new byte[20];
-                Array.Copy(Encoding.ASCII.GetBytes(MyLoginKey), loginKey, MyLoginKey.Length);
+                Array.Copy(Encoding.ASCII.GetBytes(myLoginKey), loginKey, myLoginKey.Length);
 
                 // aes encrypt the loginkey with our session key
                 byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt(loginKey, sessionKey);
@@ -226,25 +227,41 @@ namespace SteamTrade
                         steamid: client.SteamID.ConvertToUInt64(),
                         sessionkey: HttpUtility.UrlEncode(cryptedSessionKey),
                         encrypted_loginkey: HttpUtility.UrlEncode(cryptedLoginKey),
-                        method: "POST"
+                        method: "POST",
+                        secure: true
                         );
                 }
                 catch (Exception)
                 {
+                    Token = TokenSecure = null;
                     return false;
                 }
 
                 Token = authResult["token"].AsString();
+                TokenSecure = authResult["tokensecure"].AsString();
 
-                _cookies = new CookieContainer();
                 _cookies.Add(new Cookie("sessionid", SessionId, String.Empty, SteamCommunityDomain));
                 _cookies.Add(new Cookie("steamLogin", Token, String.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("steamLoginSecure", TokenSecure, String.Empty, SteamCommunityDomain));
 
                 return true;
             }
         }
 
-        private void SubmitCookies(CookieContainer cookies)
+        /// <summary>
+        /// Helper method to verify our precious cookies.
+        /// </summary>
+        /// <param name="cookies">CookieContainer with our cookies.</param>
+        /// <returns>true if cookies are correct; false otherwise</returns>
+        public bool VerifyCookies()
+        {
+            using (HttpWebResponse response = Request("http://steamcommunity.com/", "HEAD"))
+            {
+                return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
+            }
+        }
+
+        static void SubmitCookies (CookieContainer cookies)
         {
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 

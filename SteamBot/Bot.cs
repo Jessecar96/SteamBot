@@ -50,10 +50,15 @@ namespace SteamBot
         public UserHandlerCreator CreateHandler;
         Dictionary<ulong, UserHandler> userHandlers = new Dictionary<ulong, UserHandler>();
 
-        List<SteamID> friends = new List<SteamID>();
-
-        // List of Steam groups the bot is in.
-        private readonly List<SteamID> groups = new List<SteamID>();
+        private List<SteamID> friends;
+        public IEnumerable<SteamID> FriendsList
+        {
+            get
+            {
+                CreateFriendsListIfNecessary();
+                return friends;
+            }
+        }
 
         // The maximum amount of time the bot will trade for.
         public int MaximumTradeTime { get; private set; }
@@ -79,9 +84,11 @@ namespace SteamBot
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
 
-        public string MyLoginKey;
-        string sessionId;
-        string token;
+        public string MyUserNonce;
+        public string MyUniqueId;
+
+        bool CookiesAreInvalid = true;
+
         bool isprocess;
         public bool IsRunning = false;
 
@@ -149,6 +156,18 @@ namespace SteamBot
             backgroundWorker.RunWorkerAsync();
         }
 
+        private void CreateFriendsListIfNecessary()
+        {
+            if (friends != null)
+                return;
+
+            friends = new List<SteamID>();
+            for (int i = 0; i < SteamFriends.GetFriendCount(); i++)
+            {
+                friends.Add(SteamFriends.GetFriendByIndex(i));
+            }
+        }
+
         /// <summary>
         /// Occurs when the bot needs the SteamGuard authentication code.
         /// </summary>
@@ -204,7 +223,7 @@ namespace SteamBot
         /// </returns>
         public bool OpenTrade (SteamID other)
         {
-            if (CurrentTrade != null)
+            if (CurrentTrade != null || CheckCookies() == false)
                 return false;
 
             SteamTrade.Trade(other);
@@ -337,7 +356,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK)
                 {
-                    MyLoginKey = callback.WebAPIUserNonce;
+                    MyUserNonce = callback.WebAPIUserNonce;
                 }
                 else
                 {
@@ -366,25 +385,9 @@ namespace SteamBot
 
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
             {
-                while (true)
-                {
-                    bool authd = SteamWeb.Authenticate(callback, SteamClient, MyLoginKey);
+                MyUniqueId = callback.UniqueID.ToString();
 
-                    if (authd)
-                    {
-                        log.Success ("User Authenticated!");
-
-                		tradeManager = new TradeManager(ApiKey, SteamWeb);
-                        tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
-                        tradeManager.OnTimeout += OnTradeTimeout;
-                        break;
-                    }
-                    else
-                    {
-                        log.Warn ("Authentication failed, retrying in 2s...");
-                        Thread.Sleep (2000);
-                    }
-                }
+                UserWebLogOn();
 
                 if (Trade.CurrentSchema == null)
                 {
@@ -403,6 +406,22 @@ namespace SteamBot
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });
 
+            msg.Handle<SteamClient.JobCallback<SteamUser.WebAPIUserNonceCallback>>(jobCallback =>
+            {
+                log.Debug("Received new WebAPIUserNonce.");
+
+                if (jobCallback.Callback.Result == EResult.OK)
+                {
+                    MyUserNonce = jobCallback.Callback.Nonce;
+
+                    UserWebLogOn();
+                }
+                else
+                {
+                    log.Error("WebAPIUserNonce Error: " + jobCallback.Callback.Result);
+                }
+            });
+
             // handle a special JobCallback differently than the others
             if (msg.IsType<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>())
             {
@@ -417,11 +436,9 @@ namespace SteamBot
             {
                 foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
                 {
-                    if (friend.SteamID.AccountType == EAccountType.Clan)
+                    switch (friend.SteamID.AccountType)
                     {
-                        if (!groups.Contains(friend.SteamID))
-                        {
-                            groups.Add(friend.SteamID);
+                        case EAccountType.Clan:
                             if (friend.Relationship == EFriendRelationship.RequestRecipient)
                             {
                                 if (GetUserHandler(friend.SteamID).OnGroupAdd())
@@ -433,35 +450,36 @@ namespace SteamBot
                                     DeclineGroupInvite(friend.SteamID);
                                 }
                             }
-                        }
-                        else
-                        {
-                            if (friend.Relationship == EFriendRelationship.None)
-                            {
-                                groups.Remove(friend.SteamID);
-                            }
-                        }
-                    }
-                    else if (friend.SteamID.AccountType != EAccountType.Clan)
-                    {
-                        if (!friends.Contains(friend.SteamID))
-                        {
-                            friends.Add(friend.SteamID);
-                            if (friend.Relationship == EFriendRelationship.RequestRecipient &&
-                                GetUserHandler(friend.SteamID).OnFriendAdd())
-                            {
-                                SteamFriends.AddFriend(friend.SteamID);
-                            }
-                        }
-                        else
-                        {
+                            break;
+                        default:
+                            CreateFriendsListIfNecessary();
                             if (friend.Relationship == EFriendRelationship.None)
                             {
                                 friends.Remove(friend.SteamID);
                                 GetUserHandler(friend.SteamID).OnFriendRemove();
                                 RemoveUserHandler(friend.SteamID);
                             }
+                            else if (friend.Relationship == EFriendRelationship.RequestRecipient)
+                    {
+                                if (GetUserHandler(friend.SteamID).OnFriendAdd())
+                                {
+                        if (!friends.Contains(friend.SteamID))
+                        {
+                            friends.Add(friend.SteamID);
+                                    }
+                                    else
+                            {
+                                        log.Error("Friend was added who was already in friends list: " + friend.SteamID);
+                                    }
+                                SteamFriends.AddFriend(friend.SteamID);
+                            }
+                        else
+                        {
+                                    SteamFriends.RemoveFriend(friend.SteamID);
+                                RemoveUserHandler(friend.SteamID);
+                            }
                         }
+                            break;
                     }
                 }
             });
@@ -502,6 +520,12 @@ namespace SteamBot
 
             msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
             {
+                if (CheckCookies() == false)
+                {
+                    SteamTrade.RespondToTrade(callback.TradeID, false);
+                    return;
+                }
+
                 try
                 {
                     tradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
@@ -589,6 +613,62 @@ namespace SteamBot
                 logOnDetails.SentryFileHash = null;
 
             SteamUser.LogOn(logOnDetails);
+        }
+
+        void UserWebLogOn()
+        {
+            while (true)
+            {
+                bool authd = SteamWeb.Authenticate(MyUniqueId, SteamClient, MyUserNonce);
+
+                if (authd)
+                {
+                    log.Success("User Authenticated!");
+
+                    tradeManager = new TradeManager(ApiKey, SteamWeb);
+                    tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
+                    tradeManager.OnTimeout += OnTradeTimeout;
+
+                    CookiesAreInvalid = false;
+                    break;
+                }
+                else
+                {
+                    log.Warn("Authentication failed, retrying in 2s...");
+                    Thread.Sleep(2000);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if sessionId and token cookies are still valid.
+        /// Sets cookie flag if they are invalid.
+        /// </summary>
+        /// <returns>true if cookies are valid; otherwise false</returns>
+        bool CheckCookies()
+        {
+            // We still haven't re-authenticated
+            if (CookiesAreInvalid)
+                return false;
+
+            try
+            {
+                if (!SteamWeb.VerifyCookies())
+                {
+                    // Cookies are no longer valid
+                    log.Warn("Cookies are invalid. Need to re-authenticate.");
+                    CookiesAreInvalid = true;
+                    SteamUser.RequestWebAPIUserNonce();
+                    return false;
+                }
+            }
+            catch
+            {
+                // Even if exception is caught, we should still continue.
+                log.Warn("Cookie check failed. http://steamcommunity.com is possibly down.");
+            }
+
+            return true;
         }
 
         UserHandler GetUserHandler(SteamID sid)

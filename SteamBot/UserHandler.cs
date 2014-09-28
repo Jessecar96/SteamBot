@@ -12,8 +12,9 @@ namespace SteamBot
     /// </summary>
     public abstract class UserHandler
     {
-        protected Bot Bot;
-        protected SteamID OtherSID;
+        public Bot Bot { get; private set; }
+        public SteamID OtherSID { get; private set; }
+
         private Task<Inventory> otherInventoryTask;
 
         protected SteamWeb SteamWeb
@@ -81,7 +82,7 @@ namespace SteamBot
         /// <summary>
         /// Gets the log the bot uses for convenience.
         /// </summary>
-        protected Log Log
+        public Log Log
         {
             get { return Bot.log; }
         }
@@ -92,7 +93,7 @@ namespace SteamBot
         /// <value>
         /// <c>true</c> if the other user is a configured admin; otherwise, <c>false</c>.
         /// </value>
-        protected bool IsAdmin
+        public bool IsAdmin
         {
             get { return Bot.Admins.Contains (OtherSID); }
         }
