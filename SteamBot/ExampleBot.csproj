@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Notifications.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
     <Compile Include="SteamTradeDemoHandler.cs" />
     <Compile Include="TF2GC\Crafting.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
+    <Compile Include="TradeOfferUserHandler.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
