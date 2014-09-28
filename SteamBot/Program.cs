@@ -101,6 +101,11 @@ namespace SteamBot
                     {
                         b.AuthCode = cs[1].Trim();
                     }
+                    else if (cs[0].Equals("exit", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        b.Dispose();
+                        break;
+                    }
                     else if (cs[0].Equals(ExecCommand, StringComparison.CurrentCultureIgnoreCase))
                     {
                         b.HandleBotCommand(c.Remove(0, cs[0].Length + 1));
@@ -173,6 +178,7 @@ namespace SteamBot
 
                 } while (!isclosing);
             }
+            manager.Dispose();
         }
 
         #endregion Bot Modes
