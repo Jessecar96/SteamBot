@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
+using SteamBot.Logging;
 
 namespace SteamBot
 {
