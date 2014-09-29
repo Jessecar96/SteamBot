@@ -577,8 +577,11 @@ namespace SteamTrade
                 {
                     case TradeEventType.ItemAdded:
                         TradeUserAssets newAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
-                        otherOfferedItems.Add(newAsset);
-                        FireOnUserAddItem(newAsset);
+                        if(!otherOfferedItems.Contains(newAsset))
+                        {
+                            otherOfferedItems.Add(newAsset);
+                            FireOnUserAddItem(newAsset);
+                        }
                         break;
                     case TradeEventType.ItemRemoved:
                         TradeUserAssets oldAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
