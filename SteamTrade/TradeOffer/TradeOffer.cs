@@ -127,7 +127,7 @@ namespace SteamTrade.TradeOffer
                 return Session.SendTradeOffer(message, PartnerSteamId, this.Items, out offerId);
             }
             //todo: log
-            Debug.WriteLine("Can't send a trade offer that allready exists");
+            Debug.WriteLine("Can't send a trade offer that already exists.");
             return false;
         }
 
@@ -146,7 +146,7 @@ namespace SteamTrade.TradeOffer
                 return Session.SendTradeOfferWithToken(message, PartnerSteamId, this.Items, token, out offerId);
             }
             //todo: log
-            Debug.WriteLine("Can't send a trade offer that allready exists");
+            Debug.WriteLine("Can't send a trade offer that already exists.");
             return false;
         }
 
@@ -160,7 +160,7 @@ namespace SteamTrade.TradeOffer
             tradeId = String.Empty;
             if (TradeOfferId == null)
             {
-                Debug.WriteLine("Can't Accept a trade without a tradeofferid");
+                Debug.WriteLine("Can't accept a trade without a tradeofferid");
                 throw new ArgumentException("TradeOfferId");
             }
             if (!IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)
@@ -190,7 +190,7 @@ namespace SteamTrade.TradeOffer
         {
             if (TradeOfferId == null)
             {
-                Debug.WriteLine("Can't Decline a trade without a tradeofferid");
+                Debug.WriteLine("Can't decline a trade without a tradeofferid");
                 throw new ArgumentException("TradeOfferId");
             }
             if (!IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)
@@ -210,7 +210,7 @@ namespace SteamTrade.TradeOffer
         {
             if (TradeOfferId == null)
             {
-                Debug.WriteLine("Can't Cancel a trade without a tradeofferid");
+                Debug.WriteLine("Can't cancel a trade without a tradeofferid");
                 throw new ArgumentException("TradeOfferId");
             }
             if (IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)

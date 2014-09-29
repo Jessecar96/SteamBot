@@ -23,8 +23,8 @@ namespace SteamBot
 
                 var myItems = offer.Items.GetMyItems();
                 var theirItems = offer.Items.GetTheirItems();
-                Console.WriteLine("They want {0} of my items", myItems.Count);
-                Console.WriteLine("And I will get {0} of their items", theirItems.Count);
+                Log.Info("They want " + myItems.Count + " of my items.");
+                Log.Info("And I will get " +  theirItems.Count + " of their items.");
 
                 //do validation logic etc
                 if (DummyValidation(myItems, theirItems))
