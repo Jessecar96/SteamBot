@@ -680,7 +680,7 @@ namespace SteamBot
                     tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
                     tradeManager.OnTimeout += OnTradeTimeout;
 
-                    tradeOfferManager = new TradeOfferManager(apiKey, sessionId, token);
+                    tradeOfferManager = new TradeOfferManager(apiKey, sessionId, token, tokensecure);
                     SubscribeTradeOffer(tradeOfferManager);
 
                     CookiesAreInvalid = false;

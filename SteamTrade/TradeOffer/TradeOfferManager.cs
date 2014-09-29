@@ -13,11 +13,12 @@ namespace SteamTrade.TradeOffer
         private string apiKey;
         private string sessionId;
         private string token;
+        private string tokensecure;
 
         private OfferSession session;
         private TradeOfferWebAPI webApi;
 
-        public TradeOfferManager(string apiKey, string sessionId, string token)
+        public TradeOfferManager(string apiKey, string sessionId, string token, string tokensecure)
         {
             if (apiKey == null)
                 throw new ArgumentNullException("apiKey");
@@ -28,12 +29,16 @@ namespace SteamTrade.TradeOffer
             if (token == null)
                 throw new ArgumentNullException("token");
 
+            if (tokensecure == null)
+                throw new ArgumentNullException("tokensecure");
+
             this.apiKey = apiKey;
             this.sessionId = sessionId;
             this.token = token;
+            this.tokensecure = tokensecure;
 
             webApi = new TradeOfferWebAPI(this.apiKey);
-            session = new OfferSession(this.sessionId, this.token, webApi);
+            session = new OfferSession(this.sessionId, this.token, this.tokensecure, webApi);
         }
 
         public delegate void NewOfferHandler(TradeOffer offer);
