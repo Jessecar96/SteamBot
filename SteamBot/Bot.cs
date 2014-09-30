@@ -637,9 +637,12 @@ namespace SteamBot
                         log.Info(notification.UserNotificationType + " notification");
                     }
                 }
-                //check for updates on offers
-                tradeOfferManager.GetOffers();
+
+                // Get offers only if cookies are valid
+                if (CheckCookies())
+                    tradeOfferManager.GetOffers();
             });
+
             msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
             {
                 //various types of comment notifications on profile/activity feed etc
@@ -684,6 +687,10 @@ namespace SteamBot
                     SubscribeTradeOffer(tradeOfferManager);
 
                     CookiesAreInvalid = false;
+
+                    // Success, check trade offers which we have received while we were offline
+                    tradeOfferManager.GetOffers();
+
                     break;
                 }
                 else
