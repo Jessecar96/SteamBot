@@ -162,9 +162,9 @@ namespace SteamBot
             }
 
             logFile = config.LogFile;
-            CreateLog();
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
+            CreateLog();
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
@@ -187,6 +187,7 @@ namespace SteamBot
             if(log == null)
             {
                 log = new Log(DisplayName, true, new ConsoleLogger(ConsoleLogLevel), new FileLogger(FileLogLevel, logFile));
+                GetUserHandler(new SteamID((ulong)0)).OnLogCreated();
             }
         }
 

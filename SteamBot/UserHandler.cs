@@ -146,6 +146,10 @@ namespace SteamBot
 
         }
 
+        public virtual void OnLogCreated()
+        {
+        }
+
         /// <summary>
         /// Called when user accepts or denies bot's trade request.
         /// </summary>

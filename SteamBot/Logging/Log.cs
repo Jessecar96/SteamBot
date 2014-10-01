@@ -17,6 +17,8 @@ namespace SteamBot.Logging
 
         public event LogMessage OnLog;
 
+        private bool Disposed = false;
+
         public Log(string botName, bool showBotName = true, params LoggerBase[] loggerObjects)
         {
             BotName = botName;
@@ -24,13 +26,15 @@ namespace SteamBot.Logging
             foreach (LoggerBase logger in loggerObjects)
             {
                 LoggerObjects.Add(logger);
-                logger.AddHandler(this);
+                this.OnLog += logger.LogMessage;
             }
             ShowBotName = true;
         }
 
         private void CallLogMessage(LogLevel level, string data, params object[] formatParams)
         {
+            if (Disposed)
+                return;
             LoggerParams logParams = new LoggerParams(level, BotName, ShowBotName, data, formatParams);
             OnLog(logParams);
         }
@@ -75,12 +79,23 @@ namespace SteamBot.Logging
 
         public void AddLoggingObject(LoggerBase logger)
         {
+            if (Disposed)
+                return;
             LoggerObjects.Add(logger);
-            logger.AddHandler(this);
+            this.OnLog += logger.LogMessage;
+        }
+
+        public void RemoveLoggingObject(LoggerBase logger)
+        {
+            if (Disposed)
+                return;
+            LoggerObjects.Remove(logger);
+            this.OnLog -= logger.LogMessage;
         }
 
         public void Dispose()
         {
+            Disposed = true;
             foreach (LoggerBase logger in LoggerObjects)
             {
                 logger.Dispose();

@@ -72,11 +72,6 @@ namespace SteamBot.Logging
             OutputLevel = outputLevel;
         }
 
-        public void AddHandler(Log baseLogger)
-        {
-            baseLogger.OnLog += LogMessage;
-        }
-
         protected string _BotName(LoggerParams lParams)
         {
             if (!lParams.ShowBotName)
