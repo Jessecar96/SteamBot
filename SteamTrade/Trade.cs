@@ -558,6 +558,7 @@ namespace SteamTrade
                 OtherUserAccepted = status.them.confirmed == 1;
             }
 
+            bool otherUserDidSomething = false;
             var events = status.GetAllEvents();
             foreach(var tradeEvent in events.OrderBy(o => o.timestamp))
             {
@@ -573,6 +574,7 @@ namespace SteamTrade
                 if(isBot)
                     continue;
 
+                otherUserDidSomething = true;
                 switch((TradeEventType) tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
@@ -588,7 +590,7 @@ namespace SteamTrade
                         if(otherOfferedItems.Contains(oldAsset))
                         {
                             otherOfferedItems.Remove(oldAsset);
-                            FireOnUserRemoveItem(new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid));
+                            FireOnUserRemoveItem(oldAsset);
                         }
                         break;
                     case TradeEventType.UserSetReady:
@@ -615,7 +617,7 @@ namespace SteamTrade
                 session.LogPos = status.logpos;
             }
 
-            return true;
+            return otherUserDidSomething;
         }
 
         private void HandleTradeVersionChange(TradeStatus status)
