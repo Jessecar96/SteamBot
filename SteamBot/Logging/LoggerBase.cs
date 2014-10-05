@@ -65,7 +65,9 @@ namespace SteamBot.Logging
         /// <summary>
         /// The min logging output level for this class.
         /// </summary>
-        public LogLevel OutputLevel { get; private set; }
+        public LogLevel OutputLevel { get; set; }
+
+        private bool Disposed  = false;
 
         public LoggerBase(LogLevel outputLevel)
         {
@@ -117,10 +119,18 @@ namespace SteamBot.Logging
         }
 
         //Override this for your own logger class. Return true if it was a success;
-        public abstract void LogMessage(LoggerParams lParams);
+        public abstract void LogMessage2(LoggerParams lParams);
+
+        public void LogMessage(LoggerParams lParams)
+        {
+            if (Disposed)
+                return;
+            LogMessage2(lParams);
+        }
 
         public virtual void Dispose()
         {
+            Disposed = true;
         }
     }
 }

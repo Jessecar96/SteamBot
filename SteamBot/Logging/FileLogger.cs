@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SteamBot.Logging
 {
-    class FileLogger : LoggerBase
+    class FileLogger : LoggerBase, IDisposable
     {
         private StreamWriter FileWriter;
 
@@ -17,7 +17,7 @@ namespace SteamBot.Logging
             FileWriter.AutoFlush = true;
         }
 
-        public override void LogMessage(LoggerParams lParams)
+        public override void LogMessage2(LoggerParams lParams)
         {
             string formattedOutput = FormatLine(lParams);
             if (OutputLevel <= lParams.OutputLevel && FileWriter != null)
@@ -28,6 +28,7 @@ namespace SteamBot.Logging
         {
             FileWriter.Dispose();
             FileWriter = null;
+            base.Dispose();
         }
     }
 }
