@@ -491,11 +491,13 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Accepts the trade from the user.  Returns a deserialized
-        /// JSON object.
+        /// Accepts the trade from the user.  Returns whether the acceptance went through or not
         /// </summary>
         public bool AcceptTrade()
         {
+            if(!MeIsReady)
+                return false;
+
             ValidateLocalTradeItems();
 
             return RetryWebRequest(session.AcceptTradeWebCmd);
@@ -619,8 +621,9 @@ namespace SteamTrade
                 otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
             }
 
+            bool otherUserDidSomething = false;
             var events = status.GetAllEvents();
-            foreach (var tradeEvent in events)
+            foreach(var tradeEvent in events.OrderBy(o => o.timestamp))
             {
                 if (eventList.Contains(tradeEvent))
                     continue;
@@ -634,14 +637,24 @@ namespace SteamTrade
                 if (isBot)
                     continue;
 
-                otherDidSomething = true;
-
+                otherUserDidSomething = true;
                 switch ((TradeEventType)tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
+                        TradeUserAssets newAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+                        if(!otherOfferedItems.Contains(newAsset))
+                        {
+                            otherOfferedItems.Add(newAsset);
+                            FireOnUserAddItem(newAsset);
+                        }
+                        break;
                     case TradeEventType.ItemRemoved:
-                        //The ItemAdded and ItemRemoved events from Steam cannot be trusted.  See https://github.com/Jessecar96/SteamBot/issues/602
-                        //Instead, we now manually call FireOnUserAddItem/RemoveItem from HandleTradeVersionChange()
+                        TradeUserAssets oldAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+                        if(otherOfferedItems.Contains(oldAsset))
+                        {
+                            otherOfferedItems.Remove(oldAsset);
+                            FireOnUserRemoveItem(oldAsset);
+                        }
                         break;
                     case TradeEventType.UserSetReady:
                         OnUserSetReady(true);
@@ -665,7 +678,7 @@ namespace SteamTrade
                 session.LogPos = status.logpos;
             }
 
-            return otherDidSomething;
+            return otherUserDidSomething;
         }
 
         private void HandleTradeVersionChange(TradeStatus status)
@@ -699,6 +712,11 @@ namespace SteamTrade
         /// </summary>
         private void FireOnUserAddItem(TradeUserAssets asset)
         {
+            if(MeIsReady)
+            {
+                SetReady(false);
+            }
+
             if(OtherInventory != null)
             {
                 Inventory.Item item = OtherInventory.GetItem(asset.assetid);
@@ -759,6 +777,11 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeUserAssets asset)
         {
+            if(MeIsReady)
+            {
+                SetReady(false);
+            }
+
             if(OtherInventory != null)
             {
                 Inventory.Item item = OtherInventory.GetItem(asset.assetid);
