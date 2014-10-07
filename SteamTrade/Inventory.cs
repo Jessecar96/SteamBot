@@ -97,7 +97,7 @@ namespace SteamTrade
             public byte Level { get; set; }
 
             [JsonProperty("quality")]
-            public string Quality { get; set; }
+            public int Quality { get; set; }
 
             [JsonProperty("quantity")]
             public int RemainingUses { get; set; }
