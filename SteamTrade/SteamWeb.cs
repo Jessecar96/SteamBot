@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Specialized;
 using System.Net;
+using System.Net.Cache;
 using System.Text;
 using System.Web;
 using System.Security.Cryptography;
@@ -56,6 +57,8 @@ namespace SteamTrade
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = "http://steamcommunity.com/trade/1";
             request.Timeout = 50000; //Timeout after 50 seconds
+            request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
 
             if (ajax)
             {
