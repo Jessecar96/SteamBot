@@ -1,8 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
 using SteamBot.Logging;
+using SteamTrade.TradeOffer;
 
 namespace SteamBot
 {
@@ -126,6 +128,16 @@ namespace SteamBot
         /// </returns>
         public abstract bool OnTradeRequest();
 
+
+        /// <summary>
+        /// Called when a new trade offer is received
+        /// </summary>
+        /// <param name="offer"></param>
+        public virtual void OnNewTradeOffer(TradeOffer offer)
+        {
+
+        }
+
         /// <summary>
         /// Called when a chat message is sent in a chatroom
         /// </summary>
@@ -164,6 +176,14 @@ namespace SteamBot
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 
         public abstract void OnTradeError(string error);
+
+        public virtual void OnStatusError(Trade.TradeStatusType status)
+        {
+            string otherUserName = Bot.SteamFriends.GetFriendPersonaName(OtherSID);
+            string statusMessage = (Trade != null ? Trade.GetTradeStatusErrorString(status) : "died a horrible death");
+            string errorMessage = String.Format("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64(), statusMessage);
+            OnTradeError(errorMessage);
+        }
 
         public abstract void OnTradeTimeout();
 

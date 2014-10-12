@@ -12,6 +12,7 @@ using SteamBot.SteamGroups;
 using SteamKit2;
 using SteamTrade;
 using SteamKit2.Internal;
+using SteamTrade.TradeOffer;
 using SteamBot.Logging;
 
 namespace SteamBot
@@ -37,6 +38,7 @@ namespace SteamBot
         public SteamTrading SteamTrade;
         public SteamUser SteamUser;
         public SteamGameCoordinator SteamGameCoordinator;
+        public SteamNotifications SteamNotifications;
 
         // The current trade; if the bot is not in a trade, this is
         // null.
@@ -101,6 +103,7 @@ namespace SteamBot
         SteamUser.LogOnDetails logOnDetails;
 
         TradeManager tradeManager;
+        private TradeOfferManager tradeOfferManager;
         private Task<Inventory> myInventoryTask;
 
         public Inventory MyInventory
@@ -128,7 +131,7 @@ namespace SteamBot
             DisplayNamePrefix = config.DisplayNamePrefix;
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
-            this.apiKey  = apiKey;
+            this.apiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             this.isprocess = process;
 
             try
@@ -171,10 +174,12 @@ namespace SteamBot
 
             log.Debug ("Initializing Steam Bot...");
             SteamClient = new SteamClient();
+            SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
+            SteamNotifications = SteamClient.GetHandler<SteamNotifications>();
 
             GetUserHandler(new SteamID((ulong)0)).OnBotCreated();
 
@@ -296,6 +301,27 @@ namespace SteamBot
         {
             // ignore event params and just null out the trade.
             GetUserHandler (CurrentTrade.OtherSID).OnTradeTimeout();
+        }
+
+        /// <summary>
+        /// Create a new trade offer with the specified partner
+        /// </summary>
+        /// <param name="other">SteamId of the partner</param>
+        /// <returns></returns>
+        public TradeOffer NewTradeOffer(SteamID other)
+        {
+            return tradeOfferManager.NewOffer(other);
+        }
+
+        /// <summary>
+        /// Try to get a specific trade offer using the offerid
+        /// </summary>
+        /// <param name="offerId"></param>
+        /// <param name="tradeOffer"></param>
+        /// <returns></returns>
+        public bool TryGetTradeOffer(string offerId, out TradeOffer tradeOffer)
+        {
+            return tradeOfferManager.GetOffer(offerId, out tradeOffer);
         }
 
         public void HandleBotCommand(string command)
@@ -646,6 +672,33 @@ namespace SteamBot
                 SteamClient.Connect ();
             });
             #endregion
+
+            #region Notifications
+            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(callback =>
+            {
+                //currently only appears to be of trade offer
+                if (callback.Notifications.Count != 0)
+                {
+                    foreach (var notification in callback.Notifications)
+                    {
+                        log.Info(notification.UserNotificationType + " notification");
+        }
+                }
+
+                // Get offers only if cookies are valid
+                if (CheckCookies())
+                    tradeOfferManager.GetOffers();
+            });
+
+            msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
+            {
+                //various types of comment notifications on profile/activity feed etc
+                //log.Info("received CommentNotificationCallback");
+                //log.Info("New Commments " + callback.CommentNotifications.CountNewComments);
+                //log.Info("New Commments Owners " + callback.CommentNotifications.CountNewCommentsOwner);
+                //log.Info("New Commments Subscriptions" + callback.CommentNotifications.CountNewCommentsSubscriptions);
+            });
+            #endregion
         }
 
         void UserLogOn()
@@ -682,7 +735,13 @@ namespace SteamBot
             tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
             tradeManager.OnTimeout += OnTradeTimeout;
 
+            tradeOfferManager = new TradeOfferManager(apiKey, sessionId, token, tokensecure);
+            SubscribeTradeOffer(tradeOfferManager);
+
             CookiesAreInvalid = false;
+
+            // Success, check trade offers which we have received while we were offline
+            tradeOfferManager.GetOffers();
         }
 
         /// <summary>
@@ -801,6 +860,24 @@ namespace SteamBot
             myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
         }
 
+        public void TradeOfferRouter(TradeOffer offer)
+        {
+            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
+            {
+                GetUserHandler(offer.PartnerSteamId).OnNewTradeOffer(offer);
+            }
+        }
+        public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
+        {
+            tradeOfferManager.OnNewTradeOffer += TradeOfferRouter;
+        }
+
+        //todo: should unsubscribe eventually...
+        public void UnsubscribeTradeOffer(TradeOfferManager tradeOfferManager)
+        {
+            tradeOfferManager.OnNewTradeOffer -= TradeOfferRouter;
+        }
+
         /// <summary>
         /// Subscribes all listeners of this to the trade.
         /// </summary>
@@ -809,6 +886,7 @@ namespace SteamBot
             trade.OnSuccess += handler.OnTradeSuccess;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
+            trade.OnStatusError += handler.OnStatusError;
             //trade.OnTimeout += OnTradeTimeout;
             trade.OnAfterInit += handler.OnTradeInit;
             trade.OnUserAddItem += handler.OnTradeAddItem;
@@ -826,6 +904,7 @@ namespace SteamBot
             trade.OnSuccess -= handler.OnTradeSuccess;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
+            trade.OnStatusError -= handler.OnStatusError;
             //Trade.OnTimeout -= OnTradeTimeout;
             trade.OnAfterInit -= handler.OnTradeInit;
             trade.OnUserAddItem -= handler.OnTradeAddItem;
