@@ -35,7 +35,7 @@ namespace SteamTrade
             }
         }
 
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true)
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
             //Append the data to the URL for GET-requests
             bool isGetMethod = (method.ToLower() == "get");
@@ -55,7 +55,7 @@ namespace SteamTrade
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             //request.Host is set automatically
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
-            request.Referer = "http://steamcommunity.com/trade/1";
+            request.Referer = string.IsNullOrEmpty(referer) ? "http://steamcommunity.com/trade/1" : referer;
             request.Timeout = 50000; //Timeout after 50 seconds
             request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
