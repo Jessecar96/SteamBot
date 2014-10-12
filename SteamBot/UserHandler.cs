@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
+using SteamTrade.TradeOffer;
 
 namespace SteamBot
 {
@@ -125,6 +126,16 @@ namespace SteamBot
         /// Whether to accept the request.
         /// </returns>
         public abstract bool OnTradeRequest ();
+
+
+        /// <summary>
+        /// Called when a new trade offer is received
+        /// </summary>
+        /// <param name="offer"></param>
+        public virtual void OnNewTradeOffer(TradeOffer offer)
+        {
+
+        }
 
         /// <summary>
         /// Called when a chat message is sent in a chatroom
