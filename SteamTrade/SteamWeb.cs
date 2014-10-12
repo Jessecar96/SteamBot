@@ -21,9 +21,9 @@ namespace SteamTrade
         public string TokenSecure { get; private set; }
         private CookieContainer _cookies = new CookieContainer();
 
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true)
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
-            using (HttpWebResponse response = Request(url, method, data, ajax))
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer))
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
