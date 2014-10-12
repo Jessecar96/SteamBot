@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
+using SteamBot.Logging;
 
 namespace SteamBot
 {
@@ -143,6 +144,10 @@ namespace SteamBot
         public virtual void OnBotCommand(string command)
         {
 
+        }
+
+        public virtual void OnBotCreated()
+        {
         }
 
         /// <summary>

@@ -12,6 +12,7 @@ using SteamBot.SteamGroups;
 using SteamKit2;
 using SteamTrade;
 using SteamKit2.Internal;
+using SteamBot.Logging;
 
 namespace SteamBot
 {
@@ -78,8 +79,8 @@ namespace SteamBot
         string DisplayNamePrefix;
 
         // Log level to use for this bot
-        Log.LogLevel ConsoleLogLevel;
-        Log.LogLevel FileLogLevel;
+        LogLevel ConsoleLogLevel;
+        LogLevel FileLogLevel;
 
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
@@ -134,36 +135,36 @@ namespace SteamBot
             {
                 if(config.LogLevel != null)
                 {
-                    ConsoleLogLevel = (Log.LogLevel) Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+                    ConsoleLogLevel = (LogLevel) Enum.Parse(typeof(LogLevel), config.LogLevel, true);
                     Console.WriteLine(
                         @"(Console) LogLevel configuration parameter used in bot {0} is depreciated and may be removed in future versions. Please use ConsoleLogLevel instead.",
                         DisplayName);
                 }
                 else
                 {
-                    ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.ConsoleLogLevel, true);
+                    ConsoleLogLevel = (LogLevel)Enum.Parse(typeof(LogLevel), config.ConsoleLogLevel, true);
                 }
             }
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                ConsoleLogLevel = Log.LogLevel.Info;
+                ConsoleLogLevel = LogLevel.Info;
             }
 
             try
             {
-                FileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
+                FileLogLevel = (LogLevel)Enum.Parse(typeof(LogLevel), config.FileLogLevel, true);
             }
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                FileLogLevel = Log.LogLevel.Info;
+                FileLogLevel = LogLevel.Info;
             }
 
             logFile = config.LogFile;
-            CreateLog();
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
+            CreateLog();
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
@@ -175,6 +176,8 @@ namespace SteamBot
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
 
+            GetUserHandler(new SteamID((ulong)0)).OnBotCreated();
+
             backgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
             backgroundWorker.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
@@ -184,9 +187,7 @@ namespace SteamBot
         private void CreateLog()
         {
             if(log == null)
-            {
-                log = new Log(logFile, this.DisplayName, ConsoleLogLevel, FileLogLevel);
-            }
+                log = new Log(DisplayName, true, new ConsoleLogger(ConsoleLogLevel), new FileLogger(FileLogLevel, logFile));
         }
 
         private void DisposeLog()
