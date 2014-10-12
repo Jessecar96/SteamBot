@@ -11,7 +11,7 @@ namespace SteamBot.Logging
 
         private string BotName = "";
 
-        private bool ShowBotName;
+        public bool ShowBotName;
 
         private List<LoggerBase> LoggerObjects;
 
@@ -34,7 +34,7 @@ namespace SteamBot.Logging
         private void CallLogMessage(LogLevel level, string data, params object[] formatParams)
         {
             if (Disposed)
-                return;
+                throw new ObjectDisposedException("This Log instance is disposed");
             LoggerParams logParams = new LoggerParams(level, BotName, ShowBotName, data, formatParams);
             OnLog(logParams);
         }
@@ -80,7 +80,7 @@ namespace SteamBot.Logging
         public void AddLoggingObject(LoggerBase logger)
         {
             if (Disposed)
-                return;
+                throw new ObjectDisposedException("This Log instance is disposed");
             LoggerObjects.Add(logger);
             this.OnLog += logger.LogMessage;
         }
@@ -88,7 +88,7 @@ namespace SteamBot.Logging
         public void RemoveLoggingObject(LoggerBase logger)
         {
             if (Disposed)
-                return;
+                throw new ObjectDisposedException("This Log instance is disposed");
             LoggerObjects.Remove(logger);
             this.OnLog -= logger.LogMessage;
         }
@@ -96,7 +96,7 @@ namespace SteamBot.Logging
         public void Dispose()
         {
             Disposed = true;
-            foreach (LoggerBase logger in LoggerObjects)
+            foreach (IDisposable logger in LoggerObjects.OfType<IDisposable>())
             {
                 logger.Dispose();
             }

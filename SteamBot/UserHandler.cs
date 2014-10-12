@@ -146,7 +146,7 @@ namespace SteamBot
 
         }
 
-        public virtual void OnLogCreated()
+        public virtual void OnBotCreated()
         {
         }
 

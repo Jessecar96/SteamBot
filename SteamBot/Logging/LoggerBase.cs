@@ -5,20 +5,6 @@ using System.Text;
 
 namespace SteamBot.Logging
 {
-    public enum LogLevel
-    {
-        Debug,
-        Info,
-        Success,
-        Warn,
-        Error,
-        Interface, // if the user needs to input something
-        Nothing    // not recommended; it basically silences
-        // the console output because nothing is
-        // greater than it.  even if the bot needs
-        // input, it won't be shown in the console.
-    }
-
     public class LoggerParams
     {
         /// <summary>
@@ -60,21 +46,19 @@ namespace SteamBot.Logging
     /// <summary>
     /// An abstract class for Log class.
     /// </summary>
-    public abstract class LoggerBase : IDisposable
+    public abstract class LoggerBase
     {
         /// <summary>
         /// The min logging output level for this class.
         /// </summary>
         public LogLevel OutputLevel { get; set; }
 
-        private bool Disposed  = false;
-
         public LoggerBase(LogLevel outputLevel)
         {
             OutputLevel = outputLevel;
         }
 
-        protected string _BotName(LoggerParams lParams)
+        private string BotName(LoggerParams lParams)
         {
             if (!lParams.ShowBotName)
                 return String.Empty;
@@ -84,53 +68,17 @@ namespace SteamBot.Logging
                 return String.Format("({0}) ", lParams.BotName);
         }
 
-        // Determine the string equivalent of the LogLevel.
-        protected string _LogLevel(LogLevel level)
-        {
-            switch (level)
-            {
-                case LogLevel.Info:
-                    return "info";
-                case LogLevel.Debug:
-                    return "debug";
-                case LogLevel.Success:
-                    return "success";
-                case LogLevel.Warn:
-                    return "warn";
-                case LogLevel.Error:
-                    return "error";
-                case LogLevel.Interface:
-                    return "interface";
-                case LogLevel.Nothing:
-                    return "nothing";
-                default:
-                    return "undef";
-            }
-        }
-
-        protected string FormatLine(LoggerParams lParams)
+        protected virtual string FormatLine(LoggerParams lParams)
         {
             return String.Format(
                 "[{0}{1}] {2}: {3}",
-                _BotName(lParams),
+                BotName(lParams),
                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                _LogLevel(lParams.OutputLevel).ToUpper(), (lParams.FormatParams != null && lParams.FormatParams.Any() ? String.Format(lParams.Line, lParams.FormatParams) : lParams.Line)
+                LoggingUtils.LogLevelStr(lParams.OutputLevel).ToUpper(), (lParams.FormatParams != null && lParams.FormatParams.Any() ? String.Format(lParams.Line, lParams.FormatParams) : lParams.Line)
                 );
         }
 
         //Override this for your own logger class. Return true if it was a success;
-        public abstract void LogMessage2(LoggerParams lParams);
-
-        public void LogMessage(LoggerParams lParams)
-        {
-            if (Disposed)
-                return;
-            LogMessage2(lParams);
-        }
-
-        public virtual void Dispose()
-        {
-            Disposed = true;
-        }
+        public abstract void LogMessage(LoggerParams lParams);
     }
 }

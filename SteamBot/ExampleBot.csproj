@@ -66,6 +66,7 @@
     <Compile Include="Logging\FileLogger.cs" />
     <Compile Include="Logging\ConsoleLogger.cs" />
     <Compile Include="Logging\LoggerBase.cs" />
+    <Compile Include="Logging\LoggingUtils.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
     <Compile Include="SteamTradeDemoHandler.cs" />
     <Compile Include="TF2GC\Crafting.cs" />

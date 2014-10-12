@@ -176,6 +176,8 @@ namespace SteamBot
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
 
+            GetUserHandler(new SteamID((ulong)0)).OnBotCreated();
+
             backgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
             backgroundWorker.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
@@ -185,10 +187,7 @@ namespace SteamBot
         private void CreateLog()
         {
             if(log == null)
-            {
                 log = new Log(DisplayName, true, new ConsoleLogger(ConsoleLogLevel), new FileLogger(FileLogLevel, logFile));
-                GetUserHandler(new SteamID((ulong)0)).OnLogCreated();
-            }
         }
 
         private void DisposeLog()

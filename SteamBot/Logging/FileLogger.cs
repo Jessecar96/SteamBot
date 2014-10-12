@@ -10,6 +10,8 @@ namespace SteamBot.Logging
     {
         private StreamWriter FileWriter;
 
+        private bool Disposed { get; set; }
+
         public FileLogger(LogLevel outputLevel, string logFile) : base(outputLevel)
         {
             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
@@ -17,18 +19,20 @@ namespace SteamBot.Logging
             FileWriter.AutoFlush = true;
         }
 
-        public override void LogMessage2(LoggerParams lParams)
+        public override void LogMessage(LoggerParams lParams)
         {
+            if (Disposed)
+                throw new ObjectDisposedException("This logger object is disposed");
             string formattedOutput = FormatLine(lParams);
             if (OutputLevel <= lParams.OutputLevel && FileWriter != null)
                 FileWriter.WriteLine(formattedOutput);
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             FileWriter.Dispose();
             FileWriter = null;
-            base.Dispose();
+            Disposed = true;
         }
     }
 }

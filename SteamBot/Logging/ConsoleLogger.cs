@@ -15,7 +15,7 @@ namespace SteamBot.Logging
             Console.ForegroundColor = DefaultConsoleColor;
         }
 
-        public override void LogMessage2(LoggerParams lParams)
+        public override void LogMessage(LoggerParams lParams)
         {
             string formattedOutput = FormatLine(lParams);
             if (OutputLevel <= lParams.OutputLevel)
