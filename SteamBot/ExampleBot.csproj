@@ -67,6 +67,7 @@
     <Compile Include="Commands\CommandHandler.cs" />
     <Compile Include="Commands\DemoHandlerCMDs.cs" />
     <Compile Include="Commands\HelpCommand.cs" />
+    <Compile Include="Notifications.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
     <Compile Include="SteamTradeDemoHandler.cs" />
     <Compile Include="Commands\StockBotCommand.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
+    <Compile Include="TradeOfferUserHandler.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>

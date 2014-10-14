@@ -594,8 +594,6 @@ namespace SteamTrade
 
         private bool HandleTradeOngoing(TradeStatus status)
         {
-            bool otherDidSomething = false;
-
             if (status.newversion)
             {
                 HandleTradeVersionChange(status);
