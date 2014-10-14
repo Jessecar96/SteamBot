@@ -36,6 +36,7 @@ namespace SteamBot
         public override void OnMessage (string message, EChatEntryType type) 
         {
             Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
+			base.OnMessage(message, type);
         }
 
         public override bool OnTradeRequest() 
@@ -67,8 +68,6 @@ namespace SteamBot
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
-        
-        public override void OnTradeMessage (string message) {}
         
         public override void OnTradeReady (bool ready) 
         {
