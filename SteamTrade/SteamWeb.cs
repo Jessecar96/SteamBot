@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Specialized;
 using System.Net;
+using System.Net.Cache;
 using System.Text;
 using System.Web;
 using System.Security.Cryptography;
@@ -14,22 +15,41 @@ namespace SteamTrade
 {
     public class SteamWeb
     {
-        public static string Fetch (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true)
+        public const string SteamCommunityDomain = "steamcommunity.com";
+        public string Token { get; private set; }
+        public string SessionId { get; private set; }
+        public string TokenSecure { get; private set; }
+        private CookieContainer _cookies = new CookieContainer();
+
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
-            HttpWebResponse response = Request (url, method, data, cookies, ajax);
-            using(Stream responseStream = response.GetResponseStream())
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer))
             {
-                using(StreamReader reader = new StreamReader(responseStream))
+                using (Stream responseStream = response.GetResponseStream())
                 {
-                    return reader.ReadToEnd();
+                    using (StreamReader reader = new StreamReader(responseStream))
+                    {
+                        return reader.ReadToEnd();
+                    }
                 }
             }
         }
 
-        public static HttpWebResponse Request (string url, string method, NameValueCollection data = null, CookieContainer cookies = null, bool ajax = true, string referer = "")
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
-            HttpWebRequest request = WebRequest.Create (url) as HttpWebRequest;
+            //Append the data to the URL for GET-requests
+            bool isGetMethod = (method.ToLower() == "get");
+            string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key =>
+                String.Format("{0}={1}", HttpUtility.UrlEncode(key), HttpUtility.UrlEncode(data[key]))
+            )));
 
+            if (isGetMethod && !String.IsNullOrEmpty(dataString))
+            {
+                url += (url.Contains("?") ? "&" : "?") + dataString;
+            }
+
+            //Setup the request
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = method;
             request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -37,139 +57,138 @@ namespace SteamTrade
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = string.IsNullOrEmpty(referer) ? "http://steamcommunity.com/trade/1" : referer;
             request.Timeout = 50000; //Timeout after 50 seconds
+            request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
+            request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
 
             if (ajax)
             {
-                request.Headers.Add ("X-Requested-With", "XMLHttpRequest");
-                request.Headers.Add ("X-Prototype-Version", "1.7");
+                request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+                request.Headers.Add("X-Prototype-Version", "1.7");
             }
 
             // Cookies
-            request.CookieContainer = cookies ?? new CookieContainer ();
+            request.CookieContainer = _cookies;
 
-            // Request data
-            if (data != null)
+            // Write the data to the body for POST and other methods
+            if (!isGetMethod && !String.IsNullOrEmpty(dataString))
             {
-                string dataString = String.Join ("&", Array.ConvertAll (data.AllKeys, key =>
-                    String.Format ("{0}={1}", HttpUtility.UrlEncode (key), HttpUtility.UrlEncode (data [key]))
-                ));
-
-                byte[] dataBytes = Encoding.UTF8.GetBytes (dataString);
+                byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
                 request.ContentLength = dataBytes.Length;
 
-                using(Stream requestStream = request.GetRequestStream())
+                using (Stream requestStream = request.GetRequestStream())
                 {
                     requestStream.Write(dataBytes, 0, dataBytes.Length);
                 }
             }
 
             // Get the response
-            return request.GetResponse () as HttpWebResponse;
+            return request.GetResponse() as HttpWebResponse;
         }
 
         /// <summary>
         /// Executes the login by using the Steam Website.
         /// </summary>
-        public static CookieCollection DoLogin (string username, string password)
+        public bool DoLogin(string username, string password)
         {
-            var data = new NameValueCollection ();
-            data.Add ("username", username);
-            string response = Fetch ("https://steamcommunity.com/login/getrsakey", "POST", data, null, false);
-            GetRsaKey rsaJSON = JsonConvert.DeserializeObject<GetRsaKey> (response);
+            var data = new NameValueCollection();
+            data.Add("username", username);
+            string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
+            GetRsaKey rsaJSON = JsonConvert.DeserializeObject<GetRsaKey>(response);
 
 
             // Validate
-            if (rsaJSON.success != true)
+            if (!rsaJSON.success)
             {
-                return null;
+                return false;
             }
 
             //RSA Encryption
-            RSACryptoServiceProvider rsa = new RSACryptoServiceProvider ();
-            RSAParameters rsaParameters = new RSAParameters ();
+            RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
+            RSAParameters rsaParameters = new RSAParameters();
 
-            rsaParameters.Exponent = HexToByte (rsaJSON.publickey_exp);
-            rsaParameters.Modulus = HexToByte (rsaJSON.publickey_mod);
+            rsaParameters.Exponent = HexToByte(rsaJSON.publickey_exp);
+            rsaParameters.Modulus = HexToByte(rsaJSON.publickey_mod);
 
-            rsa.ImportParameters (rsaParameters);
+            rsa.ImportParameters(rsaParameters);
 
-            byte[] bytePassword = Encoding.ASCII.GetBytes (password);
-            byte[] encodedPassword = rsa.Encrypt (bytePassword, false);
-            string encryptedBase64Password = Convert.ToBase64String (encodedPassword);
+            byte[] bytePassword = Encoding.ASCII.GetBytes(password);
+            byte[] encodedPassword = rsa.Encrypt(bytePassword, false);
+            string encryptedBase64Password = Convert.ToBase64String(encodedPassword);
 
 
             SteamResult loginJson = null;
-            CookieCollection cookies;
+            CookieCollection cookieCollection;
             string steamGuardText = "";
-            string steamGuardId   = "";
+            string steamGuardId = "";
             do
             {
-                Console.WriteLine ("SteamWeb: Logging In...");
+                Console.WriteLine("SteamWeb: Logging In...");
 
                 bool captcha = loginJson != null && loginJson.captcha_needed == true;
                 bool steamGuard = loginJson != null && loginJson.emailauth_needed == true;
 
-                string time = Uri.EscapeDataString (rsaJSON.timestamp);
-                string capGID = loginJson == null ? null : Uri.EscapeDataString (loginJson.captcha_gid);
+                string time = Uri.EscapeDataString(rsaJSON.timestamp);
+                string capGID = loginJson == null ? null : Uri.EscapeDataString(loginJson.captcha_gid);
 
-                data = new NameValueCollection ();
-                data.Add ("password", encryptedBase64Password);
-                data.Add ("username", username);
+                data = new NameValueCollection();
+                data.Add("password", encryptedBase64Password);
+                data.Add("username", username);
 
                 // Captcha
                 string capText = "";
                 if (captcha)
                 {
-                    Console.WriteLine ("SteamWeb: Captcha is needed.");
-                    System.Diagnostics.Process.Start ("https://steamcommunity.com/public/captcha.php?gid=" + loginJson.captcha_gid);
-                    Console.WriteLine ("SteamWeb: Type the captcha:");
-                    capText = Uri.EscapeDataString (Console.ReadLine ());
+                    Console.WriteLine("SteamWeb: Captcha is needed.");
+                    System.Diagnostics.Process.Start("https://steamcommunity.com/public/captcha.php?gid=" + loginJson.captcha_gid);
+                    Console.WriteLine("SteamWeb: Type the captcha:");
+                    capText = Uri.EscapeDataString(Console.ReadLine());
                 }
 
-                data.Add ("captchagid", captcha ? capGID : "");
-                data.Add ("captcha_text", captcha ? capText : "");
+                data.Add("captchagid", captcha ? capGID : "");
+                data.Add("captcha_text", captcha ? capText : "");
                 // Captcha end
 
                 // SteamGuard
                 if (steamGuard)
                 {
-                    Console.WriteLine ("SteamWeb: SteamGuard is needed.");
-                    Console.WriteLine ("SteamWeb: Type the code:");
-                    steamGuardText = Uri.EscapeDataString (Console.ReadLine ());
-                    steamGuardId   = loginJson.emailsteamid;
+                    Console.WriteLine("SteamWeb: SteamGuard is needed.");
+                    Console.WriteLine("SteamWeb: Type the code:");
+                    steamGuardText = Uri.EscapeDataString(Console.ReadLine());
+                    steamGuardId = loginJson.emailsteamid;
                 }
 
-                data.Add ("emailauth", steamGuardText);
-                data.Add ("emailsteamid", steamGuardId);
+                data.Add("emailauth", steamGuardText);
+                data.Add("emailsteamid", steamGuardId);
                 // SteamGuard end
 
-                data.Add ("rsatimestamp", time);
+                data.Add("rsatimestamp", time);
 
-                HttpWebResponse webResponse = Request ("https://steamcommunity.com/login/dologin/", "POST", data, null, false);
-
-                StreamReader reader = new StreamReader (webResponse.GetResponseStream ());
-                string json = reader.ReadToEnd ();
-
-                loginJson = JsonConvert.DeserializeObject<SteamResult> (json);
-
-                cookies = webResponse.Cookies;
-            } while (loginJson.captcha_needed == true || loginJson.emailauth_needed == true);
-
-
-            if (loginJson.success == true)
-            {
-                CookieContainer c = new CookieContainer ();
-                foreach (Cookie cookie in cookies)
+                using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
                 {
-                    c.Add (cookie);
+                    using(StreamReader reader = new StreamReader(webResponse.GetResponseStream()))
+                    {
+                        string json = reader.ReadToEnd();
+                        loginJson = JsonConvert.DeserializeObject<SteamResult>(json);
+                        cookieCollection = webResponse.Cookies;
+                    }
                 }
-                SubmitCookies (c);
-                return cookies;
+            } while (loginJson.captcha_needed || loginJson.emailauth_needed);
+
+
+            if (loginJson.success)
+            {
+                _cookies = new CookieContainer();
+                foreach (Cookie cookie in cookieCollection)
+                {
+                    _cookies.Add(cookie);
+                }
+                SubmitCookies(_cookies);
+                return true;
             }
             else
             {
-                Console.WriteLine ("SteamWeb Error: " + loginJson.message);
-                return null;
+                Console.WriteLine("SteamWeb Error: " + loginJson.message);
+                return false;
             }
 
         }
@@ -179,51 +198,55 @@ namespace SteamTrade
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary> 
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
-        public static bool Authenticate(string myUniqueId, SteamClient client, out string sessionId, out string token, out string tokensecure, string myLoginKey)
+        public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
-            sessionId = Convert.ToBase64String (Encoding.UTF8.GetBytes (myUniqueId));
-            
-            using (dynamic userAuth = WebAPI.GetInterface ("ISteamUserAuth"))
+            Token = TokenSecure = "";
+            SessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(myUniqueId));
+            _cookies = new CookieContainer();
+
+            using (dynamic userAuth = WebAPI.GetInterface("ISteamUserAuth"))
             {
                 // generate an AES session key
-                var sessionKey = CryptoHelper.GenerateRandomBlock (32);
-                
+                var sessionKey = CryptoHelper.GenerateRandomBlock(32);
+
                 // rsa encrypt it with the public key for the universe we're on
                 byte[] cryptedSessionKey = null;
-                using (RSACrypto rsa = new RSACrypto (KeyDictionary.GetPublicKey (client.ConnectedUniverse)))
+                using (RSACrypto rsa = new RSACrypto(KeyDictionary.GetPublicKey(client.ConnectedUniverse)))
                 {
-                    cryptedSessionKey = rsa.Encrypt (sessionKey);
+                    cryptedSessionKey = rsa.Encrypt(sessionKey);
                 }
-                
-                
+
                 byte[] loginKey = new byte[20];
                 Array.Copy(Encoding.ASCII.GetBytes(myLoginKey), loginKey, myLoginKey.Length);
-                
+
                 // aes encrypt the loginkey with our session key
-                byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt (loginKey, sessionKey);
-                
+                byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt(loginKey, sessionKey);
+
                 KeyValue authResult;
-                
+
                 try
                 {
-                    authResult = userAuth.AuthenticateUser (
-                        steamid: client.SteamID.ConvertToUInt64 (),
-                        sessionkey: HttpUtility.UrlEncode (cryptedSessionKey),
-                        encrypted_loginkey: HttpUtility.UrlEncode (cryptedLoginKey),
+                    authResult = userAuth.AuthenticateUser(
+                        steamid: client.SteamID.ConvertToUInt64(),
+                        sessionkey: HttpUtility.UrlEncode(cryptedSessionKey),
+                        encrypted_loginkey: HttpUtility.UrlEncode(cryptedLoginKey),
                         method: "POST",
                         secure: true
                         );
                 }
                 catch (Exception)
                 {
-                    token = null;
-                    tokensecure = null;
+                    Token = TokenSecure = null;
                     return false;
                 }
-                
-                token = authResult ["token"].AsString ();
-                tokensecure = authResult["tokensecure"].AsString();
-                
+
+                Token = authResult["token"].AsString();
+                TokenSecure = authResult["tokensecure"].AsString();
+
+                _cookies.Add(new Cookie("sessionid", SessionId, String.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("steamLogin", Token, String.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("steamLoginSecure", TokenSecure, String.Empty, SteamCommunityDomain));
+
                 return true;
             }
         }
@@ -233,49 +256,48 @@ namespace SteamTrade
         /// </summary>
         /// <param name="cookies">CookieContainer with our cookies.</param>
         /// <returns>true if cookies are correct; false otherwise</returns>
-        public static bool VerifyCookies(CookieContainer cookies)
+        public bool VerifyCookies()
         {
-            using (HttpWebResponse response = Request("http://steamcommunity.com/", "HEAD", null, cookies))
+            using (HttpWebResponse response = Request("http://steamcommunity.com/", "HEAD"))
             {
-                return !(response.Cookies["steamLogin"] != null && response.Cookies["steamLogin"].Value.Equals("deleted"));
+                return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
             }
         }
 
         static void SubmitCookies (CookieContainer cookies)
         {
-            HttpWebRequest w = WebRequest.Create ("https://steamcommunity.com/") as HttpWebRequest;
+            HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 
             w.Method = "POST";
             w.ContentType = "application/x-www-form-urlencoded";
             w.CookieContainer = cookies;
 
-            w.GetResponse ().Close ();
-            return;
+            w.GetResponse().Close();
         }
 
-        static byte[] HexToByte (string hex)
+        private byte[] HexToByte(string hex)
         {
             if (hex.Length % 2 == 1)
-                throw new Exception ("The binary key cannot have an odd number of digits");
+                throw new Exception("The binary key cannot have an odd number of digits");
 
             byte[] arr = new byte[hex.Length >> 1];
             int l = hex.Length;
 
             for (int i = 0; i < (l >> 1); ++i)
             {
-                arr [i] = (byte)((GetHexVal (hex [i << 1]) << 4) + (GetHexVal (hex [(i << 1) + 1])));
+                arr[i] = (byte)((GetHexVal(hex[i << 1]) << 4) + (GetHexVal(hex[(i << 1) + 1])));
             }
 
             return arr;
         }
 
-        static int GetHexVal (char hex)
+        private int GetHexVal(char hex)
         {
             int val = (int)hex;
             return val - (val < 58 ? 48 : 55);
         }
 
-        public static bool ValidateRemoteCertificate (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
+        public bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             // allow all certificates
             return true;
