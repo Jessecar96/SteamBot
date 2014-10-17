@@ -40,6 +40,7 @@ namespace SteamBot
         {
             Log.Info(Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message);
             base.OnChatRoomMessage(chatID, sender, message);
+
         }
 
         public override void OnFriendRemove () {}
