@@ -538,7 +538,7 @@ namespace SteamBot
                 log.Debug(String.Format("Invited to chat {0} by {1}", callback.ChatRoomID, callback.PatronID));
                 if(GetUserHandler(callback.PatronID).OnMultiChatInvite(callback.ChatRoomID)) {
                     SteamFriends.JoinChat(callback.ChatRoomID);
-                    log.Debug("Attempting to join chat:");
+                    log.Debug("Attempting to join chat");
                 } else {
                     log.Debug("Declined invite");
                 }
@@ -1008,7 +1008,7 @@ namespace SteamBot
         /// Invites a use to the specified multichat
         /// </summary>
         /// <param name="user">SteamID of the user to invite.</param>
-        /// <param name="groupId">SteamID of the chat to invite the user to.</param>
+        /// <param name="chatID">SteamID of the chat to invite the user to.</param>
         public void InviteUserToMultiChat(SteamID user, SteamID chatId)
         {
             log.Debug ("Sending chat invite");
