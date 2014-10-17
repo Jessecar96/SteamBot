@@ -21,6 +21,17 @@ namespace SteamBot
             return true;
         }
 
+        public override bool OnMultiChatInvite(SteamID Chatid) {
+            // OtherSID = the person who invited us.
+            Log.Success (string.Format("Invited to multi-chat by: {0} is admin: {1}", 
+                         Bot.SteamFriends.GetFriendPersonaName (OtherSID),
+                         IsAdmin));
+            if (IsAdmin)
+                return true;
+            else 
+                return false;
+        }
+
         public override void OnLoginCompleted()
         {
         }

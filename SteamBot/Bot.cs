@@ -532,6 +532,17 @@ namespace SteamBot
             {
                 GetUserHandler(callback.ChatterID).OnChatRoomMessage(callback.ChatRoomID, callback.ChatterID, callback.Message);
             });
+
+            msg.Handle<SteamFriends.ChatInviteCallback>(callback =>
+            {
+                log.Debug(String.Format("Invited to chat {0} by {1}", callback.ChatRoomID, callback.PatronID));
+                if(GetUserHandler(callback.PatronID).OnMultiChatInvite(callback.ChatRoomID)) {
+                    SteamFriends.JoinChat(callback.ChatRoomID);
+                    log.Debug("Attempting to join chat");
+                } else {
+                    log.Debug("Declined invite");
+                }
+            });
             #endregion
 
             #region Trading
