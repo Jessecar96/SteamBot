@@ -7,38 +7,19 @@ namespace SteamTrade.TradeOffer
 {
     public class TradeOfferManager
     {
-        HashSet<string> tradeOfferHistory = new HashSet<string>();
+        private readonly HashSet<string> tradeOfferHistory = new HashSet<string>();
+        private readonly OfferSession session;
+        private readonly TradeOfferWebAPI webApi;
+
         public int LastTimeCheckedOffers { get; private set; }
 
-        private string apiKey;
-        private string sessionId;
-        private string token;
-        private string tokensecure;
-
-        private OfferSession session;
-        private TradeOfferWebAPI webApi;
-
-        public TradeOfferManager(string apiKey, string sessionId, string token, string tokensecure)
+        public TradeOfferManager(string apiKey, SteamWeb steamWeb)
         {
             if (apiKey == null)
                 throw new ArgumentNullException("apiKey");
 
-            if (sessionId == null)
-                throw new ArgumentNullException("sessionId");
-
-            if (token == null)
-                throw new ArgumentNullException("token");
-
-            if (tokensecure == null)
-                throw new ArgumentNullException("tokensecure");
-
-            this.apiKey = apiKey;
-            this.sessionId = sessionId;
-            this.token = token;
-            this.tokensecure = tokensecure;
-
-            webApi = new TradeOfferWebAPI(this.apiKey);
-            session = new OfferSession(this.sessionId, this.token, this.tokensecure, webApi);
+            webApi = new TradeOfferWebAPI(apiKey, steamWeb);
+            session = new OfferSession(webApi, steamWeb);
         }
 
         public delegate void NewOfferHandler(TradeOffer offer);

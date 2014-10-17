@@ -12,28 +12,23 @@ namespace SteamTrade.TradeWebAPI
     /// </summary>
     public class TradeSession
     {
-        private const string SteamCommunityDomain = "steamcommunity.com";
         private const string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
         private string sessionIdEsc;
         private string baseTradeURL;
-        private CookieContainer cookies;
 
-        private readonly string steamLogin;
-        private readonly string sessionId;
+        private readonly SteamWeb SteamWeb;
         private readonly SteamID OtherSID;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TradeSession"/> class.
         /// </summary>
-        /// <param name="sessionId">The session id.</param>
-        /// <param name="steamLogin">The current steam login.</param>
         /// <param name="otherSid">The Steam id of the other trading partner.</param>
-        public TradeSession(string sessionId, string steamLogin, SteamID otherSid)
+        /// <param name="steamWeb">The SteamWeb instance for this bot</param>
+        public TradeSession(SteamID otherSid, SteamWeb steamWeb)
         {
-            this.sessionId = sessionId;
-            this.steamLogin = steamLogin;
             OtherSID = otherSid;
+            SteamWeb = steamWeb;
 
             Init();
         }
@@ -80,22 +75,26 @@ namespace SteamTrade.TradeWebAPI
 
 
         /// <summary>
-        /// Gets the foriegn inventory.
+        /// Gets the foreign inventory.
         /// </summary>
         /// <param name="otherId">The other id.</param>
         /// <returns>A dynamic JSON object.</returns>
-
-        internal dynamic GetForiegnInventory(SteamID otherId)
+        internal dynamic GetForeignInventory(SteamID otherId)
         {
-            return GetForiegnInventory(otherId, 440, 2);
+            return GetForeignInventory(otherId, 440, 2);
         }
-        internal dynamic GetForiegnInventory(SteamID otherId, long contextId, int appid)
+        internal dynamic GetForeignInventory(SteamID otherId, long contextId, int appid)
         {
+            var data = new NameValueCollection();
+
+            data.Add("sessionid", sessionIdEsc);
+            data.Add("steamid", "" + otherId.ConvertToUInt64());
+            data.Add("appid", "" + appid);
+            data.Add("contextid", "" + contextId);
+
             try
             {
-                string path = string.Format("foreigninventory/?sessionid={0}&steamid={1}&appid={2}&contextid={3}",
-                    sessionIdEsc, otherId.ConvertToUInt64(), appid, contextId);
-                string response = Fetch(baseTradeURL + path, "GET");
+                string response = Fetch(baseTradeURL + "foreigninventory", "GET", data);
                 return JsonConvert.DeserializeObject(response);
             }
             catch (Exception)
@@ -235,18 +234,14 @@ namespace SteamTrade.TradeWebAPI
         
         string Fetch (string url, string method, NameValueCollection data = null)
         {
-            return SteamWeb.Fetch (url, method, data, cookies);
+            return SteamWeb.Fetch (url, method, data);
         }
 
         private void Init()
         {
-            sessionIdEsc = Uri.UnescapeDataString(sessionId);
+            sessionIdEsc = Uri.UnescapeDataString(SteamWeb.SessionId);
 
             Version = 1;
-
-            cookies = new CookieContainer();
-            cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
-            cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64());
         }
