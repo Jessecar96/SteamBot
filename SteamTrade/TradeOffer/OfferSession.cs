@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using SteamKit2;
 using System;
 using System.Collections.Specialized;
@@ -74,6 +74,7 @@ namespace SteamTrade.TradeOffer
             tradeId = "";
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
+            data.Add("serverid", "1");
             data.Add("tradeofferid", tradeOfferId);
 
             string url = string.Format("https://steamcommunity.com/tradeoffer/{0}/accept", tradeOfferId);
@@ -114,6 +115,7 @@ namespace SteamTrade.TradeOffer
         {
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
+            data.Add("serverid", "1");
             data.Add("tradeofferid", tradeOfferId);
 
             string url = string.Format("https://steamcommunity.com/tradeoffer/{0}/decline", tradeOfferId);
@@ -152,7 +154,7 @@ namespace SteamTrade.TradeOffer
         {
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
-
+            data.Add("serverid", "1");
             string url = string.Format("https://steamcommunity.com/tradeoffer/{0}/cancel", tradeOfferId);
             //should be http://steamcommunity.com/{0}/{1}/tradeoffers/sent/ - id/profile persona/id64 ideally
             string referer = string.Format("https://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
@@ -203,6 +205,7 @@ namespace SteamTrade.TradeOffer
 
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
+            data.Add("serverid", "1");
             data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
             data.Add("tradeoffermessage", message);
             data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
@@ -235,6 +238,7 @@ namespace SteamTrade.TradeOffer
         {
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
+            data.Add("serverid", "1");
             data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
             data.Add("tradeoffermessage", message);
             data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
@@ -262,18 +266,18 @@ namespace SteamTrade.TradeOffer
             {
                 throw new ArgumentNullException("token", "Partner trade offer token is missing");
             }
-            var offerToken = new OfferAccessToken() {TradeOfferAccessToken = token};
+            var offerToken = new OfferAccessToken() { TradeOfferAccessToken = token };
 
             var data = new NameValueCollection();
             data.Add("sessionid", SessionId);
+            data.Add("serverid", "1");
             data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
             data.Add("tradeoffermessage", message);
             data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
             data.Add("trade_offer_create_params", JsonConvert.SerializeObject(offerToken, JsonSerializerSettings));
-            
+
             string referer = string.Format("https://steamcommunity.com/tradeoffer/new/?partner={0}&token={1}",
                         otherSteamId.AccountID, token);
-
             return Request(SendUrl, data, referer, null, out newTradeOfferId);
         }
 
