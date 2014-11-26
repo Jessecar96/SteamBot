@@ -82,7 +82,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
     <Compile Include="TradeOfferUserHandler.cs" />
-    <Compile Include="TrashBotHandler.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
