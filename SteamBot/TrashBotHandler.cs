@@ -16,91 +16,38 @@ namespace SteamBot
     {
         public TrashBotHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
+        // trashbot accepts *all* trade offers
+        // set your inventory privacy appropriately if you don't want the public taking all your items
         public override void OnNewTradeOffer(TradeOffer offer)
         {
-            //receiving a trade offer 
-            // todo: accept trade requests from anybody on friends list
-            if (IsAdmin)
+            Log.Debug("[Trade ID " + offer.TradeOfferId + "] Inbound trade offer" );
+            
+            var theirItemCount = offer.Items.GetTheirItems().Count;
+            var myItemCount = offer.Items.GetMyItems().Count;
+
+            Log.Info("[Trade ID " + offer.TradeOfferId + "] Gaining " + theirItemCount + " item(s), losing " + myItemCount + " item(s)");
+
+            if (offer.Accept())
             {
-                //parse inventories of bot and other partner
-                //either with webapi or generic inventory
-                //Bot.GetInventory();
-                //Bot.GetOtherInventory(OtherSID);
-
-                var myItems = offer.Items.GetMyItems();
-                var theirItems = offer.Items.GetTheirItems();
-                Log.Info("They want " + myItems.Count + " of my items.");
-                Log.Info("And I will get " +  theirItems.Count + " of their items.");
-
-                // accept all trade requests - trash bot
-                string tradeid;
-                if (offer.Accept(out tradeid))
-                {
-                    Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
-                }
+                Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, "Trade Complete. [+" + theirItemCount + " -" + myItemCount + "]");
+                Log.Success("[Trade ID " + offer.TradeOfferId + "] Accepted trade offer successfully");
             }
             else
-            {
-                // we don't know this user so we can decline
-                if (offer.Decline())
-                {
-                    Log.Info("Declined trade offer : " + offer.TradeOfferId + " from untrusted user " + OtherSID.ConvertToUInt64());
-                }
-            }
+                Log.Warn("[Trade ID " + offer.TradeOfferId + "] Trade offer failed");
         }
 
-        public override void OnMessage(string message, EChatEntryType type)
-        {
-            if (IsAdmin)
-            {
-                //creating a new trade offer
-                var offer = Bot.NewTradeOffer(OtherSID);
-
-                //offer.Items.AddMyItem(0, 0, 0);
-                if (offer.Items.NewVersion)
-                {
-                    string newOfferId;
-                    if (offer.Send(out newOfferId))
-                    {
-                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
-                    }
-                }
-
-                //creating a new trade offer with token
-                var offerWithToken = Bot.NewTradeOffer(OtherSID);
-
-                //offer.Items.AddMyItem(0, 0, 0);
-                if (offerWithToken.Items.NewVersion)
-                {
-                    string newOfferId;
-                    // "token" should be replaced with the actual token from the other user
-                    if (offerWithToken.SendWithToken(out newOfferId, "token"))
-                    {
-                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
-                    }
-                }
-            }
-        }
+        public override void OnMessage(string message, EChatEntryType type) { }
 
         public override bool OnGroupAdd() { return false; }
 
-        public override bool OnFriendAdd() { 
-            // todo: some kind of remote friends list admin
-            return IsAdmin;
-        }
+        // todo: some kind of remote friends list admin
+        public override bool OnFriendAdd() { return IsAdmin; }
 
         public override void OnFriendRemove() { }
 
-        public override void OnLoginCompleted() {
-/*            string logonCompleteMessage = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " - I have arrived.";
-            Bot.SteamFriends.SendChatMessage(AdminID,
-                                      EChatEntryType.ChatMsg,
-                                      logonCompleteMessage
-                                      );
-            */
- }
+        public override void OnLoginCompleted() { }
 
-        public override bool OnTradeRequest() { return false; }
+        public override bool OnTradeRequest() { return true; }
 
         public override void OnTradeError(string error) {
             Bot.SteamFriends.SendChatMessage(OtherSID,
@@ -112,7 +59,7 @@ namespace SteamBot
 
         public override void OnTradeTimeout() {
             Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg,
-                                      "Sorry, but you were AFK and the trade was canceled.");
+                "Sorry, but you were AFK and the trade was canceled.");
             Bot.log.Info("User was kicked because he was AFK.");
         }
 
@@ -120,8 +67,7 @@ namespace SteamBot
             // Trade completed successfully
             Log.Success("Trade Complete.");
             Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg,
-                                      "Trade Complete.");
-
+                "Trade Complete.");
         }
 
         public override void OnTradeInit() { }
@@ -166,16 +112,5 @@ namespace SteamBot
                 Log.Success("Trade Complete!");
             }
         }
-
-        /*private bool DummyValidation(List<TradeAsset> myAssets, List<TradeAsset> theirAssets)
-        {
-            //compare items etc
-            if (myAssets.Count == theirAssets.Count)
-            {
-                return true;
-            }
-            return false
-        }
-        */
     }
 }
