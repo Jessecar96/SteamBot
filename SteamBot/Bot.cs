@@ -356,7 +356,7 @@ namespace SteamBot
             CurrentGame = id;
         }
 
-        void HandleSteamMessage(CallbackMsg msg)
+        void HandleSteamMessage(ICallbackMsg msg)
         {
             log.Debug(msg.ToString());
 
@@ -433,29 +433,24 @@ namespace SteamBot
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });
 
-            msg.Handle<SteamClient.JobCallback<SteamUser.WebAPIUserNonceCallback>>(jobCallback =>
+            msg.Handle<SteamUser.WebAPIUserNonceCallback>(webCallback =>
             {
                 log.Debug("Received new WebAPIUserNonce.");
 
-                if (jobCallback.Callback.Result == EResult.OK)
+                if (webCallback.Result == EResult.OK)
                 {
-                    MyUserNonce = jobCallback.Callback.Nonce;
-
+                    MyUserNonce = webCallback.Nonce;
                     UserWebLogOn();
                 }
                 else
                 {
-                    log.Error("WebAPIUserNonce Error: " + jobCallback.Callback.Result);
+                    log.Error("WebAPIUserNonce Error: " + webCallback.Result);
                 }
             });
 
-            // handle a special JobCallback differently than the others
-            if (msg.IsType<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>())
-            {
-                msg.Handle<SteamClient.JobCallback<SteamUser.UpdateMachineAuthCallback>>(
-                    jobCallback => OnUpdateMachineAuthCallback(jobCallback.Callback, jobCallback.JobID)
-                );
-            }
+            msg.Handle<SteamUser.UpdateMachineAuthCallback>(
+                authCallback => OnUpdateMachineAuthCallback(authCallback)
+            );
             #endregion
 
             #region Friends
@@ -768,7 +763,7 @@ namespace SteamBot
             return output;
         }
 
-        void OnUpdateMachineAuthCallback(SteamUser.UpdateMachineAuthCallback machineAuth, JobID jobId)
+        void OnUpdateMachineAuthCallback(SteamUser.UpdateMachineAuthCallback machineAuth)
         {
             byte[] hash = SHAHash(machineAuth.Data);
 
@@ -790,7 +785,7 @@ namespace SteamBot
                 LastError = 0, // result from win32 GetLastError
                 Result = EResult.OK, // if everything went okay, otherwise ~who knows~
 
-                JobID = jobId, // so we respond to the correct server job
+                JobID = machineAuth.JobID, // so we respond to the correct server job
             };
 
             // send off our response
@@ -897,7 +892,7 @@ namespace SteamBot
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
         {
-            CallbackMsg msg;
+            ICallbackMsg msg;
 
             while (!backgroundWorker.CancellationPending)
             {
