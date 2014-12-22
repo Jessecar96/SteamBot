@@ -312,7 +312,7 @@ namespace SteamTrade.TradeOffer
             {
                 var asset = new TradeStatusUser.TradeAsset();
                 asset.CreateItemAsset(appId, contextId, assetId, amount);
-                return ShouldUpdate(MyOfferedItems.RemoveItem(asset));
+                return ShouldUpdate(TheirOfferedItems.RemoveItem(asset));
             }
 
             public bool RemoveMyCurrencyItem(int appId, long contextId, long currencyId, long amount)
