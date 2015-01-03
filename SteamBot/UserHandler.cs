@@ -22,7 +22,8 @@ namespace SteamBot
         {
             Bot = bot;
             OtherSID = sid;
-            GetOtherInventory();
+            //注释掉，不获取对方库存，减少服务器连接问题
+            //GetOtherInventory();
         }
 
         /// <summary>
