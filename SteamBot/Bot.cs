@@ -652,12 +652,16 @@ namespace SteamBot
         void UserLogOn()
         {
             // get sentry file which has the machine hw info saved 
-            // from when a steam guard code was entered
+            // from when a steam guard code was entered.
+            // steam expects a SHA-1 hash of the sentry file contents
             Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
-            FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)));
+            FileInfo fiSentry = new FileInfo(System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)));
+            FileInfo fiSentryHash = new FileInfo(System.IO.Path.Combine("sentryfiles", String.Format("{0}.hash.sentryfile", logOnDetails.Username)));
 
-            if (fi.Exists && fi.Length > 0)
-                logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
+            if (fiSentry.Exists && fiSentry.Length > 0) 
+                logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fiSentry.FullName));
+            else if (fiSentryHash.Exists && fiSentryHash.Length > 0) // if we already have the hash, send it directly
+                logOnDetails.SentryFileHash = File.ReadAllBytes(fiSentryHash.FullName);
             else
                 logOnDetails.SentryFileHash = null;
 
