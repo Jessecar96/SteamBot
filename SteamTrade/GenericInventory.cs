@@ -14,6 +14,13 @@ namespace SteamTrade
     /// </summary>
     public class GenericInventory
     {
+        private readonly SteamWeb SteamWeb;
+
+        public GenericInventory(SteamWeb steamWeb)
+        {
+            SteamWeb = steamWeb;
+        }
+
         public Dictionary<ulong, Item> items
         {
             get
@@ -138,7 +145,7 @@ namespace SteamTrade
             {
                 foreach (long contextId in contextIds)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, null, true);
+                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, true);
                     invResponse = JsonConvert.DeserializeObject(response);
 
                     if (invResponse.success == false)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 using SteamKit2;
 using SteamTrade;
 using System.Collections.Generic;
@@ -98,7 +99,7 @@ namespace SteamBot
 
         public override void OnTradeInit()
         {
-            Trade.SendMessage("Success. (Type " + HelpCmd + " for commands.)");
+            SendTradeMessage("Success. (Type {0} for commands)", HelpCmd);
         }
 
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
@@ -120,7 +121,7 @@ namespace SteamBot
         {
             if (!IsAdmin)
             {
-                Trade.SendMessage("You are not my master.");
+                SendTradeMessage("You are not my master.");
                 Trade.SetReady(false);
                 return;
             }
@@ -165,25 +166,25 @@ namespace SteamBot
             if (message.StartsWith(AddCmd))
             {
                 HandleAddCommand(message);
-                Trade.SendMessage("done adding.");
+                SendTradeMessage("done adding.");
             }
             else if (message.StartsWith(RemoveCmd))
             {
                 HandleRemoveCommand(message);
-                Trade.SendMessage("done removing.");
+                SendTradeMessage("done removing.");
             }
         }
 
         private void PrintHelpMessage()
         {
-            Trade.SendMessage(String.Format("{0} {1} [amount] [series] - adds all crates (optionally by series number, use 0 for amount to add all)", AddCmd, AddCratesSubCmd));
-            Trade.SendMessage(String.Format("{0} {1} [amount] - adds metal", AddCmd, AddMetalSubCmd));
-            Trade.SendMessage(String.Format("{0} {1} [amount] - adds weapons", AddCmd, AddWepsSubCmd));
-            Trade.SendMessage(String.Format("{0} {1} [amount] - adds items", AddCmd, AddAllSubCmd));
-            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafting type.", AddCmd));
-            Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd));
+            SendTradeMessage("{0} {1} [amount] [series] - adds all crates (optionally by series number, use 0 for amount to add all)", AddCmd, AddCratesSubCmd);
+            SendTradeMessage("{0} {1} [amount] - adds metal", AddCmd, AddMetalSubCmd);
+            SendTradeMessage("{0} {1} [amount] - adds weapons", AddCmd, AddWepsSubCmd);
+            SendTradeMessage("{0} {1} [amount] - adds items", AddCmd, AddAllSubCmd);
+            SendTradeMessage(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafting type.", AddCmd);
+            SendTradeMessage(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd);
 
-            Trade.SendMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
+            SendTradeMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
         }
 
         private void HandleAddCommand(string command)
@@ -324,14 +325,14 @@ namespace SteamBot
         {
             if (data.Length < 2)
             {
-                Trade.SendMessage ("No parameter for cmd");
+                SendTradeMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }
 
             if (String.IsNullOrEmpty (data [1]))
             {
-                Trade.SendMessage ("No parameter for cmd");
+                SendTradeMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }

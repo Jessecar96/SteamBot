@@ -75,7 +75,9 @@ namespace SteamBot
         public int CurrentGame = 0;
 
         // The Steam Web API key.
-        public string apiKey;
+        public string ApiKey { get; private set; }
+
+        public SteamWeb SteamWeb { get; private set; }
 
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
@@ -90,9 +92,6 @@ namespace SteamBot
         public string MyUserNonce;
         public string MyUniqueId;
 
-        string sessionId;
-        string token;
-        string tokensecure;
         bool CookiesAreInvalid = true;
 
         bool isprocess;
@@ -131,7 +130,7 @@ namespace SteamBot
             DisplayNamePrefix = config.DisplayNamePrefix;
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
             Admins       = config.Admins;
-            this.apiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
+            this.ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             this.isprocess = process;
 
             try
@@ -168,6 +167,7 @@ namespace SteamBot
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             CreateLog();
+            SteamWeb = new SteamWeb();
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
@@ -464,7 +464,7 @@ namespace SteamBot
                 if (Trade.CurrentSchema == null)
                 {
                     log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (apiKey);
+                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
                     log.Success ("Schema Downloaded!");
                 }
 
@@ -560,7 +560,7 @@ namespace SteamBot
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
                                          callback.Message
                                          );
-                    GetUserHandler(callback.Sender).OnMessage(callback.Message, type);
+                    GetUserHandler(callback.Sender).OnMessageHandler(callback.Message, type);
                 }
             });
             #endregion
@@ -715,7 +715,7 @@ namespace SteamBot
         {
             do
             {
-                IsLoggedIn = SteamWeb.Authenticate(MyUniqueId, SteamClient, out sessionId, out token, out tokensecure, MyUserNonce);
+                IsLoggedIn = SteamWeb.Authenticate(MyUniqueId, SteamClient, MyUserNonce);
 
                 if(!IsLoggedIn)
                 {
@@ -726,11 +726,11 @@ namespace SteamBot
 
             log.Success("User Authenticated!");
 
-            tradeManager = new TradeManager(apiKey, sessionId, token);
+                    tradeManager = new TradeManager(ApiKey, SteamWeb);
             tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
             tradeManager.OnTimeout += OnTradeTimeout;
 
-            tradeOfferManager = new TradeOfferManager(apiKey, sessionId, token, tokensecure);
+                    tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
             SubscribeTradeOffer(tradeOfferManager);
 
             CookiesAreInvalid = false;
@@ -750,14 +750,9 @@ namespace SteamBot
             if (CookiesAreInvalid)
                 return false;
 
-            // Construct cookie container
-            CookieContainer cookies = new CookieContainer();
-            cookies.Add(new Cookie("sessionid", sessionId, String.Empty, "steamcommunity.com"));
-            cookies.Add(new Cookie("steamLogin", token, String.Empty, "steamcommunity.com"));
-
             try
             {
-                if (!SteamWeb.VerifyCookies(cookies))
+                if (!SteamWeb.VerifyCookies())
                 {
                     // Cookies are no longer valid
                     log.Warn("Cookies are invalid. Need to re-authenticate.");
@@ -765,18 +760,15 @@ namespace SteamBot
                     SteamUser.RequestWebAPIUserNonce();
                     return false;
                 }
-                else
-                {
-                    return true;
                 }
-            }
             catch
             {
                 // Even if exception is caught, we should still continue.
                 log.Warn("Cookie check failed. http://steamcommunity.com is possibly down.");
+            }
+
                 return true;
             }
-        }
 
         UserHandler GetUserHandler(SteamID sid)
         {
@@ -851,7 +843,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, apiKey));
+            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb));
         }
 
         public void TradeOfferRouter(TradeOffer offer)
@@ -885,7 +877,7 @@ namespace SteamBot
             trade.OnAfterInit += handler.OnTradeInit;
             trade.OnUserAddItem += handler.OnTradeAddItem;
             trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
-            trade.OnMessage += handler.OnTradeMessage;
+            trade.OnMessage += handler.OnTradeMessageHandler;
             trade.OnUserSetReady += handler.OnTradeReadyHandler;
             trade.OnUserAccept += handler.OnTradeAcceptHandler;
         }
@@ -903,7 +895,7 @@ namespace SteamBot
             trade.OnAfterInit -= handler.OnTradeInit;
             trade.OnUserAddItem -= handler.OnTradeAddItem;
             trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
-            trade.OnMessage -= handler.OnTradeMessage;
+            trade.OnMessage -= handler.OnTradeMessageHandler;
             trade.OnUserSetReady -= handler.OnTradeReadyHandler;
             trade.OnUserAccept -= handler.OnTradeAcceptHandler;
         }
