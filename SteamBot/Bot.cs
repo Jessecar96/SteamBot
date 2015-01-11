@@ -181,8 +181,6 @@ namespace SteamBot
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
             SteamNotifications = SteamClient.GetHandler<SteamNotifications>();
 
-            GetUserHandler(new SteamID((ulong)0)).OnBotCreated();
-
             backgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
             backgroundWorker.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
