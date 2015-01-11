@@ -35,7 +35,7 @@ namespace SteamBot
         
         public override void OnMessage (string message, EChatEntryType type) 
         {
-            Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
+            SendChatMessage(Bot.ChatResponse);
         }
 
         public override bool OnTradeRequest() 
@@ -45,23 +45,19 @@ namespace SteamBot
         
         public override void OnTradeError (string error) 
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, 
-                                              EChatEntryType.ChatMsg,
-                                              "Oh, there was an error: " + error + "."
-                                              );
+            SendChatMessage("Oh, there was an error: {0}.", error);
             Bot.log.Warn (error);
         }
         
         public override void OnTradeTimeout () 
         {
-            Bot.SteamFriends.SendChatMessage (OtherSID, EChatEntryType.ChatMsg,
-                                              "Sorry, but you were AFK and the trade was canceled.");
+            SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
             Bot.log.Info ("User was kicked because he was AFK.");
         }
         
         public override void OnTradeInit() 
         {
-            Trade.SendMessage ("Success. Please put up your items.");
+            SendTradeMessage("Success. Please put up your items.");
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
@@ -82,7 +78,7 @@ namespace SteamBot
                 {
                     Trade.SetReady (true);
                 }
-                Trade.SendMessage ("Scrap: " + ScrapPutUp);
+                SendTradeMessage("Scrap: {0}", ScrapPutUp);
             }
         }
 
@@ -137,10 +133,10 @@ namespace SteamBot
             
             // send the errors
             if (errors.Count != 0)
-                Trade.SendMessage("There were errors in your trade: ");
+                SendTradeMessage("There were errors in your trade: ");
             foreach (string error in errors)
             {
-                Trade.SendMessage(error);
+                SendTradeMessage(error);
             }
             
             return errors.Count == 0;
