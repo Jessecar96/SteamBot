@@ -11,7 +11,7 @@ namespace SteamBot
     {
         public TradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
-        public override void OnNewTradeOffer(TradeOffer offer)
+        public async override void OnNewTradeOffer(TradeOffer offer)
         {
             //receiving a trade offer 
             if (IsAdmin)
@@ -54,7 +54,7 @@ namespace SteamBot
             else
             {
                 //we don't know this user so we can decline
-                if (offer.Decline())
+                if (await offer.Decline())
                 {
                     Log.Info("Declined trade offer : " + offer.TradeOfferId + " from untrusted user " + OtherSID.ConvertToUInt64());
                 }

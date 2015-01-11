@@ -1,16 +1,12 @@
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 
 namespace SteamTrade.TradeWebAPI
 {
-    public class TradeStatus
+    public class TradeStatus : SteamWeb.ResponseBase
     {
-        public string error { get; set; }
-            
         public bool newversion { get; set; }
-            
-        public bool success { get; set; }
             
         public long trade_status { get; set; }
             

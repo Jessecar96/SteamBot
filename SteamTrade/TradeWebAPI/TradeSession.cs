@@ -1,8 +1,8 @@
-using System;
-using System.Collections.Specialized;
-using System.Net;
 using Newtonsoft.Json;
 using SteamKit2;
+using System;
+using System.Collections.Specialized;
+using System.Threading.Tasks;
 
 namespace SteamTrade.TradeWebAPI
 {
@@ -60,7 +60,7 @@ namespace SteamTrade.TradeWebAPI
         /// This is the main polling method for trading and must be done at a 
         /// periodic rate (probably around 1 second).
         /// </remarks>
-        internal TradeStatus GetStatus()
+        internal async Task<TradeStatus> GetStatus()
         {
             var data = new NameValueCollection ();
 
@@ -68,9 +68,9 @@ namespace SteamTrade.TradeWebAPI
             data.Add ("logpos", "" + LogPos);
             data.Add ("version", "" + Version);
             
-            string response = Fetch (baseTradeURL + "tradestatus", "POST", data);
+            string response = await Fetch (baseTradeURL + "tradestatus", "POST", data);
 
-            return JsonConvert.DeserializeObject<TradeStatus> (response);
+            return await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<TradeStatus> (response));
         }
 
 
@@ -79,11 +79,12 @@ namespace SteamTrade.TradeWebAPI
         /// </summary>
         /// <param name="otherId">The other id.</param>
         /// <returns>A dynamic JSON object.</returns>
-        internal dynamic GetForeignInventory(SteamID otherId)
+        internal async Task<dynamic> GetForeignInventory(SteamID otherId)
         {
-            return GetForeignInventory(otherId, 440, 2);
+            return await GetForeignInventory(otherId, 440, 2);
         }
-        internal dynamic GetForeignInventory(SteamID otherId, long contextId, int appid)
+
+        internal async Task<dynamic> GetForeignInventory(SteamID otherId, long contextId, int appid)
         {
             var data = new NameValueCollection();
 
@@ -94,19 +95,19 @@ namespace SteamTrade.TradeWebAPI
 
             try
             {
-                string response = Fetch(baseTradeURL + "foreigninventory", "GET", data);
-                return JsonConvert.DeserializeObject(response);
+                string response = await Fetch(baseTradeURL + "foreigninventory", "GET", data);
+                return await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(response));
             }
             catch (Exception)
             {
-                return JsonConvert.DeserializeObject("{\"success\":\"false\"}");
+                return SteamWeb.FAKE_RESPONSE;
             }
         }
 
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
-        internal bool SendMessageWebCmd(string msg)
+        internal async Task<bool> SendMessageWebCmd(string msg)
         {
             var data = new NameValueCollection ();
             data.Add ("sessionid", sessionIdEsc);
@@ -114,9 +115,9 @@ namespace SteamTrade.TradeWebAPI
             data.Add ("logpos", "" + LogPos);
             data.Add ("version", "" + Version);
 
-            string result = Fetch (baseTradeURL + "chat", "POST", data);
+            string result = await Fetch (baseTradeURL + "chat", "POST", data);
 
-            dynamic json = JsonConvert.DeserializeObject(result);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(result));
             return IsSuccess(json);
         }
         
@@ -129,7 +130,7 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,long contextid)
+        internal async Task<bool> AddItemWebCmd(ulong itemid, int slot, int appid, long contextid)
         {
             var data = new NameValueCollection ();
 
@@ -139,9 +140,9 @@ namespace SteamTrade.TradeWebAPI
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
-            string result = Fetch(baseTradeURL + "additem", "POST", data);
+            string result = await Fetch(baseTradeURL + "additem", "POST", data);
 
-            dynamic json = JsonConvert.DeserializeObject(result);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(result));
             return IsSuccess(json);
         }
         
@@ -150,7 +151,7 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
+        internal async Task<bool> RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
         {
             var data = new NameValueCollection ();
 
@@ -160,25 +161,25 @@ namespace SteamTrade.TradeWebAPI
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
-            string result = Fetch (baseTradeURL + "removeitem", "POST", data);
+            string result = await Fetch (baseTradeURL + "removeitem", "POST", data);
 
-            dynamic json = JsonConvert.DeserializeObject(result);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(result));
             return IsSuccess(json);
         }
         
         /// <summary>
         /// Sets the bot to a ready status.
         /// </summary>
-        internal bool SetReadyWebCmd(bool ready)
+        internal async Task<bool> SetReadyWebCmd(bool ready)
         {
             var data = new NameValueCollection ();
             data.Add ("sessionid", sessionIdEsc);
             data.Add ("ready", ready ? "true" : "false");
             data.Add ("version", "" + Version);
             
-            string result = Fetch (baseTradeURL + "toggleready", "POST", data);
+            string result = await Fetch (baseTradeURL + "toggleready", "POST", data);
 
-            dynamic json = JsonConvert.DeserializeObject(result);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(result));
             return IsSuccess(json);
         }
         
@@ -186,31 +187,31 @@ namespace SteamTrade.TradeWebAPI
         /// Accepts the trade from the user.  Returns a deserialized
         /// JSON object.
         /// </summary>
-        internal bool AcceptTradeWebCmd()
+        internal async Task<bool> AcceptTradeWebCmd()
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
             data.Add ("version", "" + Version);
 
-            string response = Fetch (baseTradeURL + "confirm", "POST", data);
+            string response = await Fetch (baseTradeURL + "confirm", "POST", data);
 
-            dynamic json = JsonConvert.DeserializeObject(response);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(response));
             return IsSuccess(json);
         }
         
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
         /// </summary>
-        internal bool CancelTradeWebCmd ()
+        internal async Task<bool> CancelTradeWebCmd ()
         {
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
 
-            string result = Fetch (baseTradeURL + "cancel", "POST", data);
+            string result = await Fetch (baseTradeURL + "cancel", "POST", data);
 
-            dynamic json = JsonConvert.DeserializeObject(result);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(result));
             return IsSuccess(json);
         }
 
@@ -232,9 +233,9 @@ namespace SteamTrade.TradeWebAPI
 
         #endregion Trade Web API command methods
         
-        string Fetch (string url, string method, NameValueCollection data = null)
+        async Task<string> Fetch (string url, string method, NameValueCollection data = null)
         {
-            return SteamWeb.Fetch (url, method, data);
+            return await SteamWeb.Fetch (url, method, data);
         }
 
         private void Init()

@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using SteamKit2;
+using SteamTrade.TradeWebAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using SteamKit2;
-using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
 {
@@ -131,7 +131,7 @@ namespace SteamTrade
             _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
         }
 
-        public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        public async void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             dynamic invResponse;
             isLoaded = false;
@@ -145,8 +145,8 @@ namespace SteamTrade
             {
                 foreach (long contextId in contextIds)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, true);
-                    invResponse = JsonConvert.DeserializeObject(response);
+                    string response = await SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, true);
+                    invResponse = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(response));
 
                     if (invResponse.success == false)
                     {

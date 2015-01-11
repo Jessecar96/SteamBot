@@ -1,10 +1,11 @@
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Newtonsoft.Json;
-using System.Net;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SteamTrade
 {
@@ -26,7 +27,7 @@ namespace SteamTrade
         /// <remarks>
         /// The schema will be cached for future use if it is updated.
         /// </remarks>
-        public static Schema FetchSchema (string apiKey)
+        public static async Task<Schema> FetchSchema (string apiKey)
         {   
             var url = SchemaApiUrlBase + apiKey;
 
@@ -47,22 +48,22 @@ namespace SteamTrade
                 }
             }
 
-            using(HttpWebResponse response = new SteamWeb().Request(url, "GET"))
+            using(HttpWebResponse response = await new SteamWeb().Request(url, "GET"))
             {
                 DateTime schemaLastModified = response.LastModified;
 
-                string result = GetSchemaString(response, schemaLastModified);
+                string result = await GetSchemaString(response, schemaLastModified);
 
                 // were done here. let others read.
                 mre.Set();
 
-                SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                SchemaResult schemaResult = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<SchemaResult>(result));
                 return schemaResult.result ?? null;
             }
         }
 
         // Gets the schema from the web or from the cached file.
-        private static string GetSchemaString(HttpWebResponse response, DateTime schemaLastModified)
+        private static async Task<string> GetSchemaString(HttpWebResponse response, DateTime schemaLastModified)
         {
             string result;
             bool mustUpdateCache = !File.Exists(cachefile) || schemaLastModified > File.GetCreationTime(cachefile);
@@ -71,7 +72,7 @@ namespace SteamTrade
             {
                 using(var reader = new StreamReader(response.GetResponseStream()))
                 {
-                    result = reader.ReadToEnd();
+                    result = await reader.ReadToEndAsync();
 
                     File.WriteAllText(cachefile, result);
                     File.SetCreationTime(cachefile, schemaLastModified);
@@ -82,7 +83,7 @@ namespace SteamTrade
                 // read previously cached file.
                 using(TextReader reader = new StreamReader(cachefile))
                 {
-                    result = reader.ReadToEnd();
+                    result = await reader.ReadToEndAsync();
                 }
             }
 
@@ -171,7 +172,7 @@ namespace SteamTrade
             public int ItemQuality { get; set; }
         }
 
-        protected class SchemaResult
+        protected class SchemaResult : SteamWeb.ResponseBase
         {
             public Schema result { get; set; }
         }

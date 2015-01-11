@@ -1,5 +1,5 @@
-using System;
 using SteamKit2;
+using System;
 
 namespace SteamTrade.Exceptions
 {

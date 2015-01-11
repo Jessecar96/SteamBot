@@ -1,41 +1,62 @@
+using Newtonsoft.Json;
+using SteamKit2;
 using System;
-using System.IO;
 using System.Collections.Specialized;
+using System.IO;
 using System.Net;
 using System.Net.Cache;
-using System.Text;
-using System.Web;
-using System.Security.Cryptography;
-using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
-using SteamKit2;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web;
 
 namespace SteamTrade
 {
     public class SteamWeb
     {
+        public class ResponseBase
+        {
+            /// <summary>
+            /// Did valve say the request was successful?
+            /// </summary>
+            public bool success { get; set; }
+
+            /// <summary>
+            /// Error string.
+            /// </summary>
+            public string error { get; set; }
+        }
+
+        public readonly object FAKE_RESPONSE = Task.Factory.StartNew(() => JsonConvert.DeserializeObject("{\"success\":\"false\"}")).Result;
         public const string SteamCommunityDomain = "steamcommunity.com";
         public string Token { get; private set; }
         public string SessionId { get; private set; }
         public string TokenSecure { get; private set; }
         private CookieContainer _cookies = new CookieContainer();
 
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        public async Task<T> FetchJson<T>(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "") where T : ResponseBase
         {
-            using (HttpWebResponse response = Request(url, method, data, ajax, referer))
+            string response = await Fetch(url, method, data, ajax, referer);
+            return await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<T>(response));
+        }
+
+        public async Task<string> Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        {
+            using (HttpWebResponse response = await Request(url, method, data, ajax, referer))
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
                     using (StreamReader reader = new StreamReader(responseStream))
                     {
-                        return reader.ReadToEnd();
+                        return await reader.ReadToEndAsync();
                     }
                 }
             }
         }
 
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        public async Task<HttpWebResponse> Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
             //Append the data to the URL for GET-requests
             bool isGetMethod = (method.ToLower() == "get");
@@ -49,7 +70,7 @@ namespace SteamTrade
             }
 
             //Setup the request
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            HttpWebRequest request = WebRequest.CreateHttp(url);
             request.Method = method;
             request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -77,23 +98,22 @@ namespace SteamTrade
 
                 using (Stream requestStream = request.GetRequestStream())
                 {
-                    requestStream.Write(dataBytes, 0, dataBytes.Length);
+                    await requestStream.WriteAsync(dataBytes, 0, dataBytes.Length);
                 }
             }
 
             // Get the response
-            return request.GetResponse() as HttpWebResponse;
+            return await request.GetResponseAsync() as HttpWebResponse;
         }
 
         /// <summary>
         /// Executes the login by using the Steam Website.
         /// </summary>
-        public bool DoLogin(string username, string password)
+        public async Task<bool> DoLogin(string username, string password)
         {
             var data = new NameValueCollection();
             data.Add("username", username);
-            string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
-            GetRsaKey rsaJSON = JsonConvert.DeserializeObject<GetRsaKey>(response);
+            GetRsaKey rsaJSON = await FetchJson<GetRsaKey>("https://steamcommunity.com/login/getrsakey", "POST", data, false);
 
 
             // Validate
@@ -163,12 +183,12 @@ namespace SteamTrade
 
                 data.Add("rsatimestamp", time);
 
-                using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
+                using(HttpWebResponse webResponse = await Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
                 {
                     using(StreamReader reader = new StreamReader(webResponse.GetResponseStream()))
                     {
-                        string json = reader.ReadToEnd();
-                        loginJson = JsonConvert.DeserializeObject<SteamResult>(json);
+                        string json = await reader.ReadToEndAsync();
+                        loginJson = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<SteamResult>(json));
                         cookieCollection = webResponse.Cookies;
                     }
                 }
@@ -256,23 +276,23 @@ namespace SteamTrade
         /// </summary>
         /// <param name="cookies">CookieContainer with our cookies.</param>
         /// <returns>true if cookies are correct; false otherwise</returns>
-        public bool VerifyCookies()
+        public async Task<bool> VerifyCookies()
         {
-            using (HttpWebResponse response = Request("http://steamcommunity.com/", "HEAD"))
+            using (HttpWebResponse response = await Request("http://steamcommunity.com/", "HEAD"))
             {
                 return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
             }
         }
 
-        static void SubmitCookies (CookieContainer cookies)
+        static async void SubmitCookies (CookieContainer cookies)
         {
-            HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
+            HttpWebRequest w = WebRequest.CreateHttp("https://steamcommunity.com/");
 
             w.Method = "POST";
             w.ContentType = "application/x-www-form-urlencoded";
             w.CookieContainer = cookies;
 
-            w.GetResponse().Close();
+            (await w.GetResponseAsync()).Close();
         }
 
         private byte[] HexToByte(string hex)
@@ -306,10 +326,8 @@ namespace SteamTrade
     }
 
     // JSON Classes
-    public class GetRsaKey
+    public class GetRsaKey : SteamWeb.ResponseBase
     {
-        public bool success { get; set; }
-
         public string publickey_mod { get; set; }
 
         public string publickey_exp { get; set; }
@@ -317,10 +335,8 @@ namespace SteamTrade
         public string timestamp { get; set; }
     }
 
-    public class SteamResult
+    public class SteamResult : SteamWeb.ResponseBase
     {
-        public bool success { get; set; }
-
         public string message { get; set; }
 
         public bool captcha_needed { get; set; }

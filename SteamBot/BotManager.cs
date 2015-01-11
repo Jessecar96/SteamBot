@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using SteamKit2;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Windows.Forms;
-using Newtonsoft.Json;
-using SteamKit2;
+using System.Threading.Tasks;
 
 namespace SteamBot
 {
@@ -32,14 +32,14 @@ namespace SteamBot
         /// Loads a configuration file to use when creating bots.
         /// </summary>
         /// <param name="configFile"><c>false</c> if there was problems loading the config file.</param>
-        public bool LoadConfiguration(string configFile)
+        public async Task<bool> LoadConfiguration(string configFile)
         {
             if (!File.Exists(configFile))
                 return false;
 
             try
             {
-                ConfigObject = Configuration.LoadConfiguration(configFile);
+                ConfigObject = await Configuration.LoadConfiguration(configFile);
             }
             catch (JsonReaderException)
             {

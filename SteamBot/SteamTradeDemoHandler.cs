@@ -1,6 +1,6 @@
 using SteamKit2;
-using System.Collections.Generic;
 using SteamTrade;
+using System.Collections.Generic;
 
 namespace SteamBot
 {
@@ -123,7 +123,7 @@ namespace SteamBot
         
         public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
         
-        public override void OnTradeMessage (string message) {
+        public override async void OnTradeMessage (string message) {
             switch (message.ToLower())
             {
                 case "errors":
@@ -151,7 +151,7 @@ namespace SteamBot
                     {
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
-                            Trade.RemoveItem(item);
+                            await Trade.RemoveItem(item);
                         }
                     }
                     else
@@ -159,7 +159,7 @@ namespace SteamBot
                         SendTradeMessage("Items on my bp: {0}", mySteamInventory.items.Count);
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
-                            Trade.AddItem(item);
+                            await Trade.AddItem(item);
                         }
                     }
 
@@ -170,26 +170,26 @@ namespace SteamBot
                 case "remove":
                     foreach (var item in mySteamInventory.items)
                     {
-                        Trade.RemoveItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
+                        await Trade.RemoveItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
                     }
                 break;
             }
         }
         
-        public override void OnTradeReady (bool ready) 
+        public override async void OnTradeReady (bool ready) 
         {
             //Because SetReady must use its own version, it's important
             //we poll the trade to make sure everything is up-to-date.
-            Trade.Poll();
+            await Trade.Poll();
             if (!ready)
             {
-                Trade.SetReady (false);
+                await Trade.SetReady(false);
             }
             else
             {
                 if(Validate () | IsAdmin)
                 {
-                    Trade.SetReady (true);
+                    await Trade.SetReady(true);
                 }
             }
         }
@@ -200,14 +200,14 @@ namespace SteamBot
             Log.Success("Trade Complete.");
         }
 
-        public override void OnTradeAccept() 
+        public override async void OnTradeAccept() 
         {
             if (Validate() | IsAdmin)
             {
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
                 try {
-                    Trade.AcceptTrade();
+                    await Trade.AcceptTrade();
                 }
                 catch {
                     Log.Warn ("The trade might have failed, but we can't be sure.");

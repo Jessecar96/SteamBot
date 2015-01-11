@@ -1,7 +1,6 @@
-﻿using System;
-using System.Windows.Forms;
-using SteamKit2;
+﻿using SteamKit2;
 using SteamTrade;
+using System;
 using System.Collections.Generic;
 
 namespace SteamBot
@@ -117,16 +116,16 @@ namespace SteamBot
             ProcessTradeMessage(message);
         }
 
-        public override void OnTradeReady(bool ready)
+        public async override void OnTradeReady(bool ready)
         {
             if (!IsAdmin)
             {
                 SendTradeMessage("You are not my master.");
-                Trade.SetReady(false);
+                await Trade.SetReady(false);
                 return;
             }
 
-            Trade.SetReady(true);
+            await Trade.SetReady(true);
         }
 
         public override void OnTradeSuccess()
@@ -135,7 +134,7 @@ namespace SteamBot
             Log.Success("Trade Complete.");
         }
 
-        public override void OnTradeAccept()
+        public async override void OnTradeAccept()
         {
             if (IsAdmin)
             {
@@ -143,7 +142,7 @@ namespace SteamBot
                 //trades with a lot of items so we use a try-catch
                 try
                 {
-                    if (Trade.AcceptTrade())
+                    if (await Trade.AcceptTrade())
                         Log.Success("Trade Accepted!");
                 }
                 catch
@@ -187,7 +186,7 @@ namespace SteamBot
             SendTradeMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
         }
 
-        private void HandleAddCommand(string command)
+        private async void HandleAddCommand(string command)
         {
             var data = command.Split(' ');
             string typeToAdd;
@@ -203,7 +202,7 @@ namespace SteamBot
             int defindex;
             if (int.TryParse(typeToAdd, out defindex))
             {
-                Trade.AddAllItemsByDefindex(defindex, amount);
+                await Trade.AddAllItemsByDefindex(defindex, amount);
                 return;
             }
 
@@ -233,7 +232,7 @@ namespace SteamBot
 
 
 
-        private void HandleRemoveCommand(string command)
+        private async void HandleRemoveCommand(string command)
         {
             var data = command.Split(' ');
 
@@ -242,14 +241,14 @@ namespace SteamBot
             bool subCmdOk = GetSubCommand(data, out subCommand);
 
             // were dumb right now... just remove everything.
-            Trade.RemoveAllItems();
+            await Trade.RemoveAllItems();
 
             if (!subCmdOk)
                 return;
         }
 
 
-        private void AddItemsByCraftType(string typeToAdd, uint amount)
+        private async void AddItemsByCraftType(string typeToAdd, uint amount)
         {
             var items = Trade.CurrentSchema.GetItemsByCraftingMaterial(typeToAdd);
 
@@ -257,7 +256,7 @@ namespace SteamBot
 
             foreach (var item in items)
             {
-                added += Trade.AddAllItemsByDefindex(item.Defindex, amount);
+                added += await Trade.AddAllItemsByDefindex(item.Defindex, amount);
 
                 // if bulk adding something that has a lot of unique
                 // defindex (weapons) we may over add so limit here also
@@ -266,17 +265,17 @@ namespace SteamBot
             }
         }
 
-        private void AddAllItems()
+        private async void AddAllItems()
         {
             var items = Trade.CurrentSchema.GetItems();
 
             foreach (var item in items)
             {
-                Trade.AddAllItemsByDefindex(item.Defindex, 0);
+                await Trade.AddAllItemsByDefindex(item.Defindex, 0);
             }
         }
 
-        private void AddCrateBySeries(string series, uint amount)
+        private async void AddCrateBySeries(string series, uint amount)
         {
             int ser;
             bool parsed = int.TryParse(series, out ser);
@@ -307,7 +306,7 @@ namespace SteamBot
 
                     if (crateNum == ser)
                     {
-                        bool ok = Trade.AddItem(item.Id);
+                        bool ok = await Trade.AddItem(item.Id);
 
                         if (ok)
                             added++;

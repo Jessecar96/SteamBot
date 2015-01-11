@@ -1,21 +1,22 @@
+using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace SteamBot
 {
     public class Configuration
     {
-        public static Configuration LoadConfiguration (string filename)
+        public static async Task<Configuration> LoadConfiguration (string filename)
         {
             TextReader reader = new StreamReader(filename);
-            string json = reader.ReadToEnd();
+            string json = await reader.ReadToEndAsync();
             reader.Close();
 
-            Configuration config =  JsonConvert.DeserializeObject<Configuration>(json);
+            Configuration config = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<Configuration>(json));
 
             config.Admins = config.Admins ?? new ulong[0];
 

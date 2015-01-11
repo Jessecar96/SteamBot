@@ -1,7 +1,7 @@
+using NDesk.Options;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using NDesk.Options;
 
 namespace SteamBot
 {
@@ -59,7 +59,7 @@ namespace SteamBot
             Configuration configObject;
             try
             {
-                configObject = Configuration.LoadConfiguration("settings.json");
+                configObject = Configuration.LoadConfiguration("settings.json").Result;
             }
             catch (Newtonsoft.Json.JsonReaderException)
             {
@@ -116,7 +116,7 @@ namespace SteamBot
 
             manager = new BotManager();
 
-            var loadedOk = manager.LoadConfiguration("settings.json");
+            var loadedOk = manager.LoadConfiguration("settings.json").Result;
 
             if (!loadedOk)
             {

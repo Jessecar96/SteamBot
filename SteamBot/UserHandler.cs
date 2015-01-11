@@ -58,7 +58,7 @@ namespace SteamBot
         /// </example>
         public void GetOtherInventory()
         {
-            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.ApiKey, SteamWeb));
+            otherInventoryTask = Inventory.FetchInventory(OtherSID, Bot.ApiKey, SteamWeb);
         }
 
         public Inventory OtherInventory
@@ -226,17 +226,17 @@ namespace SteamBot
 
         public abstract void OnTradeMessage (string message);
 
-        public void OnTradeReadyHandler(bool ready)
+        public async void OnTradeReadyHandler(bool ready)
         {
-            Trade.Poll();
+            await Trade.Poll();
             OnTradeReady(ready);
         }
 
         public abstract void OnTradeReady (bool ready);
 
-        public void OnTradeAcceptHandler()
+        public async void OnTradeAcceptHandler()
         {
-            Trade.Poll();
+            await Trade.Poll();
             if (Trade.OtherIsReady && Trade.MeIsReady)
             {
                 OnTradeAccept();
@@ -335,11 +335,11 @@ namespace SteamBot
             SendMessageDelayed(delayMs, SendTradeMessageImpl, message, formatParams);
         }
 
-        private void SendTradeMessageImpl(string message)
+        private async void SendTradeMessageImpl(string message)
         {
             if (Trade != null && !Trade.HasTradeCompletedOk)
             {
-                Trade.SendMessage(message);
+                await Trade.SendMessage(message);
             }
         }
 
