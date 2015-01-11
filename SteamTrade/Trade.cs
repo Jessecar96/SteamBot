@@ -72,7 +72,7 @@ namespace SteamTrade
         private bool tradeCancelledByBot;
         private int numUnknownStatusUpdates;
 
-        internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
+        internal Trade(SteamID me, SteamID other, SteamWeb steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
             TradeStarted = false;
             OtherIsReady = false;
@@ -80,7 +80,7 @@ namespace SteamTrade
             mySteamId = me;
             OtherSID = other;
 
-            session = new TradeSession(sessionId, token, other);
+            session = new TradeSession(other, steamWeb);
 
             this.eventList = new List<TradeEvent>();
 
@@ -549,29 +549,29 @@ namespace SteamTrade
         /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
         public bool Poll()
         {
-            if (!TradeStarted)
+            if(!TradeStarted)
             {
                 TradeStarted = true;
 
                 // since there is no feedback to let us know that the trade
                 // is fully initialized we assume that it is when we start polling.
-                if (OnAfterInit != null)
+                if(OnAfterInit != null)
                     OnAfterInit();
             }
 
             TradeStatus status = RetryWebRequest(session.GetStatus);
 
-            if (status == null)
+            if(status == null)
                 return false;
 
             TradeStatusType tradeStatusType = (TradeStatusType) status.trade_status;
             switch (tradeStatusType)
             {
-                // Nothing happened. i.e. trade hasn't closed yet.
+                    // Nothing happened. i.e. trade hasn't closed yet.
                 case TradeStatusType.OnGoing:
                     return HandleTradeOngoing(status);
 
-                // Successful trade
+                    // Successful trade
                 case TradeStatusType.CompletedSuccessfully:
                     HasTradeCompletedOk = true;
                     return false;
@@ -588,9 +588,9 @@ namespace SteamTrade
             }
 
             FireOnStatusErrorEvent(tradeStatusType);
-            OtherUserCancelled = true;
-            return false;
-        }
+                    OtherUserCancelled = true;
+                    return false;
+            }
 
         private bool HandleTradeOngoing(TradeStatus status)
         {
@@ -599,7 +599,7 @@ namespace SteamTrade
                 HandleTradeVersionChange(status);
                 return true;
             }
-            else if (status.version > session.Version)
+            else if(status.version > session.Version)
             {
                 // oh crap! we missed a version update abort so we don't get 
                 // scammed. if we could get what steam thinks what's in the 
@@ -609,7 +609,7 @@ namespace SteamTrade
             }
 
             // Update Local Variables
-            if (status.them != null)
+            if(status.them != null)
             {
                 OtherIsReady = status.them.ready == 1;
                 MeIsReady = status.me.ready == 1;
@@ -623,7 +623,7 @@ namespace SteamTrade
             var events = status.GetAllEvents();
             foreach(var tradeEvent in events.OrderBy(o => o.timestamp))
             {
-                if (eventList.Contains(tradeEvent))
+                if(eventList.Contains(tradeEvent))
                     continue;
 
                 //add event to processed list, as we are taking care of this event now
@@ -632,11 +632,11 @@ namespace SteamTrade
                 bool isBot = tradeEvent.steamid == MySteamId.ConvertToUInt64().ToString();
 
                 // dont process if this is something the bot did
-                if (isBot)
+                if(isBot)
                     continue;
 
                 otherUserDidSomething = true;
-                switch ((TradeEventType)tradeEvent.action)
+                switch((TradeEventType) tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
                         TradeUserAssets newAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
@@ -671,7 +671,7 @@ namespace SteamTrade
                 }
             }
 
-            if (status.logpos != 0)
+            if(status.logpos != 0)
             {
                 session.LogPos = status.logpos;
             }
@@ -715,7 +715,7 @@ namespace SteamTrade
                 SetReady(false);
             }
 
-            if(OtherInventory != null)
+            if(OtherInventory != null && !OtherInventory.IsPrivate)
             {
                 Inventory.Item item = OtherInventory.GetItem(asset.assetid);
                 if(item != null)
@@ -755,15 +755,18 @@ namespace SteamTrade
 
         private Schema.Item GetItemFromPrivateBp(TradeUserAssets asset)
         {
-            if(OtherPrivateInventory == null)
+            if (OtherPrivateInventory == null)
             {
-                // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, asset.contextid, asset.appid);
-                OtherPrivateInventory = new ForeignInventory(f);
+                dynamic foreignInventory = session.GetForeignInventory(OtherSID, asset.contextid, asset.appid);
+                if (foreignInventory == null || foreignInventory.success == null || !foreignInventory.success.Value)
+                {
+                    return null;
+                }
+
+                OtherPrivateInventory = new ForeignInventory(foreignInventory);
             }
 
-            ushort defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
-
+            int defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
             Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
         }
