@@ -724,11 +724,11 @@ namespace SteamBot
 
             log.Success("User Authenticated!");
 
-                    tradeManager = new TradeManager(ApiKey, SteamWeb);
+            tradeManager = new TradeManager(ApiKey, SteamWeb);
             tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximiumActionGap, TradePollingInterval);
             tradeManager.OnTimeout += OnTradeTimeout;
 
-                    tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
+            tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
             SubscribeTradeOffer(tradeOfferManager);
 
             CookiesAreInvalid = false;
@@ -758,15 +758,15 @@ namespace SteamBot
                     SteamUser.RequestWebAPIUserNonce();
                     return false;
                 }
-                }
+            }
             catch
             {
                 // Even if exception is caught, we should still continue.
                 log.Warn("Cookie check failed. http://steamcommunity.com is possibly down.");
             }
 
-                return true;
-            }
+            return true;
+        }
 
         UserHandler GetUserHandler(SteamID sid)
         {
