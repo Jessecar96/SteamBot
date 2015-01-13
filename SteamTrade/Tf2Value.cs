@@ -100,30 +100,29 @@ namespace SteamTrade
         public int GrainPart { get { return _numGrains % GRAIN_PER_SCRAP; } }
 
         /// <summary>
-        /// Returns the item-price portion of this Tf2Value.
+        /// Returns how many of an item this Tf2Value is worth
         /// Example: If keyPrice = 10 ref, then
-        /// (25*Tf2Value.Refined).GetItemPart(keyPrice, out remainder) == 2
+        /// (25*Tf2Value.Refined).GetPriceUsingItem(keyPrice) == 2.5
+        /// </summary>
+        /// <param name="itemValue">The value of the item (such as the current key-price)</param>
+        public double GetPriceUsingItem(Tf2Value itemValue)
+        {
+            return this / itemValue;
+        }
+
+        /// <summary>
+        /// Returns how many of an item this Tf2Value is worth, plus the remainder.
+        /// Example: If keyPrice = 10 ref, then
+        /// (25*Tf2Value.Refined).GetPriceUsingItem(keyPrice, out remainder) == 2
         /// with remainder == 5 ref
         /// </summary>
         /// <param name="itemValue">The value of the item (eg. the current key-price)</param>
         /// <param name="remainder">How much is leftover</param>
-        public int GetItemPart(Tf2Value itemValue, out Tf2Value remainder)
+        public int GetPriceUsingItem(Tf2Value itemValue, out Tf2Value remainder)
         {
             int numItems = (int) (this/itemValue); //Calculate value first in case remainder = this
             remainder = this % itemValue;
             return numItems;
-        }
-
-        /// <summary>
-        /// Returns the item-price portion of this Tf2Value.
-        /// Example: If keyPrice = 10 ref, then
-        /// (25*Tf2Value.Refined).GetItemPart(keyPrice, out remainder) == 2.5
-        /// with remainder == 5 ref
-        /// </summary>
-        /// <param name="itemValue">The value of the item (eg. the current key-price)</param>
-        public double GetItemTotal(Tf2Value itemValue)
-        {
-            return this / itemValue;
         }
 
         #endregion
