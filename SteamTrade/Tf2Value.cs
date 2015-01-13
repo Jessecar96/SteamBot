@@ -81,7 +81,7 @@ namespace SteamTrade
         /// <summary>
         /// A helper-property to get the value after the decimal-point for a refined-string.
         /// Example: the value 3 ref + 2 rec + 1 scrap is commonly written "3.77 ref", so RefinedPartDecimal = 77.
-        /// If you're just looking for the string "3.77 ref", call GetRefTotalString() instead
+        /// If you're just looking for the string "3.77 ref", call ToRefString() instead
         /// </summary>
         public int RefinedPartDecimal { get { return 11 * (ScrapPart + 3 * ReclaimedPart); } }
 
@@ -158,7 +158,7 @@ namespace SteamTrade
         /// Returns a string displaying how many of a certain item this Tf2Value represents.
         /// Example: if the value of a TF2 key is tf2KeyValue, then
         /// Tf2Value someValue = tf2KeyValue + Tf2Value.Refined;
-        /// someValue.GetItemWorthString(tf2KeyValue, "key")
+        /// someValue.ToItemString(tf2KeyValue, "key")
         /// returns
         /// "1 key + 1 ref"
         /// </summary>
@@ -168,7 +168,7 @@ namespace SteamTrade
         ///   This parameter lets you set a different plural.</param>
         /// <param name="roundDown">If true, only the item portion of the value will be shown.
         ///   If false, the portion in ref will be shown too</param>
-        public string GetItemWorthString(Tf2Value itemValue, string itemName, string itemNamePlural = null, bool roundDown = false)
+        public string ToItemString(Tf2Value itemValue, string itemName, string itemNamePlural = null, bool roundDown = false)
         {
             if (String.IsNullOrEmpty(itemNamePlural))
             {
@@ -195,7 +195,7 @@ namespace SteamTrade
                 {
                     returnValue += " + ";
                 }
-                returnValue += leftovers.GetRefTotalString();
+                returnValue += leftovers.ToRefString();
             }
 
             return returnValue;
@@ -205,7 +205,7 @@ namespace SteamTrade
         /// Returns a string displaying how many total refined metal this Tf2Value represents
         /// Example: For the value 3 ref + 2 rec + 1 scrap, this method returns "3.77 ref"
         /// </summary>
-        public string GetRefTotalString()
+        public string ToRefString()
         {
             return String.Format("{0}{1} ref", RefinedPart, (RefinedPartDecimal > 0 ? "." + RefinedPartDecimal : ""));
         }
@@ -219,7 +219,7 @@ namespace SteamTrade
         /// If false, the value is rounded down to the nearest scrap.
         /// Default is false.
         /// </param>
-        public string GetRefPartsString(bool includeScrapFractions = false)
+        public string ToPartsString(bool includeScrapFractions = false)
         {
             if(_numGrains == 0)
                 return "0 ref";
@@ -241,6 +241,11 @@ namespace SteamTrade
             }
 
             return string.Join(" + ", parts);
+        }
+
+        public override string ToString()
+        {
+            return ToRefString();
         }
         #endregion
 
