@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
-using SteamKit2;
-using SteamTrade.TradeWebAPI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using SteamKit2;
+using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
 {
@@ -131,7 +131,7 @@ namespace SteamTrade
             _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
         }
 
-        public async void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
+        public async Task loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             dynamic invResponse;
             isLoaded = false;

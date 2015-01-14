@@ -1,7 +1,7 @@
-﻿using SteamKit2;
-using SteamTrade;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using SteamKit2;
+using SteamTrade;
 
 namespace SteamBot
 {

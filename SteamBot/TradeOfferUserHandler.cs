@@ -1,8 +1,7 @@
-﻿using SteamKit2;
+﻿using System.Collections.Generic;
+using SteamKit2;
 using SteamTrade;
 using SteamTrade.TradeOffer;
-using System;
-using System.Collections.Generic;
 using TradeAsset = SteamTrade.TradeOffer.TradeOffer.TradeStatusUser.TradeAsset;
 
 namespace SteamBot

@@ -1,8 +1,8 @@
-using Newtonsoft.Json;
-using SteamKit2;
 using System;
 using System.Collections.Specialized;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using SteamKit2;
 
 namespace SteamTrade.TradeWebAPI
 {

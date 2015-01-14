@@ -6,9 +6,9 @@
 /// Purpose: This class contains the messages used to Invite friends to clans
 /// As well as Decline or Accept clan invites.
 
+using System.IO;
 using SteamKit2;
 using SteamKit2.Internal;
-using System.IO;
 
 namespace SteamBot.SteamGroups
 {

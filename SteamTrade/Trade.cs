@@ -1,11 +1,11 @@
-using SteamKit2;
-using SteamTrade.Exceptions;
-using SteamTrade.TradeWebAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamKit2;
+using SteamTrade.Exceptions;
+using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
 {
@@ -707,7 +707,7 @@ namespace SteamTrade
         /// Gets an item from a TradeEvent, and passes it into the UserHandler's implemented OnUserAddItem([...]) routine.
         /// Passes in null items if something went wrong.
         /// </summary>
-        private async void FireOnUserAddItem(TradeUserAssets asset)
+        private async Task FireOnUserAddItem(TradeUserAssets asset)
         {
             if(MeIsReady)
             {
@@ -775,7 +775,7 @@ namespace SteamTrade
         /// Passes in null items if something went wrong.
         /// </summary>
         /// <returns></returns>
-        private async void FireOnUserRemoveItem(TradeUserAssets asset)
+        private async Task FireOnUserRemoveItem(TradeUserAssets asset)
         {
             if(MeIsReady)
             {

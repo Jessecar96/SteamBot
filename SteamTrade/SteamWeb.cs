@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-using SteamKit2;
 using System;
 using System.Collections.Specialized;
 using System.IO;
@@ -11,6 +9,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Newtonsoft.Json;
+using SteamKit2;
 
 namespace SteamTrade
 {
@@ -29,7 +29,7 @@ namespace SteamTrade
             public string error { get; set; }
         }
 
-        public readonly object FAKE_RESPONSE = Task.Factory.StartNew(() => JsonConvert.DeserializeObject("{\"success\":\"false\"}")).Result;
+        public static readonly object FAKE_RESPONSE = JsonConvert.DeserializeObject("{\"success\":\"false\"}");
         public const string SteamCommunityDomain = "steamcommunity.com";
         public string Token { get; private set; }
         public string SessionId { get; private set; }
@@ -202,7 +202,7 @@ namespace SteamTrade
                 {
                     _cookies.Add(cookie);
                 }
-                SubmitCookies(_cookies);
+                await SubmitCookies(_cookies);
                 return true;
             }
             else
@@ -284,7 +284,7 @@ namespace SteamTrade
             }
         }
 
-        static async void SubmitCookies (CookieContainer cookies)
+        static async Task SubmitCookies (CookieContainer cookies)
         {
             HttpWebRequest w = WebRequest.CreateHttp("https://steamcommunity.com/");
 

@@ -1,7 +1,7 @@
-﻿using SteamKit2;
-using SteamKit2.Internal;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Linq;
+using SteamKit2;
+using SteamKit2.Internal;
 
 namespace SteamBot
 {

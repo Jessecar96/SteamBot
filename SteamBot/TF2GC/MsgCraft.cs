@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using SteamKit2;
-using SteamKit2.GC;
-using SteamKit2.GC.TF2;
 using SteamKit2.Internal;
 
 namespace SteamBot.TF2GC

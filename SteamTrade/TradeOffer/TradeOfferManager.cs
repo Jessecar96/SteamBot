@@ -1,8 +1,8 @@
-﻿using SteamKit2;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using SteamKit2;
 
 namespace SteamTrade.TradeOffer
 {

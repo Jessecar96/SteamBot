@@ -1,9 +1,9 @@
-using Newtonsoft.Json;
-using SteamKit2;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using SteamKit2;
 
 namespace SteamTrade
 {
@@ -31,7 +31,6 @@ namespace SteamTrade
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
         public static async Task<dynamic> GetInventory(SteamID steamid, SteamWeb steamWeb)
         {
-            object retFail = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject("{\"success\":\"false\"}"));
             string url = String.Format (
                 "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
                 steamid.ConvertToUInt64 ()
@@ -44,7 +43,7 @@ namespace SteamTrade
             }
             catch (Exception)
             {
-                return retFail;
+                return SteamWeb.FAKE_RESPONSE;
             }
         }
 

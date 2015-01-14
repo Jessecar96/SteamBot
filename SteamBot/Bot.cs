@@ -1,8 +1,3 @@
-using SteamBot.SteamGroups;
-using SteamKit2;
-using SteamKit2.Internal;
-using SteamTrade;
-using SteamTrade.TradeOffer;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,6 +6,11 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamBot.SteamGroups;
+using SteamKit2;
+using SteamKit2.Internal;
+using SteamTrade;
+using SteamTrade.TradeOffer;
 
 namespace SteamBot
 {
@@ -305,7 +305,7 @@ namespace SteamBot
 
             try
             {
-                tradeManager.InitializeTrade(SteamUser.SteamID, other);
+                tradeManager.InitializeTrade(SteamUser.SteamID, other).Wait();
                 CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
                 CurrentTrade.OnClose += CloseTrade;
                 SubscribeTrade(CurrentTrade, GetUserHandler(other));
@@ -662,7 +662,7 @@ namespace SteamBot
             SteamUser.LogOn(logOnDetails);
         }
 
-        async void UserWebLogOn()
+        async Task UserWebLogOn()
         {
             while (true)
             {

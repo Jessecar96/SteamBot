@@ -1,5 +1,5 @@
-using SteamKit2;
 using System.Collections.Generic;
+using SteamKit2;
 using SteamTrade;
 using SteamTrade.TradeWebAPI;
 

@@ -1,9 +1,9 @@
-using SteamKit2;
-using SteamTrade.Exceptions;
 using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamKit2;
+using SteamTrade.Exceptions;
 
 namespace SteamTrade
 {
@@ -176,7 +176,7 @@ namespace SteamTrade
         public Trade CreateTrade (SteamID  me, SteamID other)
         {
             if (otherInventoryTask == null || myInventoryTask == null)
-                InitializeTrade (me, other);
+                InitializeTrade (me, other).Wait();
 
             var t = new Trade (me, other, SteamWeb, myInventoryTask, otherInventoryTask);
 
@@ -217,7 +217,7 @@ namespace SteamTrade
         /// This should be done anytime a new user is traded with or the inventories are out of date. It should
         /// be done sometime before calling <see cref="CreateTrade"/>.
         /// </remarks>
-        public async void InitializeTrade (SteamID me, SteamID other)
+        public async Task InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
             otherInventoryTask = Inventory.FetchInventory(other.ConvertToUInt64(), ApiKey, SteamWeb);
