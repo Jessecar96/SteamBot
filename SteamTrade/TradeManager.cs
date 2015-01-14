@@ -176,7 +176,7 @@ namespace SteamTrade
         public Trade CreateTrade (SteamID  me, SteamID other)
         {
             if (otherInventoryTask == null || myInventoryTask == null)
-                InitializeTrade (me, other);
+                InitializeTrade (me, other).Wait();
 
             var t = new Trade (me, other, SteamWeb, myInventoryTask, otherInventoryTask);
 
@@ -217,10 +217,10 @@ namespace SteamTrade
         /// This should be done anytime a new user is traded with or the inventories are out of date. It should
         /// be done sometime before calling <see cref="CreateTrade"/>.
         /// </remarks>
-        public void InitializeTrade (SteamID me, SteamID other)
+        public async Task InitializeTrade (SteamID me, SteamID other)
         {
             // fetch other player's inventory from the Steam API.
-            otherInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(other.ConvertToUInt64(), ApiKey, SteamWeb));
+            otherInventoryTask = Inventory.FetchInventory(other.ConvertToUInt64(), ApiKey, SteamWeb);
 
             //if (OtherInventory == null)
             //{
@@ -228,11 +228,11 @@ namespace SteamTrade
             //}
             
             // fetch our inventory from the Steam API.
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(me.ConvertToUInt64(), ApiKey, SteamWeb));
+            myInventoryTask = Inventory.FetchInventory(me.ConvertToUInt64(), ApiKey, SteamWeb);
             
             // check that the schema was already successfully fetched
             if (Trade.CurrentSchema == null)
-                Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
+                Trade.CurrentSchema = await Schema.FetchSchema (ApiKey);
 
             if (Trade.CurrentSchema == null)
                 throw new TradeException ("Could not download the latest item schema.");
@@ -250,7 +250,7 @@ namespace SteamTrade
             lastOtherActionTime = DateTime.Now;
             lastTimeoutMessage = DateTime.Now.AddSeconds(-1000);
 
-            var pollThread = new Thread (() =>
+            var pollThread = new Thread (async () =>
             {
                 IsTradeThreadRunning = true;
 
@@ -261,12 +261,11 @@ namespace SteamTrade
                 {
                     while(IsTradeThreadRunning)
                     {
-                        bool action = trade.Poll();
+                        bool action = await trade.Poll();
 
                         if(action)
                             lastOtherActionTime = DateTime.Now;
-
-                        if(trade.OtherUserCancelled || trade.HasTradeCompletedOk || CheckTradeTimeout(trade))
+                        if (trade.OtherUserCancelled || trade.HasTradeCompletedOk || await CheckTradeTimeout(trade))
                         {
                             IsTradeThreadRunning = false;
                             break;
@@ -313,7 +312,7 @@ namespace SteamTrade
             pollThread.Start();
         }
 
-        private bool CheckTradeTimeout (Trade trade)
+        private async Task<bool> CheckTradeTimeout (Trade trade)
         {
             // User has accepted the trade. Disregard time out.
             if (trade.OtherUserAccepted)
@@ -340,7 +339,7 @@ namespace SteamTrade
                     OnTimeout (this, null);
                 }
 
-                trade.CancelTrade ();
+                await trade.CancelTrade ();
 
                 return true;
             }
@@ -348,7 +347,7 @@ namespace SteamTrade
             {
                 try
                 {
-                    trade.SendMessage("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
+                    await trade.SendMessage("Are You AFK? The trade will be canceled in " + untilActionTimeout + " seconds if you don't do something.");
                 }
                 catch { }
                 lastTimeoutMessage = now;

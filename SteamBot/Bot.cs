@@ -1,17 +1,15 @@
 using System;
-using System.Threading.Tasks;
-using System.Web;
-using System.Net;
-using System.Text;
-using System.IO;
-using System.Threading;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.ComponentModel;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using SteamBot.SteamGroups;
 using SteamKit2;
-using SteamTrade;
 using SteamKit2.Internal;
+using SteamTrade;
 using SteamTrade.TradeOffer;
 
 namespace SteamBot
@@ -227,9 +225,9 @@ namespace SteamBot
         /// <c>true</c>, if trade was opened,
         /// <c>false</c> if there is another trade that must be closed first.
         /// </returns>
-        public bool OpenTrade (SteamID other)
+        public async Task<bool> OpenTrade (SteamID other)
         {
-            if (CurrentTrade != null || CheckCookies() == false)
+            if (CurrentTrade != null || await CheckCookies() == false)
                 return false;
 
             SteamTrade.Trade(other);
@@ -307,7 +305,7 @@ namespace SteamBot
 
             try
             {
-                tradeManager.InitializeTrade(SteamUser.SteamID, other);
+                tradeManager.InitializeTrade(SteamUser.SteamID, other).Wait();
                 CurrentTrade = tradeManager.CreateTrade (SteamUser.SteamID, other);
                 CurrentTrade.OnClose += CloseTrade;
                 SubscribeTrade(CurrentTrade, GetUserHandler(other));
@@ -410,7 +408,7 @@ namespace SteamBot
                 }
             });
 
-            msg.Handle<SteamUser.LoginKeyCallback> (callback =>
+            msg.Handle<SteamUser.LoginKeyCallback> (async callback =>
             {
                 MyUniqueId = callback.UniqueID.ToString();
 
@@ -419,7 +417,7 @@ namespace SteamBot
                 if (Trade.CurrentSchema == null)
                 {
                     log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
+                    Trade.CurrentSchema = await Schema.FetchSchema (ApiKey);
                     log.Success ("Schema Downloaded!");
                 }
 
@@ -540,9 +538,9 @@ namespace SteamBot
                     log.Debug ("SteamTrading.SessionStartCallback handled successfully. Trade Opened.");
             });
 
-            msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
+            msg.Handle<SteamTrading.TradeProposedCallback> (async callback =>
             {
-                if (CheckCookies() == false)
+                if (await CheckCookies() == false)
                 {
                     SteamTrade.RespondToTrade(callback.TradeID, false);
                     return;
@@ -622,7 +620,7 @@ namespace SteamBot
             #endregion
 
             #region Notifications
-            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(callback =>
+            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(async callback =>
             {
                 //currently only appears to be of trade offer
                 if (callback.Notifications.Count != 0)
@@ -634,8 +632,8 @@ namespace SteamBot
                 }
 
                 // Get offers only if cookies are valid
-                if (CheckCookies())
-                    tradeOfferManager.GetOffers();
+                if (await CheckCookies())
+                    await tradeOfferManager.GetOffers();
             });
 
             msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
@@ -664,7 +662,7 @@ namespace SteamBot
             SteamUser.LogOn(logOnDetails);
         }
 
-        void UserWebLogOn()
+        async Task UserWebLogOn()
         {
             while (true)
             {
@@ -684,7 +682,7 @@ namespace SteamBot
                     CookiesAreInvalid = false;
 
                     // Success, check trade offers which we have received while we were offline
-                    tradeOfferManager.GetOffers();
+                    await tradeOfferManager.GetOffers();
 
                     break;
                 }
@@ -701,7 +699,7 @@ namespace SteamBot
         /// Sets cookie flag if they are invalid.
         /// </summary>
         /// <returns>true if cookies are valid; otherwise false</returns>
-        bool CheckCookies()
+        async Task<bool> CheckCookies()
         {
             // We still haven't re-authenticated
             if (CookiesAreInvalid)
@@ -709,7 +707,7 @@ namespace SteamBot
 
             try
             {
-                if (!SteamWeb.VerifyCookies())
+                if (!await SteamWeb.VerifyCookies())
                 {
                     // Cookies are no longer valid
                     log.Warn("Cookies are invalid. Need to re-authenticate.");
@@ -800,7 +798,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb));
+            myInventoryTask = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
         }
 
         public void TradeOfferRouter(TradeOffer offer)

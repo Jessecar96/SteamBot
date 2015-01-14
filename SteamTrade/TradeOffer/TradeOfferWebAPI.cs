@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace SteamTrade.TradeOffer
 {
@@ -23,27 +24,24 @@ namespace SteamTrade.TradeOffer
 
         private const string BaseUrl = "http://api.steampowered.com/IEconService/{0}/{1}/{2}";
 
-        public OfferResponse GetTradeOffer(string tradeofferid)
+        public async Task<OfferResponse> GetTradeOffer(string tradeofferid)
         {
             string options = string.Format("?key={0}&tradeofferid={1}&language={2}", apiKey, tradeofferid, "en_us");
             string url = String.Format(BaseUrl, "GetTradeOffer", "v1", options);
             try
             {
-                string response = steamWeb.Fetch(url, "GET", null, false);
-                var result = JsonConvert.DeserializeObject<ApiResponse<OfferResponse>>(response);
-                return result.Response;
+                ApiResponse<OfferResponse> response = await steamWeb.FetchJson<ApiResponse<OfferResponse>>(url, "GET", null, false);
+                return response.Response;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //todo log
-                Debug.WriteLine(ex);
             }
             return new OfferResponse();
         }
 
-        public TradeOfferState GetOfferState(string tradeofferid)
+        public async Task<TradeOfferState> GetOfferState(string tradeofferid)
         {
-            var resp = GetTradeOffer(tradeofferid);
+            var resp = await GetTradeOffer(tradeofferid);
             if (resp != null && resp.Offer != null)
             {
                 return resp.Offer.TradeOfferState;
@@ -51,7 +49,7 @@ namespace SteamTrade.TradeOffer
             return TradeOfferState.TradeOfferStateUnknown;
         }
 
-        public OffersResponse GetActiveTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, string language = "en_us")
+        public async Task<OffersResponse> GetActiveTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, string language = "en_us")
         {
             if (!getSentOffers && !getReceivedOffers)
             {
@@ -61,21 +59,16 @@ namespace SteamTrade.TradeOffer
             string options = string.Format("?key={0}&get_sent_offers={1}&get_received_offers={2}&get_descriptions={3}&language={4}&active_only={5}",
                 apiKey, BoolConverter(getSentOffers), BoolConverter(getReceivedOffers), BoolConverter(getDescriptions), language, BoolConverter(true));
             string url = string.Format(BaseUrl, "GetTradeOffers", "v1", options);
-            string response = steamWeb.Fetch(url, "GET", null, false);
             try
             {
-                var result = JsonConvert.DeserializeObject<ApiResponse<OffersResponse>>(response);
-                return result.Response;
+                ApiResponse<OffersResponse> response = await steamWeb.FetchJson<ApiResponse<OffersResponse>>(url, "GET", null, false);
+                return response.Response;
             }
-            catch (Exception ex)
-            {
-                //todo log
-                Debug.WriteLine(ex);
-            }
+            catch (Exception) { }
             return new OffersResponse();
         }
 
-        public OffersResponse GetTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, bool activeOnly, bool historicalOnly, string timeHistoricalCutoff = "1389106496", string language = "en_us")
+        public async Task<OffersResponse> GetTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, bool activeOnly, bool historicalOnly, string timeHistoricalCutoff = "1389106496", string language = "en_us")
         {
             if (!getSentOffers && !getReceivedOffers)
             {
@@ -85,16 +78,12 @@ namespace SteamTrade.TradeOffer
             string options = string.Format("?key={0}&get_sent_offers={1}&get_received_offers={2}&get_descriptions={3}&language={4}&active_only={5}&historical_only={6}&time_historical_cutoff={7}",
                 apiKey, BoolConverter(getSentOffers), BoolConverter(getReceivedOffers), BoolConverter(getDescriptions), language, BoolConverter(activeOnly), BoolConverter(historicalOnly), timeHistoricalCutoff);
             string url = String.Format(BaseUrl, "GetTradeOffers", "v1", options);
-            string response = steamWeb.Fetch(url, "GET", null, false);
             try
             {
-                var result = JsonConvert.DeserializeObject<ApiResponse<OffersResponse>>(response);
+                var result = await steamWeb.FetchJson<ApiResponse<OffersResponse>>(url, "GET", null, false);
                 return result.Response;
             }
-            catch (Exception ex)
-            {
-                //todo log
-                Debug.WriteLine(ex);
+            catch (Exception){
             }
             return new OffersResponse();
         }
@@ -104,33 +93,27 @@ namespace SteamTrade.TradeOffer
             return value ? "1" : "0";
         }
 
-        public TradeOffersSummary GetTradeOffersSummary(UInt32 timeLastVisit)
+        public async Task<TradeOffersSummary> GetTradeOffersSummary(UInt32 timeLastVisit)
         {
             string options = string.Format("?key={0}&time_last_visit={1}", apiKey, timeLastVisit);
             string url = String.Format(BaseUrl, "GetTradeOffersSummary", "v1", options);
 
             try
             {
-                string response = steamWeb.Fetch(url, "GET", null, false);
-                var resp = JsonConvert.DeserializeObject<ApiResponse<TradeOffersSummary>>(response);
-
+                var resp = await steamWeb.FetchJson<ApiResponse<TradeOffersSummary>>(url, "GET", null, false);
                 return resp.Response;
             }
-            catch (Exception ex)
-            {
-                //todo log
-                Debug.WriteLine(ex);
-            }
+            catch (Exception) { }
             return new TradeOffersSummary();
         }
 
-        private bool DeclineTradeOffer(ulong tradeofferid)
+        private async Task<bool> DeclineTradeOffer(ulong tradeofferid)
         {
             string options = string.Format("?key={0}&tradeofferid={1}", apiKey, tradeofferid);
             string url = String.Format(BaseUrl, "DeclineTradeOffer", "v1", options);
             Debug.WriteLine(url);
-            string response = steamWeb.Fetch(url, "POST", null, false);
-            dynamic json = JsonConvert.DeserializeObject(response);
+            string response = await steamWeb.Fetch(url, "POST", null, false);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(response));
 
             if (json == null || json.success != "1")
             {
@@ -139,13 +122,13 @@ namespace SteamTrade.TradeOffer
             return true;
         }
 
-        private bool CancelTradeOffer(ulong tradeofferid)
+        private async Task<bool> CancelTradeOffer(ulong tradeofferid)
         {
             string options = string.Format("?key={0}&tradeofferid={1}", apiKey, tradeofferid);
             string url = String.Format(BaseUrl, "CancelTradeOffer", "v1", options);
             Debug.WriteLine(url);
-            string response = steamWeb.Fetch(url, "POST", null, false);
-            dynamic json = JsonConvert.DeserializeObject(response);
+            string response = await steamWeb.Fetch(url, "POST", null, false);
+            dynamic json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(response));
 
             if (json == null || json.success != "1")
             {
@@ -182,7 +165,7 @@ namespace SteamTrade.TradeOffer
         public int HistoricalSentCount { get; set; }
     }
 
-    public class ApiResponse<T>
+    public class ApiResponse<T> : SteamWeb.ResponseBase
     {
         [JsonProperty("response")]
         public T Response { get; set; }

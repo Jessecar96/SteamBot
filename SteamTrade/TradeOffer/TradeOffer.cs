@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json;
-using SteamKit2;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using SteamKit2;
 
 namespace SteamTrade.TradeOffer
 {
@@ -186,7 +187,7 @@ namespace SteamTrade.TradeOffer
         /// Decline the current offer
         /// </summary>
         /// <returns>true if successful, otherwise false</returns>
-        public bool Decline()
+        public async Task<bool> Decline()
         {
             if (TradeOfferId == null)
             {
@@ -195,7 +196,7 @@ namespace SteamTrade.TradeOffer
             }
             if (!IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                return Session.Decline(TradeOfferId);
+                return await Session.Decline(TradeOfferId);
             }
             //todo: log wrong state
             Debug.WriteLine("Can't decline a trade that is not active");
@@ -206,7 +207,7 @@ namespace SteamTrade.TradeOffer
         /// Cancel the current offer
         /// </summary>
         /// <returns>true if successful, otherwise false</returns>
-        public bool Cancel()
+        public async Task<bool> Cancel()
         {
             if (TradeOfferId == null)
             {
@@ -215,7 +216,7 @@ namespace SteamTrade.TradeOffer
             }
             if (IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                return Session.Cancel(TradeOfferId);
+                return await Session.Cancel(TradeOfferId);
             }
             //todo: log wrong state
             Debug.WriteLine("Can't cancel a trade that is not active and ours");

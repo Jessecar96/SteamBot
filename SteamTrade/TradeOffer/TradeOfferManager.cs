@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using SteamKit2;
-using System;
 
 namespace SteamTrade.TradeOffer
 {
@@ -33,9 +34,9 @@ namespace SteamTrade.TradeOffer
         /// Gets the currently active trade offers from the web api and processes them
         /// </summary>
         /// <returns></returns>
-        public bool GetActiveTradeOffers()
+        public async Task<bool> GetActiveTradeOffers()
         {
-            var offers = webApi.GetActiveTradeOffers(false, true, false);
+            var offers = await webApi.GetActiveTradeOffers(false, true, false);
             if (offers != null && offers.TradeOffersReceived != null)
             {
                 foreach (var offer in offers.TradeOffersReceived)
@@ -49,7 +50,7 @@ namespace SteamTrade.TradeOffer
                         }
                         else
                         {
-                            var resp = webApi.GetTradeOffer(offer.TradeOfferId);
+                            var resp = await webApi.GetTradeOffer(offer.TradeOfferId);
                             if (IsOfferValid(resp.Offer))
                             {
                                 SendOfferToHandler(resp.Offer);
@@ -72,9 +73,9 @@ namespace SteamTrade.TradeOffer
         /// </summary>
         /// <param name="unixTimeStamp"></param>
         /// <returns></returns>
-        public bool GetTradeOffersSince(int unixTimeStamp)
+        public async Task<bool> GetTradeOffersSince(int unixTimeStamp)
         {
-            var offers = webApi.GetTradeOffers(false, true, false, true, false, unixTimeStamp.ToString());
+            var offers = await webApi.GetTradeOffers(false, true, false, true, false, unixTimeStamp.ToString());
             if (offers != null && offers.TradeOffersReceived != null)
             {
                 foreach (var offer in offers.TradeOffersReceived)
@@ -88,7 +89,7 @@ namespace SteamTrade.TradeOffer
                         }
                         else
                         {
-                            var resp = webApi.GetTradeOffer(offer.TradeOfferId);
+                            var resp = await webApi.GetTradeOffer(offer.TradeOfferId);
                             if (IsOfferValid(resp.Offer))
                             {
                                 SendOfferToHandler(resp.Offer);
@@ -106,11 +107,11 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
-        public bool GetOffers()
+        public async Task<bool> GetOffers()
         {
             if (LastTimeCheckedOffers != 0)
             {
-                bool action = GetTradeOffersSince(LastTimeCheckedOffers);
+                bool action = await GetTradeOffersSince(LastTimeCheckedOffers);
 
                 if (action)
                     LastTimeCheckedOffers = GetUnixTimeStamp();
@@ -118,7 +119,7 @@ namespace SteamTrade.TradeOffer
             }
             else
             {
-                bool action = GetActiveTradeOffers();
+                bool action = await GetActiveTradeOffers();
                 if (action)
                     LastTimeCheckedOffers = GetUnixTimeStamp();
                 return action;
@@ -156,7 +157,7 @@ namespace SteamTrade.TradeOffer
         public bool GetOffer(string offerId, out TradeOffer tradeOffer)
         {
             tradeOffer = null;
-            var resp = webApi.GetTradeOffer(offerId);
+            var resp = webApi.GetTradeOffer(offerId).Result;
             if (resp != null)
             {
                 if (IsOfferValid(resp.Offer))

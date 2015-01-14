@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Contexts;
 using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
@@ -280,10 +279,10 @@ namespace SteamTrade
         /// <summary>
         /// Cancel the trade.  This calls the OnClose handler, as well.
         /// </summary>
-        public bool CancelTrade()
+        public async Task<bool> CancelTrade()
         {
             tradeCancelledByBot = true;
-            return RetryWebRequest(session.CancelTradeWebCmd);
+            return await RetryWebRequest(session.CancelTradeWebCmd);
         }
 
         /// <summary>
@@ -291,7 +290,7 @@ namespace SteamTrade
         /// If the item is not a TF2 item, use the AddItem(ulong itemid, int appid, long contextid) overload
         /// </summary>
         /// <returns><c>false</c> if the tf2 item was not found in the inventory.</returns>
-        public bool AddItem(ulong itemid)
+        public async Task<bool> AddItem(ulong itemid)
         {
             if(MyInventory.GetItem(itemid) == null)
             {
@@ -299,19 +298,19 @@ namespace SteamTrade
             }
             else
             {
-                return AddItem(new TradeUserAssets(440, 2, itemid));
+                return await AddItem(new TradeUserAssets(440, 2, itemid));
             }
         }
 
-        public bool AddItem(ulong itemid, int appid, long contextid)
+        public async Task<bool> AddItem(ulong itemid, int appid, long contextid)
         {
-            return AddItem(new TradeUserAssets(appid, contextid, itemid));
+            return await AddItem(new TradeUserAssets(appid, contextid, itemid));
         }
 
-        public bool AddItem(TradeUserAssets item)
+        public async Task<bool> AddItem(TradeUserAssets item)
         {
             var slot = NextTradeSlot();
-            bool success = RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid));
+            bool success = await RetryWebRequest(() => session.AddItemWebCmd(item.assetid, slot, item.appid, item.contextid));
 
             if(success)
                 myOfferedItemsLocalCopy[slot] = item;
@@ -326,14 +325,14 @@ namespace SteamTrade
         /// <c>true</c> if an item was found with the corresponding
         /// defindex, <c>false</c> otherwise.
         /// </returns>
-        public bool AddItemByDefindex(int defindex)
+        public async Task<bool> AddItemByDefindex(int defindex)
         {
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
             foreach(Inventory.Item item in items)
             {
                 if(item != null && myOfferedItemsLocalCopy.Values.All(o => o.assetid != item.Id) && !item.IsNotTradeable)
                 {
-                    return AddItem(item.Id);
+                    return await AddItem(item.Id);
                 }
             }
             return false;
@@ -346,7 +345,7 @@ namespace SteamTrade
         /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
         /// <param name="numToAdd">The upper limit on amount of items to add. <c>0</c> to add all items.</param>
         /// <returns>Number of items added.</returns>
-        public uint AddAllItemsByDefindex(int defindex, uint numToAdd = 0)
+        public async Task<uint> AddAllItemsByDefindex(int defindex, uint numToAdd = 0)
         {
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
 
@@ -356,7 +355,7 @@ namespace SteamTrade
             {
                 if(item != null && myOfferedItemsLocalCopy.Values.All(o => o.assetid != item.Id) && !item.IsNotTradeable)
                 {
-                    bool success = AddItem(item.Id);
+                    bool success = await AddItem(item.Id);
 
                     if(success)
                         added++;
@@ -370,22 +369,22 @@ namespace SteamTrade
         }
 
 
-        public bool RemoveItem(TradeUserAssets item)
+        public async Task<bool> RemoveItem(TradeUserAssets item)
         {
-            return RemoveItem(item.assetid, item.appid, item.contextid);
+            return await RemoveItem(item.assetid, item.appid, item.contextid);
         }
 
         /// <summary>
         /// Removes an item by its itemid.
         /// </summary>
         /// <returns><c>false</c> the item was not found in the trade.</returns>
-        public bool RemoveItem(ulong itemid, int appid = 440, long contextid = 2)
+        public async Task<bool> RemoveItem(ulong itemid, int appid = 440, long contextid = 2)
         {
             int? slot = GetItemSlot(itemid);
             if(!slot.HasValue)
                 return false;
 
-            bool success = RetryWebRequest(() => session.RemoveItemWebCmd(itemid, slot.Value, appid, contextid));
+            bool success = await RetryWebRequest(() => session.RemoveItemWebCmd(itemid, slot.Value, appid, contextid));
 
             if(success)
                 myOfferedItemsLocalCopy.Remove(slot.Value);
@@ -399,14 +398,14 @@ namespace SteamTrade
         /// <returns>
         /// Returns <c>true</c> if it found a corresponding item; <c>false</c> otherwise.
         /// </returns>
-        public bool RemoveItemByDefindex(int defindex)
+        public async Task<bool> RemoveItemByDefindex(int defindex)
         {
             foreach(TradeUserAssets asset in myOfferedItemsLocalCopy.Values)
             {
                 Inventory.Item item = MyInventory.GetItem(asset.assetid);
                 if(item != null && item.Defindex == defindex)
                 {
-                    return RemoveItem(item.Id);
+                    return await RemoveItem(item.Id);
                 }
             }
             return false;
@@ -418,7 +417,7 @@ namespace SteamTrade
         /// <param name="defindex">The defindex. (ex. 5022 = crates)</param>
         /// <param name="numToRemove">The upper limit on amount of items to remove. <c>0</c> to remove all items.</param>
         /// <returns>Number of items removed.</returns>
-        public uint RemoveAllItemsByDefindex(int defindex, uint numToRemove = 0)
+        public async Task<uint> RemoveAllItemsByDefindex(int defindex, uint numToRemove = 0)
         {
             List<Inventory.Item> items = MyInventory.GetItemsByDefindex(defindex);
 
@@ -428,7 +427,7 @@ namespace SteamTrade
             {
                 if(item != null && myOfferedItemsLocalCopy.Values.Any(o => o.assetid == item.Id))
                 {
-                    bool success = RemoveItem(item.Id);
+                    bool success = await RemoveItem(item.Id);
 
                     if(success)
                         removed++;
@@ -445,7 +444,7 @@ namespace SteamTrade
         /// Removes all offered items from the trade.
         /// </summary>
         /// <returns>Number of items removed.</returns>
-        public uint RemoveAllItems()
+        public async Task<uint> RemoveAllItems()
         {
             uint numRemoved = 0;
 
@@ -455,7 +454,7 @@ namespace SteamTrade
 
                 if(item != null)
                 {
-                    bool wasRemoved = RemoveItem(item.Id);
+                    bool wasRemoved = await RemoveItem(item.Id);
 
                     if(wasRemoved)
                         numRemoved++;
@@ -468,15 +467,15 @@ namespace SteamTrade
         /// <summary>
         /// Sends a message to the user over the trade chat.
         /// </summary>
-        public bool SendMessage(string msg)
+        public async Task<bool> SendMessage(string msg)
         {
-            return RetryWebRequest(() => session.SendMessageWebCmd(msg));
+            return await RetryWebRequest(() => session.SendMessageWebCmd(msg));
         }
 
         /// <summary>
         /// Sets the bot to a ready status.
         /// </summary>
-        public bool SetReady(bool ready)
+        public async Task<bool> SetReady(bool ready)
         {
             //If the bot calls SetReady(false) and the call fails, we still want meIsReady to be
             //set to false.  Otherwise, if the call to SetReady() was a result of a callback
@@ -487,20 +486,20 @@ namespace SteamTrade
 
             ValidateLocalTradeItems();
 
-            return RetryWebRequest(() => session.SetReadyWebCmd(ready));
+            return await RetryWebRequest(() => session.SetReadyWebCmd(ready));
         }
 
         /// <summary>
         /// Accepts the trade from the user.  Returns whether the acceptance went through or not
         /// </summary>
-        public bool AcceptTrade()
+        public async Task<bool> AcceptTrade()
         {
             if(!MeIsReady)
                 return false;
 
             ValidateLocalTradeItems();
 
-            return RetryWebRequest(session.AcceptTradeWebCmd);
+            return await RetryWebRequest(session.AcceptTradeWebCmd);
         }
 
         /// <summary>
@@ -547,7 +546,7 @@ namespace SteamTrade
         /// method itself.
         /// </summary>
         /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
-        public bool Poll()
+        public async Task<bool> Poll()
         {
             if(!TradeStarted)
             {
@@ -559,7 +558,7 @@ namespace SteamTrade
                     OnAfterInit();
             }
 
-            TradeStatus status = RetryWebRequest(session.GetStatus);
+            TradeStatus status = await RetryWebRequest(session.GetStatus);
 
             if(status == null)
                 return false;
@@ -708,11 +707,11 @@ namespace SteamTrade
         /// Gets an item from a TradeEvent, and passes it into the UserHandler's implemented OnUserAddItem([...]) routine.
         /// Passes in null items if something went wrong.
         /// </summary>
-        private void FireOnUserAddItem(TradeUserAssets asset)
+        private async Task FireOnUserAddItem(TradeUserAssets asset)
         {
             if(MeIsReady)
             {
-                SetReady(false);
+                await SetReady(false);
             }
 
             if(OtherInventory != null && !OtherInventory.IsPrivate)
@@ -776,11 +775,11 @@ namespace SteamTrade
         /// Passes in null items if something went wrong.
         /// </summary>
         /// <returns></returns>
-        private void FireOnUserRemoveItem(TradeUserAssets asset)
+        private async Task FireOnUserRemoveItem(TradeUserAssets asset)
         {
             if(MeIsReady)
             {
-                SetReady(false);
+                await SetReady(false);
             }
 
             if(OtherInventory != null)

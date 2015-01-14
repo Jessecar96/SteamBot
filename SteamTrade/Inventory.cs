@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -15,11 +16,10 @@ namespace SteamTrade
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
-        public static Inventory FetchInventory (ulong steamId, string apiKey, SteamWeb steamWeb)
+        public static async Task<Inventory> FetchInventory (ulong steamId, string apiKey, SteamWeb steamWeb)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-            string response = steamWeb.Fetch (url, "GET", null, false);
-            InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
+            InventoryResponse result = await steamWeb.FetchJson<InventoryResponse>(url, "GET", null, false);
             return new Inventory(result.result);
         }
 
@@ -29,7 +29,7 @@ namespace SteamTrade
         /// <returns>The inventory for the given user. </returns>
         /// <param name='steamid'>The Steam identifier. </param>
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
-        public static dynamic GetInventory(SteamID steamid, SteamWeb steamWeb)
+        public static async Task<dynamic> GetInventory(SteamID steamid, SteamWeb steamWeb)
         {
             string url = String.Format (
                 "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
@@ -38,12 +38,12 @@ namespace SteamTrade
             
             try
             {
-                string response = steamWeb.Fetch (url, "GET");
-                return JsonConvert.DeserializeObject (response);
+                string response = await steamWeb.Fetch (url, "GET");
+                return await Task.Factory.StartNew(() => JsonConvert.DeserializeObject(response)) ;
             }
             catch (Exception)
             {
-                return JsonConvert.DeserializeObject ("{\"success\":\"false\"}");
+                return SteamWeb.FAKE_RESPONSE;
             }
         }
 
@@ -157,7 +157,7 @@ namespace SteamTrade
             public Item[] items { get; set; }
         }
 
-        protected class InventoryResponse
+        protected class InventoryResponse : SteamWeb.ResponseBase
         {
             public InventoryResult result;
         }

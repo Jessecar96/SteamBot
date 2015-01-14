@@ -1,5 +1,5 @@
-using SteamKit2;
 using System.Collections.Generic;
+using SteamKit2;
 using SteamTrade;
 using SteamTrade.TradeWebAPI;
 
@@ -66,17 +66,17 @@ namespace SteamBot
         
         public override void OnTradeMessage (string message) {}
         
-        public override void OnTradeReady (bool ready) 
+        public async override void OnTradeReady (bool ready) 
         {
             if (!ready)
             {
-                Trade.SetReady (false);
+                await Trade.SetReady (false);
             }
             else
             {
                 if(Validate ())
                 {
-                    Trade.SetReady (true);
+                    await Trade.SetReady(true);
                 }
                 SendTradeMessage("Scrap: {0}", ScrapPutUp);
             }
@@ -88,14 +88,14 @@ namespace SteamBot
             Log.Success("Trade Complete.");
         }
 
-        public override void OnTradeAccept() 
+        public async override void OnTradeAccept() 
         {
             if (Validate() || IsAdmin)
             {
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
                 try {
-                    if (Trade.AcceptTrade())
+                    if (await Trade.AcceptTrade())
                         Log.Success("Trade Accepted!");
                 }
                 catch {

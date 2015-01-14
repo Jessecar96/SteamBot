@@ -1,10 +1,9 @@
-using Newtonsoft.Json;
-using SteamKit2;
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using SteamKit2;
 
 namespace SteamTrade.TradeOffer
 {
@@ -38,13 +37,13 @@ namespace SteamTrade.TradeOffer
             string url = string.Format("https://steamcommunity.com/tradeoffer/{0}/accept", tradeOfferId);
             string referer = string.Format("https://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
 
-            string resp = steamWeb.Fetch(url, "POST", data, false, referer);
+            string resp = steamWeb.Fetch(url, "POST", data, false, referer).Result;
 
             if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
-                    var result = JsonConvert.DeserializeObject<TradeOfferAcceptResponse>(resp);
+                    var result = Task.Factory.StartNew(() => JsonConvert.DeserializeObject<TradeOfferAcceptResponse>(resp)).Result;
                     if (!String.IsNullOrEmpty(result.TradeId))
                     {
                         tradeId = result.TradeId;
@@ -60,7 +59,7 @@ namespace SteamTrade.TradeOffer
             }
             else
             {
-                var state = webApi.GetOfferState(tradeOfferId);
+                var state = webApi.GetOfferState(tradeOfferId).Result;
                 if (state == TradeOfferState.TradeOfferStateAccepted)
                 {
                     return true;
@@ -69,7 +68,7 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
-        public bool Decline(string tradeOfferId)
+        public async Task<bool> Decline(string tradeOfferId)
         {
             var data = new NameValueCollection();
             data.Add("sessionid", steamWeb.SessionId);
@@ -80,13 +79,13 @@ namespace SteamTrade.TradeOffer
             //should be http://steamcommunity.com/{0}/{1}/tradeoffers - id/profile persona/id64 ideally
             string referer = string.Format("https://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
 
-            var resp = steamWeb.Fetch(url, "POST", data, false, referer);
+            var resp = await steamWeb.Fetch(url, "POST", data, false, referer);
 
             if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
-                    var json = JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp);
+                    var json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp));
                     if (json.TradeOfferId != null && json.TradeOfferId == tradeOfferId)
                     {
                         return true;
@@ -99,7 +98,7 @@ namespace SteamTrade.TradeOffer
             }
             else
             {
-                var state = webApi.GetOfferState(tradeOfferId);
+                var state = await webApi.GetOfferState(tradeOfferId);
                 if (state == TradeOfferState.TradeOfferStateDeclined)
                 {
                     return true;
@@ -108,7 +107,7 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
-        public bool Cancel(string tradeOfferId)
+        public async Task<bool> Cancel(string tradeOfferId)
         {
             var data = new NameValueCollection();
             data.Add("sessionid", steamWeb.SessionId);
@@ -118,13 +117,13 @@ namespace SteamTrade.TradeOffer
             //should be http://steamcommunity.com/{0}/{1}/tradeoffers/sent/ - id/profile persona/id64 ideally
             string referer = string.Format("https://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
 
-            var resp = steamWeb.Fetch(url, "POST", data, false, referer);
+            var resp = await steamWeb.Fetch(url, "POST", data, false, referer);
 
             if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
-                    var json = JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp);
+                    var json = await Task.Factory.StartNew(() => JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp));
                     if (json.TradeOfferId != null && json.TradeOfferId == tradeOfferId)
                     {
                         return true;
@@ -137,7 +136,7 @@ namespace SteamTrade.TradeOffer
             }
             else
             {
-                var state = webApi.GetOfferState(tradeOfferId);
+                var state = await webApi.GetOfferState(tradeOfferId);
                 if (state == TradeOfferState.TradeOfferStateCanceled)
                 {
                     return true;
@@ -175,7 +174,7 @@ namespace SteamTrade.TradeOffer
 
             if (!Request(SendUrl, data, referer, tradeOfferId, out newTradeOfferId))
             {
-                var state = webApi.GetOfferState(tradeOfferId);
+                var state = webApi.GetOfferState(tradeOfferId).Result;
                 if (state == TradeOfferState.TradeOfferStateCountered)
                 {
                     return true;
@@ -244,12 +243,12 @@ namespace SteamTrade.TradeOffer
         {
             newTradeOfferId = "";
 
-            string resp = steamWeb.Fetch(url, "POST", data, false, referer);
+            string resp = steamWeb.Fetch(url, "POST", data, false, referer).Result;
             if (!String.IsNullOrEmpty(resp))
             {
                 try
                 {
-                    var offerResponse = JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp);
+                    var offerResponse = Task.Factory.StartNew(() => JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp)).Result;
                     if (!String.IsNullOrEmpty(offerResponse.TradeOfferId))
                     {
                         newTradeOfferId = offerResponse.TradeOfferId;
