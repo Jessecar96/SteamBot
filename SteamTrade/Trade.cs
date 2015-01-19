@@ -201,7 +201,7 @@ namespace SteamTrade
 
         public delegate void CompleteHandler();
 
-        public delegate void ErrorHandler(string errorMessage);
+        public delegate void ErrorHandler(SteamBotError errorMessage);
 
         public delegate void StatusErrorHandler(TradeStatusType statusType);
 
@@ -841,7 +841,7 @@ namespace SteamTrade
             var onErrorEvent = OnError;
 
             if(onErrorEvent != null)
-                onErrorEvent(message);
+                onErrorEvent(new SteamBotError(message, SteamBotError.SteamBotErrorType.UNKNOWN));
         }
 
         internal void FireOnStatusErrorEvent(TradeStatusType statusType)

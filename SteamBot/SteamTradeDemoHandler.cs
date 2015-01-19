@@ -49,10 +49,10 @@ namespace SteamBot
             return true;
         }
         
-        public override void OnTradeError (string error) 
+        public override void OnTradeError (SteamBotError error) 
         {
-            SendChatMessage("Oh, there was an error: {0}.", error);
-            Bot.log.Warn (error);
+            SendChatMessage("Oh, there was an error: {0}.", error.getMessage());
+            Bot.log.Warn (error.getMessage());
         }
         
         public override void OnTradeTimeout () 
