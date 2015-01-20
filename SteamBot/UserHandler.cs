@@ -196,17 +196,18 @@ namespace SteamBot
         public abstract void OnTradeError (SteamBotError error);
 
         public virtual void OnStatusError (Trade.TradeStatusType status)
-		{
-			string otherUserName = Bot.SteamFriends.GetFriendPersonaName (OtherSID);
-			string statusMessage = (Trade != null ? Trade.GetTradeStatusErrorString (status) : "died a horrible death");
-			string errorMessage = String.Format ("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64 (), statusMessage);
-			SteamBotError.SteamBotErrorType errorType = SteamBotError.SteamBotErrorType.UNKNOWN;
-			if (status = Trade.TradeStatusType.TradeCancelled) {
-				errorType = SteamBotError.SteamBotErrorType.TRADE_CANCELED_BY_USER;
-			} else if (status = Trade.TradeStatusType.SessionExpired) {
-				errorType = SteamBotError.SteamBotErrorType.TRADE_SESSION_EXPIRED;
-			}
-            OnTradeError(new SteamBotError(errorMessage, errorType));
+        {
+            string otherUserName = Bot.SteamFriends.GetFriendPersonaName (OtherSID);
+            string statusMessage = (Trade != null ? Trade.GetTradeStatusErrorString (status) : "died a horrible death");
+            string errorMessage = String.Format ("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64 (), statusMessage);
+            SteamBotError.SteamBotErrorType errorType = SteamBotError.SteamBotErrorType.UNKNOWN;
+            if (status = Trade.TradeStatusType.TradeCancelled) {
+                errorType = SteamBotError.SteamBotErrorType.TRADE_CANCELED_BY_USER;
+            }
+            else if (status = Trade.TradeStatusType.SessionExpired) {
+                errorType = SteamBotError.SteamBotErrorType.TRADE_SESSION_EXPIRED;
+            }
+            OnTradeError (new SteamBotError (errorMessage, errorType));
         }
 
         public abstract void OnTradeTimeout ();

@@ -4,8 +4,8 @@ namespace SteamTrade
 {
     public class SteamBotError
     {
-        SteamBotErrorType type;
-        string message;
+        SteamBotErrorType type { get; private set; }
+        string message { get; private set; }
 
         public SteamBotError (string message, SteamBotErrorType type = SteamBotErrorType.DEFAULT)
         {
@@ -13,21 +13,13 @@ namespace SteamTrade
             this.message = message;
         }
 
-        public SteamBotErrorType getErrorType(){
-            return type;
-        }
-
-        public string getMessage(){
-            return message;
-        }
-
-        public enum SteamBotErrorType{
-			DEFAULT,
+        public enum SteamBotErrorType
+        {
+            DEFAULT,
             INVENTORY_PRIVATE,
             TRADE_CANCELED_BY_USER,
-			TRADE_SESSION_EXPIRED,
+            TRADE_SESSION_EXPIRED,
             UNKNOWN
         }
     }
 }
-
