@@ -21,9 +21,9 @@ namespace SteamTrade
         public string TokenSecure { get; private set; }
         private CookieContainer _cookies = new CookieContainer();
 
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
         {
-            using (HttpWebResponse response = Request(url, method, data, ajax, referer))
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
@@ -33,9 +33,11 @@ namespace SteamTrade
                     }
                 }
             }
-        }
+        }       
 
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        
+        /// <param name="fetchError">Return response even if its status code is not 200</param>        
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
         {
             //Append the data to the URL for GET-requests
             bool isGetMethod = (method.ToLower() == "get");
@@ -82,7 +84,23 @@ namespace SteamTrade
             }
 
             // Get the response
-            return request.GetResponse() as HttpWebResponse;
+            try 
+            {
+                return request.GetResponse() as HttpWebResponse;
+            }
+            catch (WebException ex) 
+            {
+                //this is thrown if response code is not 200
+                if (fetchError) 
+                {
+                    var resp = ex.Response as HttpWebResponse;
+                    if (resp != null) 
+                    {
+                        return resp;
+                    }
+                }
+                throw;                
+            }            
         }
 
         /// <summary>

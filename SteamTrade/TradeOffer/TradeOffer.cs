@@ -155,31 +155,18 @@ namespace SteamTrade.TradeOffer
         /// </summary>
         /// <param name="tradeId">the tradeid if successful</param>
         /// <returns>true if successful, otherwise false</returns>
-        public bool Accept(out string tradeId)
+        public TradeOfferAcceptResponse Accept()
         {
-            tradeId = String.Empty;
             if (TradeOfferId == null)
             {
-                Debug.WriteLine("Can't accept a trade without a tradeofferid");
-                throw new ArgumentException("TradeOfferId");
+                return new TradeOfferAcceptResponse { TradeError = "Can't accept a trade without a tradeofferid" };                
             }
             if (!IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                return Session.Accept(TradeOfferId, out tradeId);
+                return Session.Accept(TradeOfferId);
             }
             //todo: log wrong state
-            Debug.WriteLine("Can't accept a trade that is not active");
-            return false;
-        }
-
-        /// <summary>
-        /// Accepts the current offer
-        /// </summary>
-        /// <returns>true if successful, otherwise false</returns>
-        public bool Accept()
-        {
-            string tradeId;
-            return Accept(out tradeId);
+            return new TradeOfferAcceptResponse { TradeError = "Can't accept a trade that is not active" };            
         }
 
         /// <summary>
