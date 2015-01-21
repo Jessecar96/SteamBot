@@ -202,9 +202,9 @@ namespace SteamBot
             string errorMessage = String.Format ("Trade with {0} ({1}) {2}", otherUserName, OtherSID.ConvertToUInt64 (), statusMessage);
             SteamBotError.SteamBotErrorType errorType = SteamBotError.SteamBotErrorType.UNKNOWN;
             if (status = Trade.TradeStatusType.TradeCancelled) {
-                errorType = SteamBotError.SteamBotErrorType.TRADE_CANCELED_BY_USER;
+                errorType == SteamBotError.SteamBotErrorType.TRADE_CANCELED_BY_USER;
             }
-            else if (status = Trade.TradeStatusType.SessionExpired) {
+            else if (status == Trade.TradeStatusType.SessionExpired) {
                 errorType = SteamBotError.SteamBotErrorType.TRADE_SESSION_EXPIRED;
             }
             OnTradeError (new SteamBotError (errorMessage, errorType));
