@@ -4,8 +4,8 @@ namespace SteamTrade
 {
     public class SteamBotError
     {
-        SteamBotErrorType type { get; private set; }
-        string message { get; private set; }
+        public SteamBotErrorType type { get; private set; }
+        public string message { get; private set; }
 
         public SteamBotError (string message, SteamBotErrorType type = SteamBotErrorType.DEFAULT)
         {
