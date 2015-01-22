@@ -143,7 +143,6 @@ namespace SteamBot
                 LogLevel = Log.LogLevel.Info;
             }
             log = new Log(config.LogFile, this.DisplayName, LogLevel);
-            log.Info("Current schema lang: " + (SchemaLang != null ? SchemaLang + " length: " + SchemaLang.Length : "None"));
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();
