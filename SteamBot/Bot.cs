@@ -13,6 +13,7 @@ using SteamKit2;
 using SteamTrade;
 using SteamKit2.Internal;
 using SteamTrade.TradeOffer;
+using System.Globalization;
 
 namespace SteamBot
 {
@@ -26,6 +27,7 @@ namespace SteamBot
         // The bot's display name.  Changing this does not mean that
         // the bot's name will change.
         public string DisplayName { get; private set; }
+        private string SchemaLang { get; set; }
 
         // The response to all chat messages sent to it.
         public string ChatResponse;
@@ -126,6 +128,7 @@ namespace SteamBot
             MaximiumActionGap = config.MaximumActionGap;
             DisplayNamePrefix = config.DisplayNamePrefix;
             TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
+            SchemaLang = config.SchemaLang != null && config.SchemaLang.Length == 2 ? config.SchemaLang.ToLower() : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLower();
             Admins       = config.Admins;
             this.ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             this.isprocess = process;
@@ -139,7 +142,8 @@ namespace SteamBot
                 Console.WriteLine("Invalid LogLevel provided in configuration. Defaulting to 'INFO'");
                 LogLevel = Log.LogLevel.Info;
             }
-            log          = new Log (config.LogFile, this.DisplayName, LogLevel);
+            log = new Log(config.LogFile, this.DisplayName, LogLevel);
+            log.Info("Current schema lang: " + (SchemaLang != null ? SchemaLang + " length: " + SchemaLang.Length : "None"));
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();
@@ -419,7 +423,7 @@ namespace SteamBot
                 if (Trade.CurrentSchema == null)
                 {
                     log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey);
+                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey, SchemaLang);
                     log.Success ("Schema Downloaded!");
                 }
 
