@@ -44,7 +44,7 @@ namespace SteamTrade.TradeOffer
                 try
                 {
                     var res = JsonConvert.DeserializeObject<TradeOfferAcceptResponse>(resp);
-                    res.Accepted = res.TradeError == null;
+                    res.Accepted = string.IsNullOrEmpty(res.TradeError);
                     return res;
                 }
                 catch (JsonException)
