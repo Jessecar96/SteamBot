@@ -44,23 +44,20 @@ namespace SteamTrade.TradeOffer
                 try
                 {
                     var res = JsonConvert.DeserializeObject<TradeOfferAcceptResponse>(resp);
-                    res.Accepted = string.IsNullOrEmpty(res.TradeError);
-                    return res;
+                    //steam can return 'null' response
+                    if (res != null) {
+                        res.Accepted = string.IsNullOrEmpty(res.TradeError);
+                        return res;
+                    }
                 }
                 catch (JsonException)
                 {
                     return new TradeOfferAcceptResponse { TradeError = "Error parsing server response: " + resp };
                 }
             }
-            else
-            {
-                var state = webApi.GetOfferState(tradeOfferId);
-                if (state == TradeOfferState.TradeOfferStateAccepted)
-                {
-                    return new TradeOfferAcceptResponse { Accepted = true };
-                }
-            }
-            return new TradeOfferAcceptResponse();
+            //if it didn't work as expected, check the state, maybe it was accepted after all
+            var state = webApi.GetOfferState(tradeOfferId);            
+            return new TradeOfferAcceptResponse { Accepted = state == TradeOfferState.TradeOfferStateAccepted };            
         }
 
         public bool Decline(string tradeOfferId)
