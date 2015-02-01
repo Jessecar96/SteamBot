@@ -19,7 +19,7 @@
             "TradePollingInterval":800,
             "LogLevel":"Success",
             "AutoStart": "true",
-            "SchemaLang":"2 letter code for language schema should be translated in"
+            "SchemaLang":"en"
         }
     ]
 }
