@@ -71,11 +71,19 @@ namespace SteamTrade
 
         public Item GetItem (ulong id)
         {
+            // Check for Private Inventory
+            if( this.IsPrivate )
+                throw new Exceptions.TradeException("Unable to access Inventory: Inventory is Private!");
+
             return (Items == null ? null : Items.FirstOrDefault(item => item.Id == id));
         }
 
         public List<Item> GetItemsByDefindex (int defindex)
         {
+            // Check for Private Inventory
+            if( this.IsPrivate )
+                throw new Exceptions.TradeException("Unable to access Inventory: Inventory is Private!");
+
             return Items.Where(item => item.Defindex == defindex).ToList();
         }
 
@@ -161,7 +169,6 @@ namespace SteamTrade
         {
             public InventoryResult result;
         }
-
     }
 }
 
