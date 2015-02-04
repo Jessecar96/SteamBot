@@ -27,7 +27,8 @@ namespace SteamTrade
             UnknownStatus = 2,
             TradeCancelled = 3,
             SessionExpired = 4,
-            TradeFailed = 5
+            TradeFailed = 5,
+            EmailAccepted = 6
         }
 
         public string GetTradeStatusErrorString(TradeStatusType tradeStatusType)
@@ -46,6 +47,8 @@ namespace SteamTrade
                     return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
                 case TradeStatusType.TradeFailed:
                     return "failed unexpectedly";
+                case TradeStatusType.EmailAccepted:
+                    return "completed successfully over email";
                 default:
                     return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
             }
@@ -573,6 +576,11 @@ namespace SteamTrade
 
                     // Successful trade
                 case TradeStatusType.CompletedSuccessfully:
+                    HasTradeCompletedOk = true;
+                    return false;
+                    
+                // Successful trade over Email
+                case TradeStatusType.EmailAccepted:
                     HasTradeCompletedOk = true;
                     return false;
 
