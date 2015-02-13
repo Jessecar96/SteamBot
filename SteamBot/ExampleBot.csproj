@@ -90,6 +90,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logging\FileLogger.cs" />
+    <Compile Include="Logging\ConsoleLogger.cs" />
+    <Compile Include="Logging\LoggerBase.cs" />
+    <Compile Include="Logging\LoggingUtils.cs" />
     <Compile Include="Notifications.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
     <Compile Include="SteamTradeDemoHandler.cs" />
@@ -104,7 +108,7 @@
     <Compile Include="BotManager.cs" />
     <Compile Include="BotManagerInterpreter.cs" />
     <Compile Include="Configuration.cs" />
-    <Compile Include="Log.cs" />
+    <Compile Include="Logging\Log.cs" />
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
