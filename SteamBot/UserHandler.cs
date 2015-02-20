@@ -172,6 +172,15 @@ namespace SteamBot
         }
 
         /// <summary>
+        /// Called when a user is invited to a multi-chat (OtherSID is the person who invited)
+        /// </summary>
+        /// <param name="Chatroom">Chatroom.</param>
+        public virtual bool OnMultiChatInvite(SteamID Chatroom) {
+            // If the handler class doesn't override it just return false.
+            return false;
+        }
+
+        /// <summary>
         /// Called when an 'exec' command is given via botmanager.
         /// </summary>
         /// <param name="command">The command message.</param>
