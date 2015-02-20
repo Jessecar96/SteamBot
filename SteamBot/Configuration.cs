@@ -130,6 +130,7 @@ namespace SteamBot
             public int TradePollingInterval { get; set; }
             public string LogLevel { get; set; }
             public ulong[] Admins { get; set; }
+            public string SchemaLang { get; set; }
 
             /// <summary>
             /// Gets or sets a value indicating whether to auto start this bot.

@@ -26,9 +26,11 @@ namespace SteamTrade
         /// <remarks>
         /// The schema will be cached for future use if it is updated.
         /// </remarks>
-        public static Schema FetchSchema (string apiKey)
+        public static Schema FetchSchema (string apiKey, string schemaLang = null)
         {   
             var url = SchemaApiUrlBase + apiKey;
+            if (schemaLang != null)
+                url += "&language=" + schemaLang;
 
             // just let one thread/proc do the initial check/possible update.
             bool wasCreated;
