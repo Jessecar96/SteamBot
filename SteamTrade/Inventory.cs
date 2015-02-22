@@ -14,10 +14,11 @@ namespace SteamTrade
         /// <returns>The give users inventory.</returns>
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
-        public static Inventory FetchInventory (ulong steamId, string apiKey)
+        /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
+        public static Inventory FetchInventory (ulong steamId, string apiKey, SteamWeb steamWeb)
         {
             var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-            string response = SteamWeb.Fetch (url, "GET", null, null, false);
+            string response = steamWeb.Fetch (url, "GET", null, false);
             InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
             return new Inventory(result.result);
         }
@@ -27,7 +28,8 @@ namespace SteamTrade
         /// </summary>
         /// <returns>The inventory for the given user. </returns>
         /// <param name='steamid'>The Steam identifier. </param>
-        public static dynamic GetInventory (SteamID steamid)
+        /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
+        public static dynamic GetInventory(SteamID steamid, SteamWeb steamWeb)
         {
             string url = String.Format (
                 "http://steamcommunity.com/profiles/{0}/inventory/json/440/2/?trading=1",
@@ -36,7 +38,7 @@ namespace SteamTrade
             
             try
             {
-                string response = SteamWeb.Fetch (url, "GET", null, null, true);
+                string response = steamWeb.Fetch (url, "GET");
                 return JsonConvert.DeserializeObject (response);
             }
             catch (Exception)
@@ -69,11 +71,19 @@ namespace SteamTrade
 
         public Item GetItem (ulong id)
         {
+            // Check for Private Inventory
+            if( this.IsPrivate )
+                throw new Exceptions.TradeException("Unable to access Inventory: Inventory is Private!");
+
             return (Items == null ? null : Items.FirstOrDefault(item => item.Id == id));
         }
 
         public List<Item> GetItemsByDefindex (int defindex)
         {
+            // Check for Private Inventory
+            if( this.IsPrivate )
+                throw new Exceptions.TradeException("Unable to access Inventory: Inventory is Private!");
+
             return Items.Where(item => item.Defindex == defindex).ToList();
         }
 
@@ -95,7 +105,7 @@ namespace SteamTrade
             public byte Level { get; set; }
 
             [JsonProperty("quality")]
-            public string Quality { get; set; }
+            public int Quality { get; set; }
 
             [JsonProperty("quantity")]
             public int RemainingUses { get; set; }
@@ -159,7 +169,6 @@ namespace SteamTrade
         {
             public InventoryResult result;
         }
-
     }
 }
 

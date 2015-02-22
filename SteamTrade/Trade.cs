@@ -10,11 +10,46 @@ using SteamTrade.TradeWebAPI;
 
 namespace SteamTrade
 {
+    /// <summary>
+    /// Class which represents a trade.
+    /// Note that the logic that Steam uses can be seen from their web-client source-code:  http://steamcommunity-a.akamaihd.net/public/javascript/economy_trade.js
+    /// </summary>
     public partial class Trade
     {
         #region Static Public data
 
         public static Schema CurrentSchema = null;
+
+        public enum TradeStatusType
+        {
+            OnGoing = 0,
+            CompletedSuccessfully = 1,
+            UnknownStatus = 2,
+            TradeCancelled = 3,
+            SessionExpired = 4,
+            TradeFailed = 5
+        }
+
+        public string GetTradeStatusErrorString(TradeStatusType tradeStatusType)
+        {
+            switch(tradeStatusType)
+            {
+                case TradeStatusType.OnGoing:
+                    return "is still going on";
+                case TradeStatusType.CompletedSuccessfully:
+                    return "completed successfully";
+                case TradeStatusType.UnknownStatus:
+                    return "CLOSED FOR UNKNOWN REASONS - WHAT CAUSES THIS STATUS!?";
+                case TradeStatusType.TradeCancelled:
+                    return "was cancelled " + (tradeCancelledByBot ? "by bot" : "by other user");
+                case TradeStatusType.SessionExpired:
+                    return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
+                case TradeStatusType.TradeFailed:
+                    return "failed unexpectedly";
+                default:
+                    return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
+            }
+        }
 
         #endregion
 
@@ -33,8 +68,11 @@ namespace SteamTrade
         private readonly Task<Inventory> otherInventoryTask;
         private List<TradeUserAssets> myOfferedItems;
         private List<TradeUserAssets> otherOfferedItems;
+        private bool otherUserTimingOut;
+        private bool tradeCancelledByBot;
+        private int numUnknownStatusUpdates;
 
-        internal Trade(SteamID me, SteamID other, string sessionId, string token, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
+        internal Trade(SteamID me, SteamID other, SteamWeb steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
             TradeStarted = false;
             OtherIsReady = false;
@@ -42,7 +80,7 @@ namespace SteamTrade
             mySteamId = me;
             OtherSID = other;
 
-            session = new TradeSession(sessionId, token, other);
+            session = new TradeSession(other, steamWeb);
 
             this.eventList = new List<TradeEvent>();
 
@@ -163,7 +201,9 @@ namespace SteamTrade
 
         public delegate void CompleteHandler();
 
-        public delegate void ErrorHandler(string error);
+        public delegate void ErrorHandler(string errorMessage);
+
+        public delegate void StatusErrorHandler(TradeStatusType statusType);
 
         public delegate void TimeoutHandler();
 
@@ -196,6 +236,11 @@ namespace SteamTrade
         /// not loading.
         /// </summary>
         public event ErrorHandler OnError;
+
+        /// <summary>
+        /// Specifically for trade_status errors.
+        /// </summary>
+        public event StatusErrorHandler OnStatusError;
 
         /// <summary>
         /// This occurs after Inventories have been loaded.
@@ -237,6 +282,7 @@ namespace SteamTrade
         /// </summary>
         public bool CancelTrade()
         {
+            tradeCancelledByBot = true;
             return RetryWebRequest(session.CancelTradeWebCmd);
         }
 
@@ -445,11 +491,13 @@ namespace SteamTrade
         }
 
         /// <summary>
-        /// Accepts the trade from the user.  Returns a deserialized
-        /// JSON object.
+        /// Accepts the trade from the user.  Returns whether the acceptance went through or not
         /// </summary>
         public bool AcceptTrade()
         {
+            if(!MeIsReady)
+                return false;
+
             ValidateLocalTradeItems();
 
             return RetryWebRequest(session.AcceptTradeWebCmd);
@@ -501,8 +549,6 @@ namespace SteamTrade
         /// <returns><c>true</c> if the other trade partner performed an action; otherwise <c>false</c>.</returns>
         public bool Poll()
         {
-            bool otherDidSomething = false;
-
             if(!TradeStarted)
             {
                 TradeStarted = true;
@@ -518,24 +564,36 @@ namespace SteamTrade
             if(status == null)
                 return false;
 
-            switch(status.trade_status)
+            TradeStatusType tradeStatusType = (TradeStatusType) status.trade_status;
+            switch (tradeStatusType)
             {
                     // Nothing happened. i.e. trade hasn't closed yet.
-                case 0:
-                    break;
+                case TradeStatusType.OnGoing:
+                    return HandleTradeOngoing(status);
 
                     // Successful trade
-                case 1:
+                case TradeStatusType.CompletedSuccessfully:
                     HasTradeCompletedOk = true;
                     return false;
 
-                    // All other known values (3, 4) correspond to trades closing.
-                default:
-                    FireOnErrorEvent("Trade was closed by other user. Trade status: " + status.trade_status);
+                //On a status of 2, the Steam web code attempts the request two more times
+                //This is our attempt to do the same.  I (BlueRaja) personally don't think this will work, but we shall see...
+                case TradeStatusType.UnknownStatus:
+                    numUnknownStatusUpdates++;
+                    if(numUnknownStatusUpdates < 3)
+                    {
+                        return false;
+                    }
+                    break;
+            }
+
+            FireOnStatusErrorEvent(tradeStatusType);
                     OtherUserCancelled = true;
                     return false;
             }
 
+        private bool HandleTradeOngoing(TradeStatus status)
+        {
             if (status.newversion)
             {
                 HandleTradeVersionChange(status);
@@ -556,10 +614,14 @@ namespace SteamTrade
                 OtherIsReady = status.them.ready == 1;
                 MeIsReady = status.me.ready == 1;
                 OtherUserAccepted = status.them.confirmed == 1;
+
+                //Similar to the logic Steam uses to determine whether or not to show the "waiting" spinner in the trade window
+                otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
             }
 
+            bool otherUserDidSomething = false;
             var events = status.GetAllEvents();
-            foreach(var tradeEvent in events)
+            foreach(var tradeEvent in events.OrderBy(o => o.timestamp))
             {
                 if(eventList.Contains(tradeEvent))
                     continue;
@@ -573,16 +635,24 @@ namespace SteamTrade
                 if(isBot)
                     continue;
 
-                otherDidSomething = true;
-
+                otherUserDidSomething = true;
                 switch((TradeEventType) tradeEvent.action)
                 {
                     case TradeEventType.ItemAdded:
-                        //The ItemAdded and ItemRemoved events from Steam cannot be trusted.  See https://github.com/Jessecar96/SteamBot/issues/602
-                        //Instead, we now manually call FireOnUserAddItem/RemoveItem from HandleTradeVersionChange()
+                        TradeUserAssets newAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+                        if(!otherOfferedItems.Contains(newAsset))
+                        {
+                            otherOfferedItems.Add(newAsset);
+                            FireOnUserAddItem(newAsset);
+                        }
                         break;
                     case TradeEventType.ItemRemoved:
-                        //Do nothing; see above comment
+                        TradeUserAssets oldAsset = new TradeUserAssets(tradeEvent.appid, tradeEvent.contextid, tradeEvent.assetid);
+                        if(otherOfferedItems.Contains(oldAsset))
+                        {
+                            otherOfferedItems.Remove(oldAsset);
+                            FireOnUserRemoveItem(oldAsset);
+                        }
                         break;
                     case TradeEventType.UserSetReady:
                         OnUserSetReady(true);
@@ -597,9 +667,7 @@ namespace SteamTrade
                         OnMessage(tradeEvent.text);
                         break;
                     default:
-                        // Todo: add an OnWarning or similar event
-                        FireOnErrorEvent("Unknown Event ID: " + tradeEvent.action);
-                        break;
+                        throw new TradeException("Unknown event type: " + tradeEvent.action);
                 }
             }
 
@@ -608,7 +676,7 @@ namespace SteamTrade
                 session.LogPos = status.logpos;
             }
 
-            return otherDidSomething;
+            return otherUserDidSomething;
         }
 
         private void HandleTradeVersionChange(TradeStatus status)
@@ -618,7 +686,7 @@ namespace SteamTrade
             IEnumerable<TradeUserAssets> addedItems = otherOfferedItemsUpdated.Except(otherOfferedItems).ToList();
             IEnumerable<TradeUserAssets> removedItems = otherOfferedItems.Except(otherOfferedItemsUpdated).ToList();
 
-            //Copy of the new items and update the version number
+            //Copy over the new items and update the version number
             otherOfferedItems = status.them.GetAssets().ToList();
             myOfferedItems = status.me.GetAssets().ToList();
             session.Version = status.version;
@@ -642,7 +710,12 @@ namespace SteamTrade
         /// </summary>
         private void FireOnUserAddItem(TradeUserAssets asset)
         {
-            if(OtherInventory != null)
+            if(MeIsReady)
+            {
+                SetReady(false);
+            }
+
+            if(OtherInventory != null && !OtherInventory.IsPrivate)
             {
                 Inventory.Item item = OtherInventory.GetItem(asset.assetid);
                 if(item != null)
@@ -682,15 +755,18 @@ namespace SteamTrade
 
         private Schema.Item GetItemFromPrivateBp(TradeUserAssets asset)
         {
-            if(OtherPrivateInventory == null)
+            if (OtherPrivateInventory == null)
             {
-                // get the foreign inventory
-                var f = session.GetForiegnInventory(OtherSID, asset.contextid, asset.appid);
-                OtherPrivateInventory = new ForeignInventory(f);
+                dynamic foreignInventory = session.GetForeignInventory(OtherSID, asset.contextid, asset.appid);
+                if (foreignInventory == null || foreignInventory.success == null || !foreignInventory.success.Value)
+                {
+                    return null;
+                }
+
+                OtherPrivateInventory = new ForeignInventory(foreignInventory);
             }
 
-            ushort defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
-
+            int defindex = OtherPrivateInventory.GetDefIndex(asset.assetid);
             Schema.Item schemaItem = CurrentSchema.GetItem(defindex);
             return schemaItem;
         }
@@ -702,6 +778,11 @@ namespace SteamTrade
         /// <returns></returns>
         private void FireOnUserRemoveItem(TradeUserAssets asset)
         {
+            if(MeIsReady)
+            {
+                SetReady(false);
+            }
+
             if(OtherInventory != null)
             {
                 Inventory.Item item = OtherInventory.GetItem(asset.assetid);
@@ -755,12 +836,20 @@ namespace SteamTrade
                 onCloseEvent();
         }
 
-        internal void FireOnErrorEvent(string errorMessage)
+        internal void FireOnErrorEvent(string message)
         {
             var onErrorEvent = OnError;
 
             if(onErrorEvent != null)
-                onErrorEvent(errorMessage);
+                onErrorEvent(message);
+        }
+
+        internal void FireOnStatusErrorEvent(TradeStatusType statusType)
+        {
+            var onStatusErrorEvent = OnStatusError;
+
+            if (onStatusErrorEvent != null)
+                onStatusErrorEvent(statusType);
         }
 
         private int NextTradeSlot()

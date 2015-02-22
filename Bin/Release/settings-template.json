@@ -8,6 +8,7 @@
         {
             "Username":"BOT USERNAME",
             "Password":"BOT PASSWORD",
+            "ApiKey":"Bot specific apiKey",
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
             "logFile": "TestBot.log",

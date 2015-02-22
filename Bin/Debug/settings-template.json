@@ -8,6 +8,7 @@
         {
             "Username":"BOT USERNAME",
             "Password":"BOT PASSWORD",
+            "ApiKey":"Bot specific apiKey",
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
             "logFile": "TestBot.log",
@@ -18,7 +19,8 @@
             "TradePollingInterval":800,
             "LogLevel":"Success",
             "FileLogLevel":"Info",
-            "AutoStart": "true"
+            "AutoStart": "true",
+            "SchemaLang":"en"
         }
     ]
 }
