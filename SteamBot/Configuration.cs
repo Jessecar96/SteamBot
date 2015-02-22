@@ -128,10 +128,13 @@ namespace SteamBot
             public int MaximumActionGap { get; set; }
             public string DisplayNamePrefix { get; set; }
             public int TradePollingInterval { get; set; }
-            public string LogLevel { get; set; }
+            public string ConsoleLogLevel { get; set; }
             public string FileLogLevel { get; set; }
             public ulong[] Admins { get; set; }
             public string SchemaLang { get; set; }
+
+            // Depreciated configuration options
+            public string LogLevel { get; set; }
 
             /// <summary>
             /// Gets or sets a value indicating whether to auto start this bot.
