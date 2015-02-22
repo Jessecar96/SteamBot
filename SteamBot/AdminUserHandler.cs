@@ -87,7 +87,7 @@ namespace SteamBot
             return false;
         }
 
-        public override void OnTradeError(string error)
+        public override void OnTradeError(SteamBotError error)
         {
             Log.Error(error);
         }

@@ -68,6 +68,7 @@
     <Compile Include="TradeWebAPI\TradeSession.cs" />
     <Compile Include="TradeManager.cs" />
     <Compile Include="Exceptions\InventoryFetchException.cs" />
+    <Compile Include="SteamBotError.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
