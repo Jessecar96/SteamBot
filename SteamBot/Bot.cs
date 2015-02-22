@@ -803,7 +803,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb));
+            myInventoryTask = Task.Factory.StartNew((Func<Inventory>) FetchBotsInventory);
         }
 
         public void TradeOfferRouter(TradeOffer offer)
@@ -858,6 +858,19 @@ namespace SteamBot
             trade.OnMessage -= handler.OnTradeMessageHandler;
             trade.OnUserSetReady -= handler.OnTradeReadyHandler;
             trade.OnUserAccept -= handler.OnTradeAcceptHandler;
+        }
+
+        /// <summary>
+        /// Fetch the Bot's inventory and log a warning if it's private
+        /// </summary>
+        private Inventory FetchBotsInventory()
+        {
+            var inventory = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
+            if(inventory.IsPrivate)
+            {
+                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Friends Only or Public.");
+            }
+            return inventory;
         }
 
         #region Background Worker Methods
