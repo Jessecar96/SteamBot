@@ -868,7 +868,7 @@ namespace SteamBot
             var inventory = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
             if(inventory.IsPrivate)
             {
-                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Friends Only or Public.");
+                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
             }
             return inventory;
         }
