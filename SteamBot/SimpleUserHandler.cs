@@ -7,7 +7,7 @@ namespace SteamBot
 {
     public class SimpleUserHandler : UserHandler
     {
-        public Tf2Value AmountAdded;
+        public TF2Value AmountAdded;
 
         public SimpleUserHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
@@ -106,7 +106,7 @@ namespace SteamBot
 
         public bool Validate ()
         {            
-            AmountAdded = Tf2Value.Zero;
+            AmountAdded = TF2Value.Zero;
             
             List<string> errors = new List<string> ();
             
@@ -114,11 +114,11 @@ namespace SteamBot
             {
                 var item = Trade.OtherInventory.GetItem(asset.assetid);
                 if (item.Defindex == 5000)
-                    AmountAdded += Tf2Value.Scrap;
+                    AmountAdded += TF2Value.Scrap;
                 else if (item.Defindex == 5001)
-                    AmountAdded += Tf2Value.Reclaimed;
+                    AmountAdded += TF2Value.Reclaimed;
                 else if (item.Defindex == 5002)
-                    AmountAdded += Tf2Value.Refined;
+                    AmountAdded += TF2Value.Refined;
                 else
                 {
                     var schemaItem = Trade.CurrentSchema.GetItem (item.Defindex);
@@ -126,7 +126,7 @@ namespace SteamBot
                 }
             }
             
-            if (AmountAdded == Tf2Value.Zero)
+            if (AmountAdded == TF2Value.Zero)
             {
                 errors.Add ("You must put up at least 1 scrap.");
             }
