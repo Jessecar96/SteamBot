@@ -7,7 +7,7 @@ namespace SteamTrade
     /// An immutable structure representing some amount of TF2 metal.  Values can be added, subtracted, etc.
     /// Negative values are not allowed.  Attempting to do, for instance, Tf2Value.Zero - Tf2Value.Scrap will throw an exception.
     /// </summary>
-    public struct Tf2Value : IEquatable<Tf2Value>, IComparable<Tf2Value>, IComparable
+    public struct TF2Value : IEquatable<TF2Value>, IComparable<TF2Value>, IComparable
     {
         private const int GRAIN_PER_SCRAP = 840;
         private const int GRAIN_PER_RECLAIMED = GRAIN_PER_SCRAP * SCRAP_PER_RECLAIMED;
@@ -21,19 +21,19 @@ namespace SteamTrade
         /// Usually you will not need to work with these directly.
         /// To get the number of Grain per Scrap, use Tf2Value.Scrap.GrainTotal
         /// </summary>
-        public static readonly Tf2Value Grain = new Tf2Value(1);
+        public static readonly TF2Value Grain = new TF2Value(1);
 
-        public static readonly Tf2Value Zero = new Tf2Value(0);
-        public static readonly Tf2Value Scrap = Grain * GRAIN_PER_SCRAP;
-        public static readonly Tf2Value Reclaimed = Grain * GRAIN_PER_RECLAIMED;
-        public static readonly Tf2Value Refined = Grain * GRAIN_PER_REFINED;
+        public static readonly TF2Value Zero = new TF2Value(0);
+        public static readonly TF2Value Scrap = Grain * GRAIN_PER_SCRAP;
+        public static readonly TF2Value Reclaimed = Grain * GRAIN_PER_RECLAIMED;
+        public static readonly TF2Value Refined = Grain * GRAIN_PER_REFINED;
 
         private readonly int _numGrains;
 
         /// <summary>
         /// Creates a new Tf2Value from the given number of grains
         /// </summary>
-        private Tf2Value(int numGrains)
+        private TF2Value(int numGrains)
         {
             if (numGrains < 0)
                 throw new ArgumentException("Cannot create a Tf2Value with negative value");
@@ -105,7 +105,7 @@ namespace SteamTrade
         /// (25*Tf2Value.Refined).GetPriceUsingItem(keyPrice) == 2.5
         /// </summary>
         /// <param name="itemValue">The value of the item (such as the current key-price)</param>
-        public double GetPriceUsingItem(Tf2Value itemValue)
+        public double GetPriceUsingItem(TF2Value itemValue)
         {
             return this / itemValue;
         }
@@ -118,7 +118,7 @@ namespace SteamTrade
         /// </summary>
         /// <param name="itemValue">The value of the item (eg. the current key-price)</param>
         /// <param name="remainder">How much is leftover</param>
-        public int GetPriceUsingItem(Tf2Value itemValue, out Tf2Value remainder)
+        public int GetPriceUsingItem(TF2Value itemValue, out TF2Value remainder)
         {
             int numItems = (int) (this/itemValue); //Calculate value first in case remainder = this
             remainder = this % itemValue;
@@ -133,7 +133,7 @@ namespace SteamTrade
         /// The rounding is done so that, for instance, "1.11" ref is equal to 10 scrap, even
         /// though 10 scrap is actually "1.11111..."
         /// </summary>
-        public static Tf2Value FromRef(double numRef)
+        public static TF2Value FromRef(double numRef)
         {
             return Round(numRef*Refined);
         }
@@ -145,7 +145,7 @@ namespace SteamTrade
         /// </summary>
         /// <exception cref="ArgumentNullException">Thrown if argument is null</exception>
         /// <exception cref="FormatException">Thrown if string is not a valid number</exception>
-        public static Tf2Value FromRef(string numRefStr)
+        public static TF2Value FromRef(string numRefStr)
         {
             return FromRef(double.Parse(numRefStr));
         }
@@ -167,7 +167,7 @@ namespace SteamTrade
         ///   This parameter lets you set a different plural.</param>
         /// <param name="roundDown">If true, only the item portion of the value will be shown.
         ///   If false, the portion in ref will be shown too</param>
-        public string ToItemString(Tf2Value itemValue, string itemName, string itemNamePlural = null, bool roundDown = false)
+        public string ToItemString(TF2Value itemValue, string itemName, string itemNamePlural = null, bool roundDown = false)
         {
             if (String.IsNullOrEmpty(itemNamePlural))
             {
@@ -180,7 +180,7 @@ namespace SteamTrade
             }
 
             int numItems = (int)(this/itemValue);
-            Tf2Value leftovers = this%itemValue;
+            TF2Value leftovers = this%itemValue;
 
             string returnValue = "";
             if(numItems > 0)
@@ -254,16 +254,16 @@ namespace SteamTrade
         /// This is different from operator- in that the result is never negative
         /// (and thus never throws an exception, since Tf2Values can't be negative)
         /// </summary>
-        public static Tf2Value Difference(Tf2Value val1, Tf2Value val2)
+        public static TF2Value Difference(TF2Value val1, TF2Value val2)
         {
-            return new Tf2Value(Math.Abs(val1._numGrains - val2._numGrains));
+            return new TF2Value(Math.Abs(val1._numGrains - val2._numGrains));
         }
 
         /// <summary>
         /// Returns the maximum of two TF2Values
         /// Example: Tf2Value.Max(Tf2Value.Scrap, Tf2Value.Refined) returns Tf2Value.Refined
         /// </summary>
-        public static Tf2Value Max(Tf2Value val1, Tf2Value val2)
+        public static TF2Value Max(TF2Value val1, TF2Value val2)
         {
             return (val1 > val2 ? val1 : val2);
         }
@@ -272,7 +272,7 @@ namespace SteamTrade
         /// Returns the minimum of two TF2Values
         /// Example: Tf2Value.Max(Tf2Value.Scrap, Tf2Value.Refined) returns Tf2Value.Scrap
         /// </summary>
-        public static Tf2Value Min(Tf2Value val1, Tf2Value val2)
+        public static TF2Value Min(TF2Value val1, TF2Value val2)
         {
             return (val1 < val2 ? val1 : val2);
         }
@@ -281,18 +281,18 @@ namespace SteamTrade
         /// Round this TF2Value up to the nearest scrap
         /// Example: Tf2Value.Ceiling(Tf2Value.Refined / 2) = 5 scrap
         /// </summary>
-        public static Tf2Value Ceiling(Tf2Value value)
+        public static TF2Value Ceiling(TF2Value value)
         {
-            return new Tf2Value((int)Math.Ceiling(value.ScrapTotal) * GRAIN_PER_SCRAP);
+            return new TF2Value((int)Math.Ceiling(value.ScrapTotal) * GRAIN_PER_SCRAP);
         }
 
         /// <summary>
         /// Round this TF2Value down to the nearest scrap
         /// Example: Tf2Value.Floor(Tf2Value.Refined / 2) = 4 scrap
         /// </summary>
-        public static Tf2Value Floor(Tf2Value value)
+        public static TF2Value Floor(TF2Value value)
         {
-            return new Tf2Value((int)Math.Floor(value.ScrapTotal) * GRAIN_PER_SCRAP);
+            return new TF2Value((int)Math.Floor(value.ScrapTotal) * GRAIN_PER_SCRAP);
         }
 
         /// <summary>
@@ -301,91 +301,91 @@ namespace SteamTrade
         /// Math.Round(), because its default is stupid.
         /// Example: Tf2Value.Round(Tf2Value.Refined / 2) = 5 scrap
         /// </summary>
-        public static Tf2Value Round(Tf2Value value, MidpointRounding roundingRule = MidpointRounding.AwayFromZero)
+        public static TF2Value Round(TF2Value value, MidpointRounding roundingRule = MidpointRounding.AwayFromZero)
         {
-            return new Tf2Value((int) Math.Round(value.ScrapTotal, roundingRule)*GRAIN_PER_SCRAP);
+            return new TF2Value((int) Math.Round(value.ScrapTotal, roundingRule)*GRAIN_PER_SCRAP);
         }
 
         #endregion
 
         #region Custom operators
-        public static bool operator ==(Tf2Value val1, Tf2Value val2)
+        public static bool operator ==(TF2Value val1, TF2Value val2)
         {
             return (val1._numGrains == val2._numGrains);
         }
 
-        public static bool operator !=(Tf2Value val1, Tf2Value val2)
+        public static bool operator !=(TF2Value val1, TF2Value val2)
         {
             return (val1._numGrains != val2._numGrains);
         }
 
-        public static bool operator >(Tf2Value val1, Tf2Value val2)
+        public static bool operator >(TF2Value val1, TF2Value val2)
         {
             return (val1._numGrains > val2._numGrains);
         }
 
-        public static bool operator <(Tf2Value val1, Tf2Value val2)
+        public static bool operator <(TF2Value val1, TF2Value val2)
         {
             return (val1._numGrains < val2._numGrains);
         }
 
-        public static bool operator >=(Tf2Value val1, Tf2Value val2)
+        public static bool operator >=(TF2Value val1, TF2Value val2)
         {
             return (val1._numGrains >= val2._numGrains);
         }
 
-        public static bool operator <=(Tf2Value val1, Tf2Value val2)
+        public static bool operator <=(TF2Value val1, TF2Value val2)
         {
             return (val1._numGrains <= val2._numGrains);
         }
 
-        public static Tf2Value operator +(Tf2Value val1, Tf2Value val2)
+        public static TF2Value operator +(TF2Value val1, TF2Value val2)
         {
-            return new Tf2Value(val1._numGrains + val2._numGrains);
+            return new TF2Value(val1._numGrains + val2._numGrains);
         }
 
-        public static Tf2Value operator -(Tf2Value val1, Tf2Value val2)
+        public static TF2Value operator -(TF2Value val1, TF2Value val2)
         {
-            return new Tf2Value(val1._numGrains - val2._numGrains);
+            return new TF2Value(val1._numGrains - val2._numGrains);
         }
 
-        public static Tf2Value operator *(Tf2Value val1, double val2)
+        public static TF2Value operator *(TF2Value val1, double val2)
         {
-            return new Tf2Value((int)(val1._numGrains * val2));
+            return new TF2Value((int)(val1._numGrains * val2));
         }
 
-        public static Tf2Value operator *(double val1, Tf2Value val2)
+        public static TF2Value operator *(double val1, TF2Value val2)
         {
-            return new Tf2Value((int)(val1 * val2._numGrains));
+            return new TF2Value((int)(val1 * val2._numGrains));
         }
 
-        public static double operator /(Tf2Value val1, Tf2Value val2)
+        public static double operator /(TF2Value val1, TF2Value val2)
         {
             return (double)val1._numGrains / val2._numGrains;
         }
 
-        public static Tf2Value operator /(Tf2Value val1, double val2)
+        public static TF2Value operator /(TF2Value val1, double val2)
         {
-            return new Tf2Value((int)(val1._numGrains / val2));
+            return new TF2Value((int)(val1._numGrains / val2));
         }
 
-        public static Tf2Value operator %(Tf2Value val1, Tf2Value val2)
+        public static TF2Value operator %(TF2Value val1, TF2Value val2)
         {
-            return new Tf2Value(val1._numGrains % val2._numGrains);
+            return new TF2Value(val1._numGrains % val2._numGrains);
         }
         #endregion
 
         #region IEquatable/IComparable
-        public bool Equals(Tf2Value other)
+        public bool Equals(TF2Value other)
         {
             return _numGrains == other._numGrains;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj) || !(obj is Tf2Value))
+            if (ReferenceEquals(null, obj) || !(obj is TF2Value))
                 return false;
-            return Equals((Tf2Value)obj);
+            return Equals((TF2Value)obj);
         }
 
         public override int GetHashCode()
@@ -395,12 +395,12 @@ namespace SteamTrade
 
         public int CompareTo(object obj)
         {
-            if (ReferenceEquals(null, obj) || !(obj is Tf2Value))
+            if (ReferenceEquals(null, obj) || !(obj is TF2Value))
                 return 1;
-            return CompareTo((Tf2Value)obj);
+            return CompareTo((TF2Value)obj);
         }
 
-        public int CompareTo(Tf2Value other)
+        public int CompareTo(TF2Value other)
         {
             return _numGrains.CompareTo(other._numGrains);
         }
