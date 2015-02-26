@@ -50,10 +50,6 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="..\SteamBot\ExampleBot.csproj">
-      <Project>{e81ded36-edf5-41a5-8666-a3a0c581762f}</Project>
-      <Name>ExampleBot</Name>
-    </ProjectReference>
     <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
       <Project>{6cec0333-81eb-40ee-85d1-941363626fc7}</Project>
       <Name>SteamTrade</Name>
