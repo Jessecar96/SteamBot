@@ -18,7 +18,8 @@
             "DisplayNamePrefix":"[AutomatedBot] ",
             "TradePollingInterval":800,
             "LogLevel":"Success",
-            "AutoStart": "true"
+            "AutoStart": "true",
+            "SchemaLang":"en"
         }
     ]
 }
