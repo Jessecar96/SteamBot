@@ -190,7 +190,7 @@ namespace SteamTrade.TradeWebAPI
         UserSetUnReady = 3,
         UserAccept = 4,
         //5 = ?? Maybe some sort of cancel?
-        //6 = ??
+        UserSetCurrency = 6,
         UserChat = 7 //message = "text"
     }
 }
