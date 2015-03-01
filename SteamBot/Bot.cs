@@ -1,19 +1,17 @@
 using System;
-using System.Threading.Tasks;
-using System.Web;
-using System.Net;
-using System.Text;
-using System.IO;
-using System.Threading;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.ComponentModel;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
+using SteamBot.Logging;
 using SteamBot.SteamGroups;
 using SteamKit2;
-using SteamTrade;
 using SteamKit2.Internal;
+using SteamTrade;
 using SteamTrade.TradeOffer;
-using System.Globalization;
 
 namespace SteamBot
 {
@@ -28,6 +26,7 @@ namespace SteamBot
         // the bot's name will change.
         public string DisplayName { get; private set; }
         private string SchemaLang { get; set; }
+        private IEnumerable<Configuration.LoggerConfiguration> loggers;
 
         // The response to all chat messages sent to it.
         public string ChatResponse;
@@ -49,7 +48,6 @@ namespace SteamBot
 
         // The log for the bot.  This logs with the bot's display name.
         public Log log;
-        private string logFile;
 
         public delegate UserHandler UserHandlerCreator(Bot bot, SteamID id);
         public UserHandlerCreator CreateHandler;
@@ -82,10 +80,6 @@ namespace SteamBot
 
         // The prefix put in the front of the bot's display name.
         string DisplayNamePrefix;
-
-        // Log level to use for this bot
-        Log.LogLevel ConsoleLogLevel;
-        Log.LogLevel FileLogLevel;
 
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
@@ -134,33 +128,7 @@ namespace SteamBot
             Admins       = config.Admins;
             this.ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             this.isprocess = process;
-
-            try
-            {
-                if( config.LogLevel != null )
-                {
-                    ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
-                    Console.WriteLine(@"(Console) LogLevel configuration parameter used in bot {0} is depreciated and may be removed in future versions. Please use ConsoleLogLevel instead.", DisplayName);
-                }
-                else ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.ConsoleLogLevel, true);
-            }
-            catch (ArgumentException)
-            {
-                Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                ConsoleLogLevel = Log.LogLevel.Info;
-            }
-
-            try
-            {
-                FileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
-            }
-            catch (ArgumentException)
-            {
-                Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                FileLogLevel = Log.LogLevel.Info;
-            }
-
-            logFile = config.LogFile;
+            loggers = config.Loggers;
             CreateLog();
             CreateHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
@@ -188,7 +156,10 @@ namespace SteamBot
         {
             if(log == null)
             {
-                log = new Log (logFile, this.DisplayName, ConsoleLogLevel, FileLogLevel);
+                List<LoggerBase> loggersInstances = new List<LoggerBase>();
+                foreach (Configuration.LoggerConfiguration config in loggers)
+                    loggersInstances.Add((LoggerBase)Activator.CreateInstance(Type.GetType(config.LogType), config.LoggerParams));
+                log = new Log(DisplayName, loggers: loggersInstances.ToArray());
             }
         }
 

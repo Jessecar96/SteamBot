@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SteamBot.Logging;
 using SteamKit2;
 
 namespace SteamBot
@@ -52,7 +54,13 @@ namespace SteamBot
 
             useSeparateProcesses = ConfigObject.UseSeparateProcesses;
 
-            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug, Log.LogLevel.Debug);
+            JObject obj = JObject.Parse(String.Format("{{" +
+                "\"LogLevel\": \"Info\"," +
+                "\"DefaultColor\": \"White\"," +
+                "\"LogFile\": \"{0}\""+
+                "}}", ConfigObject.MainLog));
+
+            mainLog = new Log(loggers:new LoggerBase[]{new ConsoleLogger(obj), new FileLogger(obj)});
 
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {

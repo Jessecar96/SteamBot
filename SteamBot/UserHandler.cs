@@ -4,6 +4,7 @@ using System.Security.AccessControl;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SteamBot.Logging;
 using SteamKit2;
 using SteamTrade;
 using SteamTrade.TradeOffer;
