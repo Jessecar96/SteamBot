@@ -24,10 +24,11 @@ namespace SteamTrade
         {
             OnGoing = 0,
             CompletedSuccessfully = 1,
-            UnknownStatus = 2,
+            Empty = 2,
             TradeCancelled = 3,
             SessionExpired = 4,
-            TradeFailed = 5
+            TradeFailed = 5,
+            PendingEmail = 6
         }
 
         public string GetTradeStatusErrorString(TradeStatusType tradeStatusType)
@@ -38,14 +39,16 @@ namespace SteamTrade
                     return "is still going on";
                 case TradeStatusType.CompletedSuccessfully:
                     return "completed successfully";
-                case TradeStatusType.UnknownStatus:
-                    return "CLOSED FOR UNKNOWN REASONS - WHAT CAUSES THIS STATUS!?";
+                case TradeStatusType.Empty:
+                    return "completed empty - no items were exchanged";
                 case TradeStatusType.TradeCancelled:
                     return "was cancelled " + (tradeCancelledByBot ? "by bot" : "by other user");
                 case TradeStatusType.SessionExpired:
                     return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
                 case TradeStatusType.TradeFailed:
                     return "failed unexpectedly";
+                case TradeStatusType.PendingEmail:
+                    return "completed - pending e-mail confirmation";
                 default:
                     return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
             }
@@ -578,7 +581,7 @@ namespace SteamTrade
 
                 //On a status of 2, the Steam web code attempts the request two more times
                 //This is our attempt to do the same.  I (BlueRaja) personally don't think this will work, but we shall see...
-                case TradeStatusType.UnknownStatus:
+                case TradeStatusType.Empty:
                     numUnknownStatusUpdates++;
                     if(numUnknownStatusUpdates < 3)
                     {
