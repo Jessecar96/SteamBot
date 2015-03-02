@@ -919,7 +919,7 @@ namespace SteamBot
                 try
                 {
                     msg = SteamClient.WaitForCallback(true);
-                    Task.Factory.StartNew(() => HandleSteamMessage(msg)); //Making handling of steam messages prevents bot from freezing on action(if userhandlers gets infinite loop).
+                    HandleSteamMessage(msg); //Making handling of steam messages prevents bot from freezing on action(if userhandlers gets infinite loop).
                 }
                 catch (WebException e)
                 {
