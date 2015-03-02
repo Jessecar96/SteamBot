@@ -132,6 +132,12 @@ namespace SteamBot
             }
         }
 
+        /// <summary>
+        /// Compatibility sanity.
+        /// </summary>
+        [Obsolete("Refactered to be Log instead of log")]
+        public Log log { get { return Log; } }
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
             LogOnDetails = new SteamUser.LogOnDetails
