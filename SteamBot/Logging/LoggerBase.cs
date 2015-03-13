@@ -9,15 +9,7 @@ namespace SteamBot.Logging
 
         public LoggerBase(JObject obj)
         {
-            try
-            {
-                OutputLevel = (LogLevel)Enum.Parse(typeof(LogLevel), (string)obj["LogLevel"]);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Malformed loglevel recieved, defaulting to INFO");
-                OutputLevel = LogLevel.Info;
-            }
+            OutputLevel = GetFromJson(obj, "LogLevel", LogLevel.Info);
         }
 
         protected virtual string FormatLogMessage(LogParams lParams)
@@ -27,6 +19,20 @@ namespace SteamBot.Logging
                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 LogUtilities.LogLevelStr(lParams.OutputLevel).ToUpper(),
                 String.Format(lParams.Message, lParams.FormatParams));
+        }
+
+        protected T GetFromJson<T>(JObject obj, string key, T defValue = default(T))
+        {
+            if (obj[key] == null)
+                return defValue;
+            try
+            {
+                return (T)Convert.ChangeType(obj[key], typeof(T));
+            }
+            catch (Exception)
+            {
+                return defValue;
+            }
         }
 
         public abstract void LogMessage(LogParams lParams);

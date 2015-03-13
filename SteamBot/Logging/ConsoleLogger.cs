@@ -8,15 +8,7 @@ namespace SteamBot.Logging
         private readonly ConsoleColor defaultColor;
         public ConsoleLogger(JObject obj) : base(obj)
         {
-            try
-            {
-                defaultColor = (ConsoleColor)Enum.Parse(typeof(ConsoleColor), (string)obj["DefaultColor"]);
-            }
-            catch(Exception)
-            {
-                Console.WriteLine("Malformed console color detected. Defaulting to White");
-                defaultColor = ConsoleColor.White;
-            }
+            defaultColor = GetFromJson(obj, "DefaultColor", ConsoleColor.White);
             Console.ForegroundColor = defaultColor;
         }
 
