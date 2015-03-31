@@ -74,6 +74,7 @@ namespace SteamTrade
         private bool otherUserTimingOut;
         private bool tradeCancelledByBot;
         private int numUnknownStatusUpdates;
+        private long tradeOfferID; //Used for email confirmation
 
         internal Trade(SteamID me, SteamID other, SteamWeb steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
@@ -192,6 +193,20 @@ namespace SteamTrade
         public bool HasTradeCompletedOk { get; private set; }
 
         /// <summary>
+        /// Gets a value indicating whether the trade completed awaiting email confirmation. This
+        /// is independent of other flags.
+        /// </summary>
+        public bool IsTradeAwaitingEmailConfirmation { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the trade has finished (regardless of the cause, eg. success, cancellation, error, etc)
+        /// </summary>
+        public bool HasTradeEnded
+        {
+            get { return OtherUserCancelled || HasTradeCompletedOk || IsTradeAwaitingEmailConfirmation || tradeCancelledByBot; }
+        }
+
+        /// <summary>
         /// Gets a value indicating if the remote trading partner accepted the trade.
         /// </summary>
         public bool OtherUserAccepted { get; private set; }
@@ -203,6 +218,8 @@ namespace SteamTrade
         public delegate void CloseHandler();
 
         public delegate void CompleteHandler();
+
+        public delegate void WaitingForEmailHandler(long tradeOfferID);
 
         public delegate void ErrorHandler(string errorMessage);
 
@@ -233,6 +250,11 @@ namespace SteamTrade
         /// Called when the trade completes successfully.
         /// </summary>
         public event CompleteHandler OnSuccess;
+
+        /// <summary>
+        /// Called when the trade ends awaiting email confirmation
+        /// </summary>
+        public event WaitingForEmailHandler OnAwaitingEmailConfirmation;
 
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -516,7 +538,7 @@ namespace SteamTrade
             for(int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
             {
                 //Don't make any more requests if the trade has ended!
-                if(HasTradeCompletedOk || OtherUserCancelled)
+                if (HasTradeEnded)
                     return default(T);
 
                 try
@@ -570,17 +592,22 @@ namespace SteamTrade
             TradeStatusType tradeStatusType = (TradeStatusType) status.trade_status;
             switch (tradeStatusType)
             {
-                    // Nothing happened. i.e. trade hasn't closed yet.
+                // Nothing happened. i.e. trade hasn't closed yet.
                 case TradeStatusType.OnGoing:
                     return HandleTradeOngoing(status);
 
-                    // Successful trade
+                // Successful trade
                 case TradeStatusType.CompletedSuccessfully:
                     HasTradeCompletedOk = true;
                     return false;
 
+                // Email confirmation
+                case TradeStatusType.PendingEmail:
+                    IsTradeAwaitingEmailConfirmation = true;
+                    tradeOfferID = long.Parse(status.tradeid);
+                    return false;
+
                 //On a status of 2, the Steam web code attempts the request two more times
-                //This is our attempt to do the same.  I (BlueRaja) personally don't think this will work, but we shall see...
                 case TradeStatusType.Empty:
                     numUnknownStatusUpdates++;
                     if(numUnknownStatusUpdates < 3)
@@ -591,9 +618,9 @@ namespace SteamTrade
             }
 
             FireOnStatusErrorEvent(tradeStatusType);
-                    OtherUserCancelled = true;
-                    return false;
-            }
+            OtherUserCancelled = true;
+            return false;
+        }
 
         private bool HandleTradeOngoing(TradeStatus status)
         {
@@ -829,6 +856,14 @@ namespace SteamTrade
 
             if(onSuccessEvent != null)
                 onSuccessEvent();
+        }
+
+        internal void FireOnAwaitingEmailConfirmation()
+        {
+            var onAwaitingEmailConfirmation = OnAwaitingEmailConfirmation;
+
+            if (onAwaitingEmailConfirmation != null)
+                onAwaitingEmailConfirmation(tradeOfferID);
         }
 
         internal void FireOnCloseEvent()
