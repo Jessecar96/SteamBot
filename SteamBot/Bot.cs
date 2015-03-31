@@ -24,27 +24,27 @@ namespace SteamBot
         #endregion
 
         #region Private readonly variables
-        private readonly SteamUser.LogOnDetails LogOnDetails;
-        private readonly string SchemaLang;
-        private readonly string LogFile;
-        private readonly Dictionary<SteamID, UserHandler> UserHandlers;
-        private readonly Log.LogLevel ConsoleLogLevel;
-        private readonly Log.LogLevel FileLogLevel;
-        private readonly UserHandlerCreator CreateHandler;
-        private readonly bool IsProccess;
-        private readonly BackgroundWorker BotThread;
+        private readonly SteamUser.LogOnDetails logOnDetails;
+        private readonly string schemaLang;
+        private readonly string logFile;
+        private readonly Dictionary<SteamID, UserHandler> userHandlers;
+        private readonly Log.LogLevel consoleLogLevel;
+        private readonly Log.LogLevel fileLogLevel;
+        private readonly UserHandlerCreator createHandler;
+        private readonly bool isProccess;
+        private readonly BackgroundWorker botThread;
         #endregion
 
         #region Private variables
-        private Task<Inventory> MyInventoryTask;
-        private TradeManager TradeManager;
-        private TradeOfferManager TradeOfferManager;
-        private int TradePollingInterval;
-        private string MyUserNonce;
-        private string MyUniqueId;
-        private bool CookiesAreInvalid = true;
-        private List<SteamID> Friends;
-        private bool Disposed = false;
+        private Task<Inventory> myInventoryTask;
+        private TradeManager tradeManager;
+        private TradeOfferManager tradeOfferManager;
+        private int tradePollingInterval;
+        private string myUserNonce;
+        private string myUniqueId;
+        private bool cookiesAreInvalid = true;
+        private List<SteamID> friends;
+        private bool disposed = false;
         #endregion
 
         #region Public readonly variables
@@ -119,7 +119,7 @@ namespace SteamBot
             get
             {
                 CreateFriendsListIfNecessary();
-                return Friends;
+                return friends;
             }
         }
 
@@ -127,8 +127,8 @@ namespace SteamBot
         {
             get
             {
-                MyInventoryTask.Wait();
-                return MyInventoryTask.Result;
+                myInventoryTask.Wait();
+                return myInventoryTask.Result;
             }
         }
 
@@ -140,7 +140,7 @@ namespace SteamBot
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
-            LogOnDetails = new SteamUser.LogOnDetails
+            logOnDetails = new SteamUser.LogOnDetails
             {
                 Username = config.Username,
                 Password = config.Password
@@ -150,39 +150,39 @@ namespace SteamBot
             MaximumTradeTime = config.MaximumTradeTime;
             MaximumActionGap = config.MaximumActionGap;
             DisplayNamePrefix = config.DisplayNamePrefix;
-            TradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
-            SchemaLang = config.SchemaLang != null && config.SchemaLang.Length == 2 ? config.SchemaLang.ToLower() : "en";
+            tradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
+            schemaLang = config.SchemaLang != null && config.SchemaLang.Length == 2 ? config.SchemaLang.ToLower() : "en";
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
-            IsProccess = process;
+            isProccess = process;
             try
             {
                 if( config.LogLevel != null )
                 {
-                    ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+                    consoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
                     Console.WriteLine(@"(Console) LogLevel configuration parameter used in bot {0} is depreciated and may be removed in future versions. Please use ConsoleLogLevel instead.", DisplayName);
                 }
-                else ConsoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.ConsoleLogLevel, true);
+                else consoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.ConsoleLogLevel, true);
             }
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                ConsoleLogLevel = Log.LogLevel.Info;
+                consoleLogLevel = Log.LogLevel.Info;
             }
 
             try
             {
-                FileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
+                fileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
             }
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                FileLogLevel = Log.LogLevel.Info;
+                fileLogLevel = Log.LogLevel.Info;
             }
 
-            LogFile = config.LogFile;
+            logFile = config.LogFile;
             CreateLog();
-            CreateHandler = handlerCreator;
+            createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();
 
@@ -198,10 +198,10 @@ namespace SteamBot
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
             SteamNotifications = SteamClient.GetHandler<SteamNotifications>();
 
-            BotThread = new BackgroundWorker { WorkerSupportsCancellation = true };
-            BotThread.DoWork += BackgroundWorkerOnDoWork;
-            BotThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
-            BotThread.RunWorkerAsync();
+            botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
+            botThread.DoWork += BackgroundWorkerOnDoWork;
+            botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
+            botThread.RunWorkerAsync();
         }
 
         ~Bot()
@@ -212,7 +212,7 @@ namespace SteamBot
         private void CreateLog()
         {
             if(Log == null)
-                Log = new Log (LogFile, DisplayName, ConsoleLogLevel, FileLogLevel);
+                Log = new Log (logFile, DisplayName, consoleLogLevel, fileLogLevel);
         }
 
         private void DisposeLog()
@@ -226,12 +226,12 @@ namespace SteamBot
 
         private void CreateFriendsListIfNecessary()
         {
-            if (Friends != null)
+            if (friends != null)
                 return;
 
-            Friends = new List<SteamID>();
+            friends = new List<SteamID>();
             for (int i = 0; i < SteamFriends.GetFriendCount(); i++)
-                Friends.Add(SteamFriends.GetFriendByIndex(i));
+                friends.Add(SteamFriends.GetFriendByIndex(i));
         }
 
         /// <summary>
@@ -255,9 +255,9 @@ namespace SteamBot
             IsRunning = true;
 
             Log.Info("Connecting...");
-            if (BotThread.IsBusy)
+            if (botThread.IsBusy)
                 return true; //We will consider this running.
-            BotThread.RunWorkerAsync();
+            botThread.RunWorkerAsync();
             SteamClient.Connect();
             Log.Success("Done Loading Bot!");
             return true; // never get here
@@ -272,8 +272,8 @@ namespace SteamBot
             IsRunning = false;
             Log.Debug("Trying to shut down bot thread.");
             SteamClient.Disconnect();
-            BotThread.CancelAsync();
-            UserHandlers.Clear();
+            botThread.CancelAsync();
+            userHandlers.Clear();
             DisposeLog();
         }
 
@@ -300,7 +300,7 @@ namespace SteamBot
             if (CurrentTrade == null)
                 return;
             UnsubscribeTrade (GetUserHandler (CurrentTrade.OtherSID), CurrentTrade);
-            TradeManager.StopTrade ();
+            tradeManager.StopTrade ();
             CurrentTrade = null;
         }
 
@@ -317,7 +317,7 @@ namespace SteamBot
         /// <returns></returns>
         public TradeOffer NewTradeOffer(SteamID other)
         {
-            return TradeOfferManager.NewOffer(other);
+            return tradeOfferManager.NewOffer(other);
         }
 
         /// <summary>
@@ -328,7 +328,7 @@ namespace SteamBot
         /// <returns></returns>
         public bool TryGetTradeOffer(string offerId, out TradeOffer tradeOffer)
         {
-            return TradeOfferManager.GetOffer(offerId, out tradeOffer);
+            return tradeOfferManager.GetOffer(offerId, out tradeOffer);
         }
 
         public void HandleBotCommand(string command)
@@ -358,11 +358,11 @@ namespace SteamBot
                 return false;
             try
             {
-                TradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = TradeManager.CreateTrade(SteamUser.SteamID, other);
+                tradeManager.InitializeTrade(SteamUser.SteamID, other);
+                CurrentTrade = tradeManager.CreateTrade(SteamUser.SteamID, other);
                 CurrentTrade.OnClose += CloseTrade;
                 SubscribeTrade(CurrentTrade, GetUserHandler(other));
-                TradeManager.StartTradeThread(CurrentTrade);
+                tradeManager.StartTradeThread(CurrentTrade);
                 return true;
             }
             catch (SteamTrade.Exceptions.InventoryFetchException)
@@ -428,7 +428,7 @@ namespace SteamBot
 
                 if (callback.Result == EResult.OK)
                 {
-                    MyUserNonce = callback.WebAPIUserNonce;
+                    myUserNonce = callback.WebAPIUserNonce;
                 }
                 else
                 {
@@ -443,28 +443,28 @@ namespace SteamBot
                     var eva = new SteamGuardRequiredEventArgs();
                     FireOnSteamGuardRequired(eva);
                     if (!String.IsNullOrEmpty(eva.SteamGuard))
-                        LogOnDetails.AuthCode = eva.SteamGuard;
+                        logOnDetails.AuthCode = eva.SteamGuard;
                     else
-                        LogOnDetails.AuthCode = Console.ReadLine();
+                        logOnDetails.AuthCode = Console.ReadLine();
                 }
 
                 if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
                     Log.Interface("The given SteamGuard code was invalid. Try again using the `auth' command.");
-                    LogOnDetails.AuthCode = Console.ReadLine();
+                    logOnDetails.AuthCode = Console.ReadLine();
                 }
             });
 
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
             {
-                MyUniqueId = callback.UniqueID.ToString();
+                myUniqueId = callback.UniqueID.ToString();
 
                 UserWebLogOn();
 
                 if (Trade.CurrentSchema == null)
                 {
                     Log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey, SchemaLang);
+                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey, schemaLang);
                     Log.Success ("Schema Downloaded!");
                 }
 
@@ -482,7 +482,7 @@ namespace SteamBot
 
                 if (webCallback.Result == EResult.OK)
                 {
-                    MyUserNonce = webCallback.Nonce;
+                    myUserNonce = webCallback.Nonce;
                     UserWebLogOn();
                 }
                 else
@@ -520,7 +520,7 @@ namespace SteamBot
                             CreateFriendsListIfNecessary();
                             if (friend.Relationship == EFriendRelationship.None)
                             {
-                                Friends.Remove(friend.SteamID);
+                                friends.Remove(friend.SteamID);
                                 GetUserHandler(friend.SteamID).OnFriendRemove();
                                 RemoveUserHandler(friend.SteamID);
                             }
@@ -528,9 +528,9 @@ namespace SteamBot
                     {
                                 if (GetUserHandler(friend.SteamID).OnFriendAdd())
                                 {
-                        if (!Friends.Contains(friend.SteamID))
+                        if (!friends.Contains(friend.SteamID))
                         {
-                            Friends.Add(friend.SteamID);
+                            friends.Add(friend.SteamID);
                                     }
                                     else
                             {
@@ -593,7 +593,7 @@ namespace SteamBot
 
                 try
                 {
-                    TradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
+                    tradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
                 }
                 catch (WebException we)
                 {                 
@@ -682,7 +682,7 @@ namespace SteamBot
 
                 // Get offers only if cookies are valid
                 if (CheckCookies())
-                    TradeOfferManager.GetOffers();
+                    tradeOfferManager.GetOffers();
             });
 
             msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
@@ -701,21 +701,21 @@ namespace SteamBot
             // get sentry file which has the machine hw info saved 
             // from when a steam guard code was entered
             Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
-            FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("{0}.sentryfile", LogOnDetails.Username)));
+            FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("{0}.sentryfile", logOnDetails.Username)));
 
             if (fi.Exists && fi.Length > 0)
-                LogOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
+                logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
             else
-                LogOnDetails.SentryFileHash = null;
+                logOnDetails.SentryFileHash = null;
 
-            SteamUser.LogOn(LogOnDetails);
+            SteamUser.LogOn(logOnDetails);
         }
 
         void UserWebLogOn()
         {
             do
             {
-                IsLoggedIn = SteamWeb.Authenticate(MyUniqueId, SteamClient, MyUserNonce);
+                IsLoggedIn = SteamWeb.Authenticate(myUniqueId, SteamClient, myUserNonce);
 
                 if(!IsLoggedIn)
                 {
@@ -726,14 +726,14 @@ namespace SteamBot
 
             Log.Success("User Authenticated!");
 
-            TradeManager = new TradeManager(ApiKey, SteamWeb);
-            TradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximumActionGap, TradePollingInterval);
-            TradeManager.OnTimeout += OnTradeTimeout;
-            TradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
-            SubscribeTradeOffer(TradeOfferManager);
-            CookiesAreInvalid = false;
+            tradeManager = new TradeManager(ApiKey, SteamWeb);
+            tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximumActionGap, tradePollingInterval);
+            tradeManager.OnTimeout += OnTradeTimeout;
+            tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
+            SubscribeTradeOffer(tradeOfferManager);
+            cookiesAreInvalid = false;
             // Success, check trade offers which we have received while we were offline
-            TradeOfferManager.GetOffers();
+            tradeOfferManager.GetOffers();
         }
 
         /// <summary>
@@ -744,7 +744,7 @@ namespace SteamBot
         bool CheckCookies()
         {
             // We still haven't re-authenticated
-            if (CookiesAreInvalid)
+            if (cookiesAreInvalid)
                 return false;
 
             try
@@ -753,7 +753,7 @@ namespace SteamBot
                 {
                     // Cookies are no longer valid
                     Log.Warn("Cookies are invalid. Need to re-authenticate.");
-                    CookiesAreInvalid = true;
+                    cookiesAreInvalid = true;
                     SteamUser.RequestWebAPIUserNonce();
                     return false;
                 }
@@ -769,15 +769,15 @@ namespace SteamBot
 
         UserHandler GetUserHandler(SteamID sid)
         {
-            if (!UserHandlers.ContainsKey(sid))
-                UserHandlers[sid] = CreateHandler(this, sid);
-            return UserHandlers[sid];
+            if (!userHandlers.ContainsKey(sid))
+                userHandlers[sid] = createHandler(this, sid);
+            return userHandlers[sid];
         }
 
         void RemoveUserHandler(SteamID sid)
         {
-            if (UserHandlers.ContainsKey(sid))
-                UserHandlers.Remove(sid);
+            if (userHandlers.ContainsKey(sid))
+                userHandlers.Remove(sid);
         }
 
         static byte [] SHAHash (byte[] input)
@@ -797,7 +797,7 @@ namespace SteamBot
 
             Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
 
-            File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", LogOnDetails.Username)), machineAuth.Data);
+            File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
             
             var authResponse = new SteamUser.MachineAuthDetails
             {
@@ -836,7 +836,7 @@ namespace SteamBot
         /// </example>
         public void GetInventory()
         {
-            MyInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb));
+            myInventoryTask = Task.Factory.StartNew(() => Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb));
         }
 
         public void TradeOfferRouter(TradeOffer offer)
@@ -920,7 +920,7 @@ namespace SteamBot
         {
             ICallbackMsg msg;
 
-            while (!BotThread.CancellationPending)
+            while (!botThread.CancellationPending)
             {
                 try
                 {
@@ -1022,9 +1022,9 @@ namespace SteamBot
 
         private void DisposeBot()
         {
-            if (Disposed)
+            if (disposed)
                 return;
-            Disposed = true;
+            disposed = true;
             StopBot();
         }
     }
