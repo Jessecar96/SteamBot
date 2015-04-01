@@ -624,10 +624,11 @@ namespace SteamTrade
 
         private bool HandleTradeOngoing(TradeStatus status)
         {
+            bool otherUserDidSomething = false;
             if (status.newversion)
             {
                 HandleTradeVersionChange(status);
-                return true;
+                otherUserDidSomething = true;
             }
             else if(status.version > session.Version)
             {
@@ -649,7 +650,6 @@ namespace SteamTrade
                 otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
             }
 
-            bool otherUserDidSomething = false;
             var events = status.GetAllEvents();
             foreach(var tradeEvent in events.OrderBy(o => o.timestamp))
             {
