@@ -140,6 +140,7 @@ namespace SteamBot
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
+            userHandlers = new Dictionary<SteamID, UserHandler>();
             logOnDetails = new SteamUser.LogOnDetails
             {
                 Username = config.Username,
@@ -925,7 +926,7 @@ namespace SteamBot
                 try
                 {
                     msg = SteamClient.WaitForCallback(true);
-                    HandleSteamMessage(msg); //Making handling of steam messages prevents bot from freezing on action(if userhandlers gets infinite loop).
+                    HandleSteamMessage(msg);
                 }
                 catch (WebException e)
                 {
