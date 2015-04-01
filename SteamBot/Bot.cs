@@ -256,9 +256,8 @@ namespace SteamBot
             IsRunning = true;
 
             Log.Info("Connecting...");
-            if (botThread.IsBusy)
-                return true; //We will consider this running.
-            botThread.RunWorkerAsync();
+            if (!botThread.IsBusy)
+                botThread.RunWorkerAsync();
             SteamClient.Connect();
             Log.Success("Done Loading Bot!");
             return true; // never get here
