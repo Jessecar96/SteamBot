@@ -101,7 +101,7 @@ namespace SteamBot
         /// </summary>
         public Log Log
         {
-            get { return Bot.log; }
+            get { return Bot.Log; }
         }
         
         /// <summary>
@@ -112,7 +112,7 @@ namespace SteamBot
         /// </value>
         public bool IsAdmin
         {
-            get { return Bot.Admins.Contains ((ulong)OtherSID); }
+            get { return Bot.Admins.Contains(OtherSID); }
         }
 
         /// <summary>

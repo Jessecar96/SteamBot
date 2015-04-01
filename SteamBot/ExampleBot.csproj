@@ -27,7 +27,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
+    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\Bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
@@ -35,6 +35,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Externalconsole>True</Externalconsole>
     <Prefer32Bit>false</Prefer32Bit>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">

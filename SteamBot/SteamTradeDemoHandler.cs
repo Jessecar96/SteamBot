@@ -52,13 +52,13 @@ namespace SteamBot
         public override void OnTradeError (string error) 
         {
             SendChatMessage("Oh, there was an error: {0}.", error);
-            Bot.log.Warn (error);
+            Bot.Log.Warn (error);
         }
         
         public override void OnTradeTimeout () 
         {
             SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
-            Bot.log.Info ("User was kicked because he was AFK.");
+            Bot.Log.Info ("User was kicked because he was AFK.");
         }
         
         public override void OnTradeInit() 

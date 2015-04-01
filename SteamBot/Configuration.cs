@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -16,6 +18,37 @@ namespace SteamBot
             public JObject LoggerParams { get; set; }
         }
 
+        private class JsonToSteamID : JsonConverter
+        {
+            static Regex Steam2Regex = new Regex(
+               @"STEAM_(?<universe>[0-5]):(?<authserver>[0-1]):(?<accountid>\d+)",
+               RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            public override bool CanConvert(Type objectType)
+            {
+                return objectType == typeof(IEnumerable<SteamKit2.SteamID>);
+            }
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                JArray array = JArray.Load(reader);
+                List<SteamKit2.SteamID> ret = new List<SteamKit2.SteamID>();
+                foreach (JToken id in array)
+                {
+                    string sID = (string)id;
+                    if (Steam2Regex.IsMatch(sID))
+                        ret.Add(new SteamKit2.SteamID(sID));
+                    else
+                        ret.Add(new SteamKit2.SteamID((ulong)id));
+                }
+                return ret;
+            }
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public static Configuration LoadConfiguration (string filename)
         {
             TextReader reader = new StreamReader(filename);
@@ -24,20 +57,15 @@ namespace SteamBot
 
             Configuration config =  JsonConvert.DeserializeObject<Configuration>(json);
 
-            config.Admins = config.Admins ?? new ulong[0];
+            config.Admins = config.Admins ?? new SteamKit2.SteamID[0];
 
             // merge bot-specific admins with global admins
             foreach (BotInfo bot in config.Bots)
             {
                 if (bot.Admins == null)
-                {
-                    bot.Admins = new ulong[config.Admins.Length];
-                    Array.Copy(config.Admins, bot.Admins, config.Admins.Length);
-                }
+                    bot.Admins = config.Admins;
                 else
-                {
-                    bot.Admins = bot.Admins.Concat(config.Admins).ToArray();
-                }
+                    bot.Admins = bot.Admins.Concat(config.Admins);
             }
 
             return config;
@@ -54,7 +82,8 @@ namespace SteamBot
         /// and separated by a comma. These admins are global to all bots 
         /// listed in the Bots array.
         /// </value>
-        public ulong[] Admins { get; set; }
+        [JsonConverter(typeof(JsonToSteamID))]
+        public IEnumerable<SteamKit2.SteamID> Admins { get; set; }
 
         /// <summary>
         /// Gets or sets the bots array.
@@ -134,7 +163,8 @@ namespace SteamBot
             public int MaximumActionGap { get; set; }
             public string DisplayNamePrefix { get; set; }
             public int TradePollingInterval { get; set; }
-            public ulong[] Admins { get; set; }
+            [JsonConverter(typeof(JsonToSteamID))]
+            public IEnumerable<SteamKit2.SteamID> Admins { get; set; }
             public string SchemaLang { get; set; }
             [JsonProperty(Required=Required.Always)]
             public LoggerConfiguration[] Loggers { get; set; }
