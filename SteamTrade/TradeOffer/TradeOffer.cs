@@ -54,16 +54,9 @@ namespace SteamTrade.TradeOffer
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     //todo: for currency items we need to check descriptions for currency bool and use the appropriate method
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
-                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
+                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount), asset.IsMissing);
                     //todo: for missing assets we should store them somewhere else? if offer state is active we shouldn't be here though
-                    if (!asset.IsMissing)
-                    {
-                        myAssets.Add(tradeAsset);
-                    }
-                    else
-                    {
-                        myMissingAssets.Add(tradeAsset);
-                    }
+                    myAssets.Add(tradeAsset);
                 }
             }
             if (offer.ItemsToReceive != null)
@@ -73,14 +66,7 @@ namespace SteamTrade.TradeOffer
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
                         Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
-                    if (!asset.IsMissing)
-                    {
-                        theirAssets.Add(tradeAsset);
-                    }
-                    else
-                    {
-                        theirMissingAssets.Add(tradeAsset);
-                    }
+                    theirAssets.Add(tradeAsset);
                 }
             }
             this.Session = session;
