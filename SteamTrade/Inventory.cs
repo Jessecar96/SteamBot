@@ -15,11 +15,19 @@ namespace SteamTrade
         /// <param name='steamId'>Steam identifier.</param>
         /// <param name='apiKey'>The needed Steam API key.</param>
         /// <param name="steamWeb">The SteamWeb instance for this Bot</param>
-        public static Inventory FetchInventory (ulong steamId, string apiKey, SteamWeb steamWeb)
+        public static Inventory FetchInventory(ulong steamId, string apiKey, SteamWeb steamWeb)
         {
-            var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
-            string response = steamWeb.Fetch (url, "GET", null, false);
-            InventoryResponse result = JsonConvert.DeserializeObject<InventoryResponse>(response);
+            int attempts = 1;
+            InventoryResponse result = null;
+            while ((result == null || result.result == null || result.result.items == null) && attempts <= 5)
+            {
+                var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
+                string response = steamWeb.Fetch(url, "GET", null, false);
+                result = JsonConvert.DeserializeObject<InventoryResponse>(response);
+                attempts++;
+            }
+            if (result == null || result.result == null || result.result.items == null)
+                throw Exception("Cannot fetch inventory of user #" + steamId);
             return new Inventory(result.result);
         }
 
