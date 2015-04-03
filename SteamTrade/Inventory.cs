@@ -23,18 +23,11 @@ namespace SteamTrade
             {
                 var url = "http://api.steampowered.com/IEconItems_440/GetPlayerItems/v0001/?key=" + apiKey + "&steamid=" + steamId;
                 string response = steamWeb.Fetch(url, "GET", null, false);
-                try
-                {
-                    result = JsonConvert.DeserializeObject<InventoryResponse>(response);
-                }
-                catch (Exception e)
-                {
-
-                }
+                result = JsonConvert.DeserializeObject<InventoryResponse>(response);
                 attempts++;
             }
             if (result == null || result.result == null || result.result.items == null)
-                return new Inventory(new InventoryResult());
+                throw Exception("Cannot fetch inventory of user #" + steamId);
             return new Inventory(result.result);
         }
 
