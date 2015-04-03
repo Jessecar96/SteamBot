@@ -167,8 +167,13 @@ namespace SteamTrade.TradeOffer
                 else
                 {
                     //todo: log steam api is giving us invalid offers.
-                    Debug.WriteLine("Offer returned from steam api is not valid : " + resp.Offer.TradeOfferId);
+                    Debug.WriteLine("Received invalid offer from Steam API");
+//                    Logging.Log("resp.Offer stringified: ->" + (resp.Offer == null ? "Null" : resp.Offer.ToString()), Logging.LogLevel.ERROR);
                 }
+            }
+            else
+            {
+                Debug.WriteLine("Null TradeOffer response!");
             }
             return false;
         }
