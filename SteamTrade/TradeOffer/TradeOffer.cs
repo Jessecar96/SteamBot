@@ -65,7 +65,7 @@ namespace SteamTrade.TradeOffer
                 {
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
-                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
+                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount), asset.IsMissing);
                     theirAssets.Add(tradeAsset);
                 }
             }
