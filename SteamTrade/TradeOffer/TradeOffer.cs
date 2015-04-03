@@ -517,14 +517,18 @@ namespace SteamTrade.TradeOffer
 
                 [JsonProperty("currencyid"), JsonConverter(typeof(ValueStringConverter))]
                 public long CurrencyId { get; set; }
+                
+                [JsonProperty("missing")]
+                public bool IsMissing { get; set; }
 
-                public void CreateItemAsset(long appId, long contextId, long assetId, long amount)
+                public void CreateItemAsset(long appId, long contextId, long assetId, long amount, bool missing = false)
                 {
                     this.AppId = appId;
                     this.ContextId = contextId;
                     this.AssetId = assetId;
                     this.Amount = amount;
                     this.CurrencyId = 0;
+                    this.IsMissing = missing;
                 }
 
                 public void CreateCurrencyAsset(long appId, long contextId, long currencyId, long amount)
