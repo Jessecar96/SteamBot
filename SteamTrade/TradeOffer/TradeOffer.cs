@@ -54,9 +54,16 @@ namespace SteamTrade.TradeOffer
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     //todo: for currency items we need to check descriptions for currency bool and use the appropriate method
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
-                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount), asset.IsMissing);
+                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
                     //todo: for missing assets we should store them somewhere else? if offer state is active we shouldn't be here though
-                    myAssets.Add(tradeAsset);
+                    if (!asset.IsMissing)
+                    {
+                        myAssets.Add(tradeAsset);
+                    }
+                    else
+                    {
+                        myMissingAssets.Add(tradeAsset);
+                    }
                 }
             }
             if (offer.ItemsToReceive != null)
@@ -65,8 +72,15 @@ namespace SteamTrade.TradeOffer
                 {
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
-                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount), asset.IsMissing);
-                    theirAssets.Add(tradeAsset);
+                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
+                    if (!asset.IsMissing)
+                    {
+                        theirAssets.Add(tradeAsset);
+                    }
+                    else
+                    {
+                        theirMissingAssets.Add(tradeAsset);
+                    }
                 }
             }
             this.Session = session;
@@ -105,7 +119,7 @@ namespace SteamTrade.TradeOffer
         /// <param name="offerId">The trade offer id if successully created</param>
         /// <param name="message">Optional message to included with the trade offer</param>
         /// <returns>true if successfully sent, otherwise false</returns>
-        public int Send(out string offerId, string message = "")
+        public bool Send(out string offerId, string message = "")
         {
             offerId = String.Empty;
             if (TradeOfferId == null)
@@ -114,7 +128,7 @@ namespace SteamTrade.TradeOffer
             }
             //todo: log
             Debug.WriteLine("Can't send a trade offer that already exists.");
-            return 0;
+            return false;
         }
 
         /// <summary>
@@ -124,16 +138,16 @@ namespace SteamTrade.TradeOffer
         /// <param name="token">The token of the partner</param>
         /// <param name="message">Optional message to included with the trade offer</param>
         /// <returns></returns>
-        public int SendWithToken(out string offerId, string token, string message = "", bool debug = false)
+        public bool SendWithToken(out string offerId, string token, string message = "")
         {
             offerId = String.Empty;
             if (TradeOfferId == null)
             {
-                return Session.SendTradeOfferWithToken(message, PartnerSteamId, this.Items, token, out offerId, debug);
+                return Session.SendTradeOfferWithToken(message, PartnerSteamId, this.Items, token, out offerId);
             }
             //todo: log
             Debug.WriteLine("Can't send a trade offer that already exists.");
-            return 0;
+            return false;
         }
 
         /// <summary>
