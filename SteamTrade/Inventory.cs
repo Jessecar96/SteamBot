@@ -27,7 +27,7 @@ namespace SteamTrade
                 attempts++;
             }
             if (result == null || result.result == null || result.result.items == null)
-                throw Exception("Cannot fetch inventory of user #" + steamId);
+                throw new Exception("Cannot fetch inventory of user #" + steamId);
             return new Inventory(result.result);
         }
 
