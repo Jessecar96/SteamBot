@@ -49,10 +49,18 @@ namespace SteamBot
 
             if (ConfigObject == null)
                 return false;
-
+            
+            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug, Log.LogLevel.Debug);
+           
+            if (IsRunningOnMono () && ConfigObject.UseSeparateProcesses)  //mono to version 3.8 does not seem to support this
+			{
+				mainLog.Info("Mono detected with UseSeparateProcesses as true, disabling" );
+				ConfigObject.UseSeparateProcesses = false;
+			}
+			
             useSeparateProcesses = ConfigObject.UseSeparateProcesses;
 
-            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug, Log.LogLevel.Debug);
+           
 
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {
@@ -68,7 +76,13 @@ namespace SteamBot
 
             return true;
         }
-
+        //Checks if steambot is been run on Mono
+       	private static bool IsRunningOnMono ()
+		{
+			return Type.GetType ("Mono.Runtime") != null;
+		}
+       
+       
         /// <summary>
         /// Starts the bots that have been configured.
         /// </summary>
