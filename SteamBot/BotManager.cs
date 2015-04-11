@@ -54,8 +54,8 @@ namespace SteamBot
            
             if (IsRunningOnMono() && ConfigObject.UseSeparateProcesses)  //mono to version 3.8 does not seem to support this
 			{
-				mainLog.Info("Mono detected with UseSeparateProcesses as true, disabling" );
-				ConfigObject.UseSeparateProcesses = false;
+			    mainLog.Info("Mono detected with UseSeparateProcesses as true, disabling" );
+			    ConfigObject.UseSeparateProcesses = false;
 			}
 			
             useSeparateProcesses = ConfigObject.UseSeparateProcesses;
@@ -77,10 +77,10 @@ namespace SteamBot
             return true;
         }
         //Checks if steambot is been run on Mono
-       	private static bool IsRunningOnMono ()
-		{
-			return Type.GetType ("Mono.Runtime") != null;
-		}
+	private static bool IsRunningOnMono ()
+	{			
+	    return Type.GetType ("Mono.Runtime") != null;
+	}
        
        
         /// <summary>
