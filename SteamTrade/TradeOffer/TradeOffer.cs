@@ -26,6 +26,8 @@ namespace SteamTrade.TradeOffer
         public int ExpirationTime { get; private set; }
 
         public int TimeUpdated { get; private set; }
+        
+        public string Message { get; private set; }
 
         public bool IsFirstOffer
         {
@@ -93,6 +95,7 @@ namespace SteamTrade.TradeOffer
             TimeCreated = offer.TimeCreated;
             TimeUpdated = TimeUpdated;
             Items = new TradeStatus(myAssets, theirAssets);
+            Message = offer.Message;
         }
 
         /// <summary>
