@@ -15,8 +15,8 @@ namespace SteamTrade
     public class Schema
     {
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
-        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
-        private const string cachefile = "tf_schema.cache";
+        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_730/GetSchema/v0002/?key=";
+        private const string cachefile = "csgo_schema.cache";
 
         /// <summary>
         /// Fetches the Tf2 Item schema.
