@@ -74,7 +74,7 @@ namespace SteamBot
                 }
                 set
                 {
-                    steamID = new SteamKit2.SteamID((uint)value);
+                    steamID = new SteamKit2.SteamID(value);
                 }
             }
         }
