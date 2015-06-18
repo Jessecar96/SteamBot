@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SteamKit2;
-using SteamAPI.TradeWebAPI;
 using System.Text.RegularExpressions;
 using System.Net;
 

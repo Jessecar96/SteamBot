@@ -59,8 +59,6 @@
     <Compile Include="SteamWeb.cs" />
     <Compile Include="Inventory\TF2Inventory.cs" />
     <Compile Include="TradeOffer.cs" />
-    <Compile Include="TradeWebAPI\TradeStatus.cs" />
-    <Compile Include="TradeWebAPI\TradeSession.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
