@@ -1,6 +1,6 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/r2ml39xoa5svu61y/branch/master?svg=true)](https://ci.appveyor.com/project/Jessecar96/steambot/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/7g6juohuug3m86d3/branch/master?svg=true)](https://ci.appveyor.com/project/waylaidwanderer/steamtradeoffersbot/branch/master)
 
-**SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 8 contributors have all added to the bot.  The bot is publicly available under the MIT License. Check out [LICENSE] for more details.
+**SteamTradeOffersBot** is a fork of [SteamBot](https://github.com/Jessecar96/SteamBot/), with an easy-to-use Trade Offers library and a true generic inventory interface, written by waylaidwanderer. All code related to live trading have been removed for simplicity. The bot is publicly available under the MIT License. Check out [LICENSE] for more details.
 
 There are several things you must do in order to get SteamBot working:
 
@@ -24,8 +24,11 @@ While running the bots you may find it necessary to do some basic operations lik
 ## More help?
 If it's a bug, open an Issue; if you have a fix, read [CONTRIBUTING.md] and open a Pull Request.  If it is a question about how to use SteamBot with your own bots, visit our subreddit at [/r/SteamBot](http://www.reddit.com/r/SteamBot). Please use the issue tracker only for bugs reports and pull requests. The subreddit should be used for all other  discussions.
 
+A list of SteamTradeOffersBot contributors (add yourself if you want to):
 
-A list of contributors (add yourself if you want to):
+- [waylaidwanderer](http://steamcommunity.com/id/waylaidwanderer) (project lead)
+
+The list of original SteamBot contributors:
 
 - [Jessecar96](http://steamcommunity.com/id/jessecar) (project lead)
 - [geel9](http://steamcommunity.com/id/geel9)
