@@ -4,7 +4,7 @@ using System.Net;
 using Newtonsoft.Json;
 using SteamKit2;
 
-namespace SteamTrade.TradeWebAPI
+namespace SteamAPI.TradeWebAPI
 {
     /// <summary>
     /// This class provides the interface into the Web API for trading on the

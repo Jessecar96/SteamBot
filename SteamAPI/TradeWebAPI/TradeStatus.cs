@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
-namespace SteamTrade.TradeWebAPI
+namespace SteamAPI.TradeWebAPI
 {
     public class TradeStatus
     {

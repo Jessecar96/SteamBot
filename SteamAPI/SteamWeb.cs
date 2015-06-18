@@ -11,7 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using SteamKit2;
 
-namespace SteamTrade
+namespace SteamAPI
 {
     public class SteamWeb
     {

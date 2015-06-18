@@ -153,16 +153,12 @@ namespace SteamBot
             public string DisplayName { get; set; }
             public string ChatResponse { get; set; }
             public string LogFile { get; set; }
-            public string BotControlClass { get; set; }
-            public int MaximumTradeTime { get; set; }
-            public int MaximumActionGap { get; set; }
+            public string BotControlClass { get; set; }           
             public string DisplayNamePrefix { get; set; }
-            public int TradePollingInterval { get; set; }
             public string ConsoleLogLevel { get; set; }
             public string FileLogLevel { get; set; }
             [JsonConverter(typeof(JsonToSteamID))]
             public IEnumerable<SteamKit2.SteamID> Admins { get; set; }
-            public string SchemaLang { get; set; }
 
             // Depreciated configuration options
             public string LogLevel { get; set; }

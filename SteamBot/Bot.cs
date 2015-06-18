@@ -10,9 +10,8 @@ using System.Security.Cryptography;
 using System.ComponentModel;
 using SteamBot.SteamGroups;
 using SteamKit2;
-using SteamTrade;
+using SteamAPI;
 using SteamKit2.Internal;
-using SteamTrade.TradeOffer;
 using System.Globalization;
 
 namespace SteamBot
@@ -25,7 +24,6 @@ namespace SteamBot
 
         #region Private readonly variables
         private readonly SteamUser.LogOnDetails logOnDetails;
-        private readonly string schemaLang;
         private readonly string logFile;
         private readonly Dictionary<SteamID, UserHandler> userHandlers;
         private readonly Log.LogLevel consoleLogLevel;
@@ -36,10 +34,6 @@ namespace SteamBot
         #endregion
 
         #region Private variables
-        private Task<Inventory> myInventoryTask;
-        private TradeManager tradeManager;
-        private TradeOfferManager tradeOfferManager;
-        private int tradePollingInterval;
         private string myUserNonce;
         private string myUniqueId;
         private bool cookiesAreInvalid = true;
@@ -69,7 +63,6 @@ namespace SteamBot
         public readonly SteamFriends SteamFriends;
         public readonly SteamTrading SteamTrade;
         public readonly SteamGameCoordinator SteamGameCoordinator;
-        public readonly SteamNotifications SteamNotifications;
         /// <summary>
         /// The amount of time the bot will trade for.
         /// </summary>
@@ -92,6 +85,7 @@ namespace SteamBot
         #region Public variables
         public string AuthCode;
         public bool IsRunning;
+
         /// <summary>
         /// Is bot fully Logged in.
         /// Set only when bot did successfully Log in.
@@ -99,19 +93,17 @@ namespace SteamBot
         public bool IsLoggedIn { get; private set; }
 
         /// <summary>
-        /// The current trade the bot is in.
-        /// </summary>
-        public Trade CurrentTrade { get; private set; }
-
-        /// <summary>
         /// The current game bot is in.
         /// Default: 0 = No game.
         /// </summary>
         public int CurrentGame { get; private set; }
+
         /// <summary>
         /// The instance of the Logger for the bot.
         /// </summary>
         public Log Log;
+
+        public TradeOffers TradeOffers;
         #endregion
 
         public IEnumerable<SteamID> FriendsList
@@ -120,15 +112,6 @@ namespace SteamBot
             {
                 CreateFriendsListIfNecessary();
                 return friends;
-            }
-        }
-
-        public Inventory MyInventory
-        {
-            get
-            {
-                myInventoryTask.Wait();
-                return myInventoryTask.Result;
             }
         }
 
@@ -148,11 +131,7 @@ namespace SteamBot
             };
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
-            MaximumTradeTime = config.MaximumTradeTime;
-            MaximumActionGap = config.MaximumActionGap;
             DisplayNamePrefix = config.DisplayNamePrefix;
-            tradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
-            schemaLang = config.SchemaLang != null && config.SchemaLang.Length == 2 ? config.SchemaLang.ToLower() : "en";
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             isProccess = process;
@@ -197,7 +176,6 @@ namespace SteamBot
             SteamUser = SteamClient.GetHandler<SteamUser>();
             SteamFriends = SteamClient.GetHandler<SteamFriends>();
             SteamGameCoordinator = SteamClient.GetHandler<SteamGameCoordinator>();
-            SteamNotifications = SteamClient.GetHandler<SteamNotifications>();
 
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BackgroundWorkerOnDoWork;
@@ -277,60 +255,6 @@ namespace SteamBot
             DisposeLog();
         }
 
-        /// <summary>
-        /// Creates a new trade with the given partner.
-        /// </summary>
-        /// <returns>
-        /// <c>true</c>, if trade was opened,
-        /// <c>false</c> if there is another trade that must be closed first.
-        /// </returns>
-        public bool OpenTrade (SteamID other)
-        {
-            if (CurrentTrade != null || CheckCookies() == false)
-                return false;
-            SteamTrade.Trade(other);
-            return true;
-        }
-
-        /// <summary>
-        /// Closes the current active trade.
-        /// </summary>
-        public void CloseTrade() 
-        {
-            if (CurrentTrade == null)
-                return;
-            UnsubscribeTrade (GetUserHandler (CurrentTrade.OtherSID), CurrentTrade);
-            tradeManager.StopTrade ();
-            CurrentTrade = null;
-        }
-
-        void OnTradeTimeout(object sender, EventArgs args) 
-        {
-            // ignore event params and just null out the trade.
-            GetUserHandler(CurrentTrade.OtherSID).OnTradeTimeout();
-        }
-
-        /// <summary>
-        /// Create a new trade offer with the specified partner
-        /// </summary>
-        /// <param name="other">SteamId of the partner</param>
-        /// <returns></returns>
-        public TradeOffer NewTradeOffer(SteamID other)
-        {
-            return tradeOfferManager.NewOffer(other);
-        }
-
-        /// <summary>
-        /// Try to get a specific trade offer using the offerid
-        /// </summary>
-        /// <param name="offerId"></param>
-        /// <param name="tradeOffer"></param>
-        /// <returns></returns>
-        public bool TryGetTradeOffer(string offerId, out TradeOffer tradeOffer)
-        {
-            return tradeOfferManager.GetOffer(offerId, out tradeOffer);
-        }
-
         public void HandleBotCommand(string command)
         {
             try
@@ -349,44 +273,6 @@ namespace SteamBot
             catch (Exception e)
             {
                 Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
-            }
-        }
-
-        bool HandleTradeSessionStart (SteamID other)
-        {
-            if (CurrentTrade != null)
-                return false;
-            try
-            {
-                tradeManager.InitializeTrade(SteamUser.SteamID, other);
-                CurrentTrade = tradeManager.CreateTrade(SteamUser.SteamID, other);
-                CurrentTrade.OnClose += CloseTrade;
-                SubscribeTrade(CurrentTrade, GetUserHandler(other));
-                tradeManager.StartTradeThread(CurrentTrade);
-                return true;
-            }
-            catch (SteamTrade.Exceptions.InventoryFetchException)
-            {
-                // we shouldn't get here because the inv checks are also
-                // done in the TradeProposedCallback handler.
-                /*string response = String.Empty;
-                if (ie.FailingSteamId.ConvertToUInt64() == other.ConvertToUInt64())
-                {
-                    response = "Trade failed. Could not correctly fetch your backpack. Either the inventory is inaccessible or your backpack is private.";
-                }
-                else 
-                {
-                    response = "Trade failed. Could not correctly fetch my backpack.";
-                }
-                
-                SteamFriends.SendChatMessage(other, 
-                                             EChatEntryType.ChatMsg,
-                                             response);
-
-                Log.Info ("Bot sent other: {0}", response);
-                
-                CurrentTrade = null;*/
-                return false;
             }
         }
 
@@ -460,13 +346,6 @@ namespace SteamBot
                 myUniqueId = callback.UniqueID.ToString();
 
                 UserWebLogOn();
-
-                if (Trade.CurrentSchema == null)
-                {
-                    Log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey, schemaLang);
-                    Log.Success ("Schema Downloaded!");
-                }
 
                 SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
                 SteamFriends.SetPersonaState (EPersonaState.Online);
@@ -572,82 +451,6 @@ namespace SteamBot
             });
             #endregion
 
-            #region Trading
-            msg.Handle<SteamTrading.SessionStartCallback> (callback =>
-            {
-                bool started = HandleTradeSessionStart (callback.OtherClient);
-
-                if (!started)
-                    Log.Error ("Could not start the trade session.");
-                else
-                    Log.Debug ("SteamTrading.SessionStartCallback handled successfully. Trade Opened.");
-            });
-
-            msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
-            {
-                if (CheckCookies() == false)
-                {
-                    SteamTrade.RespondToTrade(callback.TradeID, false);
-                    return;
-                }
-
-                try
-                {
-                    tradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
-                }
-                catch (WebException we)
-                {                 
-                    SteamFriends.SendChatMessage(callback.OtherClient,
-                             EChatEntryType.ChatMsg,
-                             "Trade error: " + we.Message);
-
-                    SteamTrade.RespondToTrade(callback.TradeID, false);
-                    return;
-                }
-                catch (Exception)
-                {
-                    SteamFriends.SendChatMessage(callback.OtherClient,
-                             EChatEntryType.ChatMsg,
-                             "Trade declined. Could not correctly fetch your backpack.");
-
-                    SteamTrade.RespondToTrade(callback.TradeID, false);
-                    return;
-                }
-
-                //if (tradeManager.OtherInventory.IsPrivate)
-                //{
-                //    SteamFriends.SendChatMessage(callback.OtherClient, 
-                //                                 EChatEntryType.ChatMsg,
-                //                                 "Trade declined. Your backpack cannot be private.");
-
-                //    SteamTrade.RespondToTrade (callback.TradeID, false);
-                //    return;
-                //}
-
-                if (CurrentTrade == null && GetUserHandler (callback.OtherClient).OnTradeRequest ())
-                    SteamTrade.RespondToTrade (callback.TradeID, true);
-                else
-                    SteamTrade.RespondToTrade (callback.TradeID, false);
-            });
-
-            msg.Handle<SteamTrading.TradeResultCallback> (callback =>
-            {
-                if (callback.Response == EEconTradeResponse.Accepted)
-                {
-                    Log.Debug("Trade Status: {0}", callback.Response);
-                    Log.Info ("Trade Accepted!");
-                    GetUserHandler(callback.OtherClient).OnTradeRequestReply(true, callback.Response.ToString());
-                }
-                else
-                {
-                    Log.Warn("Trade failed: {0}", callback.Response);
-                    CloseTrade ();
-                    GetUserHandler(callback.OtherClient).OnTradeRequestReply(false, callback.Response.ToString());
-                }
-
-            });
-            #endregion
-
             #region Disconnect
             msg.Handle<SteamUser.LoggedOffCallback> (callback =>
             {
@@ -660,38 +463,10 @@ namespace SteamBot
                 if(IsLoggedIn)
                 {
                     IsLoggedIn = false;
-                    CloseTrade();
                     Log.Warn("Disconnected from Steam Network!");
                 }
 
                 SteamClient.Connect ();
-            });
-            #endregion
-
-            #region Notifications
-            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(callback =>
-            {
-                //currently only appears to be of trade offer
-                if (callback.Notifications.Count != 0)
-                {
-                    foreach (var notification in callback.Notifications)
-                    {
-                        Log.Info(notification.UserNotificationType + " notification");
-        }
-                }
-
-                // Get offers only if cookies are valid
-                if (CheckCookies())
-                    tradeOfferManager.GetOffers();
-            });
-
-            msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
-            {
-                //various types of comment notifications on profile/activity feed etc
-                //Log.Info("received CommentNotificationCallback");
-                //Log.Info("New Commments " + callback.CommentNotifications.CountNewComments);
-                //Log.Info("New Commments Owners " + callback.CommentNotifications.CountNewCommentsOwner);
-                //Log.Info("New Commments Subscriptions" + callback.CommentNotifications.CountNewCommentsSubscriptions);
             });
             #endregion
         }
@@ -725,15 +500,30 @@ namespace SteamBot
             } while(!IsLoggedIn);
 
             Log.Success("User Authenticated!");
-
-            tradeManager = new TradeManager(ApiKey, SteamWeb);
-            tradeManager.SetTradeTimeLimits(MaximumTradeTime, MaximumActionGap, tradePollingInterval);
-            tradeManager.OnTimeout += OnTradeTimeout;
-            tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
-            SubscribeTradeOffer(tradeOfferManager);
+            
             cookiesAreInvalid = false;
-            // Success, check trade offers which we have received while we were offline
-            tradeOfferManager.GetOffers();
+
+            TradeOffers = new TradeOffers(SteamUser.SteamID, SteamWeb, ApiKey);
+            TradeOffers.TradeOfferAccepted += TradeOffers_TradeOfferAccepted;
+            TradeOffers.TradeOfferDeclined += TradeOffers_TradeOfferDeclined;
+            TradeOffers.TradeOfferReceived += TradeOffers_TradeOfferReceived;
+
+            GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
+        }
+
+        void TradeOffers_TradeOfferReceived(object sender, TradeOffers.TradeOfferEventArgs e)
+        {
+            GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferReceived(e.TradeOffer);
+        }
+
+        void TradeOffers_TradeOfferDeclined(object sender, TradeOffers.TradeOfferEventArgs e)
+        {
+            GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferDeclined(e.TradeOffer);
+        }
+
+        void TradeOffers_TradeOfferAccepted(object sender, TradeOffers.TradeOfferEventArgs e)
+        {
+            GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferAccepted(e.TradeOffer);
         }
 
         /// <summary>
@@ -818,94 +608,7 @@ namespace SteamBot
             // send off our response
             SteamUser.SendMachineAuthResponse (authResponse);
         }
-
-        /// <summary>
-        /// Gets the bot's inventory and stores it in MyInventory.
-        /// </summary>
-        /// <example> This sample shows how to find items in the bot's inventory from a user handler.
-        /// <code>
-        /// Bot.GetInventory(); // Get the inventory first
-        /// foreach (var item in Bot.MyInventory.Items)
-        /// {
-        ///     if (item.Defindex == 5021)
-        ///     {
-        ///         // Bot has a key in its inventory
-        ///     }
-        /// }
-        /// </code>
-        /// </example>
-        public void GetInventory()
-        {
-            myInventoryTask = Task.Factory.StartNew((Func<Inventory>) FetchBotsInventory);
-        }
-
-        public void TradeOfferRouter(TradeOffer offer)
-        {
-            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
-            {
-                GetUserHandler(offer.PartnerSteamId).OnNewTradeOffer(offer);
-            }
-        }
-        public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
-        {
-            tradeOfferManager.OnNewTradeOffer += TradeOfferRouter;
-        }
-
-        //todo: should unsubscribe eventually...
-        public void UnsubscribeTradeOffer(TradeOfferManager tradeOfferManager)
-        {
-            tradeOfferManager.OnNewTradeOffer -= TradeOfferRouter;
-        }
-
-        /// <summary>
-        /// Subscribes all listeners of this to the trade.
-        /// </summary>
-        public void SubscribeTrade (Trade trade, UserHandler handler)
-        {
-            trade.OnSuccess += handler.OnTradeSuccess;
-            trade.OnClose += handler.OnTradeClose;
-            trade.OnError += handler.OnTradeError;
-            trade.OnStatusError += handler.OnStatusError;
-            //trade.OnTimeout += OnTradeTimeout;
-            trade.OnAfterInit += handler.OnTradeInit;
-            trade.OnUserAddItem += handler.OnTradeAddItem;
-            trade.OnUserRemoveItem += handler.OnTradeRemoveItem;
-            trade.OnMessage += handler.OnTradeMessageHandler;
-            trade.OnUserSetReady += handler.OnTradeReadyHandler;
-            trade.OnUserAccept += handler.OnTradeAcceptHandler;
-        }
         
-        /// <summary>
-        /// Unsubscribes all listeners of this from the current trade.
-        /// </summary>
-        public void UnsubscribeTrade (UserHandler handler, Trade trade)
-        {
-            trade.OnSuccess -= handler.OnTradeSuccess;
-            trade.OnClose -= handler.OnTradeClose;
-            trade.OnError -= handler.OnTradeError;
-            trade.OnStatusError -= handler.OnStatusError;
-            //Trade.OnTimeout -= OnTradeTimeout;
-            trade.OnAfterInit -= handler.OnTradeInit;
-            trade.OnUserAddItem -= handler.OnTradeAddItem;
-            trade.OnUserRemoveItem -= handler.OnTradeRemoveItem;
-            trade.OnMessage -= handler.OnTradeMessageHandler;
-            trade.OnUserSetReady -= handler.OnTradeReadyHandler;
-            trade.OnUserAccept -= handler.OnTradeAcceptHandler;
-        }
-
-        /// <summary>
-        /// Fetch the Bot's inventory and log a warning if it's private
-        /// </summary>
-        private Inventory FetchBotsInventory()
-        {
-            var inventory = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
-            if(inventory.IsPrivate)
-            {
-                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
-            }
-            return inventory;
-        }
-
         #region Background Worker Methods
 
         private void BackgroundWorkerOnRunWorkerCompleted(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)

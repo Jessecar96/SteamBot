@@ -1,9 +1,8 @@
 ﻿using SteamKit2;
-using SteamTrade;
-using SteamTrade.TradeOffer;
+using SteamAPI;
 using System;
 using System.Collections.Generic;
-using TradeAsset = SteamTrade.TradeOffer.TradeOffer.TradeStatusUser.TradeAsset;
+using System.Linq;
 
 namespace SteamBot
 {
@@ -11,54 +10,33 @@ namespace SteamBot
     {
         public TradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
-        public override void OnNewTradeOffer(TradeOffer offer)
+        public override void OnTradeOfferReceived(TradeOffers.TradeOffer tradeOffer)
         {
-            //receiving a trade offer 
             if (IsAdmin)
             {
-                //parse inventories of bot and other partner
-                //either with webapi or generic inventory
-                //Bot.GetInventory();
-                //Bot.GetOtherInventory(OtherSID);
-
-                var myItems = offer.Items.GetMyItems();
-                var theirItems = offer.Items.GetTheirItems();
-                Log.Info("They want " + myItems.Count + " of my items.");
-                Log.Info("And I will get " +  theirItems.Count + " of their items.");
-
-                //do validation logic etc
-                if (DummyValidation(myItems, theirItems))
-                {
-                    string tradeid;
-                    if (offer.Accept(out tradeid))
-                    {
-                        Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
-                    }
-                }
-                else
-                {
-                    // maybe we want different items or something
-
-                    //offer.Items.AddMyItem(0, 0, 0);
-                    //offer.Items.RemoveTheirItem(0, 0, 0);
-                    if (offer.Items.NewVersion)
-                    {
-                        string newOfferId;
-                        if (offer.CounterOffer(out newOfferId))
-                        {
-                            Log.Success("Counter offered successfully : New Offer ID: " + newOfferId);
-                        }
-                    }
-                }
+                TradeOffers.AcceptTrade(tradeOffer.Id);
             }
             else
             {
-                //we don't know this user so we can decline
-                if (offer.Decline())
-                {
-                    Log.Info("Declined trade offer : " + offer.TradeOfferId + " from untrusted user " + OtherSID.ConvertToUInt64());
-                }
+                TradeOffers.DeclineTrade(tradeOffer.Id);
             }
+        }
+
+        public override void OnTradeOfferAccepted(TradeOffers.TradeOffer tradeOffer)
+        {
+            var tradeOfferId = tradeOffer.Id;
+            var myItems = tradeOffer.ItemsToGive;
+            var userItems = tradeOffer.ItemsToReceive;
+
+            Log.Info("Trade offer #{0} accepted. Items to give: {1}, Items to receive: {2}", tradeOfferId, myItems.Length, userItems.Length);
+
+            // myItems is now in user inventory
+            // userItems is now in bot inventory
+        }
+
+        public override void OnTradeOfferDeclined(TradeOffers.TradeOffer tradeOffer)
+        {
+            
         }
 
         public override void OnMessage(string message, EChatEntryType type)
@@ -66,30 +44,22 @@ namespace SteamBot
             if (IsAdmin)
             {
                 //creating a new trade offer
-                var offer = Bot.NewTradeOffer(OtherSID);
+                var tradeOffer = TradeOffers.CreateTrade(OtherSID);
 
-                //offer.Items.AddMyItem(0, 0, 0);
-                if (offer.Items.NewVersion)
+                //tradeOffer.AddMyItem(0, 0, 0);
+
+                var tradeOfferId = tradeOffer.SendTrade("message");
+                if (tradeOfferId > 0)
                 {
-                    string newOfferId;
-                    if (offer.Send(out newOfferId))
-                    {
-                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
-                    }
+                    Log.Success("Trade offer sent : Offer ID " + tradeOfferId);
                 }
 
-                //creating a new trade offer with token
-                var offerWithToken = Bot.NewTradeOffer(OtherSID);
-
-                //offer.Items.AddMyItem(0, 0, 0);
-                if (offerWithToken.Items.NewVersion)
+                // sending trade offer with token
+                // "token" should be replaced with the actual token from the other user
+                var tradeOfferIdWithToken = tradeOffer.SendTradeWithToken("message", "token");
+                if (tradeOfferIdWithToken > 0)
                 {
-                    string newOfferId;
-                    // "token" should be replaced with the actual token from the other user
-                    if (offerWithToken.SendWithToken(out newOfferId, "token"))
-                    {
-                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
-                    }
+                    Log.Success("Trade offer sent : Offer ID " + tradeOfferIdWithToken);
                 }
             }
         }
@@ -102,27 +72,7 @@ namespace SteamBot
 
         public override void OnLoginCompleted() { }
 
-        public override bool OnTradeRequest() { return false; }
-
-        public override void OnTradeError(string error) { }
-
-        public override void OnTradeTimeout() { }
-
-        public override void OnTradeSuccess() { }
-
-        public override void OnTradeInit() { }
-
-        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
-
-        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
-
-        public override void OnTradeMessage(string message) { }
-
-        public override void OnTradeReady(bool ready) { }
-
-        public override void OnTradeAccept() { }
-
-        private bool DummyValidation(List<TradeAsset> myAssets, List<TradeAsset> theirAssets)
+        private bool DummyValidation(List<TradeOffers.TradeOffer.CEconAsset> myAssets, List<TradeOffers.TradeOffer.CEconAsset> theirAssets)
         {
             //compare items etc
             if (myAssets.Count == theirAssets.Count)

@@ -70,7 +70,6 @@
   <ItemGroup>
     <Compile Include="Notifications.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
-    <Compile Include="SteamTradeDemoHandler.cs" />
     <Compile Include="TF2GC\Crafting.cs" />
     <Compile Include="TF2GC\Items.cs" />
     <Compile Include="TF2GC\MsgCraft.cs" />
@@ -78,7 +77,6 @@
     <Compile Include="SteamGuardRequiredEventArgs.cs" />
     <Compile Include="Bot.cs" />
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="AdminUserHandler.cs" />
     <Compile Include="BotManager.cs" />
     <Compile Include="BotManagerInterpreter.cs" />
     <Compile Include="Configuration.cs" />
@@ -88,18 +86,17 @@
     <Compile Include="TF2GC\MsgDelete.cs" />
     <Compile Include="TradeOfferUserHandler.cs" />
     <Compile Include="UserHandler.cs" />
-    <Compile Include="SimpleUserHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
-      <Project>{6CEC0333-81EB-40EE-85D1-941363626FC7}</Project>
-      <Name>SteamTrade</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SteamAPI\SteamAPI.csproj">
+      <Project>{6cec0333-81eb-40ee-85d1-941363626fc7}</Project>
+      <Name>SteamAPI</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
 </Project>

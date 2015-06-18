@@ -7,8 +7,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{6CEC0333-81EB-40EE-85D1-941363626FC7}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>SteamTrade</RootNamespace>
-    <AssemblyName>SteamTrade</AssemblyName>
+    <RootNamespace>SteamAPI</RootNamespace>
+    <AssemblyName>SteamAPI</AssemblyName>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
@@ -52,22 +52,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Exceptions\TradeException.cs" />
-    <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
-    <Compile Include="TF2Value.cs" />
-    <Compile Include="Trade.cs" />
-    <Compile Include="Schema.cs" />
-    <Compile Include="Inventory.cs" />
+    <Compile Include="Inventory\CSGOInventory.cs" />
+    <Compile Include="Inventory\Dota2Inventory.cs" />
+    <Compile Include="Inventory\Inventory.cs" />
     <Compile Include="SteamWeb.cs" />
-    <Compile Include="TradeOffer\OfferSession.cs" />
-    <Compile Include="TradeOffer\TradeOffer.cs" />
-    <Compile Include="TradeOffer\TradeOfferManager.cs" />
-    <Compile Include="TradeOffer\TradeOfferWebAPI.cs" />
+    <Compile Include="Inventory\TF2Inventory.cs" />
+    <Compile Include="TradeOffer.cs" />
     <Compile Include="TradeWebAPI\TradeStatus.cs" />
     <Compile Include="TradeWebAPI\TradeSession.cs" />
-    <Compile Include="TradeManager.cs" />
-    <Compile Include="Exceptions\InventoryFetchException.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
