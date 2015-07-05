@@ -378,7 +378,14 @@ namespace SteamAPI
             {
                 foreach (var tradeOffer in sentTradeOffers)
                 {
-                    temp.Add(JsonConvert.DeserializeObject<TradeOffer>(Convert.ToString(tradeOffer)));                    
+                    TradeOffer tempTrade = JsonConvert.DeserializeObject<TradeOffer> (Convert.ToString (tradeOffer));
+                    if (tempTrade.ItemsToReceive == null) {
+                        tempTrade.ItemsToReceive = new TradeOffers.TradeOffer.CEconAsset [0];
+                    }
+                    if (tempTrade.ItemsToGive == null) {
+                        tempTrade.ItemsToGive = new TradeOffers.TradeOffer.CEconAsset [0];
+                    }
+                    temp.Add(tempTrade);
                 }
             }
             var receivedTradeOffers = json.response.trade_offers_received;
@@ -386,7 +393,14 @@ namespace SteamAPI
             {
                 foreach (var tradeOffer in receivedTradeOffers)
                 {
-                    temp.Add(JsonConvert.DeserializeObject<TradeOffer>(Convert.ToString(tradeOffer)));
+                    TradeOffer tempTrade = JsonConvert.DeserializeObject<TradeOffer> (Convert.ToString (tradeOffer));
+                    if (tempTrade.ItemsToReceive == null) {
+                        tempTrade.ItemsToReceive = new TradeOffers.TradeOffer.CEconAsset [0];
+                    }
+                    if (tempTrade.ItemsToGive == null) {
+                        tempTrade.ItemsToGive = new TradeOffers.TradeOffer.CEconAsset [0];
+                    }
+                    temp.Add(tempTrade);
                 }
             }
             return temp;
