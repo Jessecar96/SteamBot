@@ -9,6 +9,7 @@
             "Username":"BOT USERNAME",
             "Password":"BOT PASSWORD",
             "ApiKey":"Bot specific apiKey",
+			"TradeOfferRefreshRate": 2000,
             "DisplayName":"TestBot",
             "ChatResponse":"Hi there bro",
             "logFile": "TestBot.log",
