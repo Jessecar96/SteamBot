@@ -21,13 +21,15 @@ namespace SteamAPI
         private List<ulong> ReceivedPendingTradeOffers;
         private string AccountApiKey;
         private bool ShouldCheckPendingTradeOffers;
+        private int TradeOfferRefreshRate;
 
-        public TradeOffers(SteamID botId, SteamWeb steamWeb, string accountApiKey, List<ulong> pendingTradeOffers = null)
+        public TradeOffers(SteamID botId, SteamWeb steamWeb, string accountApiKey, int TradeOfferRefreshRate, List<ulong> pendingTradeOffers = null)
         {
             this.BotId = botId;
             this.SteamWeb = steamWeb;
             this.AccountApiKey = accountApiKey;
             this.ShouldCheckPendingTradeOffers = true;
+            this.TradeOfferRefreshRate = TradeOfferRefreshRate;
 
             if (pendingTradeOffers == null)
                 this.OurPendingTradeOffers = new List<ulong>();
@@ -756,7 +758,7 @@ namespace SteamAPI
                         }
                     }
                 }
-                System.Threading.Thread.Sleep(2000);
+                System.Threading.Thread.Sleep(TradeOfferRefreshRate);
             }
         }
 

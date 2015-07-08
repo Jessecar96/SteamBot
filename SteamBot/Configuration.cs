@@ -150,6 +150,7 @@ namespace SteamBot
             public string Username { get; set; }
             public string Password { get; set; }
             public string ApiKey { get; set; }
+            public int TradeOfferRefreshRate { get; set; }
             public string DisplayName { get; set; }
             public string ChatResponse { get; set; }
             public string LogFile { get; set; }

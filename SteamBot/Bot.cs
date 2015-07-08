@@ -80,6 +80,11 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
+
+        /// <summary>
+        /// The time in milliseconds between checking for new trade offers.
+        /// </value>
+        public readonly int TradeOfferRefreshRate;
         #endregion
 
         #region Public variables
@@ -131,6 +136,7 @@ namespace SteamBot
             };
             DisplayName  = config.DisplayName;
             ChatResponse = config.ChatResponse;
+            TradeOfferRefreshRate = config.TradeOfferRefreshRate;
             DisplayNamePrefix = config.DisplayNamePrefix;
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
@@ -503,7 +509,7 @@ namespace SteamBot
             
             cookiesAreInvalid = false;
 
-            TradeOffers = new TradeOffers(SteamUser.SteamID, SteamWeb, ApiKey);
+            TradeOffers = new TradeOffers(SteamUser.SteamID, SteamWeb, ApiKey, TradeOfferRefreshRate);
             TradeOffers.TradeOfferAccepted += TradeOffers_TradeOfferAccepted;
             TradeOffers.TradeOfferDeclined += TradeOffers_TradeOfferDeclined;
             TradeOffers.TradeOfferReceived += TradeOffers_TradeOfferReceived;
