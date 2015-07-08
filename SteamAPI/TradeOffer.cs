@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
 using SteamKit2;
@@ -378,14 +379,7 @@ namespace SteamAPI
             {
                 foreach (var tradeOffer in sentTradeOffers)
                 {
-                    TradeOffer tempTrade = JsonConvert.DeserializeObject<TradeOffer> (Convert.ToString (tradeOffer));
-                    if (tempTrade.ItemsToReceive == null) {
-                        tempTrade.ItemsToReceive = new TradeOffers.TradeOffer.CEconAsset [0];
-                    }
-                    if (tempTrade.ItemsToGive == null) {
-                        tempTrade.ItemsToGive = new TradeOffers.TradeOffer.CEconAsset [0];
-                    }
-                    temp.Add(tempTrade);
+                    temp.Add(JsonConvert.DeserializeObject<TradeOffer> (Convert.ToString (tradeOffer)));
                 }
             }
             var receivedTradeOffers = json.response.trade_offers_received;
@@ -393,14 +387,7 @@ namespace SteamAPI
             {
                 foreach (var tradeOffer in receivedTradeOffers)
                 {
-                    TradeOffer tempTrade = JsonConvert.DeserializeObject<TradeOffer> (Convert.ToString (tradeOffer));
-                    if (tempTrade.ItemsToReceive == null) {
-                        tempTrade.ItemsToReceive = new TradeOffers.TradeOffer.CEconAsset [0];
-                    }
-                    if (tempTrade.ItemsToGive == null) {
-                        tempTrade.ItemsToGive = new TradeOffers.TradeOffer.CEconAsset [0];
-                    }
-                    temp.Add(tempTrade);
+                    temp.Add(JsonConvert.DeserializeObject<TradeOffer> (Convert.ToString (tradeOffer)));
                 }
             }
             return temp;
@@ -434,7 +421,18 @@ namespace SteamAPI
         }
 
         public class TradeOffer
-        {            
+        {
+            [OnDeserialized()]
+            internal void OnDeserializedMethod(StreamingContext context)
+            {
+                if (ItemsToReceive == null) {
+                    ItemsToReceive = new TradeOffers.TradeOffer.CEconAsset [0];
+                }
+                if (ItemsToGive == null) {
+                    ItemsToGive = new TradeOffers.TradeOffer.CEconAsset [0];
+                }
+            }
+
             [JsonProperty("tradeofferid")]
             public ulong Id { get; set; }
 
