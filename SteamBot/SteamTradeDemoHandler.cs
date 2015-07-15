@@ -52,13 +52,13 @@ namespace SteamBot
         public override void OnTradeError (string error) 
         {
             SendChatMessage("Oh, there was an error: {0}.", error);
-            Bot.Log.Warn (error);
+            Log.Warn (error);
         }
         
         public override void OnTradeTimeout () 
         {
             SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
-            Bot.Log.Info ("User was kicked because he was AFK.");
+            Log.Info ("User was kicked because he was AFK.");
         }
         
         public override void OnTradeInit() 
@@ -196,8 +196,13 @@ namespace SteamBot
 
         public override void OnTradeSuccess()
         {
-            // Trade completed successfully
             Log.Success("Trade Complete.");
+        }
+
+        public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID)
+        {
+            Log.Warn("Trade ended awaiting email confirmation");
+            SendChatMessage("Please complete the email confirmation to finish the trade");
         }
 
         public override void OnTradeAccept() 

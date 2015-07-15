@@ -863,6 +863,7 @@ namespace SteamBot
         public void SubscribeTrade (Trade trade, UserHandler handler)
         {
             trade.OnSuccess += handler.OnTradeSuccess;
+            trade.OnAwaitingEmailConfirmation += handler.OnTradeAwaitingEmailConfirmation;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
             trade.OnStatusError += handler.OnStatusError;
@@ -881,6 +882,7 @@ namespace SteamBot
         public void UnsubscribeTrade (UserHandler handler, Trade trade)
         {
             trade.OnSuccess -= handler.OnTradeSuccess;
+            trade.OnAwaitingEmailConfirmation -= handler.OnTradeAwaitingEmailConfirmation;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
             trade.OnStatusError -= handler.OnStatusError;

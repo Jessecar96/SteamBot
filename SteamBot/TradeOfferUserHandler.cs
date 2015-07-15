@@ -110,6 +110,8 @@ namespace SteamBot
 
         public override void OnTradeSuccess() { }
 
+        public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID) { }
+
         public override void OnTradeInit() { }
 
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }

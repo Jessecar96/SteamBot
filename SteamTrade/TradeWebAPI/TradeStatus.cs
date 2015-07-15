@@ -11,6 +11,8 @@ namespace SteamTrade.TradeWebAPI
         public bool newversion { get; set; }
             
         public bool success { get; set; }
+
+        public string tradeid { get; set; }
             
         public long trade_status { get; set; }
             
