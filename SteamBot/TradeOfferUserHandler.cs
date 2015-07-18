@@ -13,8 +13,47 @@ namespace SteamBot
 
         public override void OnNewTradeOffer(TradeOffer offer)
         {
+			Log.Info ("Trade offer recieved from user ID: " + offer.PartnerSteamId);
+
+			//Get items in the trade, and ID of user sending trade
+			var theirItems = offer.Items.GetTheirItems ();
+			var myItems = offer.Items.GetMyItems ();
+			var userID = offer.PartnerSteamId;
+
+			//Check if they are trying to get items from the bot
+			if (myItems.Count > 0 || theirItems.Count == 0) {
+				if (offer.Decline ()) {
+					Log.Success ("Offer declined because the offer wasn't a gift; the user wanted items instead of giving.");
+				}
+				return;
+			}
+
+			//Check to make sure all items are for CS: GO.
+			foreach (TradeAsset item in theirItems) {
+				if (item.AppId != 570) {
+					if (offer.Decline ()) {
+						Log.Success("Offer declined because one or more items was not for CS: GO.");
+					}
+					return;
+				}
+			}
+
+			Log.Info ("Offer is a valid deposit, accepting offer.");
+			string tradeid;
+			if (offer.Accept (out tradeid)) {
+				Log.Success ("Trade offer accepted, sending data to server. Trade ID: " + tradeid);
+
+				//Send request to server with items and steam ID of user
+
+			}
+
+
+
+
+
+			//Example code given:
             //receiving a trade offer 
-            if (IsAdmin)
+            /* if (IsAdmin)
             {
                 //parse inventories of bot and other partner
                 //either with webapi or generic inventory
@@ -58,7 +97,7 @@ namespace SteamBot
                 {
                     Log.Info("Declined trade offer : " + offer.TradeOfferId + " from untrusted user " + OtherSID.ConvertToUInt64());
                 }
-            }
+            } */
         }
 
         public override void OnMessage(string message, EChatEntryType type)
