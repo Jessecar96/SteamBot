@@ -5,6 +5,15 @@ using System;
 using System.Collections.Generic;
 using TradeAsset = SteamTrade.TradeOffer.TradeOffer.TradeStatusUser.TradeAsset;
 
+using System.IO;
+using System.Collections;
+using System.Text;
+using System.Net;
+using System.Web.Script.Serialization;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
 namespace SteamBot
 {
     public class TradeOfferUserHandler : UserHandler
@@ -44,7 +53,49 @@ namespace SteamBot
 				Log.Success ("Trade offer accepted, sending data to server. Trade ID: " + tradeid);
 
 				//Send request to server with items and steam ID of user
+				var request = (HttpWebRequest)WebRequest.Create ("http://csgowinbig.jordanturley.com/php/deposit.php");
 
+				var postData = "owner=" + offer.PartnerSteamId;
+				postData += "&allItems=";
+
+				ArrayList allItems = new ArrayList();
+
+				foreach (TradeAsset item in theirItems) {
+					string name = item.ToString ();
+
+					var itemPriceRequest = (HttpWebRequest)WebRequest.Create("http://www.example.com/recepticle.aspx");
+					var itemPriceResponse = (HttpWebResponse)itemPriceRequest.GetResponse();
+					var itemPriceResponseString = new StreamReader(itemPriceResponse.GetResponseStream()).ReadToEnd();
+
+					JObject j = JObject.Parse (@itemPriceResponseString);
+					string itemValueStr = (string)j["median_price"];
+					itemValueStr = itemValueStr.Substring (4);
+
+					int itemValue = Convert.ToInt32 (itemValueStr, 10) * 100;
+
+					CSGOItem itemObj = new CSGOItem();
+					itemObj.name = name;
+					itemObj.price = itemValue;
+
+					allItems.Add (itemObj);
+				}
+
+				string allItemsJson = JsonConvert.SerializeObject (allItems);
+				postData += allItemsJson;
+
+				var data = Encoding.ASCII.GetBytes(postData);
+
+				request.Method = "POST";
+				request.ContentType = "application/x-www-form-urlencoded";
+				request.ContentLength = data.Length;
+
+				using (var stream = request.GetRequestStream()) {
+					stream.Write(data, 0, data.Length);
+				}
+
+				var response = (HttpWebResponse)request.GetResponse();
+
+				var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
 			}
 
 
@@ -171,4 +222,9 @@ namespace SteamBot
             return false;
         }
     }
+
+	public class CSGOItem {
+		public string name;
+		public int price;
+	}
 }
