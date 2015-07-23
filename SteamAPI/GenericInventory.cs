@@ -124,9 +124,9 @@ namespace SteamAPI
             return FetchInventory(inventoryUrl, steamId, botId, appId, contextId);
         }
 
-        private Inventory FetchInventory(string inventoryUrl, SteamID steamId, SteamID botId, int appId, ulong contextId)
+        private Inventory FetchInventory(string inventoryUrl, SteamID steamId, SteamID botId, int appId, ulong contextId, int start = 0)
         {
-            string response = RetryWebRequest(inventoryUrl, botId);
+            string response = RetryWebRequest(inventoryUrl + "&start=" + start, botId);
             try
             {
                 var inventory = JsonConvert.DeserializeObject<Inventory>(response);
@@ -149,6 +149,12 @@ namespace SteamAPI
                     var inventoryItem = inventory.RgDescriptions[key];
                     inventoryItem.ContextId = contextId;
                     inventoryItem.IsCurrency = item.IsCurrency;
+                }
+                if(inventory.More){
+                    Inventory addInv = FetchInventory(inventoryUrl, steamId, botId, appId, contextId, inventory.MoreStart);
+                    inventory.RgInventory.Concat(addInv.RgInventory);
+                    inventory.RgCurrencies.Concat(addInv.RgCurrencies);
+                    inventory.RgDescriptions.Concat(addInv.RgDescriptions);
                 }
                 return inventory;
             }
@@ -464,8 +470,9 @@ namespace SteamAPI
             [JsonProperty("more")]
             public bool More { get; set; }
 
+            //If the JSON returns false it will be 0 (as it should be)
             [JsonProperty("more_start")]
-            public bool MoreStart { get; set; }
+            public int MoreStart { get; set; }
 
             public class Item
             {
