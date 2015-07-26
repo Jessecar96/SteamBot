@@ -66,7 +66,11 @@ namespace SteamBot
 				foreach (TradeAsset item in theirItems) {
 					string name = item.ToString ();
 
-					var itemPriceRequest = (HttpWebRequest)WebRequest.Create("http://www.example.com/recepticle.aspx");
+					string nameHash = System.Uri.EscapeDataString (name);
+
+					string priceURL = "http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=" + nameHash;
+
+					var itemPriceRequest = (HttpWebRequest)WebRequest.Create(priceURL);
 					var itemPriceResponse = (HttpWebResponse)itemPriceRequest.GetResponse();
 					var itemPriceResponseString = new StreamReader(itemPriceResponse.GetResponseStream()).ReadToEnd();
 
