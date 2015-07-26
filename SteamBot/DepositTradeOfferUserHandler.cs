@@ -35,7 +35,7 @@ namespace SteamBot
 			//Check if they are trying to get items from the bot
 			if (myItems.Count > 0 || theirItems.Count == 0) {
 				if (offer.Decline ()) {
-					Log.Success ("Offer declined because the offer wasn't a gift; the user wanted items instead of giving.");
+					Log.Error ("Offer declined because the offer wasn't a gift; the user wanted items instead of giving.");
 				}
 				return;
 			}
@@ -44,7 +44,7 @@ namespace SteamBot
 			foreach (TradeAsset item in theirItems) {
 				if (item.AppId != 570) {
 					if (offer.Decline ()) {
-						Log.Success("Offer declined because one or more items was not for CS: GO.");
+						Log.Error ("Offer declined because one or more items was not for CS: GO.");
 					}
 					return;
 				}
