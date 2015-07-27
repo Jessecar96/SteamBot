@@ -78,9 +78,14 @@ namespace SteamBot
 
 					int itemValue = Convert.ToInt32 (itemValueStr, 10) * 100;
 
+					long appId = item.AppId, contextId = item.ContextId, assetId = item.AssetId;
+
 					CSGOItem itemObj = new CSGOItem();
 					itemObj.name = name;
 					itemObj.price = itemValue;
+					itemObj.appId = appId;
+					itemObj.contextId = contextId;
+					itemObj.assetId = assetId;
 
 					allItems.Add (itemObj);
 				}
@@ -145,5 +150,9 @@ namespace SteamBot
 	public class CSGOItem {
 		public string name;
 		public int price;
+
+		public long appId;
+		public long contextId;
+		public long assetId;
 	}
 }
