@@ -25,8 +25,6 @@ namespace SteamBot
 			var botInfo = new Configuration.BotInfo();
 			string pass = botInfo.Password;
 
-			Log.Info ("Trade offer recieved from user ID: " + offer.PartnerSteamId);
-
 			//Get items in the trade, and ID of user sending trade
 			var theirItems = offer.Items.GetTheirItems ();
 			var myItems = offer.Items.GetMyItems ();
@@ -42,7 +40,7 @@ namespace SteamBot
 
 			//Check to make sure all items are for CS: GO.
 			foreach (TradeAsset item in theirItems) {
-				if (item.AppId != 570) {
+				if (item.AppId != 730) {
 					if (offer.Decline ()) {
 						Log.Error ("Offer declined because one or more items was not for CS: GO.");
 					}
