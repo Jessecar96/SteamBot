@@ -924,11 +924,10 @@ namespace SteamBot
                 Log.Info("This bot died. Stopping it..");
                 //backgroundWorker.RunWorkerAsync();
                 //Thread.Sleep(10000);
-                StopBot();
+                StopBot(); //disposes log
                 //StartBot();
             }
 
-            Log.Dispose();
         }
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
