@@ -48,67 +48,43 @@ namespace SteamBot
 				}
 			}
 
-			Log.Info ("Offer is a valid deposit, accepting offer.");
-			string tradeid;
-			if (offer.Accept (out tradeid)) {
-				Log.Success ("Trade offer accepted, sending data to server. Trade ID: " + tradeid);
+			//Send items to server and check if all items add up to more than $1.
+			//If they do, accept the trade. If they don't, decline the trade.
+			string postData = "password=" + pass;
+			postData += "&owner=" + userID;
 
-				//Send request to server with items and steam ID of user
-				var request = (HttpWebRequest)WebRequest.Create ("http://csgowinbig.jordanturley.com/php/deposit.php");
+			string theirItemsJSON = JsonConvert.SerializeObject (theirItems);
+			postData += "&items=" + theirItemsJSON;
 
-				var postData = "owner=" + offer.PartnerSteamId;
-				postData += "&allItems=";
+			string url = "http://csgowinbig.jordanturley.com/php/deposit.php";
+			var request = (HttpWebRequest)WebRequest.Create (url);
 
-				ArrayList allItems = new ArrayList();
+			var data = Encoding.ASCII.GetBytes(postData);
 
-				foreach (TradeAsset item in theirItems) {
-					string name = item.ToString ();
+			request.Method = "POST";
+			request.ContentType = "application/x-www-form-urlencoded";
+			request.ContentLength = data.Length;
 
-					string nameHash = System.Uri.EscapeDataString (name);
+			using (var stream = request.GetRequestStream()) {
+				stream.Write(data, 0, data.Length);
+			}
 
-					string priceURL = "http://steamcommunity.com/market/priceoverview/?currency=3&appid=730&market_hash_name=" + nameHash;
+			var response = (HttpWebResponse)request.GetResponse();
 
-					var itemPriceRequest = (HttpWebRequest)WebRequest.Create(priceURL);
-					var itemPriceResponse = (HttpWebResponse)itemPriceRequest.GetResponse();
-					var itemPriceResponseString = new StreamReader(itemPriceResponse.GetResponseStream()).ReadToEnd();
+			var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
 
-					JObject j = JObject.Parse (@itemPriceResponseString);
-					string itemValueStr = (string)j["median_price"];
-					itemValueStr = itemValueStr.Substring (4);
+			var responseJsonObj = JObject.Parse (responseString);
 
-					int itemValue = Convert.ToInt32 (itemValueStr, 10) * 100;
-
-					long appId = item.AppId, contextId = item.ContextId, assetId = item.AssetId;
-
-					CSGOItem itemObj = new CSGOItem();
-					itemObj.name = name;
-					itemObj.price = itemValue;
-					itemObj.appId = appId;
-					itemObj.contextId = contextId;
-					itemObj.assetId = assetId;
-
-					allItems.Add (itemObj);
+			if (responseJsonObj ["success"] == 1) {
+				if (responseJsonObj ["minDeposit"] == 1) {
+					if (offer.Accept ()) {
+						Log.Success ("Offer accepted from " + userID);
+					}
+				} else {
+					if (offer.Decline ()) {
+						Log.Error ("Minimum deposit not reached, offer declined.");
+					}
 				}
-
-				string allItemsJson = JsonConvert.SerializeObject (allItems);
-				postData += allItemsJson;
-
-				var data = Encoding.ASCII.GetBytes(postData);
-
-				request.Method = "POST";
-				request.ContentType = "application/x-www-form-urlencoded";
-				request.ContentLength = data.Length;
-
-				using (var stream = request.GetRequestStream()) {
-					stream.Write(data, 0, data.Length);
-				}
-
-				var response = (HttpWebResponse)request.GetResponse();
-
-				var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-
-				//Check responseString to see if it is the end of a round
-				//If it is, send out the trade to the winner, and send offer to the profit account, with ~2% of items
 			}
         }
 
@@ -148,9 +124,6 @@ namespace SteamBot
     }
 
 	public class CSGOItem {
-		public string name;
-		public int price;
-
 		public long appId;
 		public long contextId;
 		public long assetId;
