@@ -927,6 +927,8 @@ namespace SteamBot
                 StopBot(); //disposes log
                 //StartBot();
             }
+            
+            DisposeLog();
 
         }
 
