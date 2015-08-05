@@ -22,31 +22,38 @@ namespace SteamBot
 
         public override void OnNewTradeOffer(TradeOffer offer)
         {
-			var botInfo = new Configuration.BotInfo();
-			string pass = botInfo.Password;
+			//Get password from file on desktop
+			string pass = System.IO.File.ReadAllText(@"C:\Users\Jordan\Desktop\password.txt");
 
 			//Get items in the trade, and ID of user sending trade
 			var theirItems = offer.Items.GetTheirItems ();
 			var myItems = offer.Items.GetMyItems ();
 			var userID = offer.PartnerSteamId;
 
+			bool shouldDecline = false;
+
 			//Check if they are trying to get items from the bot
 			if (myItems.Count > 0 || theirItems.Count == 0) {
-				if (offer.Decline ()) {
-					Log.Error ("Offer declined because the offer wasn't a gift; the user wanted items instead of giving.");
-				}
-				return;
+				shouldDecline = true;
+				Log.Error ("Offer declined because the offer wasn't a gift; the user wanted items instead of giving.");
 			}
 
 			//Check to make sure all items are for CS: GO.
 			foreach (TradeAsset item in theirItems) {
 				if (item.AppId != 730) {
-					if (offer.Decline ()) {
-						Log.Error ("Offer declined because one or more items was not for CS: GO.");
-					}
-					return;
+					shouldDecline = true;
+					Log.Error ("Offer declined because one or more items was not for CS: GO.");
 				}
 			}
+
+			if (shouldDecline) {
+				if (offer.Decline ()) {
+					Log.Error ("Offer declined.");
+				}
+				return;
+			}
+
+			Log.Success ("Offer approved, accepting.");
 
 			//Send items to server and check if all items add up to more than $1.
 			//If they do, accept the trade. If they don't, decline the trade.
@@ -54,7 +61,10 @@ namespace SteamBot
 			postData += "&owner=" + userID;
 
 			string theirItemsJSON = JsonConvert.SerializeObject (theirItems);
+
 			postData += "&items=" + theirItemsJSON;
+
+			Log.Success ("Post data string: \n" + postData);
 
 			string url = "http://csgowinbig.jordanturley.com/php/deposit.php";
 			var request = (HttpWebRequest)WebRequest.Create (url);
@@ -73,18 +83,45 @@ namespace SteamBot
 
 			var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
 
-			var responseJsonObj = JObject.Parse (responseString);
+			Log.Success ("Response received from server: \n" + responseString);
 
-			if (responseJsonObj ["success"] == 1) {
-				if (responseJsonObj ["minDeposit"] == 1) {
+			JSONClass responseJsonObj = JsonConvert.DeserializeObject<JSONClass> (responseString);
+
+			if (responseJsonObj.success == 1) {
+				//Get data array from json
+				var jsonData = responseJsonObj.data;
+
+				if (jsonData.minDeposit == 1) {
 					if (offer.Accept ()) {
 						Log.Success ("Offer accepted from " + userID);
+					}
+
+					//Check if the pot is over
+					if (jsonData.potOver == 1) {
+						//Get the winner, and items to give and keep
+
+						var itemsToGive = jsonData.tradeItems;
+						var itemsToKeep = jsonData.profitItems;
+
+						string winnerSteamIDString = jsonData.winnerSteamID;
+						SteamID winnerSteamID = new SteamID (winnerSteamIDString);
+
+						//Create trade offer for the winner
+						var tradeOffer = Bot.NewTradeOffer (winnerSteamID);
+
+						//Loop through all winner's items and add them to trade
+						foreach (CSGOItem item in itemsToGive) {
+							
+						}
 					}
 				} else {
 					if (offer.Decline ()) {
 						Log.Error ("Minimum deposit not reached, offer declined.");
 					}
 				}
+			} else {
+				Log.Error ("Server deposit request failed, declining trade. Error message:\n" + responseJsonObj.errMsg);
+				offer.Decline ();
 			}
         }
 
@@ -127,5 +164,26 @@ namespace SteamBot
 		public long appId;
 		public long contextId;
 		public long assetId;
+	}
+
+	public class JSONClass {
+		public int success;
+		public string errMsg; //Error message
+		public Data data;
+	}
+
+	public class Data {
+		public int minDeposit;
+		public int potOver;
+		public string winnerSteamID;
+		public List<CSGOItem> tradeItems;
+		public List<CSGOItem> profitItems;
+	}
+
+	public class CSGOItemFromWeb {
+		public long appId;
+		public long contextId;
+		public long assetId;
+
 	}
 }
