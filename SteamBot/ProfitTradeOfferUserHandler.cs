@@ -33,7 +33,8 @@ namespace SteamBot
 			}
 
 			//Check to make sure the offer is from the deposit account
-			if (offer.PartnerSteamId == 1234567890 && myItems.Count == 0 && theirItems.Count > 0) {
+			//Also check counts again just to be sure
+			if (offer.PartnerSteamId.ConvertToUInt64 () == 76561198238743988 && myItems.Count == 0 && theirItems.Count > 0) {
 				if (offer.Accept ()) {
 					Log.Success ("Profit offer accepted!");
 				}
