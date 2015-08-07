@@ -16,12 +16,12 @@ using Newtonsoft.Json.Linq;
 
 namespace SteamBot
 {
-    public class DepositTradeOfferUserHandler : UserHandler
-    {
-        public DepositTradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
+	public class DepositTradeOfferUserHandler : UserHandler
+	{
+		public DepositTradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
-        public override void OnNewTradeOffer(TradeOffer offer)
-        {
+		public override void OnNewTradeOffer(TradeOffer offer)
+		{
 			//Get password from file on desktop
 			string pass = System.IO.File.ReadAllText(@"C:\Users\Jordan\Desktop\password.txt");
 
@@ -124,8 +124,8 @@ namespace SteamBot
 						//Create trade offer for the winner
 						var winnerTradeOffer = Bot.NewTradeOffer (winnerSteamID);
 
-						//Loop through all winner's items and add them to winnerItems array with amount
-						List<PayoutItem> winnerItems = new List<PayoutItem>();
+						//Loop through all winner's items and add them to trade
+						List<long> alreadyAddedToWinnerTrade = new List<long> ();
 						foreach (CSGOItemFromWeb item in itemsToGive) {
 							long classId = item.classId, instanceId = item.instanceId;
 
@@ -136,32 +136,20 @@ namespace SteamBot
 								long tAssetId = value.id, tClassId = value.classid, tInstanceId = value.instanceid;
 
 								if (tClassId == classId && tInstanceId == instanceId) {
+									//Check if this assetId has already been added to the trade
+									if (alreadyAddedToWinnerTrade.Contains (tAssetId)) {
+										continue;
+										//This is for when there are 2 of the same weapon, but they have different assetIds
+									}
 									assetId = tAssetId;
+									break;
 								}
 							}
 
-							//Loop through winnerItems. If there is already an item in with this assetId, increase the amount. If not, add this assetId.
-							bool alreadyInWinnerItems = false;
-							foreach (PayoutItem payoutItem in winnerItems) {
-								if (payoutItem.assetId == assetId) {
-									payoutItem.amount++;
-									alreadyInWinnerItems = true;
-								}
-							}
+							//Log.Success ("Adding item to winner trade offer. Asset ID: " + assetId);
 
-							if (!alreadyInWinnerItems) {
-								PayoutItem newItem = new PayoutItem ();
-								newItem.assetId = assetId;
-								newItem.amount = 1;
-								winnerItems.Add (newItem);
-							}
-						}
-
-						//Loop through winnerItems array and add items to trade
-						foreach (PayoutItem item in winnerItems) {
-							long assetId = item.assetId, amount = item.amount;
-
-							winnerTradeOffer.Items.AddMyItem (730, 2, assetId, amount);
+							winnerTradeOffer.Items.AddMyItem (730, 2, assetId, 1);
+							alreadyAddedToWinnerTrade.Add (assetId);
 						}
 
 						//Send trade offer to winner
@@ -177,7 +165,7 @@ namespace SteamBot
 						var profitTradeOffer = Bot.NewTradeOffer (profitSteamID);
 
 						//Loop through all profit items and add them to trade
-						List<PayoutItem> profitItems = new List<PayoutItem>();
+						List<long> alreadyAddedToProfitTrade = new List<long> ();
 						foreach (CSGOItemFromWeb item in itemsToKeep) {
 							long classId = item.classId, instanceId = item.instanceId;
 
@@ -188,31 +176,19 @@ namespace SteamBot
 								long tAssetId = value.id, tClassId = value.classid, tInstanceId = value.instanceid;
 
 								if (tClassId == classId && tInstanceId == instanceId) {
+									if (alreadyAddedToProfitTrade.Contains (tAssetId)) {
+										continue;
+										//This is for when there are 2 of the same weapon, but they have different assetIds
+									}
 									assetId = tAssetId;
+									break;
 								}
 							}
 
-							bool alreadyInProfitItems = false;
-							foreach (PayoutItem payoutItem in profitItems) {
-								if (payoutItem.assetId == assetId) {
-									payoutItem.amount++;
-									alreadyInProfitItems = true;
-								}
-							}
+							//Log.Success ("Adding item to winner trade offer. Asset ID: " + assetId);
 
-							if (!alreadyInProfitItems) {
-								PayoutItem newItem = new PayoutItem ();
-								newItem.assetId = assetId;
-								newItem.amount = 1;
-								profitItems.Add (newItem);
-							}
-						}
-
-						//Loop through profitItems array and add items to trade
-						foreach (PayoutItem item in profitItems) {
-							long assetId = item.assetId, amount = item.amount;
-
-							profitTradeOffer.Items.AddMyItem (730, 2, assetId, amount);
+							profitTradeOffer.Items.AddMyItem (730, 2, assetId, 1);
+							alreadyAddedToProfitTrade.Add (assetId);
 						}
 
 						//Send trade offer to profit account
@@ -229,41 +205,41 @@ namespace SteamBot
 				Log.Error ("Server deposit request failed, declining trade. Error message:\n" + responseJsonObj.errMsg);
 				offer.Decline ();
 			}
-        }
+		}
 
-        public override void OnMessage(string message, EChatEntryType type)
-        {
+		public override void OnMessage(string message, EChatEntryType type)
+		{
 			SendChatMessage (Bot.ChatResponse);
-        }
+		}
 
-        public override bool OnGroupAdd() { return false; }
+		public override bool OnGroupAdd() { return false; }
 
-        public override bool OnFriendAdd() { return IsAdmin; }
+		public override bool OnFriendAdd() { return IsAdmin; }
 
-        public override void OnFriendRemove() { }
+		public override void OnFriendRemove() { }
 
-        public override void OnLoginCompleted() { }
+		public override void OnLoginCompleted() { }
 
-        public override bool OnTradeRequest() { return false; }
+		public override bool OnTradeRequest() { return false; }
 
-        public override void OnTradeError(string error) { }
+		public override void OnTradeError(string error) { }
 
-        public override void OnTradeTimeout() { }
+		public override void OnTradeTimeout() { }
 
-        public override void OnTradeSuccess() { }
+		public override void OnTradeSuccess() { }
 
-        public override void OnTradeInit() { }
+		public override void OnTradeInit() { }
 
-        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
+		public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
 
-        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
+		public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
 
-        public override void OnTradeMessage(string message) { }
+		public override void OnTradeMessage(string message) { }
 
-        public override void OnTradeReady(bool ready) { }
+		public override void OnTradeReady(bool ready) { }
 
-        public override void OnTradeAccept() { }
-    }
+		public override void OnTradeAccept() { }
+	}
 
 	public class CSGOItem {
 		public long appId;
@@ -301,10 +277,5 @@ namespace SteamBot
 		public long id;
 		public long classid;
 		public long instanceid;
-	}
-
-	public class PayoutItem {
-		public long assetId;
-		public long amount;
 	}
 }
