@@ -126,7 +126,6 @@ namespace SteamBot
 
 						//Loop through all winner's items and add them to winnerItems array with amount
 						List<PayoutItem> winnerItems = new List<PayoutItem>();
-
 						foreach (CSGOItemFromWeb item in itemsToGive) {
 							long classId = item.classId, instanceId = item.instanceId;
 
@@ -152,15 +151,10 @@ namespace SteamBot
 
 							if (!alreadyInWinnerItems) {
 								PayoutItem newItem = new PayoutItem ();
-								newItem.amount = 1;
 								newItem.assetId = assetId;
+								newItem.amount = 1;
 								winnerItems.Add (newItem);
 							}
-
-
-
-							//Log.Success ("Adding item to winner trade offer. Asset ID: " + assetId);
-
 						}
 
 						//Loop through winnerItems array and add items to trade
@@ -183,6 +177,7 @@ namespace SteamBot
 						var profitTradeOffer = Bot.NewTradeOffer (profitSteamID);
 
 						//Loop through all profit items and add them to trade
+						List<PayoutItem> profitItems = new List<PayoutItem>();
 						foreach (CSGOItemFromWeb item in itemsToKeep) {
 							long classId = item.classId, instanceId = item.instanceId;
 
@@ -197,9 +192,27 @@ namespace SteamBot
 								}
 							}
 
-							//Log.Success ("Adding item to winner trade offer. Asset ID: " + assetId);
+							bool alreadyInProfitItems = false;
+							foreach (PayoutItem payoutItem in profitItems) {
+								if (payoutItem.assetId == assetId) {
+									payoutItem.amount++;
+									alreadyInProfitItems = true;
+								}
+							}
 
-							profitTradeOffer.Items.AddMyItem (730, 2, assetId, 1);
+							if (!alreadyInProfitItems) {
+								PayoutItem newItem = new PayoutItem ();
+								newItem.assetId = assetId;
+								newItem.amount = 1;
+								profitItems.Add (newItem);
+							}
+						}
+
+						//Loop through profitItems array and add items to trade
+						foreach (PayoutItem item in profitItems) {
+							long assetId = item.assetId, amount = item.amount;
+
+							profitTradeOffer.Items.AddMyItem (730, 2, assetId, amount);
 						}
 
 						//Send trade offer to profit account
