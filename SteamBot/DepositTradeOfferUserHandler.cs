@@ -124,7 +124,9 @@ namespace SteamBot
 						//Create trade offer for the winner
 						var winnerTradeOffer = Bot.NewTradeOffer (winnerSteamID);
 
-						//Loop through all winner's items and add them to trade
+						//Loop through all winner's items and add them to winnerItems array with amount
+						List<PayoutItem> winnerItems = new List<PayoutItem>();
+
 						foreach (CSGOItemFromWeb item in itemsToGive) {
 							long classId = item.classId, instanceId = item.instanceId;
 
@@ -139,9 +141,33 @@ namespace SteamBot
 								}
 							}
 
+							//Loop through winnerItems. If there is already an item in with this assetId, increase the amount. If not, add this assetId.
+							bool alreadyInWinnerItems = false;
+							foreach (PayoutItem payoutItem in winnerItems) {
+								if (payoutItem.assetId == assetId) {
+									payoutItem.amount++;
+									alreadyInWinnerItems = true;
+								}
+							}
+
+							if (!alreadyInWinnerItems) {
+								PayoutItem newItem = new PayoutItem ();
+								newItem.amount = 1;
+								newItem.assetId = assetId;
+								winnerItems.Add (newItem);
+							}
+
+
+
 							//Log.Success ("Adding item to winner trade offer. Asset ID: " + assetId);
 
-							winnerTradeOffer.Items.AddMyItem (730, 2, assetId, 1);
+						}
+
+						//Loop through winnerItems array and add items to trade
+						foreach (PayoutItem item in winnerItems) {
+							long assetId = item.assetId, amount = item.amount;
+
+							winnerTradeOffer.Items.AddMyItem (730, 2, assetId, amount);
 						}
 
 						//Send trade offer to winner
@@ -262,5 +288,10 @@ namespace SteamBot
 		public long id;
 		public long classid;
 		public long instanceid;
+	}
+
+	public class PayoutItem {
+		public long assetId;
+		public long amount;
 	}
 }
