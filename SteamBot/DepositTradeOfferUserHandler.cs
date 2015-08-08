@@ -120,7 +120,6 @@ namespace SteamBot
 						}
 						var rgInventory = botInventory.rgInventory;
 
-
 						//Create trade offer for the winner
 						var winnerTradeOffer = Bot.NewTradeOffer (winnerSteamID);
 
@@ -153,11 +152,16 @@ namespace SteamBot
 						}
 
 						//Send trade offer to winner
-						string winnerTradeOfferId, winnerMessage = "Congratulations, you have won on CSGO Win Big! Here are your items.";
-						winnerTradeOffer.SendWithToken (out winnerTradeOfferId, winnerTradeToken, winnerMessage);
-						Log.Success ("Offer sent to winner.");
+						if (itemsToGive.Count > 0) {
+							string winnerTradeOfferId, winnerMessage = "Congratulations, you have won on CSGO Win Big! Here are your items.";
+							winnerTradeOffer.SendWithToken (out winnerTradeOfferId, winnerTradeToken, winnerMessage);
+							Log.Success ("Offer sent to winner.");
+						} else {
+							Log.Info ("No items to give... strange");
+						}
 
-						//System.Threading.Thread.Sleep (1000);
+						//Wait for a second before sending next trade offer.
+						System.Threading.Thread.Sleep (1000);
 
 						//Create trade offer for items kept
 						string profitSteamIDString = "STEAM_0:1:66955921";
@@ -192,9 +196,13 @@ namespace SteamBot
 						}
 
 						//Send trade offer to profit account
-						string profitTradeOfferId;
-						profitTradeOffer.Send (out profitTradeOfferId, "Profit items.");
-						Log.Success ("Offer sent to profit.");
+						if (itemsToKeep.Count > 0) {
+							string profitTradeOfferId;
+							profitTradeOffer.Send (out profitTradeOfferId, "Profit items.");
+							Log.Success ("Offer sent to profit.");
+						} else {
+							Log.Info ("No items to keep.");
+						}
 					}
 				} else {
 					if (offer.Decline ()) {
