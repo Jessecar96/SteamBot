@@ -1,19 +1,17 @@
 using System;
-using System.Threading.Tasks;
-using System.Web;
-using System.Net;
-using System.Text;
-using System.IO;
-using System.Threading;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.ComponentModel;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 using SteamBot.SteamGroups;
 using SteamKit2;
-using SteamTrade;
 using SteamKit2.Internal;
+using SteamTrade;
 using SteamTrade.TradeOffer;
-using System.Globalization;
 
 namespace SteamBot
 {
@@ -46,6 +44,7 @@ namespace SteamBot
         private bool cookiesAreInvalid = true;
         private List<SteamID> friends;
         private bool disposed = false;
+        private int cellid = 0;
         #endregion
 
         #region Public readonly variables
@@ -207,6 +206,32 @@ namespace SteamBot
             callbackGrabber.DoWork += GrabCallback;
             callbackGrabber.RunWorkerCompleted += OnCallbackGrabEnd;
         }
+
+        private bool LoadServerList()
+        {
+            if (File.Exists("serverCellid.txt"))
+                int.TryParse(File.ReadAllText("serverCellid.txt"), out cellid);
+            if (File.Exists("servers.json"))
+                CMClient.Servers.TryAddRange(JsonConvert.DeserializeObject<IPEndPoint[]>(File.ReadAllText("servers.json")));
+            else
+            {
+                var serverLoadTask = SteamDirectory.Initialize(cellid);
+                serverLoadTask.Wait();
+                if (serverLoadTask.IsFaulted)
+                {
+                    Log.Error("Unable to load server list.");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void SaveServerList()
+        {
+            File.WriteAllText("serverCellid.txt", cellid.ToString());
+            string json = JsonConvert.SerializeObject(CMClient.Servers.GetAllEndPoints());
+            File.WriteAllText("servers.json", json);
+        }
         
         private void OnCallbackGrabEnd(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)
         {
@@ -307,6 +332,8 @@ namespace SteamBot
         /// <returns><c>true</c>. See remarks</returns>
         public bool StartBot()
         {
+            if (!LoadServerList())
+                return false; //Cancel starting of bot if server list fails.
             CreateLog();
             IsRunning = true;
             if (!callbackGrabber.IsBusy)
@@ -325,6 +352,8 @@ namespace SteamBot
         {
             IsRunning = false;
             Log.Debug("Trying to shut down bot thread.");
+            SteamUser.LogOff();
+            SaveServerList();
             SteamClient.Disconnect();
             callbackGrabber.CancelAsync();
             userHandlers.Clear();
