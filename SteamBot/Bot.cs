@@ -229,8 +229,7 @@ namespace SteamBot
         private void SaveServerList()
         {
             File.WriteAllText("serverCellid.txt", cellid.ToString());
-            string json = JsonConvert.SerializeObject(CMClient.Servers.GetAllEndPoints());
-            File.WriteAllText("servers.json", json);
+            File.WriteAllText("servers.json", JsonConvert.SerializeObject(CMClient.Servers.GetAllEndPoints()));
         }
         
         private void OnCallbackGrabEnd(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)
