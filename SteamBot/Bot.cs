@@ -209,8 +209,8 @@ namespace SteamBot
 
         private bool LoadServerList()
         {
-            if (File.Exists("serverCellid.txt"))
-                int.TryParse(File.ReadAllText("serverCellid.txt"), out cellid);
+            if (File.Exists("userCellID.txt"))
+                int.TryParse(File.ReadAllText("userCellID.txt"), out cellid);
             if (File.Exists("servers.json"))
                 CMClient.Servers.TryAddRange(JsonConvert.DeserializeObject<IPEndPoint[]>(File.ReadAllText("servers.json")));
             else
@@ -228,7 +228,6 @@ namespace SteamBot
 
         private void SaveServerList()
         {
-            File.WriteAllText("serverCellid.txt", cellid.ToString());
             File.WriteAllText("servers.json", JsonConvert.SerializeObject(CMClient.Servers.GetAllEndPoints()));
         }
         
