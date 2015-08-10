@@ -6,7 +6,6 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using SteamBot.SteamGroups;
 using SteamKit2;
 using SteamKit2.Internal;
@@ -211,8 +210,22 @@ namespace SteamBot
         {
             if (File.Exists("userCellID.txt"))
                 int.TryParse(File.ReadAllText("userCellID.txt"), out cellid);
-            if (File.Exists("servers.json"))
-                CMClient.Servers.TryAddRange(JsonConvert.DeserializeObject<IPEndPoint[]>(File.ReadAllText("servers.json")));
+            if (File.Exists("servers.bin"))
+            {
+                using (var fs = File.OpenRead("servers.bin"))
+                using (var reader = new BinaryReader(fs))
+                {
+                    while (fs.Position < fs.Length)
+                    {
+                        var numAddressBytes = reader.ReadInt32();
+                        var addressBytes = reader.ReadBytes(numAddressBytes);
+                        var port = reader.ReadInt32();
+                        var ipaddress = new IPAddress(addressBytes);
+                        var endPoint = new IPEndPoint(ipaddress, port);
+                        CMClient.Servers.TryAdd(endPoint);
+                    }
+                }
+            }
             else
             {
                 var serverLoadTask = SteamDirectory.Initialize(cellid);
@@ -228,7 +241,17 @@ namespace SteamBot
 
         private void SaveServerList()
         {
-            File.WriteAllText("servers.json", JsonConvert.SerializeObject(CMClient.Servers.GetAllEndPoints()));
+            using (var fs = File.OpenWrite("servers.bin"))
+            using (var writer = new BinaryWriter(fs))
+            {
+                foreach (var endPoint in CMClient.Servers.GetAllEndPoints())
+                {
+                    var addressBytes = endPoint.Address.GetAddressBytes();
+                    writer.Write(addressBytes.Length);
+                    writer.Write(addressBytes);
+                    writer.Write(endPoint.Port);
+                }
+            }
         }
         
         private void OnCallbackGrabEnd(object sender, RunWorkerCompletedEventArgs runWorkerCompletedEventArgs)
@@ -354,6 +377,8 @@ namespace SteamBot
             SaveServerList();
             SteamClient.Disconnect();
             callbackGrabber.CancelAsync();
+            while (callbackGrabber.IsBusy)
+                Thread.Yield();
             userHandlers.Clear();
             DisposeLog();
         }
