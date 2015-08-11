@@ -163,6 +163,8 @@ namespace SteamBot
             [JsonConverter(typeof(JsonToSteamID))]
             public IEnumerable<SteamKit2.SteamID> Admins { get; set; }
             public string SchemaLang { get; set; }
+            [DefaultValue(0)]
+            public int CellID { get; set; }
 
             // Depreciated configuration options
             public string LogLevel { get; set; }

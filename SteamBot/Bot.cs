@@ -31,6 +31,7 @@ namespace SteamBot
         private readonly bool isProccess;
         private readonly BackgroundWorker callbackGrabber;
         private readonly List<IDisposable> subscriptions;
+        private readonly int cellid;
         #endregion
 
         #region Private variables
@@ -43,7 +44,6 @@ namespace SteamBot
         private bool cookiesAreInvalid = true;
         private List<SteamID> friends;
         private bool disposed = false;
-        private int cellid = 0;
         #endregion
 
         #region Public readonly variables
@@ -185,6 +185,7 @@ namespace SteamBot
             CreateLog();
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
+            cellid = config.CellID;
             SteamWeb = new SteamWeb();
 
             // Hacking around https
@@ -208,9 +209,7 @@ namespace SteamBot
 
         private bool LoadServerList()
         {
-            if (File.Exists("userCellID.txt"))
-                int.TryParse(File.ReadAllText("userCellID.txt"), out cellid);
-            if (File.Exists("servers.bin"))
+            if (File.Exists(String.Format("servers-{0}.bin", cellid)))
             {
                 using (var fs = File.OpenRead("servers.bin"))
                 using (var reader = new BinaryReader(fs))
@@ -241,7 +240,7 @@ namespace SteamBot
 
         private void SaveServerList()
         {
-            using (var fs = File.OpenWrite("servers.bin"))
+            using (var fs = File.OpenWrite(String.Format("servers-{0}.bin", cellid)))
             using (var writer = new BinaryWriter(fs))
             {
                 foreach (var endPoint in CMClient.Servers.GetAllEndPoints())
@@ -996,7 +995,7 @@ namespace SteamBot
             var inventory = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
             if(inventory.IsPrivate)
             {
-                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
+                Log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
             }
             return inventory;
         }
