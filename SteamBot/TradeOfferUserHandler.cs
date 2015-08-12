@@ -6,7 +6,7 @@ using TradeAsset = SteamTrade.TradeOffer.TradeOffer.TradeStatusUser.TradeAsset;
 
 namespace SteamBot
 {
-    public class TradeOfferUserHandler : UserHandler
+    public sealed class TradeOfferUserHandler : UserHandler
     {
         public TradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 

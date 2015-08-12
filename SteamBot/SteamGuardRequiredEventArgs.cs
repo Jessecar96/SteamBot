@@ -2,7 +2,7 @@ using System;
 
 namespace SteamBot
 {
-    public class SteamGuardRequiredEventArgs : EventArgs
+    public sealed class SteamGuardRequiredEventArgs : EventArgs
     {
         /// <summary>
         /// Set this to return the Steam Guard code to the bot.

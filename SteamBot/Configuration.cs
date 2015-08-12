@@ -10,17 +10,15 @@ using Newtonsoft.Json.Linq;
 
 namespace SteamBot
 {
-    public class Configuration
+    public sealed class Configuration
     {
         private class JsonToSteamID : JsonConverter
         {
             static Regex Steam2Regex = new Regex(
                @"STEAM_(?<universe>[0-5]):(?<authserver>[0-1]):(?<accountid>\d+)",
                RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            public override bool CanConvert(Type objectType)
-            {
-                return objectType == typeof(IEnumerable<SteamKit2.SteamID>);
-            }
+
+            public override bool CanConvert(Type objectType) { return objectType == typeof(IEnumerable<SteamKit2.SteamID>); }
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
@@ -37,22 +35,16 @@ namespace SteamBot
                 return ret;
             }
 
-            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-            {
-                throw new NotImplementedException();
-            }
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) { throw new NotImplementedException(); }
         }
 
-        public static Configuration LoadConfiguration (string filename)
+        public static Configuration LoadConfiguration(string filename)
         {
             TextReader reader = new StreamReader(filename);
             string json = reader.ReadToEnd();
             reader.Close();
-
-            Configuration config =  JsonConvert.DeserializeObject<Configuration>(json);
-
+            Configuration config = JsonConvert.DeserializeObject<Configuration>(json);
             config.Admins = config.Admins ?? new SteamKit2.SteamID[0];
-
             // merge bot-specific admins with global admins
             foreach (BotInfo bot in config.Bots)
             {
@@ -61,12 +53,11 @@ namespace SteamBot
                 else
                     bot.Admins = bot.Admins.Concat(config.Admins);
             }
-
             return config;
         }
 
         #region Top-level config properties
-        
+
         /// <summary>
         /// Gets or sets the admins.
         /// </summary>
@@ -134,14 +125,12 @@ namespace SteamBot
         {
             StringBuilder sb = new StringBuilder();
             var fields = this.GetType().GetProperties();
-
             foreach (var propInfo in fields)
             {
                 sb.AppendFormat("{0} = {1}" + Environment.NewLine,
                     propInfo.Name,
                     propInfo.GetValue(this, null));
             }
-
             return sb.ToString();
         }
 
@@ -151,6 +140,9 @@ namespace SteamBot
             public string Password { get; set; }
             public string ApiKey { get; set; }
             public string DisplayName { get; set; }
+            [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+            [DefaultValue(true)]
+            public bool ShowDisplayName { get; set; }
             public string ChatResponse { get; set; }
             public string LogFile { get; set; }
             public string BotControlClass { get; set; }
@@ -177,22 +169,20 @@ namespace SteamBot
             /// If <see cref="SteamBot.Configuration.AutoStartAllBots "/> is true,
             /// then this property has no effect and is ignored.
             /// </remarks>
-            [JsonProperty (Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Populate)]
-            [DefaultValue (true)]
+            [JsonProperty(Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Populate)]
+            [DefaultValue(true)]
             public bool AutoStart { get; set; }
 
             public override string ToString()
             {
                 StringBuilder sb = new StringBuilder();
                 var fields = this.GetType().GetProperties();
-
                 foreach (var propInfo in fields)
                 {
                     sb.AppendFormat("{0} = {1}" + Environment.NewLine,
-                        propInfo.Name, 
+                        propInfo.Name,
                         propInfo.GetValue(this, null));
                 }
-
                 return sb.ToString();
             }
         }

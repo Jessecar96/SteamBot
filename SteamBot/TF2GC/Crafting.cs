@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using SteamKit2.GC;
 
 namespace SteamBot.TF2GC
@@ -25,10 +22,8 @@ namespace SteamBot.TF2GC
         /// <remarks>
         /// You must have set the current game to 440 for this to do anything.
         /// </remarks>
-        public static void CraftItems(Bot bot, params ulong[] items)
-        {
-            CraftItems(bot, -2, items);
-        }
+        public static void CraftItems(Bot bot, params ulong[] items) { CraftItems(bot, -2, items); }
+
         /// <summary>
         /// Crafts the specified items using the specified recipe.
         /// </summary>
@@ -38,23 +33,17 @@ namespace SteamBot.TF2GC
         /// <remarks>
         /// You must have set the current game to 440 for this to do anything.
         /// </remarks>
-        public static void CraftItems(Bot bot, ECraftingRecipe recipe, params ulong[] items)
-        {
-            CraftItems(bot, (short)recipe, items);
-        }
+        public static void CraftItems(Bot bot, ECraftingRecipe recipe, params ulong[] items) { CraftItems(bot, (short)recipe, items); }
+        
         public static void CraftItems(Bot bot, short recipe, params ulong[] items)
         {
             if (bot.CurrentGame != 440)
                 throw new Exception("SteamBot is not ingame with AppID 440; current AppID is " + bot.CurrentGame);
-
             var craftMsg = new ClientGCMsg<MsgCraft>();
-
             craftMsg.Body.NumItems = (short)items.Length;
             craftMsg.Body.Recipe = recipe;
-
             foreach (ulong id in items)
                 craftMsg.Write(id);
-
             bot.SteamGameCoordinator.Send(craftMsg, 440);
         }
     }

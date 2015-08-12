@@ -5,7 +5,7 @@ using SteamTrade.TradeWebAPI;
 
 namespace SteamBot
 {
-    public class SimpleUserHandler : UserHandler
+    public sealed class SimpleUserHandler : UserHandler
     {
         private TF2Value AmountAdded;
 

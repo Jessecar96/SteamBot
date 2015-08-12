@@ -12,22 +12,14 @@ using SteamKit2.Internal;
 
 namespace SteamBot.SteamGroups
 {
-    //CMsgInviteUserToClan
-
     /// <summary>
     /// Message used to Accept or Decline a group(clan) invite.
     /// </summary>
-    public class CMsgGroupInviteAction : ISteamSerializableMessage, ISteamSerializable
+    public sealed class CMsgGroupInviteAction : ISteamSerializableMessage, ISteamSerializable
     {
-        EMsg ISteamSerializableMessage.GetEMsg()
-        {
-            return EMsg.ClientAcknowledgeClanInvite;
-        }
+        EMsg ISteamSerializableMessage.GetEMsg() { return EMsg.ClientAcknowledgeClanInvite; }
 
-        public CMsgGroupInviteAction()
-        {
-
-        }
+        public CMsgGroupInviteAction() { }
 
         /// <summary>
         /// Group invited to.
@@ -67,5 +59,4 @@ namespace SteamBot.SteamGroups
             }//catch
         }//Deserialize()
     }//CMsgClanInviteAction
-
 }

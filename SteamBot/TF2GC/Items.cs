@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using SteamKit2.GC;
 
 namespace SteamBot.TF2GC
@@ -20,11 +17,8 @@ namespace SteamBot.TF2GC
         {
             if (bot.CurrentGame != 440)
                 throw new Exception("SteamBot is not ingame with AppID 440; current AppID is " + bot.CurrentGame);
-
             var deleteMsg = new ClientGCMsg<MsgDelete>();
-
-            deleteMsg.Write((ulong)item);
-
+            deleteMsg.Write(item);
             bot.SteamGameCoordinator.Send(deleteMsg, 440);
         }
     }

@@ -4,7 +4,7 @@ using SteamTrade;
 
 namespace SteamBot
 {
-    public class SteamTradeDemoHandler : UserHandler
+    public sealed class SteamTradeDemoHandler : UserHandler
     {
         // NEW ------------------------------------------------------------------
         private readonly GenericInventory mySteamInventory;

@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace SteamBot
 {
@@ -12,7 +12,7 @@ namespace SteamBot
     /// are limited by the functionality the <see cref="BotManager"/> class
     /// exposes.
     /// </remarks>
-    public class BotManagerInterpreter
+    public sealed class BotManagerInterpreter
     {
         private readonly BotManager manager;
         private CommandSet p;
@@ -37,7 +37,7 @@ namespace SteamBot
                         new BotManagerOption("clear", "clears this console", s => clearConsole = s != null),
                         new BotManagerOption("auth", "auth (X)=(Y) where X = the username or index of the configured bot and Y = the steamguard code",
                                              AuthSet),
-                        new BotManagerOption("exec", 
+                        new BotManagerOption("exec",
                                              "exec (X) (Y) where X = the username or index of the bot and Y = your custom command to execute",
                                              ExecCommand)
                     };
@@ -46,12 +46,10 @@ namespace SteamBot
         void AuthSet(string auth)
         {
             string[] xy = auth.Split('=');
-
             if (xy.Length == 2)
             {
                 int index;
                 string code = xy[1].Trim();
-
                 if (int.TryParse(xy[0], out index) && (index < manager.ConfigObject.Bots.Length))
                 {
                     Console.WriteLine("Authing bot with '" + code + "'");
@@ -80,39 +78,28 @@ namespace SteamBot
             showHelp = false;
             start = null;
             stop = null;
-
             p.Parse(command);
-
             if (showHelp)
             {
                 Console.WriteLine("");
                 p.WriteOptionDescriptions(Console.Out);
             }
-
             if (!String.IsNullOrEmpty(stop))
             {
                 int index;
                 if (int.TryParse(stop, out index) && (index < manager.ConfigObject.Bots.Length))
-                {
                     manager.StopBot(index);
-                }
                 else
-                {
                     manager.StopBot(stop);
-                }
             }
 
             if (!String.IsNullOrEmpty(start))
             {
                 int index;
                 if (int.TryParse(start, out index) && (index < manager.ConfigObject.Bots.Length))
-                {
                     manager.StartBot(index);
-                }
                 else
-                {
                     manager.StartBot(start);
-                }
             }
 
             if (clearConsole)
@@ -125,7 +112,6 @@ namespace SteamBot
         private void ShowCommand(string param)
         {
             param = param.Trim();
-
             int i;
             if (int.TryParse(param, out i))
             {
@@ -161,18 +147,14 @@ namespace SteamBot
         private void ExecCommand(string cmd)
         {
             cmd = cmd.Trim();
-
             var cs = cmd.Split(' ');
-
             if (cs.Length < 2)
             {
                 Console.WriteLine("Error: No command given to be executed.");
                 return;
             }
-
             // Take the rest of the input as is
             var command = cmd.Remove(0, cs[0].Length + 1);
-
             int index;
             // Try index first then search usernames
             if (int.TryParse(cs[0], out index) && (index < manager.ConfigObject.Bots.Length))
@@ -201,8 +183,7 @@ namespace SteamBot
         #region Nested Options classes
         // these are very much like the NDesk.Options but without the
         // maturity, features or need for command seprators like "-" or "/"
-
-        private class BotManagerOption
+        private sealed class BotManagerOption
         {
             public string Name { get; set; }
             public string Help { get; set; }
@@ -216,35 +197,24 @@ namespace SteamBot
             }
         }
 
-        private class CommandSet : KeyedCollection<string, BotManagerOption>
+        private sealed class CommandSet : KeyedCollection<string, BotManagerOption>
         {
-            protected override string GetKeyForItem(BotManagerOption item)
-            {
-                return item.Name;
-            }
+            protected override string GetKeyForItem(BotManagerOption item) { return item.Name; }
 
             public void Parse(string commandLine)
             {
                 var c = commandLine.Trim();
-
                 var cs = c.Split(' ');
-
                 foreach (var option in this)
                 {
                     if (cs[0].Equals(option.Name, StringComparison.CurrentCultureIgnoreCase))
                     {
                         if (cs.Length > 2)
-                        {
                             option.Func(c.Remove(0, cs[0].Length + 1));
-                        }
                         else if (cs.Length > 1)
-                        {
                             option.Func(cs[1]);
-                        }
                         else
-                        {
                             option.Func(String.Empty);
-                        }
                     }
                 }
             }
@@ -258,7 +228,6 @@ namespace SteamBot
                 }
             }
         }
-
         #endregion Nested Options classes
     }
 }

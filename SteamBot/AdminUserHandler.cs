@@ -9,7 +9,7 @@ namespace SteamBot
     /// A user handler class that implements basic text-based commands entered in
     /// chat or trade chat.
     /// </summary>
-    public class AdminUserHandler : UserHandler
+    public sealed class AdminUserHandler : UserHandler
     {
         private const string AddCmd = "add";
         private const string RemoveCmd = "remove";
