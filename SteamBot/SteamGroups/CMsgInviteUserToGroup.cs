@@ -15,17 +15,11 @@ namespace SteamBot.SteamGroups
     /// <summary>
     /// Message used to invite a user to a group(clan).
     /// </summary>
-    public class CMsgInviteUserToGroup : ISteamSerializableMessage, ISteamSerializable
+    public sealed class CMsgInviteUserToGroup : ISteamSerializableMessage, ISteamSerializable
     {
-        EMsg ISteamSerializableMessage.GetEMsg()
-        {
-            return EMsg.ClientInviteUserToClan;
-        }
+        EMsg ISteamSerializableMessage.GetEMsg() { return EMsg.ClientInviteUserToClan; }
 
-        public CMsgInviteUserToGroup()
-        {
-
-        }
+        public CMsgInviteUserToGroup() { }
 
         /// <summary>
         /// Who is being invited.

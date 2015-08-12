@@ -203,7 +203,7 @@ namespace SteamBot
         // Declare the SetConsoleCtrlHandler function
         // as external and receiving a delegate.
         [DllImport("Kernel32")]
-        public static extern bool SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
+        private static extern bool SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
 
         // A delegate type to be used as the handler routine
         // for SetConsoleCtrlHandler.

@@ -1,10 +1,10 @@
-using SteamKit2;
 using System.Collections.Generic;
+using SteamKit2;
 using SteamTrade;
 
 namespace SteamBot
 {
-    public class SteamTradeDemoHandler : UserHandler
+    public sealed class SteamTradeDemoHandler : UserHandler
     {
         // NEW ------------------------------------------------------------------
         private readonly GenericInventory mySteamInventory;
@@ -19,54 +19,41 @@ namespace SteamBot
             OtherSteamInventory = new GenericInventory(SteamWeb);
         }
 
-        public override bool OnGroupAdd()
-        {
-            return false;
-        }
+        public override bool OnGroupAdd() { return false; }
 
-        public override bool OnFriendAdd () 
-        {
-            return true;
-        }
+        public override bool OnFriendAdd() { return true; }
 
-        public override void OnLoginCompleted() {}
+        public override void OnLoginCompleted() { }
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
-            Log.Info(Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message);
+            Log.Info(bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message);
             base.OnChatRoomMessage(chatID, sender, message);
         }
 
-        public override void OnFriendRemove () {}
-        
-        public override void OnMessage (string message, EChatEntryType type) 
-        {
-            SendChatMessage(Bot.ChatResponse);
-        }
+        public override void OnFriendRemove() { }
 
-        public override bool OnTradeRequest() 
-        {
-            return true;
-        }
-        
-        public override void OnTradeError (string error) 
+        public override void OnMessage(string message, EChatEntryType type) { SendChatMessage(bot.ChatResponse); }
+
+        public override bool OnTradeRequest() { return true; }
+
+        public override void OnTradeError(string error)
         {
             SendChatMessage("Oh, there was an error: {0}.", error);
-            Log.Warn (error);
+            Log.Warn(error);
         }
-        
-        public override void OnTradeTimeout () 
+
+        public override void OnTradeTimeout()
         {
             SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
-            Log.Info ("User was kicked because he was AFK.");
+            Log.Info("User was kicked because he was AFK.");
         }
-        
-        public override void OnTradeInit() 
+
+        public override void OnTradeInit()
         {
             // NEW -------------------------------------------------------------------------------
             List<long> contextId = new List<long>();
             tested = false;
-
             /*************************************************************************************
              * 
              * SteamInventory AppId = 753 
@@ -76,27 +63,21 @@ namespace SteamBot
              *      6           Trading Cards, Emoticons & Backgrounds. 
              *  
              ************************************************************************************/
-
             contextId.Add(1);
             contextId.Add(6);
-
-            mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
-            OtherSteamInventory.load(753, contextId, OtherSID);
-
+            mySteamInventory.load(753, contextId, bot.SteamClient.SteamID);
+            OtherSteamInventory.load(753, contextId, otherSID);
             if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
-            {
                 SendTradeMessage("Couldn't open an inventory, type 'errors' for more info.");
-            }
-
             SendTradeMessage("Type 'test' to start.");
             // -----------------------------------------------------------------------------------
         }
-        
-        public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
+
+        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
+        {
             // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
             SendTradeMessage("Object AppID: {0}", inventoryItem.AppId);
             SendTradeMessage("Object ContextId: {0}", inventoryItem.ContextId);
-
             switch (inventoryItem.AppId)
             {
                 case 440:
@@ -106,24 +87,23 @@ namespace SteamBot
                     SendTradeMessage("Level: {0}", inventoryItem.Level);
                     SendTradeMessage("Craftable: {0}", (inventoryItem.IsNotCraftable ? "No" : "Yes"));
                     break;
-
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
                     SendTradeMessage("Steam Inventory Item Added.");
                     SendTradeMessage("Type: {0}", tmpDescription.type);
                     SendTradeMessage("Marketable: {0}", (tmpDescription.marketable ? "Yes" : "No"));
                     break;
-
                 default:
                     SendTradeMessage("Unknown item");
                     break;
             }
             // ------------------------------------------------------------------------------------------------------
         }
-        
-        public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
-        
-        public override void OnTradeMessage (string message) {
+
+        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
+
+        public override void OnTradeMessage(string message)
+        {
             switch (message.ToLower())
             {
                 case "errors":
@@ -131,73 +111,49 @@ namespace SteamBot
                     {
                         SendTradeMessage("User Errors:");
                         foreach (string error in OtherSteamInventory.errors)
-                        {
                             SendTradeMessage(" * {0}", error);
-                        }
                     }
 
                     if (mySteamInventory.errors.Count > 0)
                     {
                         SendTradeMessage("Bot Errors:");
                         foreach (string error in mySteamInventory.errors)
-                        {
                             SendTradeMessage(" * {0}", error);
-                        }
                     }
-                break;
-
+                    break;
                 case "test":
                     if (tested)
                     {
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
-                        {
                             Trade.RemoveItem(item);
-                        }
                     }
                     else
                     {
                         SendTradeMessage("Items on my bp: {0}", mySteamInventory.items.Count);
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
-                        {
                             Trade.AddItem(item);
-                        }
                     }
-
                     tested = !tested;
-
-                break;
-
+                    break;
                 case "remove":
                     foreach (var item in mySteamInventory.items)
-                    {
                         Trade.RemoveItem(item.Value.assetid, item.Value.appid, item.Value.contextid);
-                    }
-                break;
+                    break;
             }
         }
-        
-        public override void OnTradeReady (bool ready) 
+
+        public override void OnTradeReady(bool ready)
         {
             //Because SetReady must use its own version, it's important
             //we poll the trade to make sure everything is up-to-date.
             Trade.Poll();
             if (!ready)
-            {
-                Trade.SetReady (false);
-            }
-            else
-            {
-                if(Validate () | IsAdmin)
-                {
-                    Trade.SetReady (true);
-                }
-            }
+                Trade.SetReady(false);
+            else if (Validate() | IsAdmin)
+                Trade.SetReady(true);
         }
 
-        public override void OnTradeSuccess()
-        {
-            Log.Success("Trade Complete.");
-        }
+        public override void OnTradeSuccess() { Log.Success("Trade Complete."); }
 
         public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID)
         {
@@ -205,41 +161,37 @@ namespace SteamBot
             SendChatMessage("Please complete the email confirmation to finish the trade");
         }
 
-        public override void OnTradeAccept() 
+        public override void OnTradeAccept()
         {
             if (Validate() | IsAdmin)
             {
                 //Even if it is successful, AcceptTrade can fail on
                 //trades with a lot of items so we use a try-catch
-                try {
+                try
+                {
                     Trade.AcceptTrade();
                 }
-                catch {
-                    Log.Warn ("The trade might have failed, but we can't be sure.");
+                catch
+                {
+                    Log.Warn("The trade might have failed, but we can't be sure.");
                 }
-
-                Log.Success ("Trade Complete!");
+                Log.Success("Trade Complete!");
             }
         }
 
-        public bool Validate ()
-        {            
-            List<string> errors = new List<string> ();
+        public bool Validate()
+        {
+            List<string> errors = new List<string>();
             errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're an Admin.");
-
             // send the errors
             if (errors.Count != 0)
                 SendTradeMessage("There were errors in your trade: ");
-
             foreach (string error in errors)
-            {
                 SendTradeMessage(error);
-            }
-            
             return errors.Count == 0;
         }
-        
+
     }
- 
+
 }
 

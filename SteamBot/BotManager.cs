@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Windows.Forms;
 using Newtonsoft.Json;
 using SteamKit2;
 
@@ -13,11 +12,14 @@ namespace SteamBot
     /// <summary>
     /// A class that manages SteamBot processes.
     /// </summary>
-    public class BotManager
+    public sealed class BotManager : IDisposable
     {
         private readonly List<RunningBot> botProcs;
         private Log mainLog;
         private bool useSeparateProcesses;
+        private bool disposed = false;
+
+        public Configuration ConfigObject { get; private set; }
 
         public BotManager()
         {
@@ -26,7 +28,10 @@ namespace SteamBot
             botProcs = new List<RunningBot>();
         }
 
-        public Configuration ConfigObject { get; private set; }
+        ~BotManager()
+        {
+            Dispose(false);
+        }
 
         /// <summary>
         /// Loads a configuration file to use when creating bots.
@@ -36,7 +41,6 @@ namespace SteamBot
         {
             if (!File.Exists(configFile))
                 return false;
-
             try
             {
                 ConfigObject = Configuration.LoadConfiguration(configFile);
@@ -46,26 +50,18 @@ namespace SteamBot
                 // handle basic json formatting screwups
                 ConfigObject = null;
             }
-
             if (ConfigObject == null)
                 return false;
-
             useSeparateProcesses = ConfigObject.UseSeparateProcesses;
-
-            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug, Log.LogLevel.Debug);
-
+            mainLog = new Log(ConfigObject.MainLog, null, true, Log.LogLevel.Debug, Log.LogLevel.Debug);
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {
                 Configuration.BotInfo info = ConfigObject.Bots[i];
                 if (ConfigObject.AutoStartAllBots || info.AutoStart)
-                {
                     mainLog.Info("Launching Bot " + info.DisplayName + "...");
-                }
-
                 var v = new RunningBot(useSeparateProcesses, i, ConfigObject);
                 botProcs.Add(v);
             }
-
             return true;
         }
 
@@ -77,14 +73,11 @@ namespace SteamBot
         {
             if (ConfigObject == null || mainLog == null)
                 return false;
-
             foreach (var runningBot in botProcs)
             {
                 runningBot.Start();
-
                 Thread.Sleep(2000);
             }
-
             return true;
         }
 
@@ -95,10 +88,7 @@ namespace SteamBot
         {
             mainLog.Debug("Shutting down all bot processes.");
             foreach (var botProc in botProcs)
-            {
                 botProc.Stop();
-            }
-
             mainLog.Dispose();
             mainLog = null;
         }
@@ -111,9 +101,7 @@ namespace SteamBot
         {
             mainLog.Debug(String.Format("Killing bot process {0}.", index));
             if (index < botProcs.Count)
-            {
                 botProcs[index].Stop();
-            }
         }
 
         /// <summary>
@@ -123,15 +111,11 @@ namespace SteamBot
         public void StopBot(string botUserName)
         {
             mainLog.Debug(String.Format("Killing bot with username {0}.", botUserName));
-
             var res = from b in botProcs
                       where b.BotConfig.Username.Equals(botUserName, StringComparison.CurrentCultureIgnoreCase)
                       select b;
-
             foreach (var bot in res)
-            {
                 bot.Stop();
-            }
         }
 
         /// <summary>
@@ -141,11 +125,8 @@ namespace SteamBot
         public void StartBot(int index)
         {
             mainLog.Debug(String.Format("Starting bot at index {0}.", index));
-
             if (index < ConfigObject.Bots.Length)
-            {
                 botProcs[index].Start();
-            }
         }
 
         /// <summary>
@@ -155,16 +136,12 @@ namespace SteamBot
         public void StartBot(string botUserName)
         {
             mainLog.Debug(String.Format("Starting bot with username {0}.", botUserName));
-
             var res = from b in botProcs
                       where b.BotConfig.Username.Equals(botUserName, StringComparison.CurrentCultureIgnoreCase)
                       select b;
-
             foreach (var bot in res)
-            {
                 bot.Start();
-            }
-            
+
         }
 
         /// <summary>
@@ -180,14 +157,11 @@ namespace SteamBot
                 {
                     //  Write out auth code to the bot process' stdin
                     StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
-
                     BotStdIn.WriteLine("auth " + AuthCode);
                     BotStdIn.Flush();
                 }
                 else
-                {
                     botProcs[index].TheBot.AuthCode = AuthCode;
-                }
             }
         }
 
@@ -207,24 +181,17 @@ namespace SteamBot
                     {
                         //  Write out the exec command to the bot process' stdin
                         StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
-
                         BotStdIn.WriteLine("exec " + command);
                         BotStdIn.Flush();
                     }
                     else
-                    {
                         botProcs[index].TheBot.HandleBotCommand(command);
-                    }
                 }
                 else
-                {
                     mainLog.Warn(String.Format("Bot at index {0} is not running. Use the 'Start' command first", index));
-                }
             }
             else
-            {
                 mainLog.Warn(String.Format("Invalid Bot index: {0}", index));
-            }
         }
 
         /// <summary>
@@ -245,15 +212,36 @@ namespace SteamBot
                     controlClass, new object[] { bot, sid });
         }
 
+        private void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+            if (disposing)
+            {
+                foreach (RunningBot bot in botProcs)
+                    bot.Stop();
+                mainLog.Dispose();
+            }
+            disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         #region Nested RunningBot class
 
         /// <summary>
         /// Nested class that holds the information about a spawned bot process.
         /// </summary>
-        private class RunningBot
+        private sealed class RunningBot : IDisposable
         {
             private const string BotExecutable = "SteamBot.exe";
             private readonly Configuration config;
+
+            private bool disposed = false;
 
             /// <summary>
             /// Creates a new instance of <see cref="RunningBot"/> class.
@@ -273,6 +261,11 @@ namespace SteamBot
                 this.config = config;
             }
 
+            ~RunningBot()
+            {
+                Dispose(false);
+            }
+
             public bool UsingProcesses { get; private set; }
 
             public int BotConfigIndex { get; private set; }
@@ -288,6 +281,8 @@ namespace SteamBot
 
             public void Stop()
             {
+                if (disposed)
+                    return;
                 if (IsRunning && UsingProcesses)
                 {
                     if (!BotProcess.HasExited)
@@ -305,6 +300,8 @@ namespace SteamBot
 
             public void Start()
             {
+                if (disposed)
+                    throw new ObjectDisposedException("RunningBot");
                 if (UsingProcesses)
                 {
                     if (!IsRunning)
@@ -329,28 +326,20 @@ namespace SteamBot
             {
                 // we don't do any of the standard output redirection below. 
                 // we could but we lose the nice console colors that the Log class uses.
-
                 Process botProc = new Process();
                 botProc.StartInfo.FileName = BotExecutable;
                 botProc.StartInfo.Arguments = @"-bot " + botIndex;
-
                 // Set UseShellExecute to false for redirection.
                 botProc.StartInfo.UseShellExecute = false;
-
                 // Redirect the standard output.  
                 // This stream is read asynchronously using an event handler.
                 botProc.StartInfo.RedirectStandardOutput = false;
-
                 // Redirect standard input to allow manager commands to be read properly
                 botProc.StartInfo.RedirectStandardInput = true;
-
                 // Set our event handler to asynchronously read the output.
                 //botProc.OutputDataReceived += new DataReceivedEventHandler(BotStdOutHandler);
-
                 botProc.Start();
-
                 BotProcess = botProc;
-
                 // Start the asynchronous read of the bot output stream.
                 //botProc.BeginOutputReadLine();
             }
@@ -363,7 +352,6 @@ namespace SteamBot
                                 config.ApiKey,
                                 UserHandlerCreator,
                                 true);
-
                 TheBot = b;
                 TheBot.StartBot();
             }
@@ -375,8 +363,23 @@ namespace SteamBot
             //        Console.WriteLine(e.Data);
             //    }
             //}
-        }
 
+            private void Dispose(bool disposing)
+            {
+                if (disposed)
+                    return;
+                Stop();
+                if (disposing && TheBot != null && TheBot.IsRunning)
+                    TheBot.Dispose();
+                disposed = true;
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+        }
         #endregion Nested RunningBot class
     }
 }

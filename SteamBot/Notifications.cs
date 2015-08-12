@@ -1,13 +1,13 @@
-﻿using SteamKit2;
-using SteamKit2.Internal;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Linq;
+using SteamKit2;
+using SteamKit2.Internal;
 
 namespace SteamBot
 {
-    public class SteamNotifications : ClientMsgHandler
+    public sealed class SteamNotifications : ClientMsgHandler
     {
-        public class NotificationCallback : CallbackMsg
+        public sealed class NotificationCallback : CallbackMsg
         {
             public ReadOnlyCollection<Notification> Notifications { get; private set; }
 
@@ -16,7 +16,6 @@ namespace SteamBot
                 var list = msg.notifications
                     .Select(n => new Notification(n))
                     .ToList();
-
                 this.Notifications = new ReadOnlyCollection<Notification>(list);
             }
 
@@ -27,9 +26,7 @@ namespace SteamBot
                     Count = notification.count;
                     UserNotificationType = (UserNotificationType)notification.user_notification_type;
                 }
-
                 public uint Count { get; private set; }
-
                 public UserNotificationType UserNotificationType { get; private set; }
             }
 
@@ -40,14 +37,11 @@ namespace SteamBot
             }
         }
 
-        public class CommentNotificationCallback : CallbackMsg
+        public sealed class CommentNotificationCallback : CallbackMsg
         {
             public CommentNotification CommentNotifications { get; private set; }
 
-            internal CommentNotificationCallback(CMsgClientCommentNotifications msg)
-            {
-                CommentNotifications = new CommentNotification(msg);
-            }
+            internal CommentNotificationCallback(CMsgClientCommentNotifications msg) { CommentNotifications = new CommentNotification(msg); }
 
             public sealed class CommentNotification
             {
@@ -73,7 +67,6 @@ namespace SteamBot
         {
             var clientRequestCommentNotifications =
                 new ClientMsgProtobuf<CMsgClientRequestCommentNotifications>(EMsg.ClientRequestCommentNotifications);
-
             Client.Send(clientRequestCommentNotifications);
         }
 
@@ -94,11 +87,9 @@ namespace SteamBot
                 case EMsg.ClientNewLoginKey:
                     HandleClientNewLoginKey(packetMsg);
                     break;
-
                 case EMsg.ClientUserNotifications:
                     HandleClientUserNotifications(packetMsg);
                     break;
-
                 case EMsg.ClientCommentNotifications:
                     HandleClientCommentNotifications(packetMsg);
                     break;
@@ -108,18 +99,14 @@ namespace SteamBot
         private void HandleClientUserNotifications(IPacketMsg packetMsg)
         {
             var clientUserNotificationResponse = new ClientMsgProtobuf<CMsgClientUserNotifications>(packetMsg);
-
             CMsgClientUserNotifications result = clientUserNotificationResponse.Body;
-
             Client.PostCallback(new NotificationCallback(result));
         }
 
         private void HandleClientCommentNotifications(IPacketMsg packetMsg)
         {
             var clientCommentNotifications = new ClientMsgProtobuf<CMsgClientCommentNotifications>(packetMsg);
-
             CMsgClientCommentNotifications result = clientCommentNotifications.Body;
-
             Client.PostCallback(new CommentNotificationCallback(result));
         }
 

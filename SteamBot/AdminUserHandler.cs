@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Windows.Forms;
+using System.Collections.Generic;
 using SteamKit2;
 using SteamTrade;
-using System.Collections.Generic;
 
 namespace SteamBot
 {
@@ -10,7 +9,7 @@ namespace SteamBot
     /// A user handler class that implements basic text-based commands entered in
     /// chat or trade chat.
     /// </summary>
-    public class AdminUserHandler : UserHandler
+    public sealed class AdminUserHandler : UserHandler
     {
         private const string AddCmd = "add";
         private const string RemoveCmd = "remove";
@@ -20,16 +19,14 @@ namespace SteamBot
         private const string AddAllSubCmd = "all";
         private const string HelpCmd = "help";
 
-        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) {}
+        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
         #region Overrides of UserHandler
 
         /// <summary>
         /// Called when the bot is fully logged in.
         /// </summary>
-        public override void OnLoginCompleted()
-        {
-        }
+        public override void OnLoginCompleted() { }
 
         /// <summary>
         /// Triggered when a clan invites the bot.
@@ -37,10 +34,7 @@ namespace SteamBot
         /// <returns>
         /// Whether to accept.
         /// </returns>
-        public override bool OnGroupAdd()
-        {
-            return false;
-        }
+        public override bool OnGroupAdd() { return false; }
 
         /// <summary>
         /// Called when a the user adds the bot as a friend.
@@ -52,26 +46,18 @@ namespace SteamBot
         {
             // if the other is an admin then accept add
             if (IsAdmin)
-            {
                 return true;
-            }
-
-            Log.Warn("Random SteamID: " + OtherSID + " tried to add the bot as a friend");
+            Log.Warn("Random SteamID: " + otherSID + " tried to add the bot as a friend");
             return false;
         }
 
-        public override void OnFriendRemove()
-        {
-        }
+        public override void OnFriendRemove() { }
 
         /// <summary>
         /// Called whenever a message is sent to the bot.
         /// This is limited to regular and emote messages.
         /// </summary>
-        public override void OnMessage(string message, EChatEntryType type)
-        {
-            // TODO: magic command system
-        }
+        public override void OnMessage(string message, EChatEntryType type) { }
 
         /// <summary>
         /// Called whenever a user requests a trade.
@@ -83,39 +69,20 @@ namespace SteamBot
         {
             if (IsAdmin)
                 return true;
-
             return false;
         }
 
-        public override void OnTradeError(string error)
-        {
-            Log.Error(error);
-        }
+        public override void OnTradeError(string error) { Log.Error(error); }
 
-        public override void OnTradeTimeout()
-        {
-            Log.Warn("Trade timed out.");
-        }
+        public override void OnTradeTimeout() { Log.Warn("Trade timed out."); }
 
-        public override void OnTradeInit()
-        {
-            SendTradeMessage("Success. (Type {0} for commands)", HelpCmd);
-        }
+        public override void OnTradeInit() { SendTradeMessage("Success. (Type {0} for commands)", HelpCmd); }
 
-        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
-        {
-            // whatever.   
-        }
+        public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
 
-        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
-        {
-            // whatever.
-        }
+        public override void OnTradeRemoveItem(Schema.Item schemaItem, Inventory.Item inventoryItem) { }
 
-        public override void OnTradeMessage(string message)
-        {
-            ProcessTradeMessage(message);
-        }
+        public override void OnTradeMessage(string message) { ProcessTradeMessage(message); }
 
         public override void OnTradeReady(bool ready)
         {
@@ -125,14 +92,10 @@ namespace SteamBot
                 Trade.SetReady(false);
                 return;
             }
-
             Trade.SetReady(true);
         }
 
-        public override void OnTradeSuccess()
-        {
-            Log.Success("Trade Complete.");
-        }
+        public override void OnTradeSuccess() { Log.Success("Trade Complete."); }
 
         public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID)
         {
@@ -167,7 +130,6 @@ namespace SteamBot
                 PrintHelpMessage();
                 return;
             }
-
             if (message.StartsWith(AddCmd))
             {
                 HandleAddCommand(message);
@@ -188,7 +150,6 @@ namespace SteamBot
             SendTradeMessage("{0} {1} [amount] - adds items", AddCmd, AddAllSubCmd);
             SendTradeMessage(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafting type.", AddCmd);
             SendTradeMessage(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd);
-
             SendTradeMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
         }
 
@@ -196,14 +157,10 @@ namespace SteamBot
         {
             var data = command.Split(' ');
             string typeToAdd;
-
-            bool subCmdOk = GetSubCommand (data, out typeToAdd);
-
+            bool subCmdOk = GetSubCommand(data, out typeToAdd);
             if (!subCmdOk)
                 return;
-
-            uint amount = GetAddAmount (data);
-
+            uint amount = GetAddAmount(data);
             // if user supplies the defindex directly use it to add.
             int defindex;
             if (int.TryParse(typeToAdd, out defindex))
@@ -211,7 +168,6 @@ namespace SteamBot
                 Trade.AddAllItemsByDefindex(defindex, amount);
                 return;
             }
-
             switch (typeToAdd)
             {
                 case AddMetalSubCmd:
@@ -241,14 +197,10 @@ namespace SteamBot
         private void HandleRemoveCommand(string command)
         {
             var data = command.Split(' ');
-
             string subCommand;
-
             bool subCmdOk = GetSubCommand(data, out subCommand);
-
             // were dumb right now... just remove everything.
             Trade.RemoveAllItems();
-
             if (!subCmdOk)
                 return;
         }
@@ -257,13 +209,10 @@ namespace SteamBot
         private void AddItemsByCraftType(string typeToAdd, uint amount)
         {
             var items = Trade.CurrentSchema.GetItemsByCraftingMaterial(typeToAdd);
-
             uint added = 0;
-
             foreach (var item in items)
             {
                 added += Trade.AddAllItemsByDefindex(item.Defindex, amount);
-
                 // if bulk adding something that has a lot of unique
                 // defindex (weapons) we may over add so limit here also
                 if (amount > 0 && added >= amount)
@@ -274,49 +223,36 @@ namespace SteamBot
         private void AddAllItems()
         {
             var items = Trade.CurrentSchema.GetItems();
-
             foreach (var item in items)
-            {
                 Trade.AddAllItemsByDefindex(item.Defindex, 0);
-            }
         }
 
         private void AddCrateBySeries(string series, uint amount)
         {
             int ser;
             bool parsed = int.TryParse(series, out ser);
-
             if (!parsed)
                 return;
-
             var l = Trade.CurrentSchema.GetItemsByCraftingMaterial("supply_crate");
-
-
             List<Inventory.Item> invItems = new List<Inventory.Item>();
-
             foreach (var schemaItem in l)
             {
                 ushort defindex = schemaItem.Defindex;
                 invItems.AddRange(Trade.MyInventory.GetItemsByDefindex(defindex));
             }
-
             uint added = 0;
-
             foreach (var item in invItems)
             {
                 int crateNum = 0;
                 for (int count = 0; count < item.Attributes.Length; count++)
                 {
                     // FloatValue will give you the crate's series number
-                    crateNum = (int) item.Attributes[count].FloatValue;
-
+                    crateNum = (int)item.Attributes[count].FloatValue;
                     if (crateNum == ser)
                     {
                         bool ok = Trade.AddItem(item.Id);
-
                         if (ok)
                             added++;
-
                         // if bulk adding something that has a lot of unique
                         // defindex (weapons) we may over add so limit here also
                         if (amount > 0 && added >= amount)
@@ -326,7 +262,7 @@ namespace SteamBot
             }
         }
 
-        bool GetSubCommand (string[] data, out string subCommand)
+        bool GetSubCommand(string[] data, out string subCommand)
         {
             if (data.Length < 2)
             {
@@ -334,32 +270,25 @@ namespace SteamBot
                 subCommand = null;
                 return false;
             }
-
-            if (String.IsNullOrEmpty (data [1]))
+            if (String.IsNullOrEmpty(data[1]))
             {
                 SendTradeMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }
-
-            subCommand = data [1];
-
+            subCommand = data[1];
             return true;
         }
 
-        static uint GetAddAmount (string[] data)
+        static uint GetAddAmount(string[] data)
         {
             uint amount = 0;
-
             if (data.Length > 2)
             {
                 // get the optional amount parameter
-                if (!String.IsNullOrEmpty (data [2]))
-                {
-                    uint.TryParse (data [2], out amount);
-                }
+                if (!String.IsNullOrEmpty(data[2]))
+                    uint.TryParse(data[2], out amount);
             }
-
             return amount;
         }
     }
