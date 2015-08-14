@@ -174,8 +174,11 @@ namespace SteamBot
 						SteamID profitSteamID = new SteamID (profitSteamIDString);
 						var profitTradeOffer = Bot.NewTradeOffer (profitSteamID);
 
+						//Instead of trading the items to keep to another account, just keep them on this account.
+						//Then, they can be sent to my main account using exec and the command "withdraw"
+
 						//Loop through all profit items and add them to trade
-						List<long> alreadyAddedToProfitTrade = new List<long> ();
+						/* List<long> alreadyAddedToProfitTrade = new List<long> ();
 						foreach (CSGOItemFromWeb item in itemsToKeep) {
 							long classId = item.classId, instanceId = item.instanceId;
 
@@ -208,7 +211,7 @@ namespace SteamBot
 							Log.Success ("Offer sent to profit.");
 						} else {
 							Log.Info ("No items to keep.");
-						}
+						} */
 					}
 				} else {
 					if (offer.Decline ()) {
@@ -224,6 +227,16 @@ namespace SteamBot
 		public override void OnMessage(string message, EChatEntryType type)
 		{
 			SendChatMessage (Bot.ChatResponse);
+		}
+
+		public override void OnBotCommand(string command)
+		{
+			switch (command) {
+				case "sendAllProfitSkins":
+					//Do some stuff here
+					Log.Success("Send trade offer");
+					break;
+			}
 		}
 
 		public override bool OnGroupAdd() { return false; }

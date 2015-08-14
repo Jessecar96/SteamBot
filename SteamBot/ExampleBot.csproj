@@ -82,7 +82,6 @@
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
     <Compile Include="DepositTradeOfferUserHandler.cs" />
-    <Compile Include="ProfitTradeOfferUserHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
