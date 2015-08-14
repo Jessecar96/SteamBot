@@ -20,6 +20,65 @@ namespace SteamBot
 	{
 		public DepositTradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
+		public override void OnBotCommand(string command)
+		{
+			if (command.Equals ("withdraw")) {
+				//Get current pot and all items in inventory
+				string withdrawUrl = "http://csgowinbig.jordanturley.com/php/bot-withdraw.php";
+				var withdrawRequest = (HttpWebRequest)WebRequest.Create (withdrawUrl);
+				var withdrawResponse = (HttpWebResponse)withdrawRequest.GetResponse ();
+				string withdrawString = new StreamReader (withdrawResponse.GetResponseStream()).ReadToEnd();
+
+				WithdrawResponse botInventory = JsonConvert.DeserializeObject<WithdrawResponse> (withdrawString);
+
+				var data = botInventory.data;
+
+				var rgInventory = data.rgInventory;
+				var currentPot = data.currentPot;
+
+				var withdrawTradeOffer = Bot.NewTradeOffer (new SteamID(76561198020620333));
+
+				foreach (var inventoryItemKeyVal in rgInventory) {
+					var invItem = inventoryItemKeyVal.Value;
+					long classId = invItem.classid, instanceId = invItem.instanceid;
+
+					bool withdrawThisItem = true;
+					//Check to see if this item is in the current pot
+					foreach (var potItem in currentPot) {
+						long classIdPot = potItem.classid, instanceIdPot = potItem.instanceid;
+
+						if (classId == classIdPot && instanceId == instanceIdPot) {
+							withdrawThisItem = false;
+						}
+					}
+
+					if (withdrawThisItem) {
+						var assetId = invItem.id;
+						withdrawTradeOffer.Items.AddMyItem (730, 2, assetId, 1);
+					}
+				}
+
+				if (withdrawTradeOffer.Items.GetMyItems ().Count != 0) {
+					string withdrawOfferId;
+					withdrawTradeOffer.Send (out withdrawOfferId, "Here are the withdraw items requested.");
+					Log.Success ("Withdraw trade offer sent. Offer ID: " + withdrawOfferId);
+				} else {
+					Log.Error ("There are no profit items to withdraw at this time.");
+				}
+			}
+		}
+
+		public class WithdrawResponse {
+			public int success;
+			public string errMsg;
+			public WithdrawData data;
+		}
+
+		public class WithdrawData {
+			public IDictionary<string, inventoryItem> rgInventory;
+			public List<inventoryItem> currentPot;
+		}
+
 		public override void OnNewTradeOffer(TradeOffer offer)
 		{
 			//Get password from file on desktop
@@ -227,16 +286,6 @@ namespace SteamBot
 		public override void OnMessage(string message, EChatEntryType type)
 		{
 			SendChatMessage (Bot.ChatResponse);
-		}
-
-		public override void OnBotCommand(string command)
-		{
-			switch (command) {
-				case "sendAllProfitSkins":
-					//Do some stuff here
-					Log.Success("Send trade offer");
-					break;
-			}
 		}
 
 		public override bool OnGroupAdd() { return false; }
