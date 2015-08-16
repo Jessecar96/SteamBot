@@ -87,6 +87,10 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
+        /// <summary>
+        /// The instance of the Logger for the bot.
+        /// </summary>
+        public readonly Log Log;
         #endregion
 
         #region Public variables
@@ -108,10 +112,6 @@ namespace SteamBot
         /// Default: 0 = No game.
         /// </summary>
         public int CurrentGame { get; private set; }
-        /// <summary>
-        /// The instance of the Logger for the bot.
-        /// </summary>
-        public Log Log;
         #endregion
 
         public IEnumerable<SteamID> FriendsList
@@ -182,7 +182,7 @@ namespace SteamBot
             }
 
             logFile = config.LogFile;
-            CreateLog();
+            Log = new Log(logFile, DisplayName, consoleLogLevel, fileLogLevel);
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();
@@ -207,22 +207,7 @@ namespace SteamBot
 
         ~Bot()
         {
-            DisposeBot();
-        }
-
-        private void CreateLog()
-        {
-            if(Log == null)
-                Log = new Log (logFile, DisplayName, consoleLogLevel, fileLogLevel);
-        }
-
-        private void DisposeLog()
-        {
-            if(Log != null)
-            {
-                Log.Dispose();
-                Log = null;
-            }
+            Dispose(false);
         }
 
         private void CreateFriendsListIfNecessary()
@@ -252,9 +237,7 @@ namespace SteamBot
         /// <returns><c>true</c>. See remarks</returns>
         public bool StartBot()
         {
-            CreateLog();
             IsRunning = true;
-
             Log.Info("Connecting...");
             if (!botThread.IsBusy)
                 botThread.RunWorkerAsync();
@@ -273,8 +256,9 @@ namespace SteamBot
             Log.Debug("Trying to shut down bot thread.");
             SteamClient.Disconnect();
             botThread.CancelAsync();
+            while (botThread.IsBusy)
+                Thread.Yield();
             userHandlers.Clear();
-            DisposeLog();
         }
 
         /// <summary>
@@ -927,8 +911,6 @@ namespace SteamBot
                 StopBot();
                 //StartBot();
             }
-
-            Log.Dispose();
         }
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
@@ -1031,16 +1013,18 @@ namespace SteamBot
 
         public void Dispose()
         {
-            DisposeBot();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        private void DisposeBot()
+        private void Dispose(bool disposing)
         {
             if (disposed)
                 return;
-            disposed = true;
             StopBot();
+            if (disposing)
+                Log.Dispose();
+            disposed = true;
         }
     }
 }
