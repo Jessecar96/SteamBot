@@ -10,6 +10,7 @@ There are several things you must do in order to get SteamBot working:
 1. Download the source.
 2. Compile the source code.
 3. Configure the bot (username, password, etc.).
+ * Be sure to set "BotControlClass" to "SteamBot.DepositTradeOfferUserHandler".
 4. This project requires that you have Json.NET from Newtonsoft, so you will have to add this, probably through NuGet.
 5. Download the code for the website [https://github.com/ztizzlegaming/CSGOWinBig](here), and upload it to a server, and set it up, making sure that it is functional.
 6. Change the url [here](https://github.com/ztizzlegaming/CSGOWinBig-SteamBot/blob/master/SteamBot/DepositTradeOfferUserHandler.cs#L73) to your own website's deposit php script.
