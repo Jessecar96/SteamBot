@@ -226,12 +226,12 @@ namespace SteamBot
 						}
 
 						//Wait for a second before sending next trade offer.
-						System.Threading.Thread.Sleep (1000);
+						//System.Threading.Thread.Sleep (1000);
 
 						//Create trade offer for items kept
-						string profitSteamIDString = "STEAM_0:1:66955921";
-						SteamID profitSteamID = new SteamID (profitSteamIDString);
-						var profitTradeOffer = Bot.NewTradeOffer (profitSteamID);
+						//string profitSteamIDString = "STEAM_0:1:66955921";
+						//SteamID profitSteamID = new SteamID (profitSteamIDString);
+						//var profitTradeOffer = Bot.NewTradeOffer (profitSteamID);
 
 						//Instead of trading the items to keep to another account, just keep them on this account.
 						//Then, they can be sent to my main account using exec and the command "withdraw"
