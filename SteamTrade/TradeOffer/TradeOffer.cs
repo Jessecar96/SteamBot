@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using SteamKit2;
 using System;
 using System.Collections.Generic;
@@ -54,16 +54,9 @@ namespace SteamTrade.TradeOffer
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     //todo: for currency items we need to check descriptions for currency bool and use the appropriate method
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
-                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
+                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount), asset.IsMissing);
                     //todo: for missing assets we should store them somewhere else? if offer state is active we shouldn't be here though
-                    if (!asset.IsMissing)
-                    {
-                        myAssets.Add(tradeAsset);
-                    }
-                    else
-                    {
-                        myMissingAssets.Add(tradeAsset);
-                    }
+                    myAssets.Add(tradeAsset);
                 }
             }
             if (offer.ItemsToReceive != null)
@@ -72,15 +65,8 @@ namespace SteamTrade.TradeOffer
                 {
                     var tradeAsset = new TradeStatusUser.TradeAsset();
                     tradeAsset.CreateItemAsset(Convert.ToInt64(asset.AppId), Convert.ToInt64(asset.ContextId),
-                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount));
-                    if (!asset.IsMissing)
-                    {
-                        theirAssets.Add(tradeAsset);
-                    }
-                    else
-                    {
-                        theirMissingAssets.Add(tradeAsset);
-                    }
+                        Convert.ToInt64(asset.AssetId), Convert.ToInt64(asset.Amount), asset.IsMissing);
+                    theirAssets.Add(tradeAsset);
                 }
             }
             this.Session = session;
@@ -276,59 +262,58 @@ namespace SteamTrade.TradeOffer
             public bool AddMyItem(int appId, long contextId, long assetId, long amount = 1)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateItemAsset(appId, contextId, assetId, amount);
+                asset.CreateItemAsset(appId, contextId, assetId, amount, false);
                 return ShouldUpdate(MyOfferedItems.AddItem(asset));
             }
 
             public bool AddTheirItem(int appId, long contextId, long assetId, long amount = 1)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateItemAsset(appId, contextId, assetId, amount);
+                asset.CreateItemAsset(appId, contextId, assetId, amount, false);
                 return ShouldUpdate(TheirOfferedItems.AddItem(asset));
             }
 
             public bool AddMyCurrencyItem(int appId, long contextId, long currencyId, long amount)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount);
+                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount, false);
                 return ShouldUpdate(MyOfferedItems.AddCurrencyItem(asset));
             }
 
             public bool AddTheirCurrencyItem(int appId, long contextId, long currencyId, long amount)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount);
+                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount, false);
                 return ShouldUpdate(TheirOfferedItems.AddCurrencyItem(asset));
             }
 
             public bool RemoveMyItem(int appId, long contextId, long assetId, long amount = 1)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateItemAsset(appId, contextId, assetId, amount);
+                asset.CreateItemAsset(appId, contextId, assetId, amount, false);
                 return ShouldUpdate(MyOfferedItems.RemoveItem(asset));
             }
 
             public bool RemoveTheirItem(int appId, long contextId, long assetId, long amount = 1)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateItemAsset(appId, contextId, assetId, amount);
+                asset.CreateItemAsset(appId, contextId, assetId, amount, false);
                 return ShouldUpdate(TheirOfferedItems.RemoveItem(asset));
             }
 
             public bool RemoveMyCurrencyItem(int appId, long contextId, long currencyId, long amount)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount);
+                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount, false);
                 return ShouldUpdate(MyOfferedItems.RemoveCurrencyItem(asset));
             }
 
             public bool RemoveTheirCurrencyItem(int appId, long contextId, long currencyId, long amount)
             {
                 var asset = new TradeStatusUser.TradeAsset();
-                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount);
+                asset.CreateCurrencyAsset(appId, contextId, currencyId, amount, false);
                 return ShouldUpdate(TheirOfferedItems.RemoveCurrencyItem(asset));
             }
-
             public bool TryGetMyItem(int appId, long contextId, long assetId, long amount, out TradeStatusUser.TradeAsset asset)
             {
                 var tradeAsset = new TradeStatusUser.TradeAsset()
@@ -532,22 +517,27 @@ namespace SteamTrade.TradeOffer
                 [JsonProperty("currencyid"), JsonConverter(typeof(ValueStringConverter))]
                 public long CurrencyId { get; set; }
 
-                public void CreateItemAsset(long appId, long contextId, long assetId, long amount)
+                [JsonProperty("missing")]
+                public bool IsMissing { get; set; }
+
+                public void CreateItemAsset(long appId, long contextId, long assetId, long amount, bool missing)
                 {
                     this.AppId = appId;
                     this.ContextId = contextId;
                     this.AssetId = assetId;
                     this.Amount = amount;
                     this.CurrencyId = 0;
+                    this.IsMissing = missing;
                 }
 
-                public void CreateCurrencyAsset(long appId, long contextId, long currencyId, long amount)
+                public void CreateCurrencyAsset(long appId, long contextId, long currencyId, long amount, bool missing)
                 {
                     this.AppId = appId;
                     this.ContextId = contextId;
                     this.CurrencyId = currencyId;
                     this.Amount = amount;
                     this.AssetId = 0;
+                    this.IsMissing = missing;
                 }
 
                 public bool ShouldSerializeAssetId()
