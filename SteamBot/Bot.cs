@@ -87,6 +87,10 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
+        /// <summary>
+        /// The instance of the Logger for the bot.
+        /// </summary>
+        public readonly Log Log;
         #endregion
 
         #region Public variables
@@ -108,10 +112,6 @@ namespace SteamBot
         /// Default: 0 = No game.
         /// </summary>
         public int CurrentGame { get; private set; }
-        /// <summary>
-        /// The instance of the Logger for the bot.
-        /// </summary>
-        public Log Log;
         #endregion
 
         public IEnumerable<SteamID> FriendsList
@@ -182,7 +182,7 @@ namespace SteamBot
             }
 
             logFile = config.LogFile;
-            CreateLog();
+            Log = new Log(logFile, DisplayName, consoleLogLevel, fileLogLevel);
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             cellid = config.CellID;
@@ -267,7 +267,6 @@ namespace SteamBot
                 Log.Info("This bot died. Stopping it..");
                 StopBot();
             }
-            DisposeLog();
         }
 
         private void GrabCallback(object sender, DoWorkEventArgs e)
@@ -288,7 +287,7 @@ namespace SteamBot
 
         ~Bot()
         {
-            DisposeBot();
+            Dispose(false);
         }
 
         private void RegisterCallbacks()
@@ -308,21 +307,6 @@ namespace SteamBot
             subscriptions.Add(CallbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected));
             subscriptions.Add(CallbackManager.Subscribe<SteamNotifications.NotificationCallback>(OnNotification));
             subscriptions.Add(CallbackManager.Subscribe<SteamNotifications.CommentNotificationCallback>(OnProfileCommentRecieved));
-        }
-
-        private void CreateLog()
-        {
-            if(Log == null)
-                Log = new Log (logFile, DisplayName, consoleLogLevel, fileLogLevel);
-        }
-
-        private void DisposeLog()
-        {
-            if(Log != null)
-            {
-                Log.Dispose();
-                Log = null;
-            }
         }
 
         private void CreateFriendsListIfNecessary()
@@ -354,10 +338,10 @@ namespace SteamBot
         {
             if (!LoadServerList())
                 return false; //Cancel starting of bot if server list fails.
-            CreateLog();
             IsRunning = true;
             if (!callbackGrabber.IsBusy)
                 callbackGrabber.RunWorkerAsync();
+            IsRunning = true;
             Log.Info("Connecting...");
             SteamClient.Connect();
             Log.Success("Done Loading Bot!");
@@ -379,7 +363,6 @@ namespace SteamBot
             while (callbackGrabber.IsBusy)
                 Thread.Yield();
             userHandlers.Clear();
-            DisposeLog();
         }
 
         /// <summary>
@@ -1074,18 +1057,20 @@ namespace SteamBot
 
         public void Dispose()
         {
-            DisposeBot();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        private void DisposeBot()
+        private void Dispose(bool disposing)
         {
             if (disposed)
                 return;
-            disposed = true;
             StopBot();
             foreach (IDisposable subscription in subscriptions)
                 subscription.Dispose();
+            if (disposing)
+                Log.Dispose();
+            disposed = true;
         }
     }
 }

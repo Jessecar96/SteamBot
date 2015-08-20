@@ -23,6 +23,7 @@ namespace SteamBot
 
         protected StreamWriter _FileStream;
         protected string _botName;
+        private bool disposed;
         public LogLevel OutputLevel;
         public LogLevel FileLogLevel;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
@@ -40,9 +41,9 @@ namespace SteamBot
             ShowBotName = true;
         }
 
-        public void Dispose()
+        ~Log()
         {
-            _FileStream.Dispose();
+            Dispose(false);
         }
 
         // This outputs a log entry of the level info.
@@ -87,6 +88,8 @@ namespace SteamBot
         // applicable.
         protected void _OutputLine(LogLevel level, string line, params object[] formatParams)
         {
+            if (disposed)
+                return;
             string formattedString = String.Format(
                 "[{0}{1}] {2}: {3}",
                 GetLogBotName(),
@@ -170,6 +173,21 @@ namespace SteamBot
             default:
                 return DefaultConsoleColor;
             }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+            if (disposing)
+                _FileStream.Dispose();
+            disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
