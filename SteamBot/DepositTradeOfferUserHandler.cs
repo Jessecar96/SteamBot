@@ -224,53 +224,6 @@ namespace SteamBot
 						} else {
 							Log.Info ("No items to give... strange");
 						}
-
-						//Wait for a second before sending next trade offer.
-						//System.Threading.Thread.Sleep (1000);
-
-						//Create trade offer for items kept
-						//string profitSteamIDString = "STEAM_0:1:66955921";
-						//SteamID profitSteamID = new SteamID (profitSteamIDString);
-						//var profitTradeOffer = Bot.NewTradeOffer (profitSteamID);
-
-						//Instead of trading the items to keep to another account, just keep them on this account.
-						//Then, they can be sent to my main account using exec and the command "withdraw"
-
-						//Loop through all profit items and add them to trade
-						/* List<long> alreadyAddedToProfitTrade = new List<long> ();
-						foreach (CSGOItemFromWeb item in itemsToKeep) {
-							long classId = item.classId, instanceId = item.instanceId;
-
-							//Loop through all inventory items and find the asset id for the item
-							long assetId = 0;
-							foreach (var inventoryItem in rgInventory) {
-								var value = inventoryItem.Value;
-								long tAssetId = value.id, tClassId = value.classid, tInstanceId = value.instanceid;
-
-								if (tClassId == classId && tInstanceId == instanceId) {
-									if (alreadyAddedToProfitTrade.Contains (tAssetId)) {
-										continue;
-										//This is for when there are 2 of the same weapon, but they have different assetIds
-									}
-									assetId = tAssetId;
-									break;
-								}
-							}
-
-							//Log.Success ("Adding item to winner trade offer. Asset ID: " + assetId);
-
-							profitTradeOffer.Items.AddMyItem (730, 2, assetId, 1);
-							alreadyAddedToProfitTrade.Add (assetId);
-						}
-
-						//Send trade offer to profit account
-						if (itemsToKeep.Count > 0) {
-							string profitTradeOfferId;
-							profitTradeOffer.Send (out profitTradeOfferId, "Profit items.");
-							Log.Success ("Offer sent to profit.");
-						} else {
-							Log.Info ("No items to keep.");
-						} */
 					}
 				} else {
 					if (offer.Decline ()) {
