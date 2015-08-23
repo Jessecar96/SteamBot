@@ -1,7 +1,7 @@
 # CSGO Win Big Steam Bot
 
 ### What is this?
-This is a custom fork of [https://github.com/Jessecar96/SteamBot](Jessecar96/SteamBot), for handling deposit and payout trade offers for [http://csgowinbig.jordanturley.com/](CSGO Win Big). CSGO Win Big is a Counter-Strike: Global Offensive jackpot skin betting website, created by me, Jordan Turley.
+This is a custom fork of [Jessecar96/SteamBot](https://github.com/Jessecar96/SteamBot), for handling deposit and payout trade offers for [CSGO Win Big](http://csgowinbig.jordanturley.com/). CSGO Win Big is a Counter-Strike: Global Offensive jackpot skin betting website, created by me, Jordan Turley.
 
 **SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 8 contributors have all added to the bot.  The bot is publicly available under the MIT License. Check out [LICENSE] for more details.
 
