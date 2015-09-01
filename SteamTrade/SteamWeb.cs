@@ -58,8 +58,8 @@ namespace SteamTrade
 
         public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            Task<WebResponse> responseTask = RequestAsync(url, method, data, ajax, referer);
-            return responseTask.Result as HttpWebResponse;
+            Task<WebResponse> requestTask = Task.Run(async() => { return await RequestAsync(url, method, data, ajax, referer); });
+            return requestTask.Result as HttpWebResponse;
         }
 
         public Task<string> FetchAsync(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
@@ -75,8 +75,8 @@ namespace SteamTrade
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            Task<string> responseTask = FetchAsync(url, method, data, ajax, referer);
-            return responseTask.Result;
+            Task<string> fetchTask = Task.Run(async() => { return await FetchAsync(url, method, data, ajax, referer)});
+            return fetchTask.Result;
         }
 
         ///<summary>
@@ -130,7 +130,7 @@ namespace SteamTrade
         /// <returns>True if authentication is successful, false otherwise.</returns>
         public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
-            Task<bool> authTask = AuthenticateAsync(myUniqueId, client, myLoginKey);
+            Task<bool> authTask = Task.Run(async() => { return await AuthenticateAsync(myUniqueId, client, myLoginKey); });
             return authTask.Result;
         }
 
@@ -153,7 +153,7 @@ namespace SteamTrade
         /// <returns>True if cookies are valid, false otherwise</returns>
         public bool VerifyCookies()
         {
-            Task<bool> verifyTask = VerifyCookiesAsync();
+            Task<bool> verifyTask = Task.Run(async() => { return await VerifyCookiesAsync(); });
             return verifyTask.Result;
         }
 
