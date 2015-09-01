@@ -75,7 +75,7 @@ namespace SteamTrade
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            Task<string> fetchTask = Task.Run(async() => { return await FetchAsync(url, method, data, ajax, referer)});
+            Task<string> fetchTask = Task.Run(async() => { return await FetchAsync(url, method, data, ajax, referer); });
             return fetchTask.Result;
         }
 
