@@ -252,6 +252,8 @@ namespace SteamTrade.TradeOffer
         TradeOfferStateCanceled = 6,
         TradeOfferStateDeclined = 7,
         TradeOfferStateInvalidItems = 8,
+        TradeOfferStateAwaitingEmailConfirmation = 9,
+        TradeOfferStateEmailConfirmationCancelled = 10,
         TradeOfferStateUnknown
     }
 
