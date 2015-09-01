@@ -59,7 +59,6 @@ namespace SteamTrade
         public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
             Task<WebResponse> responseTask = RequestAsync(url, method, data, ajax, referer);
-            responseTask.Wait();
             return responseTask.Result as HttpWebResponse;
         }
 
@@ -77,7 +76,6 @@ namespace SteamTrade
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
             Task<string> responseTask = FetchAsync(url, method, data, ajax, referer);
-            responseTask.Wait();
             return responseTask.Result;
         }
 
@@ -133,7 +131,6 @@ namespace SteamTrade
         public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
             Task<bool> authTask = AuthenticateAsync(myUniqueId, client, myLoginKey);
-            authTask.Wait();
             return authTask.Result;
         }
 
@@ -157,7 +154,6 @@ namespace SteamTrade
         public bool VerifyCookies()
         {
             Task<bool> verifyTask = VerifyCookiesAsync();
-            verifyTask.Wait();
             return verifyTask.Result;
         }
 
