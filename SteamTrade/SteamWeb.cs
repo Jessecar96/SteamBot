@@ -58,17 +58,24 @@ namespace SteamTrade
 
         public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            Task<WebResponse> requestTask = Task.Run(async() => { return await RequestAsync(url, method, data, ajax, referer); });
+            Task<WebResponse> requestTask = Task.Run(async() => { try { return await RequestAsync(url, method, data, ajax, referer); } catch (Exception) { return null; } });
             return requestTask.Result as HttpWebResponse;
         }
 
         public Task<string> FetchAsync(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            return RequestAsync(url, method, data, ajax, referer).ContinueWith(x => {
-                using (WebResponse response = x.Result)
+            return RequestAsync(url, method, data, ajax, referer).ContinueWith(request => {
+                try
                 {
-                    using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                        return reader.ReadToEnd();
+                    using (WebResponse response = request.Result)
+                    {
+                        using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                            return reader.ReadToEnd();
+                    }
+                }
+                catch (Exception)
+                {
+                    return null;
                 }
             });
         }
@@ -96,16 +103,16 @@ namespace SteamTrade
                     cryptedSessionKey = rsa.Encrypt(sessionKey);
                 Array.Copy(Encoding.ASCII.GetBytes(myLoginKey), loginKey, myLoginKey.Length);
                 byte[] cryptedLoginKey = CryptoHelper.SymmetricEncrypt(loginKey, sessionKey);
-                try
+                Task<KeyValue> authResult = userAuth.AuthenticateUser(
+                    steamid: client.SteamID.ConvertToUInt64(),
+                    sessionkey: HttpUtility.UrlEncode(cryptedSessionKey),
+                    encrypted_loginkey: HttpUtility.UrlEncode(cryptedLoginKey),
+                    method: "POST",
+                    secure: true
+                    );
+                return authResult.ContinueWith(x =>
                 {
-                    Task<KeyValue> authResult = userAuth.AuthenticateUser(
-                        steamid: client.SteamID.ConvertToUInt64(),
-                        sessionkey: HttpUtility.UrlEncode(cryptedSessionKey),
-                        encrypted_loginkey: HttpUtility.UrlEncode(cryptedLoginKey),
-                        method: "POST",
-                        secure: true
-                        );
-                    return authResult.ContinueWith(x =>
+                    try
                     {
                         KeyValue result = x.Result;
                         Token = result["token"].AsString();
@@ -114,13 +121,13 @@ namespace SteamTrade
                         cookies.Add(new Cookie("steamLogin", Token, String.Empty, SteamCommunityDomain));
                         cookies.Add(new Cookie("steamLoginSecure", TokenSecure, String.Empty, SteamCommunityDomain));
                         return true;
-                    });
-                }
-                catch (Exception)
-                {
-                    Token = TokenSecure = null;
-                    return Task.Factory.StartNew(delegate () { return false; });
-                }
+                    }
+                    catch (Exception)
+                    {
+                        Token = TokenSecure = null;
+                        return false;
+                    }
+                });
             }
         }
 
@@ -142,8 +149,15 @@ namespace SteamTrade
         {
             return RequestAsync("http://" + SteamCommunityDomain, "HEAD").ContinueWith(x =>
             {
-                using (HttpWebResponse response = x.Result as HttpWebResponse)
-                    return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
+                try
+                {
+                    using (HttpWebResponse response = x.Result as HttpWebResponse)
+                        return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
             });
         }
 
