@@ -30,7 +30,8 @@ See the [configuration guide] on the wiki. This guide covers configuring a basic
 While running the bots you may find it necessary to do some basic operations like shutting down and restarting a bot. The console will take some commands to allow you to do some this. See the [usage guide] for more information.
 
 ### Troubleshooting
-If you are trying to get this website set up and encounter any errors, please send me an email at csgowinbig@jordanturley.com. DO NOT submit an issue, only submit an issue if there is something legitimately wrong with the code. Also, please try something on your own before messaging me, and if you cannot fix it on your own, send me an email and list off what you have tried. If you haven't tried anything, I will not respond.
+* If you are trying to get this website set up and encounter any errors, please send me an email at csgowinbig@jordanturley.com. DO NOT submit an issue, only submit an issue if there is something legitimately wrong with the code. Also, please try something on your own before messaging me, and if you cannot fix it on your own, send me an email and list off what you have tried. If you haven't tried anything, I will not respond.
+* If you are getting a 500 Internal Server Error when trying to send/receive a trade offer, this is probably because it has not been 7 days since you have first logged in on the bot. Steam puts a 7 day trade ban on your account when you login on a new device, so you must wait 7 days before sending or receiving trades on the bot once you first login.
 
 ### More help?
 If it's a bug, open an Issue; if you have a fix, read [CONTRIBUTING.md] and open a Pull Request.  If it is a question about how to use SteamBot with your own bots, visit our subreddit at [/r/SteamBot](http://www.reddit.com/r/SteamBot). Please use the issue tracker only for bugs reports and pull requests. The subreddit should be used for all other  discussions.
