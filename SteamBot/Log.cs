@@ -1,11 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 
 namespace SteamBot
 {
     public class Log : IDisposable
     {
-
         public enum LogLevel
         {
             Debug,
@@ -22,76 +22,102 @@ namespace SteamBot
 
 
         protected StreamWriter _FileStream;
-        protected string _Bot;
-        public LogLevel OutputToConsole;
+        protected string _botName;
+        private bool disposed;
+        public LogLevel OutputLevel;
+        public LogLevel FileLogLevel;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
+        public bool ShowBotName { get; set; }
 
-        public Log (string logFile, string botName = "", LogLevel output = LogLevel.Info)
+        public Log(string logFile, string botName = "", LogLevel consoleLogLevel = LogLevel.Info, LogLevel fileLogLevel = LogLevel.Info)
         {
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
-            _FileStream = File.AppendText (System.IO.Path.Combine("logs",logFile));
+            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
+            _FileStream = File.AppendText (Path.Combine("logs",logFile));
             _FileStream.AutoFlush = true;
-            _Bot = botName;
-            OutputToConsole = output;
+            _botName = botName;
+            OutputLevel = consoleLogLevel;
+            FileLogLevel = fileLogLevel;
             Console.ForegroundColor = DefaultConsoleColor;
+            ShowBotName = true;
         }
 
-        public void Dispose()
+        ~Log()
         {
-            _FileStream.Dispose();
+            Dispose(false);
         }
 
         // This outputs a log entry of the level info.
-        public void Info (string data)
+        public void Info(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Info, data);
+            _OutputLine(LogLevel.Info, data, formatParams);
         }
 
         // This outputs a log entry of the level debug.
-        public void Debug (string data)
+        public void Debug(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Debug, data);
+            _OutputLine(LogLevel.Debug, data, formatParams);
         }
 
         // This outputs a log entry of the level success.
-        public void Success (string data)
+        public void Success(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Success, data);
+            _OutputLine(LogLevel.Success, data, formatParams);
         }
 
         // This outputs a log entry of the level warn.
-        public void Warn (string data)
+        public void Warn(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Warn, data);
+            _OutputLine(LogLevel.Warn, data, formatParams);
         }
 
         // This outputs a log entry of the level error.
-        public void Error (string data)
+        public void Error(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Error, data);
+            _OutputLine(LogLevel.Error, data, formatParams);
         }
 
         // This outputs a log entry of the level interface;
         // normally, this means that some sort of user interaction
         // is required.
-        public void Interface (string data)
+        public void Interface(string data, params object[] formatParams)
         {
-            _OutputLine (LogLevel.Interface, data);
+            _OutputLine(LogLevel.Interface, data, formatParams);
         }
 
         // Outputs a line to both the log and the console, if
         // applicable.
-        protected void _OutputLine (LogLevel level, string line)
+        protected void _OutputLine(LogLevel level, string line, params object[] formatParams)
         {
-            string formattedString = String.Format (
-                "[{0} {1}] {2}: {3}",
-                (_Bot == null ? "(System)" : _Bot),
-                DateTime.Now.ToString ("yyyy-MM-dd HH:mm:ss"),
-                _LogLevel (level).ToUpper (), line
+            if (disposed)
+                return;
+            string formattedString = String.Format(
+                "[{0}{1}] {2}: {3}",
+                GetLogBotName(),
+                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                _LogLevel(level).ToUpper(), (formatParams != null && formatParams.Any() ? String.Format(line, formatParams) : line)
                 );
-            _FileStream.WriteLine (formattedString);
-            if (level >= OutputToConsole)
-                _OutputLineToConsole (level, formattedString);
+
+            if(level >= FileLogLevel)
+            {
+                _FileStream.WriteLine(formattedString);
+            }
+            if(level >= OutputLevel)
+            {
+                _OutputLineToConsole(level, formattedString);
+            }
+        }
+
+        private string GetLogBotName()
+        {
+            if(_botName == null)
+            {
+                return "(System) ";
+            }
+            else if(ShowBotName)
+            {
+                return _botName + " ";
+            }
+            return "";
         }
 
         // Outputs a line to the console, with the correct color
@@ -147,6 +173,21 @@ namespace SteamBot
             default:
                 return DefaultConsoleColor;
             }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+            if (disposing)
+                _FileStream.Dispose();
+            disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

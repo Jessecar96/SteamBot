@@ -73,7 +73,7 @@ namespace SteamTrade
         public double RefinedTotal { get { return (double)_numGrains / GRAIN_PER_REFINED; } }
 
         /// <summary>
-        /// Only the reclaimed portion of this TF2Value.
+        /// Only the refined portion of this TF2Value.
         /// Example: if the value is 3 ref + 2 rec + 1 scrap, the RefinedPart would be 3
         /// </summary>
         public int RefinedPart { get { return (int)RefinedTotal; } }

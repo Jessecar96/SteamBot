@@ -24,10 +24,11 @@ namespace SteamTrade
         {
             OnGoing = 0,
             CompletedSuccessfully = 1,
-            UnknownStatus = 2,
+            Empty = 2,
             TradeCancelled = 3,
             SessionExpired = 4,
-            TradeFailed = 5
+            TradeFailed = 5,
+            PendingEmail = 6
         }
 
         public string GetTradeStatusErrorString(TradeStatusType tradeStatusType)
@@ -38,14 +39,16 @@ namespace SteamTrade
                     return "is still going on";
                 case TradeStatusType.CompletedSuccessfully:
                     return "completed successfully";
-                case TradeStatusType.UnknownStatus:
-                    return "CLOSED FOR UNKNOWN REASONS - WHAT CAUSES THIS STATUS!?";
+                case TradeStatusType.Empty:
+                    return "completed empty - no items were exchanged";
                 case TradeStatusType.TradeCancelled:
                     return "was cancelled " + (tradeCancelledByBot ? "by bot" : "by other user");
                 case TradeStatusType.SessionExpired:
                     return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
                 case TradeStatusType.TradeFailed:
                     return "failed unexpectedly";
+                case TradeStatusType.PendingEmail:
+                    return "completed - pending e-mail confirmation";
                 default:
                     return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
             }
@@ -71,6 +74,7 @@ namespace SteamTrade
         private bool otherUserTimingOut;
         private bool tradeCancelledByBot;
         private int numUnknownStatusUpdates;
+        private long tradeOfferID; //Used for email confirmation
 
         internal Trade(SteamID me, SteamID other, SteamWeb steamWeb, Task<Inventory> myInventoryTask, Task<Inventory> otherInventoryTask)
         {
@@ -189,6 +193,20 @@ namespace SteamTrade
         public bool HasTradeCompletedOk { get; private set; }
 
         /// <summary>
+        /// Gets a value indicating whether the trade completed awaiting email confirmation. This
+        /// is independent of other flags.
+        /// </summary>
+        public bool IsTradeAwaitingEmailConfirmation { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the trade has finished (regardless of the cause, eg. success, cancellation, error, etc)
+        /// </summary>
+        public bool HasTradeEnded
+        {
+            get { return OtherUserCancelled || HasTradeCompletedOk || IsTradeAwaitingEmailConfirmation || tradeCancelledByBot; }
+        }
+
+        /// <summary>
         /// Gets a value indicating if the remote trading partner accepted the trade.
         /// </summary>
         public bool OtherUserAccepted { get; private set; }
@@ -200,6 +218,8 @@ namespace SteamTrade
         public delegate void CloseHandler();
 
         public delegate void CompleteHandler();
+
+        public delegate void WaitingForEmailHandler(long tradeOfferID);
 
         public delegate void ErrorHandler(string errorMessage);
 
@@ -230,6 +250,11 @@ namespace SteamTrade
         /// Called when the trade completes successfully.
         /// </summary>
         public event CompleteHandler OnSuccess;
+
+        /// <summary>
+        /// Called when the trade ends awaiting email confirmation
+        /// </summary>
+        public event WaitingForEmailHandler OnAwaitingEmailConfirmation;
 
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -513,7 +538,7 @@ namespace SteamTrade
             for(int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
             {
                 //Don't make any more requests if the trade has ended!
-                if(HasTradeCompletedOk || OtherUserCancelled)
+                if (HasTradeEnded)
                     return default(T);
 
                 try
@@ -567,18 +592,23 @@ namespace SteamTrade
             TradeStatusType tradeStatusType = (TradeStatusType) status.trade_status;
             switch (tradeStatusType)
             {
-                    // Nothing happened. i.e. trade hasn't closed yet.
+                // Nothing happened. i.e. trade hasn't closed yet.
                 case TradeStatusType.OnGoing:
                     return HandleTradeOngoing(status);
 
-                    // Successful trade
+                // Successful trade
                 case TradeStatusType.CompletedSuccessfully:
                     HasTradeCompletedOk = true;
                     return false;
 
+                // Email confirmation
+                case TradeStatusType.PendingEmail:
+                    IsTradeAwaitingEmailConfirmation = true;
+                    tradeOfferID = long.Parse(status.tradeid);
+                    return false;
+
                 //On a status of 2, the Steam web code attempts the request two more times
-                //This is our attempt to do the same.  I (BlueRaja) personally don't think this will work, but we shall see...
-                case TradeStatusType.UnknownStatus:
+                case TradeStatusType.Empty:
                     numUnknownStatusUpdates++;
                     if(numUnknownStatusUpdates < 3)
                     {
@@ -588,16 +618,17 @@ namespace SteamTrade
             }
 
             FireOnStatusErrorEvent(tradeStatusType);
-                    OtherUserCancelled = true;
-                    return false;
-            }
+            OtherUserCancelled = true;
+            return false;
+        }
 
         private bool HandleTradeOngoing(TradeStatus status)
         {
+            bool otherUserDidSomething = false;
             if (status.newversion)
             {
                 HandleTradeVersionChange(status);
-                return true;
+                otherUserDidSomething = true;
             }
             else if(status.version > session.Version)
             {
@@ -619,7 +650,6 @@ namespace SteamTrade
                 otherUserTimingOut = (status.them.connection_pending || status.them.sec_since_touch >= 5);
             }
 
-            bool otherUserDidSomething = false;
             var events = status.GetAllEvents();
             foreach(var tradeEvent in events.OrderBy(o => o.timestamp))
             {
@@ -826,6 +856,14 @@ namespace SteamTrade
 
             if(onSuccessEvent != null)
                 onSuccessEvent();
+        }
+
+        internal void FireOnAwaitingEmailConfirmation()
+        {
+            var onAwaitingEmailConfirmation = OnAwaitingEmailConfirmation;
+
+            if (onAwaitingEmailConfirmation != null)
+                onAwaitingEmailConfirmation(tradeOfferID);
         }
 
         internal void FireOnCloseEvent()

@@ -266,7 +266,7 @@ namespace SteamTrade
                         if(action)
                             lastOtherActionTime = DateTime.Now;
 
-                        if(trade.OtherUserCancelled || trade.HasTradeCompletedOk || CheckTradeTimeout(trade))
+                        if (trade.HasTradeEnded || CheckTradeTimeout(trade))
                         {
                             IsTradeThreadRunning = false;
                             break;
@@ -295,6 +295,8 @@ namespace SteamTrade
                         {
                             if(trade.HasTradeCompletedOk)
                                 trade.FireOnSuccessEvent();
+                            else if(trade.IsTradeAwaitingEmailConfirmation)
+                                trade.FireOnAwaitingEmailConfirmation();
                         }
                         finally
                         {

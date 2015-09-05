@@ -11,6 +11,8 @@ namespace SteamTrade.TradeWebAPI
         public bool newversion { get; set; }
             
         public bool success { get; set; }
+
+        public string tradeid { get; set; }
             
         public long trade_status { get; set; }
             
@@ -190,7 +192,7 @@ namespace SteamTrade.TradeWebAPI
         UserSetUnReady = 3,
         UserAccept = 4,
         //5 = ?? Maybe some sort of cancel?
-        //6 = ??
+        ModifiedCurrency = 6,
         UserChat = 7 //message = "text"
     }
 }

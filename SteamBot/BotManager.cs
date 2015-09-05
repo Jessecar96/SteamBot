@@ -13,17 +13,23 @@ namespace SteamBot
     /// <summary>
     /// A class that manages SteamBot processes.
     /// </summary>
-    public class BotManager
+    public class BotManager : IDisposable
     {
         private readonly List<RunningBot> botProcs;
         private Log mainLog;
         private bool useSeparateProcesses;
+        private bool disposed;
 
         public BotManager()
         {
             useSeparateProcesses = false;
             new List<Bot>();
             botProcs = new List<RunningBot>();
+        }
+
+        ~BotManager()
+        {
+            Dispose(false);
         }
 
         public Configuration ConfigObject { get; private set; }
@@ -52,7 +58,7 @@ namespace SteamBot
 
             useSeparateProcesses = ConfigObject.UseSeparateProcesses;
 
-            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug);
+            mainLog = new Log(ConfigObject.MainLog, null, Log.LogLevel.Debug, Log.LogLevel.Debug);
 
             for (int i = 0; i < ConfigObject.Bots.Length; i++)
             {
@@ -89,7 +95,7 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Kills all running bot processes.
+        /// Kills all running bot processes and cleans up loose ends
         /// </summary>
         public void StopBots()
         {
@@ -98,6 +104,9 @@ namespace SteamBot
             {
                 botProc.Stop();
             }
+
+            mainLog.Dispose();
+            mainLog = null;
         }
 
         /// <summary>
@@ -242,15 +251,35 @@ namespace SteamBot
                     controlClass, new object[] { bot, sid });
         }
 
+        private void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+            StopBots();
+            if (disposing)
+            {
+                foreach (IDisposable bot in botProcs)
+                    bot.Dispose();
+            }
+            disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         #region Nested RunningBot class
 
         /// <summary>
         /// Nested class that holds the information about a spawned bot process.
         /// </summary>
-        private class RunningBot
+        private class RunningBot : IDisposable
         {
             private const string BotExecutable = "SteamBot.exe";
             private readonly Configuration config;
+            private bool disposed;
 
             /// <summary>
             /// Creates a new instance of <see cref="RunningBot"/> class.
@@ -268,6 +297,11 @@ namespace SteamBot
                 BotConfigIndex = index;
                 BotConfig = config.Bots[BotConfigIndex];
                 this.config = config;
+            }
+
+            ~RunningBot()
+            {
+                Dispose(false);
             }
 
             public bool UsingProcesses { get; private set; }
@@ -372,6 +406,22 @@ namespace SteamBot
             //        Console.WriteLine(e.Data);
             //    }
             //}
+
+            private void Dispose(bool disposing)
+            {
+                if (disposed)
+                    return;
+                Stop();
+                if (disposing && TheBot != null)
+                    TheBot.Dispose();
+                disposed = true;
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
         }
 
         #endregion Nested RunningBot class

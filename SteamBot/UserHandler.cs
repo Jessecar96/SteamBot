@@ -21,6 +21,7 @@ namespace SteamBot
 
         private bool _lastMessageWasFromTrade;
         private Task<Inventory> otherInventoryTask;
+        private TaskCompletionSource<string> _waitingOnUserResponse;
 
         protected SteamWeb SteamWeb
         {
@@ -39,6 +40,16 @@ namespace SteamBot
             Bot = bot;
             OtherSID = sid;
             GetOtherInventory();
+        }
+
+        private bool HandleWaitingOnUserResponse(string message)
+        {
+            if(_waitingOnUserResponse == null)
+                return false;
+
+            _waitingOnUserResponse.SetResult(message);
+            _waitingOnUserResponse = null;
+            return true;
         }
 
         /// <summary>
@@ -89,7 +100,7 @@ namespace SteamBot
         /// </summary>
         public Log Log
         {
-            get { return Bot.log; }
+            get { return Bot.Log; }
         }
         
         /// <summary>
@@ -100,7 +111,7 @@ namespace SteamBot
         /// </value>
         public bool IsAdmin
         {
-            get { return Bot.Admins.Contains ((ulong)OtherSID); }
+            get { return Bot.Admins.Contains(OtherSID); }
         }
 
         /// <summary>
@@ -133,9 +144,11 @@ namespace SteamBot
         public void OnMessageHandler(string message, EChatEntryType type)
         {
             _lastMessageWasFromTrade = false;
-            OnMessage(message, type);
+            if(!HandleWaitingOnUserResponse(message))
+            {
+                OnMessage(message, type);
+            }
         }
-
 
         /// <summary>
         /// Called when the bot is fully logged in.
@@ -190,6 +203,26 @@ namespace SteamBot
 
         }
 
+        /// <summary>
+        /// Waits for the user to enter something into regular or trade chat, then returns it (as the result of a task)
+        /// Usage: The following displays "How many do you want to buy" and stores the user's response:
+        /// string userResponse = await GetUserResponse("How many do you want to buy?");
+        /// 
+        /// Note: calling this method causes the next user-message to NOT call OnMessage() or OnTradeMessage()
+        /// </summary>
+        /// <param name="message">An option message to display to the user.
+        /// Sent to whichever chat (normal or trade) is currently being used.</param>
+        protected virtual Task<string> GetUserResponse(string message = null)
+        {
+            if (message != null)
+            {
+                SendReplyMessage(message);
+            }
+
+            _waitingOnUserResponse = new TaskCompletionSource<string>();
+            return _waitingOnUserResponse.Task;
+        }
+
         #region Trade events
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 
@@ -207,6 +240,8 @@ namespace SteamBot
 
         public abstract void OnTradeSuccess ();
 
+        public abstract void OnTradeAwaitingEmailConfirmation (long tradeOfferID);
+
         public virtual void OnTradeClose ()
         {
             Bot.CloseTrade ();
@@ -221,7 +256,10 @@ namespace SteamBot
         public void OnTradeMessageHandler(string message)
         {
             _lastMessageWasFromTrade = true;
-            OnTradeMessage(message);
+            if (!HandleWaitingOnUserResponse(message))
+            {
+                OnTradeMessage(message);
+            }
         }
 
         public abstract void OnTradeMessage (string message);
@@ -337,7 +375,7 @@ namespace SteamBot
 
         private void SendTradeMessageImpl(string message)
         {
-            if (Trade != null && !Trade.HasTradeCompletedOk)
+            if (Trade != null && !Trade.HasTradeEnded)
             {
                 Trade.SendMessage(message);
             }
@@ -351,7 +389,7 @@ namespace SteamBot
         /// <param name="formatParams">Optional.  The format parameters, using the same syntax as String.Format()</param>
         protected virtual void SendReplyMessage(string message, params object[] formatParams)
         {
-            if (_lastMessageWasFromTrade && Trade != null && !Trade.HasTradeCompletedOk)
+            if (_lastMessageWasFromTrade && Trade != null && !Trade.HasTradeEnded)
             {
                 SendTradeMessage(message, formatParams);
             }
@@ -370,7 +408,7 @@ namespace SteamBot
         /// <param name="formatParams">Optional.  The format parameters, using the same syntax as String.Format()</param>
         protected virtual void SendReplyMessage(int delayMs, string message, params object[] formatParams)
         {
-            if (_lastMessageWasFromTrade && Trade != null && !Trade.HasTradeCompletedOk)
+            if (_lastMessageWasFromTrade && Trade != null && !Trade.HasTradeEnded)
             {
                 SendTradeMessage(delayMs, message, formatParams);
             }
