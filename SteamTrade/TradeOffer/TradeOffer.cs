@@ -155,9 +155,8 @@ namespace SteamTrade.TradeOffer
 
         /// <summary>
         /// Accepts the current offer
-        /// </summary>
-        /// <param name="tradeId">the tradeid if successful</param>
-        /// <returns>true if successful, otherwise false</returns>
+        /// </summary>        
+        /// <returns>TradeOfferAcceptResponse object containing accept result</returns>
         public TradeOfferAcceptResponse Accept()
         {
             if (TradeOfferId == null)
@@ -170,6 +169,32 @@ namespace SteamTrade.TradeOffer
             }
             //todo: log wrong state
             return new TradeOfferAcceptResponse { TradeError = "Can't accept a trade that is not active" };            
+        }
+
+
+        /// <summary>
+        /// Accepts the current offer. Old signature for compatibility
+        /// </summary>
+        /// <param name="tradeId">the tradeid if successful</param>
+        /// <returns>true if successful, otherwise false</returns>
+        [Obsolete("Use TradeOfferAcceptResponse Accept()")]
+        public bool Accept(out string tradeId)
+        {
+            tradeId = String.Empty;
+            if (TradeOfferId == null) 
+            {   
+                //throw like original function did             
+                throw new ArgumentException("TradeOfferId");
+            }
+            else 
+            {
+                TradeOfferAcceptResponse result = Accept();
+                if (result.Accepted) 
+                {
+                    tradeId = result.TradeId;
+                }
+                return result.Accepted;
+            }            
         }
 
         /// <summary>
