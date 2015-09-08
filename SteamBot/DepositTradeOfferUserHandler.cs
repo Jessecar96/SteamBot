@@ -24,7 +24,7 @@ namespace SteamBot
 		{
 			if (command.Equals ("withdraw")) {
 				//Get current pot and all items in inventory
-				string withdrawUrl = "http://csgowinbig.jordanturley.com/php/bot-withdraw.php";
+				string withdrawUrl = "http://csgowinbig.com/php/bot-withdraw.php";
 				var withdrawRequest = (HttpWebRequest)WebRequest.Create (withdrawUrl);
 				var withdrawResponse = (HttpWebResponse)withdrawRequest.GetResponse ();
 				string withdrawString = new StreamReader (withdrawResponse.GetResponseStream()).ReadToEnd();
@@ -129,7 +129,7 @@ namespace SteamBot
 
 			postData += "&items=" + theirItemsJSON;
 
-			string url = "http://csgowinbig.jordanturley.com/php/deposit.php";
+			string url = "http://csgowinbig.com/php/deposit.php";
 			var request = (HttpWebRequest)WebRequest.Create (url);
 
 			var data = Encoding.ASCII.GetBytes(postData);
