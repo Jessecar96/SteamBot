@@ -211,7 +211,7 @@ namespace SteamBot
         {
             if (File.Exists(String.Format("servers-{0}.bin", cellid)))
             {
-                using (var fs = File.OpenRead("servers.bin"))
+                using (var fs = File.OpenRead(String.Format("servers-{0}.bin", cellid)))
                 using (var reader = new BinaryReader(fs))
                 {
                     while (fs.Position < fs.Length)
