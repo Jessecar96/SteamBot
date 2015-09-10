@@ -82,7 +82,7 @@ namespace SteamBot
 		public override void OnNewTradeOffer(TradeOffer offer)
 		{
 			//Get password from file on desktop
-			string pass = System.IO.File.ReadAllText(@"C:\Users\Jordan\Desktop\password.txt");
+			string pass = System.IO.File.ReadAllText(@"C:\Users\Jordan Turley\Desktop\password.txt");
 
 			//Get items in the trade, and ID of user sending trade
 			var theirItems = offer.Items.GetTheirItems ();
@@ -129,7 +129,7 @@ namespace SteamBot
 
 			postData += "&items=" + theirItemsJSON;
 
-			string url = "http://csgowinbig.com/php/deposit.php";
+			string url = "http://csgowinbig.com/php/check-items.php";
 			var request = (HttpWebRequest)WebRequest.Create (url);
 
 			var data = Encoding.ASCII.GetBytes(postData);
@@ -157,6 +157,30 @@ namespace SteamBot
 				if (jsonData.minDeposit == 1) {
 					if (offer.Accept ()) {
 						Log.Success ("Offer accepted from " + userID);
+
+						//Put items into the pot
+						string urlPutItemsIn = "http://csgowinbig.com/php/deposit.php";
+						var requestUrlPutItemsIn = (HttpWebRequest)WebRequest.Create (urlPutItemsIn);
+
+						string postDataPutItemsIn = "password=" + pass;
+						postDataPutItemsIn += "&owner=" + userID;
+						postDataPutItemsIn += "&items=" + jsonData.allItems;
+						//Log.Success (jsonData.allItems);
+
+						var dataPutItemsIn = Encoding.ASCII.GetBytes (postDataPutItemsIn);
+
+						requestUrlPutItemsIn.Method = "POST";
+						requestUrlPutItemsIn.ContentType = "application/x-www-form-urlencoded";
+						requestUrlPutItemsIn.ContentLength = dataPutItemsIn.Length;
+
+						using (var stream = requestUrlPutItemsIn.GetRequestStream ()) {
+							stream.Write (dataPutItemsIn, 0, dataPutItemsIn.Length);
+						}
+
+						var responsePutItemsIn = (HttpWebResponse)requestUrlPutItemsIn.GetResponse ();
+						string responsePutItemsInString = new StreamReader (responsePutItemsIn.GetResponseStream ()).ReadToEnd ();
+						JSONClass responseJsonObjPutItemsIn = JsonConvert.DeserializeObject<JSONClass> (responsePutItemsInString);
+						jsonData = responseJsonObjPutItemsIn.data;
 					}
 
 					//Check if the pot is over
@@ -285,6 +309,7 @@ namespace SteamBot
 	public class Data {
 		public int minDeposit;
 		public int potOver;
+		public string allItems;
 		public string winnerSteamID;
 		public string winnerTradeToken;
 		public List<CSGOItemFromWeb> tradeItems;
