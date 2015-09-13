@@ -53,12 +53,17 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Exceptions\TradeException.cs" />
-    <Compile Include="ForeignInventory.cs" />
-    <Compile Include="GenericInventory.cs" />
+    <Compile Include="IEnumerableTools.cs" />
+    <Compile Include="InventorySys\FetchType.cs" />
+    <Compile Include="InventorySys\Game.cs" />
+    <Compile Include="InventorySys\Inventory.cs" />
+    <Compile Include="InventorySys\InventoryType.cs" />
+    <Compile Include="InventorySys\Item.cs" />
+    <Compile Include="InventorySys\ItemAppData.cs" />
+    <Compile Include="InventorySys\ItemEnumerator.cs" />
+    <Compile Include="InventorySys\ItemTag.cs" />
     <Compile Include="TF2Value.cs" />
     <Compile Include="Trade.cs" />
-    <Compile Include="Schema.cs" />
-    <Compile Include="Inventory.cs" />
     <Compile Include="SteamWeb.cs" />
     <Compile Include="TradeOffer\OfferSession.cs" />
     <Compile Include="TradeOffer\TradeOffer.cs" />
@@ -72,6 +77,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
 </Project>
