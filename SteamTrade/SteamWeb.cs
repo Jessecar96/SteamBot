@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Cache;
 using System.Net.Security;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -58,32 +59,35 @@ namespace SteamTrade
 
         public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            Task<WebResponse> requestTask = Task.Run(async() => { try { return await RequestAsync(url, method, data, ajax, referer); } catch (Exception) { return null; } });
-            return requestTask.Result as HttpWebResponse;
+            return Task.Run(() => RequestAsync(url, method, data, ajax, referer).ContinueWith(requestTask =>
+            {
+                if (requestTask.IsFaulted)
+                    ExceptionDispatchInfo.Capture(requestTask.Exception.InnerException).Throw();
+                return requestTask.Result;
+            })).Result as HttpWebResponse;
         }
 
         public Task<string> FetchAsync(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            return RequestAsync(url, method, data, ajax, referer).ContinueWith(request => {
-                try
+            return RequestAsync(url, method, data, ajax, referer).ContinueWith(requestTask => {
+                if (requestTask.IsFaulted)
+                    ExceptionDispatchInfo.Capture(requestTask.Exception.InnerException).Throw();
+                using (WebResponse response = requestTask.Result)
                 {
-                    using (WebResponse response = request.Result)
-                    {
-                        using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                            return reader.ReadToEnd();
-                    }
-                }
-                catch (Exception)
-                {
-                    return null;
+                    using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                        return reader.ReadToEnd();
                 }
             });
         }
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "http://" + SteamCommunityDomain + "/trade/1")
         {
-            Task<string> fetchTask = Task.Run(async() => { return await FetchAsync(url, method, data, ajax, referer); });
-            return fetchTask.Result;
+            return Task.Run(() => FetchAsync(url, method, data, ajax, referer).ContinueWith(fetchTask =>
+            {
+                if (fetchTask.IsFaulted)
+                    ExceptionDispatchInfo.Capture(fetchTask.Exception.InnerException).Throw();
+                return fetchTask.Result;
+            })).Result;
         }
 
         ///<summary>
@@ -110,23 +114,17 @@ namespace SteamTrade
                     method: "POST",
                     secure: true
                     );
-                return authResult.ContinueWith(x =>
+                return authResult.ContinueWith(apiTask =>
                 {
-                    try
-                    {
-                        KeyValue result = x.Result;
-                        Token = result["token"].AsString();
-                        TokenSecure = result["tokensecure"].AsString();
-                        cookies.Add(new Cookie("sessionid", SessionId, String.Empty, SteamCommunityDomain));
-                        cookies.Add(new Cookie("steamLogin", Token, String.Empty, SteamCommunityDomain));
-                        cookies.Add(new Cookie("steamLoginSecure", TokenSecure, String.Empty, SteamCommunityDomain));
-                        return true;
-                    }
-                    catch (Exception)
-                    {
-                        Token = TokenSecure = null;
-                        return false;
-                    }
+                    if (apiTask.IsFaulted)
+                        ExceptionDispatchInfo.Capture(apiTask.Exception.InnerException).Throw();
+                    KeyValue result = apiTask.Result;
+                    Token = result["token"].AsString();
+                    TokenSecure = result["tokensecure"].AsString();
+                    cookies.Add(new Cookie("sessionid", SessionId, string.Empty, SteamCommunityDomain));
+                    cookies.Add(new Cookie("steamLogin", Token, string.Empty, SteamCommunityDomain));
+                    cookies.Add(new Cookie("steamLoginSecure", TokenSecure, string.Empty, SteamCommunityDomain));
+                    return true;
                 });
             }
         }
@@ -137,8 +135,12 @@ namespace SteamTrade
         /// <returns>True if authentication is successful, false otherwise.</returns>
         public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
-            Task<bool> authTask = Task.Run(async() => { return await AuthenticateAsync(myUniqueId, client, myLoginKey); });
-            return authTask.Result;
+            return Task.Run(() => AuthenticateAsync(myUniqueId, client, myLoginKey).ContinueWith(authTask =>
+            {
+                if (authTask.IsFaulted)
+                    ExceptionDispatchInfo.Capture(authTask.Exception.InnerException).Throw();
+                return authTask.Result;
+            })).Result;
         }
 
         /// <summary>
@@ -147,17 +149,12 @@ namespace SteamTrade
         /// <returns>True if cookies are valid, false otherwise</returns>
         public Task<bool> VerifyCookiesAsync()
         {
-            return RequestAsync("http://" + SteamCommunityDomain, "HEAD").ContinueWith(x =>
+            return RequestAsync("http://" + SteamCommunityDomain, "HEAD").ContinueWith(requestTask =>
             {
-                try
-                {
-                    using (HttpWebResponse response = x.Result as HttpWebResponse)
-                        return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
+                if (requestTask.IsFaulted)
+                    ExceptionDispatchInfo.Capture(requestTask.Exception.InnerException).Throw();
+                using (HttpWebResponse response = requestTask.Result as HttpWebResponse)
+                    return response.Cookies["steamLogin"] == null || !response.Cookies["steamLogin"].Value.Equals("deleted");
             });
         }
 
@@ -167,8 +164,12 @@ namespace SteamTrade
         /// <returns>True if cookies are valid, false otherwise</returns>
         public bool VerifyCookies()
         {
-            Task<bool> verifyTask = Task.Run(async() => { return await VerifyCookiesAsync(); });
-            return verifyTask.Result;
+            return Task.Run(() => VerifyCookiesAsync().ContinueWith(cookiesTask =>
+            {
+                if (cookiesTask.IsFaulted)
+                    ExceptionDispatchInfo.Capture(cookiesTask.Exception.InnerException).Throw();
+                return cookiesTask.Result;
+            })).Result;
         }
 
         public bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
