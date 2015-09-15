@@ -15,7 +15,7 @@ There are several things you must do in order to get SteamBot working:
 5. Download the code for the website [here](https://github.com/ztizzlegaming/CSGOWinBig), and upload it to a server, and set it up, making sure that it is functional.
 6. Change the url [here](https://github.com/ztizzlegaming/CSGOWinBig-SteamBot/blob/master/SteamBot/DepositTradeOfferUserHandler.cs#L132) to your own website's check-items.php php script.
 7. Change the url [here](https://github.com/ztizzlegaming/CSGOWinBig-SteamBot/blob/master/SteamBot/DepositTradeOfferUserHandler.cs#L162) to your own website's deposit php script.
-7. Change the url [here](https://github.com/ztizzlegaming/CSGOWinBig-SteamBot/blob/master/SteamBot/DepositTradeOfferUserHandler.cs#L176) to your own bot's inventory url. Just replace the number after 'profiles/' and before '/inventory' to your bot's 64bit ID. This can be found pretty easily on https://steamid.io/.
+7. Change the url [here](https://github.com/ztizzlegaming/CSGOWinBig-SteamBot/blob/master/SteamBot/DepositTradeOfferUserHandler.cs#L200) to your own bot's inventory url. Just replace the number after 'profiles/' and before '/inventory' to your bot's 64bit ID. This can be found pretty easily on https://steamid.io/.
 8. Once you have the website set up, you should have a file in your web root with your default password. Make a text file named 'password.txt' on your desktop (or wherever you want) with only this password in it. Then, update the location of this file [here](https://github.com/ztizzlegaming/CSGOWinBig-SteamBot/blob/master/SteamBot/DepositTradeOfferUserHandler.cs#L85).
 
 ### Getting the Source
