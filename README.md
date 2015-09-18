@@ -1,7 +1,7 @@
 # CSGO Win Big Steam Bot
 
 ### What is this?
-This is a custom fork of [Jessecar96/SteamBot](https://github.com/Jessecar96/SteamBot), for handling deposit and payout trade offers for [CSGO Win Big](http://csgowinbig.jordanturley.com/). CSGO Win Big is a Counter-Strike: Global Offensive jackpot skin betting website, created by me, Jordan Turley.
+This is a custom fork of [Jessecar96/SteamBot](https://github.com/Jessecar96/SteamBot), for handling deposit and payout trade offers for [CSGO Win Big](http://csgowinbig.com/). CSGO Win Big is a Counter-Strike: Global Offensive jackpot skin betting website, created by me, Jordan Turley.
 
 **SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 8 contributors have all added to the bot.  The bot is publicly available under the MIT License. Check out [LICENSE] for more details.
 
@@ -31,7 +31,8 @@ See the [configuration guide] on the wiki. This guide covers configuring a basic
 While running the bots you may find it necessary to do some basic operations like shutting down and restarting a bot. The console will take some commands to allow you to do some this. See the [usage guide] for more information.
 
 ### Troubleshooting
-* If you are trying to get this website set up and encounter any errors, please send me an email at csgowinbig@jordanturley.com. DO NOT submit an issue, only submit an issue if there is something legitimately wrong with the code. Also, please try something on your own before messaging me, and if you cannot fix it on your own, send me an email and list off what you have tried. If you haven't tried anything, I will not respond.
+* If you are trying to get this website set up and encounter any errors, please send me an email at support@csgowinbig.com. DO NOT submit an issue, only submit an issue if there is something legitimately wrong with the code. Also, please try something on your own before messaging me, and if you cannot fix it on your own, send me an email and list off what you have tried. If you haven't tried anything, I will not respond.
+* Please DO NOT add me on Steam, just sned an email to the support email.
 * If you are getting a 500 Internal Server Error when trying to send/receive a trade offer, this is probably because it has not been 7 days since you have first logged in on the bot. Steam puts a 7 day trade ban on your account when you login on a new device, so you must wait 7 days before sending or receiving trades on the bot once you first login.
 
 ### More help?
