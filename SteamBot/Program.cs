@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using NDesk.Options;
-using SteamTrade;
 
 namespace SteamBot
 {
