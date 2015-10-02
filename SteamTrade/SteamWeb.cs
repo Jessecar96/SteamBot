@@ -82,26 +82,30 @@ namespace SteamTrade
         /// <returns>An instance of a HttpWebResponse object.</returns>
         public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
-            //Append the data to the URL for GET-requests
+            // Append the data to the URL for GET-requests.
             bool isGetMethod = (method.ToLower() == "get");
             string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key =>
-                String.Format("{0}={1}", HttpUtility.UrlEncode(key), HttpUtility.UrlEncode(data[key]))
+                // ReSharper disable once UseStringInterpolation
+                string.Format("{0}={1}", HttpUtility.UrlEncode(key), HttpUtility.UrlEncode(data[key]))
             )));
+
+            // Example working with C# 6
+            // string dataString = (data == null ? null : String.Join("&", Array.ConvertAll(data.AllKeys, key => $"{HttpUtility.UrlEncode(key)}={HttpUtility.UrlEncode(data[key])}" )));
 
             if (isGetMethod && !String.IsNullOrEmpty(dataString))
             {
                 url += (url.Contains("?") ? "&" : "?") + dataString;
             }
 
-            //Setup the request
+            // Setup the request.
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = method;
             request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-            //request.Host is set automatically
+            // request.Host is set automatically.
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
             request.Referer = string.IsNullOrEmpty(referer) ? "http://steamcommunity.com/trade/1" : referer;
-            request.Timeout = 50000; //Timeout after 50 seconds
+            request.Timeout = 50000; // Timeout after 50 seconds.
             request.CachePolicy = new HttpRequestCachePolicy(HttpRequestCacheLevel.Revalidate);
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
 
@@ -115,7 +119,7 @@ namespace SteamTrade
             request.CookieContainer = _cookies;
 
             // Write the data to the body for POST and other methods
-            if (isGetMethod || String.IsNullOrEmpty(dataString)) return request.GetResponse() as HttpWebResponse;
+            if (isGetMethod || string.IsNullOrEmpty(dataString)) return request.GetResponse() as HttpWebResponse;
             byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
             request.ContentLength = dataBytes.Length;
 
@@ -152,10 +156,12 @@ namespace SteamTrade
 
             //RSA Encryption
             RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
-            RSAParameters rsaParameters = new RSAParameters();
+            RSAParameters rsaParameters = new RSAParameters
+            {
+                Exponent = HexToByte(rsaJSON.publickey_exp),
+                Modulus = HexToByte(rsaJSON.publickey_mod)
+            };
 
-            rsaParameters.Exponent = HexToByte(rsaJSON.publickey_exp);
-            rsaParameters.Modulus = HexToByte(rsaJSON.publickey_mod);
 
             rsa.ImportParameters(rsaParameters);
 
@@ -184,9 +190,7 @@ namespace SteamTrade
                     capGid = Uri.EscapeDataString(loginJson.captcha_gid);
                 }
 
-                data = new NameValueCollection();
-                data.Add("password", encryptedBase64Password);
-                data.Add("username", username);
+                data = new NameValueCollection {{"password", encryptedBase64Password}, {"username", username}};
 
                 // Captcha
                 string capText = "";
@@ -289,7 +293,7 @@ namespace SteamTrade
                 var sessionKey = CryptoHelper.GenerateRandomBlock(32);
 
                 // rsa encrypt it with the public key for the universe we're on
-                byte[] cryptedSessionKey = null;
+                byte[] cryptedSessionKey;
                 using (RSACrypto rsa = new RSACrypto(KeyDictionary.GetPublicKey(client.ConnectedUniverse)))
                 {
                     cryptedSessionKey = rsa.Encrypt(sessionKey);
@@ -322,9 +326,9 @@ namespace SteamTrade
                 Token = authResult["token"].AsString();
                 TokenSecure = authResult["tokensecure"].AsString();
 
-                _cookies.Add(new Cookie("sessionid", SessionId, String.Empty, SteamCommunityDomain));
-                _cookies.Add(new Cookie("steamLogin", Token, String.Empty, SteamCommunityDomain));
-                _cookies.Add(new Cookie("steamLoginSecure", TokenSecure, String.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("sessionid", SessionId, string.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("steamLogin", Token, string.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("steamLoginSecure", TokenSecure, string.Empty, SteamCommunityDomain));
 
                 return true;
             }
