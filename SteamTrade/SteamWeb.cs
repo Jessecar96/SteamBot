@@ -63,7 +63,10 @@ namespace SteamTrade
                 using (Stream responseStream = response.GetResponseStream())
                 {
                     // If the response stream is null it cannot be read. So return an empty string.
-                    if (responseStream == null) return "";
+                    if (responseStream == null)
+                    {
+                        return "";
+                    }
                     using (StreamReader reader = new StreamReader(responseStream))
                     {
                         return reader.ReadToEnd();
@@ -122,7 +125,10 @@ namespace SteamTrade
             request.CookieContainer = _cookies;
 
             // If the request is a GET request return now the response. If not go on. Because then we need to apply data to the request.
-            if (isGetMethod || string.IsNullOrEmpty(dataString)) return request.GetResponse() as HttpWebResponse;
+            if (isGetMethod || string.IsNullOrEmpty(dataString))
+            {
+                return request.GetResponse() as HttpWebResponse;
+            }
             // Write the data to the body for POST and other methods.
             byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
             request.ContentLength = dataBytes.Length;
@@ -189,7 +195,8 @@ namespace SteamTrade
                 
                 string capGid = string.Empty;
                 // Response does not need to send if captcha is needed or not.
-                if (loginJson?.captcha_gid != null)
+                // ReSharper disable once MergeSequentialChecks
+                if (loginJson != null && loginJson.captcha_gid != null)
                 {
                     capGid = Uri.EscapeDataString(loginJson.captcha_gid);
                 }
@@ -371,7 +378,10 @@ namespace SteamTrade
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 
             // Check, if the request is null.
-            if (w == null) return;
+            if (w == null)
+            {
+                return;
+            }
             w.Method = "POST";
             w.ContentType = "application/x-www-form-urlencoded";
             w.CookieContainer = cookies;
@@ -387,8 +397,10 @@ namespace SteamTrade
         /// <returns>The byte value.</returns>
         private byte[] HexToByte(string hex)
         {
-            if (hex.Length % 2 == 1)
+            if (hex.Length%2 == 1)
+            {
                 throw new Exception("The binary key cannot have an odd number of digits");
+            }
 
             byte[] arr = new byte[hex.Length >> 1];
             int l = hex.Length;
