@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Cache;
 using System.Text;
@@ -404,13 +405,14 @@ namespace SteamTrade
             // allow all certificates
             return true;
         }
-
     }
+
     // JSON Classes
 
     /// <summary>
     /// Class to Deserialize the json response strings of the getResKey request. See: <see cref="SteamWeb.DoLogin"/>
     /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class GetRsaKey
     {
         public bool success { get; set; }
@@ -425,6 +427,7 @@ namespace SteamTrade
     /// <summary>
     /// Class to Deserialize the json response strings after the login. See: <see cref="SteamWeb.DoLogin"/>
     /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class SteamResult
     {
         public bool success { get; set; }
@@ -438,6 +441,5 @@ namespace SteamTrade
         public bool emailauth_needed { get; set; }
 
         public string emailsteamid { get; set; }
-
     }
 }
