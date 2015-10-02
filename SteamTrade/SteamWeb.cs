@@ -142,14 +142,13 @@ namespace SteamTrade
         /// <returns>A bool containing a value, if the login was successful.</returns>
         public bool DoLogin(string username, string password)
         {
-            var data = new NameValueCollection();
-            data.Add("username", username);
+            var data = new NameValueCollection {{"username", username}};
             string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
-            GetRsaKey rsaJSON = JsonConvert.DeserializeObject<GetRsaKey>(response);
+            GetRsaKey rsaJson = JsonConvert.DeserializeObject<GetRsaKey>(response);
 
 
             // Validate
-            if (!rsaJSON.success)
+            if (!rsaJson.success)
             {
                 return false;
             }
@@ -158,8 +157,8 @@ namespace SteamTrade
             RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
             RSAParameters rsaParameters = new RSAParameters
             {
-                Exponent = HexToByte(rsaJSON.publickey_exp),
-                Modulus = HexToByte(rsaJSON.publickey_mod)
+                Exponent = HexToByte(rsaJson.publickey_exp),
+                Modulus = HexToByte(rsaJson.publickey_mod)
             };
 
 
@@ -181,7 +180,7 @@ namespace SteamTrade
                 bool captcha = loginJson != null && loginJson.captcha_needed == true;
                 bool steamGuard = loginJson != null && loginJson.emailauth_needed == true;
 
-                string time = Uri.EscapeDataString(rsaJSON.timestamp);
+                string time = Uri.EscapeDataString(rsaJson.timestamp);
                 
                 string capGid = string.Empty;
                 // Response does not need to send if captcha is needed or not.
