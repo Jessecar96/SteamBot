@@ -60,6 +60,8 @@ namespace SteamTrade
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
+                    // If the response stream is null it cannot be read. So return an empty string.
+                    if (responseStream == null) return "";
                     using (StreamReader reader = new StreamReader(responseStream))
                     {
                         return reader.ReadToEnd();
@@ -212,7 +214,12 @@ namespace SteamTrade
 
                 using(HttpWebResponse webResponse = Request("https://steamcommunity.com/login/dologin/", "POST", data, false))
                 {
-                    using(StreamReader reader = new StreamReader(webResponse.GetResponseStream()))
+                    var stream = webResponse.GetResponseStream();
+                    if (stream == null)
+                    {
+                        return false;
+                    }
+                    using (StreamReader reader = new StreamReader(stream))
                     {
                         string json = reader.ReadToEnd();
                         loginJson = JsonConvert.DeserializeObject<SteamResult>(json);
@@ -322,10 +329,11 @@ namespace SteamTrade
         {
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 
+            // Check, if the request is null.
+            if (w == null) return;
             w.Method = "POST";
             w.ContentType = "application/x-www-form-urlencoded";
             w.CookieContainer = cookies;
-
             w.GetResponse().Close();
         }
 
@@ -357,7 +365,7 @@ namespace SteamTrade
         /// <returns>A Hex Value as int.</returns>
         private int GetHexVal(char hex)
         {
-            int val = (int)hex;
+            int val = hex;
             return val - (val < 58 ? 48 : 55);
         }
 
