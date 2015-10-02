@@ -175,7 +175,13 @@ namespace SteamTrade
                 bool steamGuard = loginJson != null && loginJson.emailauth_needed == true;
 
                 string time = Uri.EscapeDataString(rsaJSON.timestamp);
-                string capGID = loginJson == null ? null : Uri.EscapeDataString(loginJson.captcha_gid);
+                
+                string capGid = string.Empty;
+                // Response does not need to send if captcha is needed or not.
+                if (loginJson?.captcha_gid != null)
+                {
+                    capGid = Uri.EscapeDataString(loginJson.captcha_gid);
+                }
 
                 data = new NameValueCollection();
                 data.Add("password", encryptedBase64Password);
@@ -191,10 +197,15 @@ namespace SteamTrade
                     capText = Uri.EscapeDataString(Console.ReadLine());
                 }
 
-                data.Add("captchagid", captcha ? capGID : "");
+                data.Add("captchagid", captcha ? capGid : "");
                 data.Add("captcha_text", captcha ? capText : "");
                 // Captcha end
+                // Added Header for two factor code.
+                data.Add("twofactorcode", "");
 
+                // Added Header for remember login. It can also set to true.
+                data.Add("remember_login", "false");
+                
                 // SteamGuard
                 if (steamGuard)
                 {
@@ -202,11 +213,22 @@ namespace SteamTrade
                     Console.WriteLine("SteamWeb: Type the code:");
                     steamGuardText = Uri.EscapeDataString(Console.ReadLine());
                     steamGuardId = loginJson.emailsteamid;
+
+                    // Adding the machine name to the NameValueCollection, because it is requested by steam.
+                    Console.WriteLine("SteamWeb: Type your machine name:");
+                    string consoleText = Console.ReadLine();
+                    var machineName = string.IsNullOrEmpty(consoleText) ? "" : Uri.EscapeDataString(consoleText);
+                    data.Add("loginfriendlyname", machineName != "" ? machineName : "defaultSteamBotMachine");
                 }
 
                 data.Add("emailauth", steamGuardText);
                 data.Add("emailsteamid", steamGuardId);
                 // SteamGuard end
+
+                // Added unixTimestamp. It is included in the request normally.
+                var unixTimestamp = (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+                // Added three "0"'s because Steam has a weird unix timestamp interpretation.
+                data.Add("donotcache", unixTimestamp + "000");
 
                 data.Add("rsatimestamp", time);
 
@@ -332,6 +354,8 @@ namespace SteamTrade
             w.Method = "POST";
             w.ContentType = "application/x-www-form-urlencoded";
             w.CookieContainer = cookies;
+            // Added content-length because it is required.
+            w.ContentLength = 0;
             w.GetResponse().Close();
         }
 
