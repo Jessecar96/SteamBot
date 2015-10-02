@@ -114,15 +114,13 @@ namespace SteamTrade
             request.CookieContainer = _cookies;
 
             // Write the data to the body for POST and other methods
-            if (!isGetMethod && !String.IsNullOrEmpty(dataString))
-            {
-                byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
-                request.ContentLength = dataBytes.Length;
+            if (isGetMethod || String.IsNullOrEmpty(dataString)) return request.GetResponse() as HttpWebResponse;
+            byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
+            request.ContentLength = dataBytes.Length;
 
-                using (Stream requestStream = request.GetRequestStream())
-                {
-                    requestStream.Write(dataBytes, 0, dataBytes.Length);
-                }
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(dataBytes, 0, dataBytes.Length);
             }
 
             // Get the response
