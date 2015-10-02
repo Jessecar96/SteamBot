@@ -177,8 +177,8 @@ namespace SteamTrade
             {
                 Console.WriteLine("SteamWeb: Logging In...");
 
-                bool captcha = loginJson != null && loginJson.captcha_needed == true;
-                bool steamGuard = loginJson != null && loginJson.emailauth_needed == true;
+                bool captcha = loginJson != null && loginJson.captcha_needed;
+                bool steamGuard = loginJson != null && loginJson.emailauth_needed;
 
                 string time = Uri.EscapeDataString(rsaJson.timestamp);
                 
@@ -198,7 +198,11 @@ namespace SteamTrade
                     Console.WriteLine("SteamWeb: Captcha is needed.");
                     System.Diagnostics.Process.Start("https://steamcommunity.com/public/captcha.php?gid=" + loginJson.captcha_gid);
                     Console.WriteLine("SteamWeb: Type the captcha:");
-                    capText = Uri.EscapeDataString(Console.ReadLine());
+                    string consoleText = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(consoleText))
+                    {
+                        capText = Uri.EscapeDataString(consoleText);
+                    }
                 }
 
                 data.Add("captchagid", captcha ? capGid : "");
@@ -215,12 +219,16 @@ namespace SteamTrade
                 {
                     Console.WriteLine("SteamWeb: SteamGuard is needed.");
                     Console.WriteLine("SteamWeb: Type the code:");
-                    steamGuardText = Uri.EscapeDataString(Console.ReadLine());
+                    string consoleText = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(consoleText))
+                    {
+                        steamGuardText = Uri.EscapeDataString(consoleText);
+                    }
                     steamGuardId = loginJson.emailsteamid;
 
                     // Adding the machine name to the NameValueCollection, because it is requested by steam.
                     Console.WriteLine("SteamWeb: Type your machine name:");
-                    string consoleText = Console.ReadLine();
+                    consoleText = Console.ReadLine();
                     var machineName = string.IsNullOrEmpty(consoleText) ? "" : Uri.EscapeDataString(consoleText);
                     data.Add("loginfriendlyname", machineName != "" ? machineName : "defaultSteamBotMachine");
                 }
