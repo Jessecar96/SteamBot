@@ -12,15 +12,48 @@ using System.Net.Security;
 using SteamKit2;
 
 namespace SteamTrade
-{
+{   
+
+    /// <summary>
+    /// SteamWeb class to create an API endpoint to the Steam Web.
+    /// </summary>
     public class SteamWeb
     {
+        /// <summary>
+        /// Base steam community domain.
+        /// </summary>
         public const string SteamCommunityDomain = "steamcommunity.com";
+
+        /// <summary>
+        /// Token of steam. Generated after login.
+        /// </summary>
         public string Token { get; private set; }
+
+        /// <summary>
+        /// Session id of Steam after Login.
+        /// </summary>
         public string SessionId { get; private set; }
+
+        /// <summary>
+        /// Token secure as string. It is generated after the Login.
+        /// </summary>
         public string TokenSecure { get; private set; }
+
+        /// <summary>
+        /// CookieContainer to save all cookies during the Login. 
+        /// </summary>
         private CookieContainer _cookies = new CookieContainer();
 
+        /// <summary>
+        /// This method is using the Request method to return the full http stream from a web request as string.
+        /// </summary>
+        /// <param name="url">URL of the http request.</param>
+        /// <param name="method">Gets the HTTP data transfer method (such as GET, POST, or HEAD) used by the client.</param>
+        /// <param name="data">A NameValueCollection including Headers added to the request.</param>
+        /// <param name="ajax">A bool to define if the http request is an ajax request.</param>
+        /// <param name="referer">Gets information about the URL of the client's previous request that linked to the current URL.</param>
+        /// <returns>The string of the http return stream.</returns>
+        /// <remarks>If you want to know how the request method works, use: <see cref="SteamWeb.Request"/></remarks>
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
             using (HttpWebResponse response = Request(url, method, data, ajax, referer))
@@ -35,6 +68,15 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Custom wrapper for creating a HttpWebRequest, edited for Steam.
+        /// </summary>
+        /// <param name="url">Gets information about the URL of the current request.</param>
+        /// <param name="method">Gets the HTTP data transfer method (such as GET, POST, or HEAD) used by the client.</param>
+        /// <param name="data">A NameValueCollection including Headers added to the request.</param>
+        /// <param name="ajax">A bool to define if the http request is an ajax request.</param>
+        /// <param name="referer">Gets information about the URL of the client's previous request that linked to the current URL.</param>
+        /// <returns>An instance of a HttpWebResponse object.</returns>
         public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
             //Append the data to the URL for GET-requests
@@ -87,7 +129,12 @@ namespace SteamTrade
 
         /// <summary>
         /// Executes the login by using the Steam Website.
+        /// This Method is not used by Steambot repository, but it could be very helpful if you want to build a own Steambot or want to login into steam services like backpack.tf/csgolounge.com.
+        /// Updated: 10-02-2015.
         /// </summary>
+        /// <param name="username">Your Steam username.</param>
+        /// <param name="password">Your Steam password.</param>
+        /// <returns>A bool containing a value, if the login was successful.</returns>
         public bool DoLogin(string username, string password)
         {
             var data = new NameValueCollection();
@@ -193,11 +240,15 @@ namespace SteamTrade
 
         }
 
-        ///<summary>
+        /// <summary>
         /// Authenticate using SteamKit2 and ISteamUserAuth. 
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
-        /// </summary> 
+        /// </summary>
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
+        /// <param name="myUniqueId">Id what you get to login.</param>
+        /// <param name="client">An instance of a SteamClient.</param>
+        /// <param name="myLoginKey">Login Key of your account.</param>
+        /// <returns>A bool, which is true if the login was successful.</returns>
         public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
             Token = TokenSecure = "";
@@ -254,7 +305,6 @@ namespace SteamTrade
         /// <summary>
         /// Helper method to verify our precious cookies.
         /// </summary>
-        /// <param name="cookies">CookieContainer with our cookies.</param>
         /// <returns>true if cookies are correct; false otherwise</returns>
         public bool VerifyCookies()
         {
@@ -264,6 +314,10 @@ namespace SteamTrade
             }
         }
 
+        /// <summary>
+        /// Method to submit cookies to Steam after Login.
+        /// </summary>
+        /// <param name="cookies">Cookiecontainer which contains cookies after the login to Steam.</param>
         static void SubmitCookies (CookieContainer cookies)
         {
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
@@ -275,6 +329,11 @@ namespace SteamTrade
             w.GetResponse().Close();
         }
 
+        /// <summary>
+        /// Method to convert a Hex to a byte.
+        /// </summary>
+        /// <param name="hex">Input parameter as string.</param>
+        /// <returns>The byte value.</returns>
         private byte[] HexToByte(string hex)
         {
             if (hex.Length % 2 == 1)
@@ -291,12 +350,25 @@ namespace SteamTrade
             return arr;
         }
 
+        /// <summary>
+        /// Get the Hex value as int out of an char.
+        /// </summary>
+        /// <param name="hex">Input parameter.</param>
+        /// <returns>A Hex Value as int.</returns>
         private int GetHexVal(char hex)
         {
             int val = (int)hex;
             return val - (val < 58 ? 48 : 55);
         }
 
+        /// <summary>
+        /// Method to allow all certificates.
+        /// </summary>
+        /// <param name="sender">An object that contains state information for this validation.</param>
+        /// <param name="certificate">The certificate used to authenticate the remote party.</param>
+        /// <param name="chain">The chain of certificate authorities associated with the remote certificate.</param>
+        /// <param name="policyErrors">One or more errors associated with the remote certificate.</param>
+        /// <returns>Always true to accept all certificates.</returns>
         public bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             // allow all certificates
@@ -304,8 +376,11 @@ namespace SteamTrade
         }
 
     }
-
     // JSON Classes
+
+    /// <summary>
+    /// Class to Deserialize the json response strings of the getResKey request. See: <see cref="SteamWeb.DoLogin"/>
+    /// </summary>
     public class GetRsaKey
     {
         public bool success { get; set; }
@@ -317,6 +392,9 @@ namespace SteamTrade
         public string timestamp { get; set; }
     }
 
+    /// <summary>
+    /// Class to Deserialize the json response strings after the login. See: <see cref="SteamWeb.DoLogin"/>
+    /// </summary>
     public class SteamResult
     {
         public bool success { get; set; }
@@ -332,5 +410,4 @@ namespace SteamTrade
         public string emailsteamid { get; set; }
 
     }
-
 }
