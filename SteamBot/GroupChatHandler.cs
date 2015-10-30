@@ -15,6 +15,14 @@ namespace SteamBot
 	public class GroupChatHandler : UserHandler
 	{
 
+		public string vdcCommand = "!VDC";
+		public string tf2wCommand = "!TF2";
+		public string impCommand = "!IMP";
+		public string mapListCommand = "!MAPS";
+		public string clearcommand = "!COMMAND";
+		public string chatroomID = "103582791429594873";
+		public string tf2maps = "!tfm";
+
 		public GroupChatHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
 		public override bool OnGroupAdd()
@@ -68,10 +76,16 @@ namespace SteamBot
 		{
 			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
 			base.OnChatRoomMessage (chatID, sender, message);
-			if (message.StartsWith ("!VDC" , StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith (vdcCommand , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string par1 = message.Remove (0, 5);
-				GoogleSearch(par1, "https://developer.valvesoftware.com/" , chatID);
+				GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
+			}
+
+			if (message.StartsWith (tf2maps , StringComparison.OrdinalIgnoreCase)) 
+			{
+				string par1 = message.Remove (0, 4);
+				GoogleSearch(par1, "http://tf2maps.net/", chatID);
 			}
 
 			if (message.StartsWith ("You have a leak" , StringComparison.OrdinalIgnoreCase)) 
@@ -79,10 +93,10 @@ namespace SteamBot
 				string output = "https://developer.valvesoftware.com/wiki/leak";
 				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, output);
 			}
-			if (message.StartsWith ("!TF2" , StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith (tf2wCommand , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string par1 = message.Remove (0, 5);
-				GoogleSearch(par1, "https://wiki.teamfortress.com/" , chatID);
+				GoogleSearch(par1, "https://wiki.teamfortress.com/", chatID);
 			}
 			if (message.StartsWith ("!DEBUG_01")) 
 			{
@@ -113,14 +127,14 @@ namespace SteamBot
 				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "GROUP CHAT HANDLED SUCCESSFULLY");
 			}
 
-			if (message.StartsWith ("!IMP" , StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith (impCommand , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string[] words = message.Split(' ');
 				string save = message.Substring (5, message.Length - 5);
 				maps (save);
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Added:maps");
 			}
-			if (message.StartsWith ("!MAPS", StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith (mapListCommand, StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @"logs\maps.log";
 				// Open the file to read from.
@@ -130,7 +144,7 @@ namespace SteamBot
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Sent map list as private message");
 			}
 
-			if (message.StartsWith ("!CLEAR" , StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith ("clearcommand" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @"logs\maps.log";
 				File.Delete(path);
@@ -139,18 +153,25 @@ namespace SteamBot
 
 		}
 		public void GoogleSearch(string par1 , string url, SteamID chatID) {
-
+			
 			WebClient client = new WebClient ();
 			string search = "http://www.google.com.au/search?q=" + par1 + "+site:" + url;
 			string httpdata = client.DownloadString (search);
 			string[] suffix = httpdata.Split (new string[] { "<h3 class=\"r\"><a href=\"/url?q=" + url }, System.StringSplitOptions.None);
 			Log.Info (httpdata);
-			string suffix_string = suffix [1];
-			string[] suffix_split = suffix_string.Split (new string[] { "&" }, System.StringSplitOptions.None);
-			string page = suffix_split [0];
-			string output = url + page;
-			Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, output);
-			Log.Info ("requested:" + output);
+			if (suffix.LongLength > 1) {
+				string suffix_string = suffix [1];
+				string[] suffix_split = suffix_string.Split (new string[] { "&" }, System.StringSplitOptions.None);
+				string page = suffix_split [0];
+				string output = url + page;
+				Log.Info ("requested:" + output);
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, output);
+			} 
+			else 
+			
+			{
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Invalid Search");
+			}
 		}
 		public static void maps(string map)
 		{
