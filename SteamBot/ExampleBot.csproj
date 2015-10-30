@@ -88,6 +88,7 @@
     <Compile Include="TradeOfferUserHandler.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />
+    <Compile Include="GroupChatHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
