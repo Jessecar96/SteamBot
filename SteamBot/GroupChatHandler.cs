@@ -58,7 +58,7 @@ namespace SteamBot
 
 		public override void OnMessage (string message, EChatEntryType type) {
 			SendChatMessage(Bot.ChatResponse);
-			if (message.StartsWith ("!TF2MAPS")) 
+			if (message.StartsWith ("!TF2MAPS" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				Bot.SteamFriends.JoinChat (new SteamID (103582791429594873));
 			}
@@ -68,18 +68,18 @@ namespace SteamBot
 		{
 			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
 			base.OnChatRoomMessage (chatID, sender, message);
-			if (message.StartsWith ("!VDC")) 
+			if (message.StartsWith ("!VDC" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string par1 = message.Remove (0, 5);
 				GoogleSearch(par1, "https://developer.valvesoftware.com/" , chatID);
 			}
 
-			if (message.StartsWith ("You have a leak")) 
+			if (message.StartsWith ("You have a leak" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string output = "https://developer.valvesoftware.com/wiki/leak";
 				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, output);
 			}
-			if (message.StartsWith ("!TF2")) 
+			if (message.StartsWith ("!TF2" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string par1 = message.Remove (0, 5);
 				GoogleSearch(par1, "https://wiki.teamfortress.com/" , chatID);
@@ -89,7 +89,7 @@ namespace SteamBot
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
 			}
 
-			if (message.StartsWith ("!RSS")) 
+			if (message.StartsWith ("!RSS" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string url = "http://fooblog.com/feed";
 				XmlReader reader = XmlReader.Create(url);
@@ -104,32 +104,33 @@ namespace SteamBot
 				}
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
 			}
-			if (message.StartsWith ("!DEBUG_02")) 
+			if (message.StartsWith ("!DEBUG_02" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "SEND TO:" + "103582791429594873");
 			}
-			if (message.StartsWith ("!DEBUG_03")) 
+			if (message.StartsWith ("!DEBUG_03" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "GROUP CHAT HANDLED SUCCESSFULLY");
 			}
 
-			if (message.StartsWith ("!IMP")) 
+			if (message.StartsWith ("!IMP" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string[] words = message.Split(' ');
 				string save = message.Substring (5, message.Length - 5);
 				maps (save);
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Added:maps");
 			}
-			if (message.StartsWith ("!MAPS")) 
+			if (message.StartsWith ("!MAPS", StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @"logs\maps.log";
 				// Open the file to read from.
 				string readText = File.ReadAllText(path);
 				Log.Interface (readText);
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, readText);
-
+				SendChatMessage(readText);
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Sent map list as private message");
 			}
 
-			if (message.StartsWith ("!CLEAR")) 
+			if (message.StartsWith ("!CLEAR" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @"logs\maps.log";
 				File.Delete(path);
