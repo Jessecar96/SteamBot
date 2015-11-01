@@ -10,6 +10,8 @@ using System.ServiceModel.Syndication;
 using System;
 using System.IO;
 using System.Text;
+using System.Linq;
+using System.Timers;
 namespace SteamBot
 {
 	public class GroupChatHandler : UserHandler
@@ -22,6 +24,27 @@ namespace SteamBot
 		public string clearcommand = "!COMMAND";
 		public string chatroomID = "103582791429594873";
 		public string tf2maps = "!tfm";
+		double interval = 10000;
+
+
+		private Timer rsspoll;
+		public void InitTimer()
+		{
+			rsspoll = new Timer();
+			rsspoll.Elapsed += new ElapsedEventHandler(rsspoll_Tick);
+
+			rsspoll.Interval = interval; // in miliseconds
+			rsspoll.Start();
+			LogRSS ("initialised");
+		}
+
+		private void rsspoll_Tick(object sender, EventArgs e)
+		{
+			LogRSS ("Ran");
+			rssfeedupdates();
+		}
+
+
 
 		public GroupChatHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
@@ -70,6 +93,11 @@ namespace SteamBot
 			{
 				Bot.SteamFriends.JoinChat (new SteamID (103582791429594873));
 			}
+
+			if (message.StartsWith ("!RSS" , StringComparison.OrdinalIgnoreCase)) 
+			{
+				InitTimer ();
+			}
 		}
 
 		public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
@@ -98,25 +126,22 @@ namespace SteamBot
 				string par1 = message.Remove (0, 5);
 				GoogleSearch(par1, "https://wiki.teamfortress.com/", chatID);
 			}
-			if (message.StartsWith ("!DEBUG_01")) 
+			if (message.StartsWith ("ghost?" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "no");
 			}
 
 			if (message.StartsWith ("!RSS" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				string url = "http://fooblog.com/feed";
+				string url = "http://steamcommunity.com/groups/TF2Mappers/rss/";
 				XmlReader reader = XmlReader.Create(url);
 				SyndicationFeed feed = SyndicationFeed.Load(reader);
+				string file = reader.ToString();
 				reader.Close();
-				foreach (SyndicationItem item in feed.Items)
-				{
-					string subject = item.Title.Text;    
-					string summary = item.Summary.Text;
-
-					Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, subject);
-				}
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
+				var latest = feed.Items.OrderByDescending(x=>x.PublishDate).FirstOrDefault().Title.Text;
+				Log.Interface (latest.ToString());
+				SendChatMessage(latest.ToString());
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, latest.ToString());
 			}
 			if (message.StartsWith ("!DEBUG_02" , StringComparison.OrdinalIgnoreCase)) 
 			{
@@ -173,6 +198,58 @@ namespace SteamBot
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Invalid Search");
 			}
 		}
+
+		public void rssloop (string feed , string filename)
+		{
+			getrss (feed);
+			string latest = getrss(feed);
+			RSSWrite (@"logs\", filename, latest);
+		}
+
+		public void rssfeedupdates()
+		{
+			rssloop("https://www.reddit.com/r/AskReddit/new/.rss" , "Debug.log");
+			rssloop("http://steamcommunity.com/groups/TF2Mappers/rss/" , "GroupEvents.log");
+		}
+
+		public void LogRSS(string par1)
+		{
+			Log.Interface (par1);
+		}
+		public void RSSWrite (string path , string filename , string content)
+		{
+			string filepath = path + filename;
+
+			if (!File.Exists (filepath)) 
+			{
+				File.WriteAllText (filepath, content);
+			} 
+			else 
+			{
+				string readText = File.ReadAllText (filepath);
+
+				if (content != readText) {
+					File.WriteAllText (filepath, content);
+					LogRSS ("New Entry");
+					LogRSS (content);
+				} else 
+				{
+					LogRSS ("No new entry");
+				}
+			}
+		}
+
+		string getrss(string feedtoread)
+		{
+			string url = feedtoread ;
+			XmlReader reader = XmlReader.Create(url);
+			SyndicationFeed feed = SyndicationFeed.Load(reader);
+			string file = reader.ToString();
+			reader.Close();
+			var latest = feed.Items.OrderByDescending(x=>x.PublishDate).FirstOrDefault().Title.Text;
+			return latest;
+		}
+
 		public static void maps(string map)
 		{
 			string path = @"logs\maps.log";
