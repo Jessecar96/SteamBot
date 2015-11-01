@@ -25,7 +25,8 @@ namespace SteamBot
 		public string chatroomID = "103582791429594873";
 		public string tf2maps = "!tfm";
 		double interval = 10000;
-
+		// Testing SteamID Groupchat = 103582791439544925;
+		SteamID Groupchat = 103582791429594873;
 
 		private Timer rsspoll;
 		public void InitTimer()
@@ -89,9 +90,9 @@ namespace SteamBot
 
 		public override void OnMessage (string message, EChatEntryType type) {
 			SendChatMessage(Bot.ChatResponse);
-			if (message.StartsWith ("!TF2MAPS" , StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith ("!JOIN" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				Bot.SteamFriends.JoinChat (new SteamID (103582791429594873));
+				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			}
 
 			if (message.StartsWith ("!RSS" , StringComparison.OrdinalIgnoreCase)) 
@@ -199,24 +200,25 @@ namespace SteamBot
 			}
 		}
 
-		public void rssloop (string feed , string filename)
+		public void rssloop (string feed , string filename , Boolean sendtochat)
 		{
 			getrss (feed);
 			string latest = getrss(feed);
-			RSSWrite (@"logs\", filename, latest);
+			RSSWrite (@"logs\", filename, latest, sendtochat);
 		}
 
 		public void rssfeedupdates()
 		{
-			rssloop("https://www.reddit.com/r/AskReddit/new/.rss" , "Debug.log");
-			rssloop("http://steamcommunity.com/groups/TF2Mappers/rss/" , "GroupEvents.log");
+			rssloop("https://www.reddit.com/r/AskReddit/new/.rss" , "Debug.log" , false);
+			rssloop("http://steamcommunity.com/groups/TF2Mappers/rss/" , "GroupEvents.log" , true);
+			rssloop("http://steamcommunity.com/groups/tf2maps_twitter/rss/" , "twitterbot.log" , true);
 		}
 
 		public void LogRSS(string par1)
 		{
 			Log.Interface (par1);
 		}
-		public void RSSWrite (string path , string filename , string content)
+		public void RSSWrite (string path , string filename , string content, Boolean SendtoChat)
 		{
 			string filepath = path + filename;
 
@@ -232,6 +234,9 @@ namespace SteamBot
 					File.WriteAllText (filepath, content);
 					LogRSS ("New Entry");
 					LogRSS (content);
+					if (SendtoChat == true) {
+						Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, content);
+					}
 				} else 
 				{
 					LogRSS ("No new entry");
@@ -246,7 +251,7 @@ namespace SteamBot
 			SyndicationFeed feed = SyndicationFeed.Load(reader);
 			string file = reader.ToString();
 			reader.Close();
-			var latest = feed.Items.OrderByDescending(x=>x.PublishDate).FirstOrDefault().Title.Text;
+			var latest = feed.Items.FirstOrDefault().Title.Text;
 			return latest;
 		}
 
