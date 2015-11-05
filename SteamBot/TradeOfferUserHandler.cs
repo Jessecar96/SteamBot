@@ -36,7 +36,12 @@ namespace SteamBot
 
         public override void OnTradeOfferDeclined(TradeOffers.TradeOffer tradeOffer)
         {
-            
+            Log.Warn("Trade offer #{0} has been declined.", tradeOffer.Id);
+        }
+
+        public override void OnTradeOfferInvalid(TradeOffers.TradeOffer tradeOffer)
+        {
+            Log.Warn("Trade offer #{0} is invalid, with state: {1}.", tradeOffer.Id, tradeOffer.State);
         }
 
         public override void OnMessage(string message, EChatEntryType type)

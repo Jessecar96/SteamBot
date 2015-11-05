@@ -74,6 +74,7 @@ namespace SteamBot
             return GenericInventory.FetchInventories(steamId, Bot.SteamClient.SteamID, Bot.SteamWeb);
         }
 
+        public abstract void OnTradeOfferInvalid(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferReceived(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferAccepted(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferDeclined(TradeOffers.TradeOffer tradeOffer);

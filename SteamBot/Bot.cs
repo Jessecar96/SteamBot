@@ -513,8 +513,14 @@ namespace SteamBot
             TradeOffers.TradeOfferAccepted += TradeOffers_TradeOfferAccepted;
             TradeOffers.TradeOfferDeclined += TradeOffers_TradeOfferDeclined;
             TradeOffers.TradeOfferReceived += TradeOffers_TradeOfferReceived;
+            TradeOffers.TradeOfferInvalid += TradeOffers_TradeOfferInvalid;
 
             GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
+        }
+
+        private void TradeOffers_TradeOfferInvalid(object sender, TradeOffers.TradeOfferEventArgs e)
+        {
+            GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferInvalid(e.TradeOffer);
         }
 
         void TradeOffers_TradeOfferReceived(object sender, TradeOffers.TradeOfferEventArgs e)

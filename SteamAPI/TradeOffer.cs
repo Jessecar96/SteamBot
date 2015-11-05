@@ -16,10 +16,10 @@ namespace SteamAPI
         private SteamWeb SteamWeb;
         public List<ulong> OurPendingTradeOffers;
         private List<ulong> ReceivedPendingTradeOffers;
+        private List<ulong> HandledTradeOffers;
         private string AccountApiKey;
         private bool ShouldCheckPendingTradeOffers;
         private int TradeOfferRefreshRate;
-        private int TimestampLastChecked = 0;        
 
         public TradeOffers(SteamID botId, SteamWeb steamWeb, string accountApiKey, int tradeOfferRefreshRate, List<ulong> pendingTradeOffers = null)
         {
@@ -35,6 +35,7 @@ namespace SteamAPI
                 this.OurPendingTradeOffers = pendingTradeOffers;
 
             this.ReceivedPendingTradeOffers = new List<ulong>();
+            this.HandledTradeOffers = new List<ulong>();
 
             new Thread(CheckPendingTradeOffers).Start();
         }
@@ -404,23 +405,15 @@ namespace SteamAPI
         /// <summary>
         /// Get list of trade offers from API
         /// </summary>
-        /// <param name="getChanged">Only get trade offers that has changed state since last request (UNTESTED)</param>
+        /// <param name="getActive">Set this to true to get active-only trade offers</param>
         /// <returns>list of trade offers</returns>
-        public List<TradeOffer> GetTradeOffers(bool getChanged = false)
+        public List<TradeOffer> GetTradeOffers(bool getActive = false)
         {
             var temp = new List<TradeOffer>();
             var url = "https://api.steampowered.com/IEconService/GetTradeOffers/v1/?key=" + AccountApiKey + "&get_sent_offers=1&get_received_offers=1";
-            if (getChanged)
+            if (getActive)
             {
-                if (TimestampLastChecked > 0)
-                {
-                    url += "&active_only=1&time_historical_cutoff=" + TimestampLastChecked;
-                }
-                else
-                {
-                    url += "&active_only=0";
-                }
-                TimestampLastChecked = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0)).TotalSeconds;
+                url += "&active_only=1&time_historical_cutoff=" + (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             }
             else
             {
@@ -1022,80 +1015,75 @@ namespace SteamAPI
 
         private void CheckPendingTradeOffers()
         {
-            while (ShouldCheckPendingTradeOffers)
+            new Thread(() =>
             {
-                var tradeOffers = GetTradeOffers(false);
-                foreach (var tradeOffer in tradeOffers)
+                while (ShouldCheckPendingTradeOffers)
                 {
-                    if (tradeOffer.IsOurOffer && OurPendingTradeOffers.Contains(tradeOffer.Id))
+                    var tradeOffers = GetTradeOffers(true);
+                    foreach (var tradeOffer in tradeOffers)
                     {
-                        if (tradeOffer.State != TradeOfferState.Active)
+                        if (!tradeOffer.IsOurOffer && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
                         {
                             var args = new TradeOfferEventArgs();
                             args.TradeOffer = tradeOffer;
 
-                            // check if trade offer has been accepted/declined, or items unavailable (manually validate)
-                            if (tradeOffer.State == TradeOfferState.Accepted)
+                            if (tradeOffer.State == TradeOfferState.Active)
                             {
-                                // fire event                            
-                                OnTradeOfferAccepted(args);
-                                // remove from list
-                                OurPendingTradeOffers.Remove(tradeOffer.Id);
-                            }
-                            else if (tradeOffer.State != TradeOfferState.Active && tradeOffer.State != TradeOfferState.Accepted)
-                            {
-                                if (tradeOffer.State == TradeOfferState.Invalid || tradeOffer.State == TradeOfferState.InvalidItems)
-                                {
-                                    // invalid, handle manually
-                                    new Thread(() =>
-                                    {
-                                        Console.WriteLine("Trade offer #{0} is in an invalid state, validating manually...", tradeOffer.Id);
-                                        // wait 1 min for trade to go through
-                                        Thread.Sleep(60000);
-                                        var retryGetTradeOffer = GetTradeOffer(tradeOffer.Id);
-                                        if (retryGetTradeOffer.Offer == null)
-                                        {
-                                            retryGetTradeOffer.Offer = tradeOffer;
-                                        }
-                                        else
-                                        {
-                                            args.TradeOffer = retryGetTradeOffer.Offer;
-                                        }
-                                        if (ValidateTradeAccept(retryGetTradeOffer.Offer))
-                                        {
-                                            OnTradeOfferAccepted(args);
-                                        }
-                                        else
-                                        {
-                                            OnTradeOfferDeclined(args);
-                                        }
-                                    }).Start();
-                                }
-                                else
-                                {
-                                    // fire event
-                                    OnTradeOfferDeclined(args);
-                                }
-                                // remove from list
-                                OurPendingTradeOffers.Remove(tradeOffer.Id);
+                                ReceivedPendingTradeOffers.Add(tradeOffer.Id);
+                                OnTradeOfferReceived(args);
                             }
                         }
                     }
-                    else if (!tradeOffer.IsOurOffer && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
+                    Thread.Sleep(TradeOfferRefreshRate);
+                }
+            }).Start();
+            while (ShouldCheckPendingTradeOffers)
+            {
+                var checkingThreads = new List<Thread>();
+                foreach (var tradeOfferId in OurPendingTradeOffers.ToList())
+                {
+                    var thread = new Thread(() =>
                     {
-                        var args = new TradeOfferEventArgs();
-                        args.TradeOffer = tradeOffer;
+                        var pendingTradeOffer = GetTradeOffer(tradeOfferId);
+                        if (pendingTradeOffer != null)
+                        {
+                            if (pendingTradeOffer.Offer.State != TradeOfferState.Active)
+                            {
+                                var args = new TradeOfferEventArgs();
+                                args.TradeOffer = pendingTradeOffer.Offer;
 
-                        if (tradeOffer.State == TradeOfferState.Active)
-                        {
-                            ReceivedPendingTradeOffers.Add(tradeOffer.Id);
-                            OnTradeOfferReceived(args);
+                                // check if trade offer has been accepted/declined, or items unavailable (manually validate)
+                                if (pendingTradeOffer.Offer.State == TradeOfferState.Accepted)
+                                {
+                                    // fire event                            
+                                    OnTradeOfferAccepted(args);
+                                    // remove from list
+                                    OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
+                                }
+                                else if (pendingTradeOffer.Offer.State != TradeOfferState.Active && pendingTradeOffer.Offer.State != TradeOfferState.Accepted)
+                                {
+                                    if (pendingTradeOffer.Offer.State == TradeOfferState.Invalid || pendingTradeOffer.Offer.State == TradeOfferState.InvalidItems)
+                                    {
+                                        // fire event
+                                        OnTradeOfferInvalid(args);
+                                    }
+                                    else
+                                    {
+                                        // fire event
+                                        OnTradeOfferDeclined(args);
+                                    }
+                                    // remove from list
+                                    OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
+                                }
+                            }
                         }
-                        else
-                        {
-                            ReceivedPendingTradeOffers.Remove(tradeOffer.Id);
-                        }
-                    }
+                    });
+                    checkingThreads.Add(thread);
+                    thread.Start();
+                }
+                foreach (var thread in checkingThreads)
+                {
+                    thread.Join();
                 }
                 Thread.Sleep(TradeOfferRefreshRate);
             }
@@ -1103,32 +1091,57 @@ namespace SteamAPI
 
         protected virtual void OnTradeOfferReceived(TradeOfferEventArgs e)
         {
-            TradeOfferStatusEventHandler handler = TradeOfferReceived;
-            if (handler != null)
+            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                handler(this, e);
+                TradeOfferStatusEventHandler handler = TradeOfferReceived;
+                if (handler != null)
+                {
+                    handler(this, e);
+                }
+                HandledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
         protected virtual void OnTradeOfferAccepted(TradeOfferEventArgs e)
         {
-            TradeOfferStatusEventHandler handler = TradeOfferAccepted;
-            if (handler != null)
+            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                handler(this, e);
+                TradeOfferStatusEventHandler handler = TradeOfferAccepted;
+                if (handler != null)
+                {
+                    handler(this, e);
+                }
+                HandledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
         protected virtual void OnTradeOfferDeclined(TradeOfferEventArgs e)
         {
-            TradeOfferStatusEventHandler handler = TradeOfferDeclined;
-            if (handler != null)
+            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                handler(this, e);
+                TradeOfferStatusEventHandler handler = TradeOfferDeclined;
+                if (handler != null)
+                {
+                    handler(this, e);
+                }
+                HandledTradeOffers.Add(e.TradeOffer.Id);
+            }
+        }
+        protected virtual void OnTradeOfferInvalid(TradeOfferEventArgs e)
+        {
+            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
+            {
+                TradeOfferStatusEventHandler handler = TradeOfferInvalid;
+                if (handler != null)
+                {
+                    handler(this, e);
+                }
+                HandledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
 
         public event TradeOfferStatusEventHandler TradeOfferReceived;
         public event TradeOfferStatusEventHandler TradeOfferAccepted;
         public event TradeOfferStatusEventHandler TradeOfferDeclined;
+        public event TradeOfferStatusEventHandler TradeOfferInvalid;
 
         public class TradeOfferEventArgs : EventArgs
         {
