@@ -14,9 +14,11 @@ using SteamTrade;
 using SteamKit2.Internal;
 using SteamTrade.TradeOffer;
 using System.Globalization;
+using Newtonsoft.Json;
 
 namespace SteamBot
 {
+	
     public class Bot : IDisposable
     {
         #region Bot delegates
@@ -480,6 +482,7 @@ namespace SteamBot
             );
             #endregion
 
+			
             #region Friends
             msg.Handle<SteamFriends.FriendsListCallback>(callback =>
             {
@@ -542,13 +545,46 @@ namespace SteamBot
                 {
                     Log.Info ("Chat Message from {0}: {1}",
                                          SteamFriends.GetFriendPersonaName (callback.Sender),
-                                         callback.Message
+							callback.Message
+
                                          );
                     GetUserHandler(callback.Sender).OnMessageHandler(callback.Message, type);
                 }
             });
             #endregion
 
+			msg.Handle<SteamFriends.ChatMemberInfoCallback>(callback =>
+				{                 
+					if (callback.StateChangeInfo.MemberInfo != null)
+					{
+					log.Interface("passed the if");
+					string User = callback.StateChangeInfo.MemberInfo.SteamID.ToString();
+					log.Interface(User.ToString());
+					//Retrieves the database of users	
+					string filedata = System.IO.File.ReadAllText(@"users.json");
+					//Converts the JSON file to a dictionary
+					Dictionary<string,EClanPermission> existing = JsonConvert.DeserializeObject<Dictionary<string,EClanPermission>>(System.IO.File.ReadAllText(@"users.json"));
+					//Log.Interface(existing);
+					EClanPermission Status = callback.StateChangeInfo.MemberInfo.Details; //Their officer status
+					ChatMember ChatMember = new ChatMember();
+					//Sets up dictionary for the JSON file	
+					Dictionary<string, EClanPermission > dictionary = new Dictionary<string, EClanPermission >();
+					//Adds a new entry to the dictionary, or overwrites an existing	
+						if (existing.ContainsKey(User)) //if it already exists, it deletes it so it can update the data
+							{
+								existing.Remove(User);
+							}
+					existing.Add(User,Status);
+					//Resaves it into a usable JSON format to later save
+					string json = JsonConvert.SerializeObject(existing);
+					//Shows on the screen	
+					log.Interface(json);
+					log.Interface("ADDED: " + User + callback.StateChangeInfo.MemberInfo.Details.ToString());
+					//Saves the file
+					System.IO.File.WriteAllText(@"users.json", json);
+					}
+				});
+			
             #region Group Chat
             msg.Handle<SteamFriends.ChatMsgCallback>(callback =>
             {

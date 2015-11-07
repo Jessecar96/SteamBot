@@ -12,11 +12,15 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System.Timers;
+using SteamKit2.Internal;
+using Newtonsoft.Json;
+
 namespace SteamBot
 {
+	
 	public class GroupChatHandler : UserHandler
 	{
-
+		
 		public string vdcCommand = "!VDC";
 		public string tf2wCommand = "!TF2";
 		public string impCommand = "!IMP";
@@ -29,23 +33,90 @@ namespace SteamBot
 		SteamID Groupchat = 103582791429594873;
 
 		private Timer rsspoll;
+
+		//initialises the timer for the RSS poll update
 		public void InitTimer()
 		{
 			rsspoll = new Timer();
 			rsspoll.Elapsed += new ElapsedEventHandler(rsspoll_Tick);
-
 			rsspoll.Interval = interval; // in miliseconds
 			rsspoll.Start();
 			LogRSS ("initialised");
 		}
 
+		public static void RUN (string file)
+		{
+
+		}
+		//When the timer is 'ticked' it begins polling
 		private void rsspoll_Tick(object sender, EventArgs e)
 		{
 			LogRSS ("Ran");
 			rssfeedupdates();
 		}
 
+		//The list of feeds that will be updated, where each will be saved, and if they will be posted to chat
+		public void rssfeedupdates()
+		{
+			rssloop("https://www.reddit.com/r/AskReddit/new/.rss" , "Debug.log" , false);
+			rssloop("http://steamcommunity.com/groups/TF2Mappers/rss/" , "GroupEvents.log" , true);
+			rssloop("http://steamcommunity.com/groups/tf2maps_twitter/rss/" , "twitterbot.log" , true);
+			rssloop("http://www.teamfortress.com/rss.xml", "tf2site.log", true);
+		}
 
+		//Gets the RSS feed, then saves it
+		public void rssloop (string feed , string filename , Boolean sendtochat)
+		{
+			getrssfirstentry (feed);
+			string latest = getrssfirstentry(feed);
+			RSSWrite (@"logs\", filename, latest, sendtochat);
+		}
+
+		//Gets the feed sent, and returns the first entry
+		string getrssfirstentry(string feedtoread)
+		{
+			string url = feedtoread ;
+			XmlReader reader = XmlReader.Create(url);
+			SyndicationFeed feed = SyndicationFeed.Load(reader);
+			string file = reader.ToString();
+			// Closing this, will it change anything? reader.Close();
+			var latest = feed.Items.FirstOrDefault().Title.Text;
+			return latest;
+		}
+
+		//Will compare the LOG file with the RSS feed's first entry.
+		public void RSSWrite (string path , string filename , string content, Boolean SendtoChat)
+		{
+			string filepath = path + filename;
+			if (!File.Exists (filepath)) //Checks if the RSS feed is stored already, if not it writes it
+			{
+				File.WriteAllText (filepath, content);
+			}
+			else
+			{
+				string readText = File.ReadAllText (filepath);
+				if (content != readText)
+				{ //Checks if the existing entry is the same or different
+					File.WriteAllText (filepath, content);
+					LogRSS ("New Entry");
+					LogRSS (content);
+					if (SendtoChat == true)
+					{
+						Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, content); //Posts to the chat the new entry if it's set to
+					}
+				}
+				else
+				{
+					LogRSS ("No new entry"); //Logs that there is no new entry
+				}
+			}
+		}
+
+		//Prints the Input to the screen
+		public void LogRSS(string par1)
+		{
+			Log.Interface (par1);
+		}
 
 		public GroupChatHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
@@ -59,7 +130,16 @@ namespace SteamBot
 			return true;
 		}
 
-		public override void OnLoginCompleted(){}
+		public SteamKit2.SteamFriends SteamFriends;
+		public void OnChatEnter(SteamKit2.SteamFriends.ChatEnterCallback callback){
+
+		}
+
+	
+		public override void OnLoginCompleted()
+		{
+			
+		}
 
 		public override void OnFriendRemove () {}
 
@@ -92,6 +172,7 @@ namespace SteamBot
 			SendChatMessage(Bot.ChatResponse);
 			if (message.StartsWith ("!JOIN" , StringComparison.OrdinalIgnoreCase)) 
 			{
+				
 				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			}
 
@@ -103,8 +184,25 @@ namespace SteamBot
 
 		public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
 		{
-			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
+
 			base.OnChatRoomMessage (chatID, sender, message);
+			//Retrieves the database of users	
+			bool value = getperms(sender);
+			Log.Interface ("Msg RANK: " + value);
+			//Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, value);
+
+			if (value) { //Checks if the user is Admin
+				Log.Info ("Admin" + Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message); //Logs admin commands
+				if (message.StartsWith ("clearcommand" , StringComparison.OrdinalIgnoreCase)) 
+				{
+					string path = @"logs\maps.log";
+					File.Delete(path);
+					File.WriteAllText (path, Environment.NewLine);
+				}
+
+
+			}
+			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
 			if (message.StartsWith (vdcCommand , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string par1 = message.Remove (0, 5);
@@ -146,13 +244,16 @@ namespace SteamBot
 			}
 			if (message.StartsWith ("!DEBUG_02" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "SEND TO:" + "103582791429594873");
+				//This code has been emptied
 			}
 			if (message.StartsWith ("!DEBUG_03" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "GROUP CHAT HANDLED SUCCESSFULLY");
+				//manager.Subscribe<SteamGameCoordinator.MessageCallback>(Onrun);
+				//manager.RunCallbacks<SteamGameCoordinator.MessageCallback>(Onrun);
+				LogRSS("INITIATED");
+				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "I WILL ALWAYS SHOUT");
 			}
-
+	
 			if (message.StartsWith (impCommand , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string[] words = message.Split(' ');
@@ -166,18 +267,53 @@ namespace SteamBot
 				// Open the file to read from.
 				string readText = File.ReadAllText(path);
 				Log.Interface (readText);
-				SendChatMessage(readText);
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "Sent map list as private message");
+				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, readText);
 			}
 
-			if (message.StartsWith ("clearcommand" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				string path = @"logs\maps.log";
-				File.Delete(path);
-				File.WriteAllText (path, Environment.NewLine);
+
+			//if (message.StartsWith ("status" , StringComparison.OrdinalIgnoreCase)) 
+			//{
+			//	id (SteamFriends.ChatMemberInfoCallback);
+			//}
+		}
+
+
+		//public void id ( EChatMemberStateChange steam)
+		//{
+
+		//}
+
+
+		//Define steamClient, manager
+	
+
+
+
+		//Subscribe for events here and pass them to OnMessage function
+
+
+		//OnMessage function
+		public bool   getperms(SteamID sender)
+		{
+			//string filedata = System.IO.File.ReadAllText(@"users.json");
+			Dictionary<string,EClanPermission> Dictionary = JsonConvert.DeserializeObject<Dictionary<string,EClanPermission>>(System.IO.File.ReadAllText(@"users.json"));
+			if (Dictionary.ContainsKey (sender.ToString ())) {
+				string user = sender.ToString ();
+				EClanPermission value = Dictionary [user];
+				if (value == EClanPermission.Moderator | value == EClanPermission.Officer | value == EClanPermission.Owner)
+				{
+					return true;
+				}
 			}
+			return false;
+		}
+
+		public void Onrun(SteamGameCoordinator.MessageCallback callback)
+		{
+			LogRSS ("SKEETSKEET");
 
 		}
+
 		public void GoogleSearch(string par1 , string url, SteamID chatID) {
 			
 			WebClient client = new WebClient ();
@@ -200,60 +336,7 @@ namespace SteamBot
 			}
 		}
 
-		public void rssloop (string feed , string filename , Boolean sendtochat)
-		{
-			getrss (feed);
-			string latest = getrss(feed);
-			RSSWrite (@"logs\", filename, latest, sendtochat);
-		}
 
-		public void rssfeedupdates()
-		{
-			rssloop("https://www.reddit.com/r/AskReddit/new/.rss" , "Debug.log" , false);
-			rssloop("http://steamcommunity.com/groups/TF2Mappers/rss/" , "GroupEvents.log" , true);
-			rssloop("http://steamcommunity.com/groups/tf2maps_twitter/rss/" , "twitterbot.log" , true);
-		}
-
-		public void LogRSS(string par1)
-		{
-			Log.Interface (par1);
-		}
-		public void RSSWrite (string path , string filename , string content, Boolean SendtoChat)
-		{
-			string filepath = path + filename;
-
-			if (!File.Exists (filepath)) 
-			{
-				File.WriteAllText (filepath, content);
-			} 
-			else 
-			{
-				string readText = File.ReadAllText (filepath);
-
-				if (content != readText) {
-					File.WriteAllText (filepath, content);
-					LogRSS ("New Entry");
-					LogRSS (content);
-					if (SendtoChat == true) {
-						Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, content);
-					}
-				} else 
-				{
-					LogRSS ("No new entry");
-				}
-			}
-		}
-
-		string getrss(string feedtoread)
-		{
-			string url = feedtoread ;
-			XmlReader reader = XmlReader.Create(url);
-			SyndicationFeed feed = SyndicationFeed.Load(reader);
-			string file = reader.ToString();
-			reader.Close();
-			var latest = feed.Items.FirstOrDefault().Title.Text;
-			return latest;
-		}
 
 		public static void maps(string map)
 		{
@@ -263,13 +346,13 @@ namespace SteamBot
 			if (!File.Exists (path)) {
 				// Create a file to write to.
 				string createText = map;
-				File.WriteAllText (path, createText + Environment.NewLine);
+				File.WriteAllText (path, createText + " , ");
 			} 
 			else 
 			{
 				// This text is always added, making the file longer over time
 				// if it is not deleted.
-				string appendText = map + Environment.NewLine;
+				string appendText = map + " , ";
 				File.AppendAllText (path, appendText);
 
 				// Open the file to read from.
