@@ -138,7 +138,7 @@ namespace SteamBot
 	
 		public override void OnLoginCompleted()
 		{
-			
+			Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 		}
 
 		public override void OnFriendRemove () {}
@@ -187,20 +187,16 @@ namespace SteamBot
 
 			base.OnChatRoomMessage (chatID, sender, message);
 			//Retrieves the database of users	
-			bool value = getperms(sender);
-			Log.Interface ("Msg RANK: " + value);
-			//Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, value);
-
-			if (value) { //Checks if the user is Admin
-				Log.Info ("Admin" + Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message); //Logs admin commands
+			bool value = admincheck(sender); //Sees if the sender is an admin or not
+			Log.Interface ("Msg RANK: " + value); //Logs on the screen if the sender is an admin or not
+			if (value) { //Checks if the user is Admin from before returned value, if so allows them to use admin commands
+				Log.Info ("Admin" + Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message); //Logs admin commands used
 				if (message.StartsWith ("clearcommand" , StringComparison.OrdinalIgnoreCase)) 
 				{
 					string path = @"logs\maps.log";
 					File.Delete(path);
 					File.WriteAllText (path, Environment.NewLine);
 				}
-
-
 			}
 			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
 			if (message.StartsWith (vdcCommand , StringComparison.OrdinalIgnoreCase)) 
@@ -269,43 +265,23 @@ namespace SteamBot
 				Log.Interface (readText);
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, readText);
 			}
-
-
-			//if (message.StartsWith ("status" , StringComparison.OrdinalIgnoreCase)) 
-			//{
-			//	id (SteamFriends.ChatMemberInfoCallback);
-			//}
 		}
 
-
-		//public void id ( EChatMemberStateChange steam)
-		//{
-
-		//}
-
-
-		//Define steamClient, manager
-	
-
-
-
-		//Subscribe for events here and pass them to OnMessage function
-
-
-		//OnMessage function
-		public bool   getperms(SteamID sender)
+		//Checks if the given SteamID is an admin
+		public bool   admincheck(SteamID sender)
 		{
 			//string filedata = System.IO.File.ReadAllText(@"users.json");
 			Dictionary<string,EClanPermission> Dictionary = JsonConvert.DeserializeObject<Dictionary<string,EClanPermission>>(System.IO.File.ReadAllText(@"users.json"));
-			if (Dictionary.ContainsKey (sender.ToString ())) {
-				string user = sender.ToString ();
-				EClanPermission value = Dictionary [user];
-				if (value == EClanPermission.Moderator | value == EClanPermission.Officer | value == EClanPermission.Owner)
+			if (Dictionary.ContainsKey (sender.ToString ())) { //If the STEAMID is in the dictionary
+				string Key = sender.ToString (); 
+				EClanPermission UserPermissions = Dictionary [Key]; //It will get the permissions value
+				if((UserPermissions & EClanPermission.OwnerOfficerModerator) > 0)
+					//Checks if it has sufficient privilages
 				{
-					return true;
+					return true; //if it does, it'll say it does
 				}
 			}
-			return false;
+			return false; //If there is no entry in the database, or there aren't sufficient privalages, it returns false
 		}
 
 		public void Onrun(SteamGameCoordinator.MessageCallback callback)
