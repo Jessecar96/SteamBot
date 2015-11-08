@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using SteamTrade;
 using SteamTrade.TradeWebAPI;
 using System.Net;
-using System.ServiceModel;
-using System.ServiceModel.Web;
+//using System.ServiceModel;
+//using System.ServiceModel.Web;
 using System.Xml;
-using System.ServiceModel.Syndication;
+//using System.ServiceModel.Syndication;
 using System;
 using System.IO;
 using System.Text;
@@ -75,13 +75,13 @@ namespace SteamBot
 		//Gets the feed sent, and returns the first entry
 		string getrssfirstentry(string feedtoread)
 		{
-			string url = feedtoread ;
-			XmlReader reader = XmlReader.Create(url);
-			SyndicationFeed feed = SyndicationFeed.Load(reader);
-			string file = reader.ToString();
+		//	string url = feedtoread ;
+		//	XmlReader reader = XmlReader.Create(url);
+		//	SyndicationFeed feed = SyndicationFeed.Load(reader);
+		//	string file = reader.ToString();
 			// Closing this, will it change anything? reader.Close();
-			var latest = feed.Items.FirstOrDefault().Title.Text;
-			return latest;
+		//	var latest = feed.Items.FirstOrDefault().Title.Text;
+			return "THIS HAS BEEN FROZEN DUE TO AN ERROR";
 		}
 
 		//Will compare the LOG file with the RSS feed's first entry.
@@ -228,15 +228,15 @@ namespace SteamBot
 
 			if (message.StartsWith ("!RSS" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				string url = "http://steamcommunity.com/groups/TF2Mappers/rss/";
-				XmlReader reader = XmlReader.Create(url);
-				SyndicationFeed feed = SyndicationFeed.Load(reader);
-				string file = reader.ToString();
-				reader.Close();
-				var latest = feed.Items.OrderByDescending(x=>x.PublishDate).FirstOrDefault().Title.Text;
-				Log.Interface (latest.ToString());
-				SendChatMessage(latest.ToString());
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, latest.ToString());
+				//string url = "http://steamcommunity.com/groups/TF2Mappers/rss/";
+				//XmlReader reader = XmlReader.Create(url);
+				//SyndicationFeed feed = SyndicationFeed.Load(reader);
+				//string file = reader.ToString();
+				//reader.Close();
+				//var latest = feed.Items.OrderByDescending(x=>x.PublishDate).FirstOrDefault().Title.Text;
+				//Log.Interface (latest.ToString());
+				//SendChatMessage(latest.ToString());
+				//Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, latest.ToString());
 			}
 			if (message.StartsWith ("!DEBUG_02" , StringComparison.OrdinalIgnoreCase)) 
 			{

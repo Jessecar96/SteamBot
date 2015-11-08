@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using SteamTrade;
 using SteamTrade.TradeWebAPI;
 using System.Net;
-using System.ServiceModel;
-using System.ServiceModel.Web;
 using System.Xml;
-using System.ServiceModel.Syndication;
+//using System.ServiceModel.Syndication;
+//using System.ServiceModel;
+//using System.ServiceModel.Web;
 using System;
 using System.IO;
 using System.Text;
@@ -63,17 +63,17 @@ namespace SteamBot
 
 			if (message.StartsWith ("!RSS")) 
 			{
-				string url = "http://fooblog.com/feed";
-				XmlReader reader = XmlReader.Create(url);
-				SyndicationFeed feed = SyndicationFeed.Load(reader);
-				reader.Close();
-				foreach (SyndicationItem item in feed.Items)
-				{
-					string subject = item.Title.Text;    
-					string summary = item.Summary.Text;
+				//string url = "http://fooblog.com/feed";
+				//XmlReader reader = XmlReader.Create(url);
+				//SyndicationFeed feed = SyndicationFeed.Load(reader);
+				//reader.Close();
+				//foreach (SyndicationItem item in feed.Items)
+				//{
+				//	string subject = item.Title.Text;    
+				//	string summary = item.Summary.Text;
 					 
-					Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, subject);
-				}
+				//	Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, subject);
+				//}
 				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
 			}
 			if (message.StartsWith ("!DEBUG_02")) 

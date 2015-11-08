@@ -11,6 +11,7 @@
     <RestorePackages>true</RestorePackages>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <TargetFrameworkProfile />
+    <ReleaseVersion>0.2</ReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -58,12 +59,6 @@
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ServiceModel">
-      <HintPath>C:\Program Files %28x86%29\Reference Assemblies\Microsoft\Framework\v3.0\System.ServiceModel.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ServiceModel.Web">
-      <HintPath>C:\Program Files %28x86%29\Reference Assemblies\Microsoft\Framework\v3.5\System.ServiceModel.Web.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
