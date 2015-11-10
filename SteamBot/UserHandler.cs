@@ -377,13 +377,7 @@ namespace SteamBot
         {
             if (message.Length > 100)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("Message '");
-                Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                Console.Write(message);
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("' is longer than 100 characters, the trade message gets trimmed during this process\n");
-                Console.ResetColor();
+                Log.Warn("Message '{0}' is longer than 100 characters, the trade message gets trimmed during this process.", message);
             }
 
             if (Trade != null && !Trade.HasTradeEnded)
