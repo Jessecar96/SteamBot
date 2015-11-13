@@ -11,12 +11,14 @@ namespace SteamBot
         private readonly GenericInventory OtherSteamInventory;
 
         private bool tested;
+        protected SteamWeb SW;
         // ----------------------------------------------------------------------
 
         public SteamTradeDemoHandler(Bot bot, SteamID sid) : base(bot, sid)
         {
             mySteamInventory = new GenericInventory(SteamWeb);
             OtherSteamInventory = new GenericInventory(SteamWeb);
+            SW = SteamWeb;
         }
 
         public override bool OnGroupAdd()
@@ -202,9 +204,33 @@ namespace SteamBot
         public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID)
         {
             Log.Warn("Trade ended awaiting email confirmation");
-            SendChatMessage("Please complete the email confirmation to finish the trade");
+            SendChatMessage("Please complete the email confirmation to finish the trade, you've got 10 minutes from now.");
+            CheckIfEmailConfirmationFinished(tradeOfferID, 120, 5); //120 tries, 5 seconds per try, therefore 10 mins by default
         }
 
+        public void CheckIfEmailConfirmationFinished(long tradeOfferID, int triesToGo, float secondsForCheck)
+        {
+            if (triesToGo > 0)
+            {
+                TradeOfferWebAPI tradeOffer = new TradeOfferWebAPI(Bot.ApiKey, SW);
+                TradeOfferState st = tradeOffer.GetOfferState(tradeOfferID.ToString());
+                if (st == TradeOfferState.TradeOfferStateAccepted)
+                {
+                    OnTradeSuccess();
+                    Log.Success("Trade has been made and confirmed by email.");
+                }
+                else if (st == TradeOfferState.TradeOfferStateCanceled)
+                {
+                    SendChatMessage("Trade offer email validation has been declined.");
+                }
+                else
+                {
+                    Action toDo = () => CheckIfEmailConfirmationFinished(tradeOfferID, triesToGo - 1, secondsForCheck);
+                    toDo.DelayFor(TimeSpan.FromSeconds(secondsForCheck));
+                }
+            }
+        }
+        
         public override void OnTradeAccept() 
         {
             if (Validate() | IsAdmin)
@@ -242,4 +268,13 @@ namespace SteamBot
     }
  
 }
+
+public static class ActionExtensions
+{
+    public static async void DelayFor(this Action act, TimeSpan delay)
+    {
+        await Task.Delay(delay);
+        act();
+    }
+} //for making delayed function calls simple, taken from stackoverflow
 
