@@ -163,6 +163,14 @@ namespace SteamBot
         /// </returns>
         public abstract bool OnTradeRequest ();
 
+        /// <summary>
+        /// Called when the email confirmation has been approved, calls OnTradeSuccess() by default
+        /// You need to manually call CheckIfEmailConfirmationFinished() first
+        /// </summary>
+        public virtual void OnEmailConfirmationSuccess()
+        {
+            OnTradeSuccess();
+        }
 
         /// <summary>
         /// Called when a new trade offer is received
@@ -417,7 +425,45 @@ namespace SteamBot
                 SendChatMessage(delayMs, message, formatParams);
             }
         }
+
+        /// <summary>
+        /// Checks if the email confirmation has been finished by the user, calls OnTradeSuccess() if the Trade Offer has been accepted.
+        /// </summary>
+        /// <param name="tradeOfferID">The trade offer to check, usually you'll just want to pass the one from OnTradeAwaitingEmailConfirmation()</param>
+        /// <param name="triesToGo">How many times it should be checked before giving up</param>
+        /// <param name="secondsForCheck">How frequently the offer state should be checked, in seconds</param>
+        protected virtual void CheckIfEmailConfirmationFinished(long tradeOfferID, int triesToGo, float secondsForCheck)
+        {
+            if (triesToGo > 0)
+            {
+                TradeOfferWebAPI tradeOffer = new TradeOfferWebAPI(Bot.ApiKey, SteamWeb);
+                TradeOfferState st = tradeOffer.GetOfferState(tradeOfferID.ToString());
+                if (st == TradeOfferState.TradeOfferStateAccepted)
+                {
+                    OnEmailConfirmationSuccess();
+                    Log.Success("Trade has been made and confirmed by email.");
+                }
+                else if (st == TradeOfferState.TradeOfferStateCanceled)
+                {
+                    SendChatMessage("Trade offer email validation has been declined.");
+                }
+                else
+                {
+                    Action toDo = () => CheckIfEmailConfirmationFinished(tradeOfferID, triesToGo - 1, secondsForCheck);
+                    toDo.DelayFor(TimeSpan.FromSeconds(secondsForCheck));
+                }
+            }
+        }
         #endregion
     }
 }
+
+public static class ActionExtensions
+{
+    public static async void DelayFor(this Action act, TimeSpan delay)
+    {
+        await Task.Delay(delay);
+        act();
+    }
+} //for making delayed function calls simple, taken from stackoverflow
 
