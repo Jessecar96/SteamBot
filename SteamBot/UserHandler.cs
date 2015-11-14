@@ -432,7 +432,7 @@ namespace SteamBot
         /// <param name="tradeOfferID">The trade offer to check, usually you'll just want to pass the one from OnTradeAwaitingEmailConfirmation()</param>
         /// <param name="triesToGo">How many times it should be checked before giving up</param>
         /// <param name="secondsForCheck">How frequently the offer state should be checked, in seconds</param>
-        protected virtual void CheckIfEmailConfirmationFinished(long tradeOfferID, int triesToGo, float secondsForCheck)
+        protected async virtual void CheckIfEmailConfirmationFinished(long tradeOfferID, int triesToGo, float secondsForCheck)
         {
             if (triesToGo > 0)
             {
@@ -449,21 +449,12 @@ namespace SteamBot
                 }
                 else
                 {
-                    Action toDo = () => CheckIfEmailConfirmationFinished(tradeOfferID, triesToGo - 1, secondsForCheck);
-                    toDo.DelayFor(TimeSpan.FromSeconds(secondsForCheck));
+                    await Task.Delay(TimeSpan.FromSeconds(secondsForCheck));
+                    CheckIfEmailConfirmationFinished(tradeOfferID, triesToGo - 1, secondsForCheck);
                 }
             }
         }
         #endregion
     }
 }
-
-public static class ActionExtensions
-{
-    public static async void DelayFor(this Action act, TimeSpan delay)
-    {
-        await Task.Delay(delay);
-        act();
-    }
-} //for making delayed function calls simple, taken from stackoverflow
 
