@@ -578,8 +578,8 @@ namespace SteamBot
 					//Resaves it into a usable JSON format to later save
 					string json = JsonConvert.SerializeObject(existing);
 					//Shows on the screen	
-					log.Interface(json);
-					log.Interface("ADDED: " + User + callback.StateChangeInfo.MemberInfo.Details.ToString());
+					//log.Interface(json);
+					//log.Interface("ADDED: " + User + callback.StateChangeInfo.MemberInfo.Details.ToString());
 					//Saves the file
 					System.IO.File.WriteAllText(@"users.json", json);
 					}

@@ -190,7 +190,7 @@ namespace SteamBot
         /// <param name="command">The command message.</param>
         public virtual void OnBotCommand(string command)
         {
-
+			
         }
 
         /// <summary>
