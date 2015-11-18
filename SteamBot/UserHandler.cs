@@ -377,7 +377,7 @@ namespace SteamBot
         {
             if (message.Length > 100)
             {
-                Log.Warn("Message '{0}' is longer than 100 characters, the trade message gets trimmed during this process.", message);
+                Log.Warn("'{0}' is longer than 100 chars, it will be trimmed.", message);
             }
 
             if (Trade != null && !Trade.HasTradeEnded)
