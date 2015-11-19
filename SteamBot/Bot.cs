@@ -557,7 +557,6 @@ namespace SteamBot
 				{                 
 					if (callback.StateChangeInfo.MemberInfo != null)
 					{
-					log.Interface("passed the if");
 					string User = callback.StateChangeInfo.MemberInfo.SteamID.ToString();
 					log.Interface(User.ToString());
 					//Retrieves the database of users	

@@ -26,7 +26,8 @@ namespace SteamBot
 		//JSON files store data, check if this works later. 
 		double interval = 10000;
 		//TODO ADD CHECK IF THE FILE EXISTS OR NOT
-		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
+		public static string SettingsFile = "GroupChatHandler_Settings.json";
+		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@SettingsFile));
 		public string vdcCommand = groupchatsettings["vdcCommand"];
 		public string tf2wCommand = groupchatsettings["tf2wCommand"];
 		public string impCommand = groupchatsettings["mapListCommand"];
@@ -39,13 +40,18 @@ namespace SteamBot
 		public string CLIENT_SECRET = groupchatsettings["CLIENT_SECRET"];
 		public string SCOPE = groupchatsettings["SCOPE"];
 		public string REDIRECT_URI = groupchatsettings["REDIRECT_URI"];
+		public string OnlineSync = groupchatsettings["OnlineSync"];
+		public string SpreadSheetURI =  groupchatsettings["SpreadSheetURI"]; //TODO CHANGE TO ID so you can just put in 1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o
+		public string IntegrationName =  groupchatsettings["IntegrationName"];
+		public string MapStoragePath =  groupchatsettings["MapStoragePath"];
+		public string UserDatabase =  "users.json"; //Callback needs t be changed before making: groupchatsettings["UserDatabase"];
+		public static string GroupchatID =  groupchatsettings["GroupchatID"];
+		SteamID Groupchat = ulong.Parse (GroupchatID);
+
+
 
 		//TODO add file decleration here for maps.json and stuff, so we can later implement per-chat file storage.
-		//TODO add a lot more values once it's confirmed the system is functional
-
-
-		// Testing SteamID Groupchat = 103582791439544925;
-		SteamID Groupchat = 103582791429594873;
+		//TODO add a lot more values, make it rely more on this settings file and make a template. This aint your bot forever
 
 		///<summary>Prints the Input to the interface</summary>
 		public void LogRSS(string par1)
@@ -54,6 +60,30 @@ namespace SteamBot
 		}
 
 		public GroupChatHandler (Bot bot, SteamID sid) : base(bot, sid) {}
+
+		public override void OnFriendRemove () {}
+
+		public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
+
+		public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
+
+		public override void OnTradeMessage (string message) {}
+
+		public override void OnTradeReady (bool ready) {}
+
+		public override void OnTradeError (string error) {}
+
+		public override void OnTradeTimeout () {}
+
+		public override void OnTradeInit() {}
+
+		public override bool OnTradeRequest() {return false;}
+
+		public override void OnTradeSuccess(){}
+
+		public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID){}
+
+		public override void OnTradeAccept(){}
 
 		public override bool OnGroupAdd()
 		{
@@ -83,7 +113,7 @@ namespace SteamBot
 			}
 			if (command.StartsWith ("Google" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				register ();
+				SheetSync();
 			}
 			if (command.StartsWith("!REAUTH" , StringComparison.OrdinalIgnoreCase)) 
 				{
@@ -99,44 +129,24 @@ namespace SteamBot
 					//AUTHENTICATE
 					string authorizationUrl = OAuthUtil.CreateOAuth2AuthorizationUrl (parameters);
 					Log.Interface (authorizationUrl);
-					Log.Interface ("Please visit the URL above to authorize your OAuth "
+				    Log.Info (authorizationUrl);
+				    Log.Debug (authorizationUrl);
+				   Log.Interface ("Please visit the URL above to authorize your OAuth "
 						+ "request token.  Once that is complete, type in your access code to "
 						+ "continue...");
 					parameters.AccessCode = Console.ReadLine ();
-
-					OAuthUtil.GetAccessToken (parameters);
-					string accessToken = parameters.AccessToken;
-					Log.Interface ("PLACE THE FOLLOWING IN GoogleAPI in the settings file: " + accessToken);
-					
+				OAuthUtil.GetAccessToken (parameters);
+				string accessToken = parameters.AccessToken;
+				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@SettingsFile));
+			    //if it already exists, it deletes it so it can update the data
+				entrydata.Remove ("GoogleAPI");
+				entrydata.Add ("GoogleAPI", accessToken);
+				System.IO.File.WriteAllText (@SettingsFile, JsonConvert.SerializeObject (entrydata));
+				GoogleAPI = accessToken;
 				} 
-		
 		}
 
-		public override void OnFriendRemove () {}
-
-		public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
-
-		public override void OnTradeRemoveItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {}
-
-		public override void OnTradeMessage (string message) {}
-
-		public override void OnTradeReady (bool ready) {}
-
-		public override void OnTradeError (string error) {}
-
-		public override void OnTradeTimeout () {}
-
-		public override void OnTradeInit() {}
-
-		public override bool OnTradeRequest() {return false;}
-
-		public override void OnTradeSuccess(){}
-
-		public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID){}
-
-		public override void OnTradeAccept(){}
-
-		//TODO ALLOW USERS TO SEND COMMANDS VIA MSG
+		//TODO ALLOW USERS TO SEND ADMIN COMMANDS VIA MSG
 		public override void OnMessage (string message, EChatEntryType type) {
 			SteamID ChatMsg = 0;
 			string response = Chatcommands (ChatMsg, ChatMsg, message);
@@ -148,16 +158,15 @@ namespace SteamBot
 		public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
 		{
 			string adminresponse = null;
-			//	bool rank = admincheck(sender); IF CODE FAILS USE THIS
 			if (admincheck(sender)){
 				adminresponse = admincommands (chatID, sender, message);
 			}
 			string response = Chatcommands(chatID, sender, message);
 			if (response != null) {
-				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, response);
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, response);
 			}
 			if (adminresponse != null) {
-				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, adminresponse);
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, adminresponse);
 			}
 		}
 
@@ -175,10 +184,29 @@ namespace SteamBot
 			}
 			if (message.StartsWith ("!wipe", StringComparison.OrdinalIgnoreCase)) 
 			{
-				string path = @"maps.json";
+				string path = @MapStoragePath;
 				File.Delete(path);
 				File.WriteAllText (path, "{}");
+				SheetSync ();
 				return "Wiped Maps";
+			}
+			if (message.StartsWith ("!EnableSync", StringComparison.OrdinalIgnoreCase)) {
+				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (@SettingsFile));
+				//if it already exists, it deletes it so it can update the data
+				entrydata.Remove ("OnlineSync");
+				entrydata.Add ("OnlineSync", "true");
+				System.IO.File.WriteAllText (@SettingsFile, JsonConvert.SerializeObject (entrydata));
+				OnlineSync = "true";
+				return "Enabled Sync";
+			}
+			if (message.StartsWith ("!DisableSync", StringComparison.OrdinalIgnoreCase)) {
+				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (@SettingsFile));
+				//if it already exists, it deletes it so it can update the data
+				entrydata.Remove ("OnlineSync");
+				entrydata.Add ("OnlineSync", "false");
+				System.IO.File.WriteAllText (@SettingsFile, JsonConvert.SerializeObject (entrydata));
+				OnlineSync = "false";
+				return "Disabled Sync";
 			}
 
 			return null;
@@ -204,9 +232,9 @@ namespace SteamBot
 				string par1 = message.Remove (0, 5);
 				return GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
 			}
-			if (message.StartsWith ("GOOGLE", StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith ("!Sync", StringComparison.OrdinalIgnoreCase)) 
 			{
-				register ();
+				SheetSync ();
 				return null;
 			}
 
@@ -249,6 +277,7 @@ namespace SteamBot
 			{
 				string map = message.Remove (0, 8);
 				string removed = ImpRemove (map, sender);
+				SheetSync ();
 				return removed;
 				//Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, removed);
 			}	
@@ -268,16 +297,16 @@ namespace SteamBot
 				else 
 				{
 				string status = ImpEntry (words [1], words [2], sender);
-					//register();
+					SheetSync();
 					return status;
 				}
 			}
 			if (message.StartsWith ("!Sheet", StringComparison.OrdinalIgnoreCase)) {
-				return "https://docs.google.com/spreadsheets/d/1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o/edit#gid=185531839";
+				return "https://goo.gl/Q5bQxg";
 			}
 			if (message.StartsWith ("!view" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@"maps.json"));
+				Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath));
 				string Maplisting = "";
 				string DownloadListing = "";
 				foreach (var item in entrydata) 
@@ -291,12 +320,8 @@ namespace SteamBot
 			}
 			if (message.StartsWith (mapListCommand, StringComparison.OrdinalIgnoreCase)) 
 			{
-				string path = @"logs\maps.log";
-				// Open the file to read from.
-				string readText = File.ReadAllText(path);
-				Log.Interface (readText);
-				//Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, readText);
-				return readText;
+				
+				return "Please use the !view or !sheet command.";
 			}
 			return null;
 		}
@@ -307,7 +332,7 @@ namespace SteamBot
 		{
 			//Deserialises the current map list
 			string response = "Failed to add map to the list";
-			Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@"maps.json"));
+			Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath));
 			if (entrydata.ContainsKey (map)) { //if it already exists, it deletes it so it can update the data
 				Log.Interface("duplicate");
 				response = "Error, the entry already exists! Please remove the existing entry";
@@ -315,7 +340,7 @@ namespace SteamBot
 				//Adds the entry
 				entrydata.Add (map, new Tuple<String, SteamID> (downloadurl, sender));
 				//Saves the data
-				System.IO.File.WriteAllText (@"maps.json", JsonConvert.SerializeObject (entrydata));
+				System.IO.File.WriteAllText (@MapStoragePath, JsonConvert.SerializeObject (entrydata));
 				response = "Added " + map; 
 			}
 			return response;
@@ -327,7 +352,7 @@ namespace SteamBot
 		public string ImpRemove (string map , SteamID sender)
 		{
 			Log.Interface ("Map: " + map + " Sender: " + sender.ToString ());
-			Dictionary<string,Tuple<string,SteamID> > Maplist = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>> (System.IO.File.ReadAllText (@"maps.json"));
+			Dictionary<string,Tuple<string,SteamID> > Maplist = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>> (System.IO.File.ReadAllText (@MapStoragePath));
 			Dictionary<string,Tuple<string,SteamID> > NewMaplist = new Dictionary<string, Tuple<string, SteamID>>();
 			string removed = "none"; 
 			foreach (var item in Maplist) {
@@ -338,7 +363,7 @@ namespace SteamBot
 					NewMaplist.Add (item.Key, item.Value);
 				}
 			}
-			System.IO.File.WriteAllText(@"maps.json", JsonConvert.SerializeObject(NewMaplist));
+			System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(NewMaplist));
 			Log.Interface ("Removed: " + removed);
 			return removed;
 			{
@@ -348,7 +373,7 @@ namespace SteamBot
 		public bool admincheck(SteamID sender)
 		{
 			//string filedata = System.IO.File.ReadAllText(@"users.json");
-			Dictionary<string,EClanPermission> Dictionary = JsonConvert.DeserializeObject<Dictionary<string,EClanPermission>>(System.IO.File.ReadAllText(@"users.json"));
+			Dictionary<string,EClanPermission> Dictionary = JsonConvert.DeserializeObject<Dictionary<string,EClanPermission>>(System.IO.File.ReadAllText(@UserDatabase));
 			if (Dictionary.ContainsKey (sender.ToString ())) { //If the STEAMID is in the dictionary
 				string Key = sender.ToString (); 
 				EClanPermission UserPermissions = Dictionary [Key]; //It will get the permissions value
@@ -408,122 +433,95 @@ namespace SteamBot
 				Console.WriteLine (readText);
 			}
 		}
-		//TODO google spreadsheet functions
-
-
-
-		public void register ()
+		/// <summary>
+		/// Updates the online spreadsheet according the maps file
+		/// </summary>
+		/// 
+		//TODO Clean portions that need cleaning
+		public void SheetSync ()
 		{
-			//TODO LESS HARDCODED, JUST RUN AND PLAY POSSIBILITIES
+			if (OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase)) {
 
 			OAuth2Parameters parameters = new OAuth2Parameters ();
-
 			parameters.ClientId = CLIENT_ID;
-
 			parameters.ClientSecret = CLIENT_SECRET;
-
 			parameters.RedirectUri = REDIRECT_URI;
-
 			parameters.Scope = SCOPE;
+			//parameters.AccessToken = GoogleAPI;
+			parameters.AccessType = "offline";
+			parameters.RefreshToken = GoogleAPI;
 
-			if (GoogleAPI == null) {
-				//AUTHENTICATE
-				string authorizationUrl = OAuthUtil.CreateOAuth2AuthorizationUrl (parameters);
-				Log.Interface (authorizationUrl);
-				Log.Interface ("Please visit the URL above to authorize your OAuth "
-				+ "request token.  Once that is complete, type in your access code to "
-				+ "continue...");
-				parameters.AccessCode = Console.ReadLine ();
-		  
-				OAuthUtil.GetAccessToken (parameters);
-				string accessToken = parameters.AccessToken;
-				Log.Interface ("PLACE THE FOLLOWING IN GoogleAPI in the settings file: " + accessToken);
-			} 
+			OAuthUtil.GetAccessToken (parameters);
+			string accessToken = parameters.AccessToken;
 
-			else 
-				
-			{
-				parameters.AccessToken = GoogleAPI;
-			}
 
-			GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory (null, "MySpreadsheetIntegration-v1", parameters);
-			SpreadsheetsService service = new SpreadsheetsService ("MySpreadsheetIntegration-v1");
+			GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory (null, IntegrationName, parameters);
+			SpreadsheetsService service = new SpreadsheetsService (IntegrationName);
 			service.RequestFactory = requestFactory;
 
-			// Instantiate a SpreadsheetQuery object to retrieve spreadsheets.
-			SpreadsheetQuery query = new SpreadsheetQuery ("https://spreadsheets.google.com/feeds/spreadsheets/private/full/1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o");
+			//TODO Put this in the settings file, and have his also be the result from !sheet
+			SpreadsheetQuery query = new SpreadsheetQuery (SpreadSheetURI);
 
 	    	SpreadsheetFeed feed = service.Query (query);
-
 			SpreadsheetEntry spreadsheet = (SpreadsheetEntry)feed.Entries[0];
-
-
-			//NEW CODE
-
-			// Get the first worksheet of the first spreadsheet.
-			// TODO: Choose a worksheet more intelligently based on your
-			// app's needs.
 			WorksheetFeed wsFeed = spreadsheet.Worksheets;
 			WorksheetEntry worksheet = (WorksheetEntry)wsFeed.Entries[0];
 
-		   
-
-			// Fetch the cell feed of the worksheet.
 			CellQuery cellQuery = new CellQuery(worksheet.CellFeedLink);
 			cellQuery.ReturnEmpty = ReturnEmptyCells.yes;
 			CellFeed cellFeed = service.Query(cellQuery);
 
-		
+			Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath));
+	
+			//Sets the size of the dictionary to the size of the JSON file, and updates
+			worksheet.Cols = 3;
+
+			worksheet.Rows = Convert.ToUInt32(entrydata.Count + 1);
+
+			worksheet.Update ();
+
+			//TODO Updates the Bot Prefix to the map list
+			//SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
+			Bot.SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
+
+		    //Makes the current Cells empty, to be replaced by the existing Maps list
 			foreach (CellEntry cell in cellFeed.Entries) 
 			{
 				cell.InputValue = " ";
 				cell.Update ();
 			}
-
-			worksheet.Cols = 3;
-			worksheet.Rows = 25;
-
-			worksheet.Update ();
-
-			Log.Interface (cellFeed.Entries.Count.ToString ());
-			// Iterate through each cell, updating its value if necessary.
-
-			Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@"maps.json"));
+			// Iterate through each cell, updating its value if necessary. TODO Optimise this function to use batch upload, or just generally faster.
 
 			int Entries = 1;
 
-			foreach (var item in entrydata) 
-			{
-				Entries = Entries + 1; 
-				Log.Interface ("A" + Entries.ToString());
-				foreach (CellEntry cell in cellFeed.Entries)
-				{
-					if (cell.Title.Text == "A" + Entries.ToString ()) {
-						cell.InputValue = item.Key;
-						cell.Update();
+				foreach (var item in entrydata) {
+					Entries = Entries + 1; 
+					foreach (CellEntry cell in cellFeed.Entries) {
+						if (cell.Title.Text == "A" + Entries.ToString ()) {
+							cell.InputValue = item.Key;
+							cell.Update ();
+						}
+						if (cell.Title.Text == "B" + Entries.ToString ()) {
+							cell.InputValue = item.Value.Item1;
+							cell.Update ();
+						}
+						if (cell.Title.Text == "C" + Entries.ToString ()) {
+							cell.InputValue = item.Value.Item2.ToString ();
+							cell.Update ();
+						}
 					}
-					if (cell.Title.Text == "B" + Entries.ToString ()) {
-						cell.InputValue = item.Value.Item1;
-						cell.Update();
-					}
-					if (cell.Title.Text == "C" + Entries.ToString ()) {
-						cell.InputValue = item.Value.Item2.ToString();
-						cell.Update();
-					}
-			}
+				}
 
 		}
 		}
 
-
-
-
-
-
-
-
+		public string MapVolume ()
+		{
+			Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath));
+			return entrydata.Count.ToString ();
+		}
+	
 		//TODO update all code below to no longer be obsolete
-
 
 		private Timer rsspoll;
 
