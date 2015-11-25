@@ -331,6 +331,7 @@ namespace SteamBot
                 {
                     TheBot.StopBot();
                     IsRunning = false;
+                    TheBot.Dispose();
                 }
             }
 
