@@ -98,6 +98,9 @@
     <Reference Include="Google.GData.Spreadsheets">
       <HintPath>..\packages\google\Google.GData.Spreadsheets.dll</HintPath>
     </Reference>
+    <Reference Include="Steam.Query">
+      <HintPath>..\packages\Steam.Query.1.0.21.0\lib\net451\Steam.Query.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Notifications.cs" />
