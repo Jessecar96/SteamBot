@@ -9,7 +9,6 @@ using System.Security.Cryptography;
 using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
-using SteamAuth;
 using SteamKit2;
 
 namespace SteamTrade
@@ -91,70 +90,7 @@ namespace SteamTrade
         /// </summary>
         public bool DoLogin(string username, string password)
         {
-            //This basic loop will log into user accounts you specify, enable the mobile authenticator, and save a maFile (mobile authenticator file)
-            while (true)
-            {
-                Console.WriteLine("SteamWeb: trying to log in...");
-                UserLogin login = new UserLogin(username, password);
-                LoginResult response = LoginResult.BadCredentials;
-                while ((response = login.DoLogin()) != LoginResult.LoginOkay)
-                {
-                    switch (response)
-                    {
-                        case LoginResult.NeedEmail:
-                            Console.WriteLine("Please enter your email code: ");
-                            string code = Console.ReadLine();
-                            login.EmailCode = code;
-                            break;
-
-                        case LoginResult.NeedCaptcha:
-                            System.Diagnostics.Process.Start(SteamAuth.APIEndpoints.COMMUNITY_BASE + "/public/captcha.php?gid=" + login.CaptchaGID); //Open a web browser to the captcha image
-                            Console.WriteLine("Please enter captcha text: ");
-                            string captchaText = Console.ReadLine();
-                            login.CaptchaText = captchaText;
-                            break;
-
-                        case LoginResult.Need2FA:
-                            Console.WriteLine("Please enter your mobile authenticator code: ");
-                            code = Console.ReadLine();
-                            login.TwoFactorCode = code;
-                            break;
-                    }
-                }
-
-                AuthenticatorLinker linker = new AuthenticatorLinker(login.Session);
-                linker.PhoneNumber = null; //Set this to non-null to add a new phone number to the account.
-                var result = linker.AddAuthenticator();
-
-                if (result != AuthenticatorLinker.LinkResult.AwaitingFinalization)
-                {
-                    Console.WriteLine("Failed to add authenticator: " + result);
-                    continue;
-                }
-
-                try
-                {
-                    string sgFile = JsonConvert.SerializeObject(linker.LinkedAccount, Formatting.Indented);
-                    string fileName = linker.LinkedAccount.AccountName + ".maFile";
-                    File.WriteAllText(fileName, sgFile);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    Console.WriteLine("EXCEPTION saving maFile. For security, authenticator will not be finalized.");
-                    continue;
-                }
-
-                Console.WriteLine("Please enter SMS code: ");
-                string smsCode = Console.ReadLine();
-                var linkResult = linker.FinalizeAddAuthenticator(smsCode);
-
-                if (linkResult == AuthenticatorLinker.FinalizeResult.Success) continue;
-                Console.WriteLine("Unable to finalize authenticator: " + linkResult);
-                return false;
-            }
-
-            /* var data = new NameValueCollection();
+            var data = new NameValueCollection();
             data.Add("username", username);
             string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
             GetRsaKey rsaJSON = JsonConvert.DeserializeObject<GetRsaKey>(response);
@@ -253,7 +189,7 @@ namespace SteamTrade
             {
                 Console.WriteLine("SteamWeb Error: " + loginJson.message);
                 return false;
-            } */
+            }
 
         }
 
@@ -261,7 +197,7 @@ namespace SteamTrade
         /// Authenticate using SteamKit2 and ISteamUserAuth. 
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary> 
-        /// <remarks>Should this one doesn't work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
+        /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
         public bool Authenticate(string myUniqueId, SteamClient client, string myLoginKey)
         {
             Token = TokenSecure = "";
@@ -328,7 +264,7 @@ namespace SteamTrade
             }
         }
 
-        static void SubmitCookies(CookieContainer cookies)
+        static void SubmitCookies (CookieContainer cookies)
         {
             HttpWebRequest w = WebRequest.Create("https://steamcommunity.com/") as HttpWebRequest;
 
