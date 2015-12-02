@@ -176,6 +176,13 @@ namespace SteamBot
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
 
             Log.Debug ("Initializing Steam Bot...");
+
+            var mobileAuthCode = DoMobileAuth();
+            if (!string.IsNullOrEmpty(mobileAuthCode))
+            {
+                logOnDetails.TwoFactorCode = mobileAuthCode;
+            }
+
             SteamClient = new SteamClient();
             SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
@@ -344,7 +351,7 @@ namespace SteamBot
                 {
                     Log.Interface("The given SteamGuard code was invalid. Try again using the `auth' command.");
                     logOnDetails.AuthCode = Console.ReadLine();
-                }
+                }                
             });
 
             msg.Handle<SteamUser.LoginKeyCallback> (callback =>
@@ -475,6 +482,84 @@ namespace SteamBot
                 SteamClient.Connect ();
             });
             #endregion
+        }
+
+        string DoMobileAuth()
+        {
+            if (File.Exists(Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username))))
+            {
+                var auth = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username))));
+                var steamGuardAccount = new SteamAuth.SteamGuardAccount();
+                steamGuardAccount.SharedSecret = auth.SharedSecret;
+                return steamGuardAccount.GenerateSteamGuardCode();
+            }
+            else
+            {
+                var login = new SteamAuth.UserLogin(logOnDetails.Username, logOnDetails.Password);
+                var loginResult = login.DoLogin();
+                if (loginResult == SteamAuth.LoginResult.NeedEmail)
+                {
+                    while (loginResult == SteamAuth.LoginResult.NeedEmail)
+                    {
+                        Console.WriteLine("Enter Email code:");
+                        var emailCode = Console.ReadLine();
+                        login.EmailCode = emailCode;
+                        loginResult = login.DoLogin();
+                    }                    
+                }
+                if (loginResult == SteamAuth.LoginResult.LoginOkay)
+                {
+                    Log.Info("Linking mobile authenticator...");
+                    var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
+                    var addAuthResult = authLinker.AddAuthenticator();
+                    if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                    {
+                        while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                        {
+                            Console.WriteLine("Enter phone number (must provide country code, e.g. +1XXXXXXXXXXX):");
+                            var phoneNumber = Console.ReadLine();
+                            authLinker.PhoneNumber = phoneNumber;
+                            addAuthResult = authLinker.AddAuthenticator();
+                        }
+                    }
+                    if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.AwaitingFinalization)
+                    {
+                        var auth = authLinker.LinkedAccount;
+                        try
+                        {
+                            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
+                            File.WriteAllText(Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username)), Newtonsoft.Json.JsonConvert.SerializeObject(auth));
+                        }
+                        catch
+                        {
+
+                        }
+                        Console.WriteLine("Enter SMS code:");
+                        var smsCode = Console.ReadLine();
+                        var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
+                        if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
+                        {
+                            Log.Success("Linked authenticator.");
+                            var steamGuardAccount = new SteamAuth.SteamGuardAccount();
+                            steamGuardAccount.SharedSecret = auth.SharedSecret;
+                            return steamGuardAccount.GenerateSteamGuardCode();
+                        }
+                        else
+                        {
+                            Log.Error("Error linking authenticator: " + authResult);
+                        }
+                    }
+                    else
+                    {
+                        Log.Error("Error adding authenticator: " + addAuthResult);
+                    }                
+                }
+                else
+                {
+                    Log.Error("Error performing mobile login: " + loginResult);
+                }
+            }
+            return string.Empty;          
         }
 
         void UserLogOn()
