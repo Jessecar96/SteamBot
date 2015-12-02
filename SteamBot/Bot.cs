@@ -283,7 +283,7 @@ namespace SteamBot
                     }
                     catch (NullReferenceException)
                     {
-                        Log.Info("Unable to generate Steam Guard code.");
+                        Log.Error("Unable to generate Steam Guard code.");
                     }                    
                 }
                 else if (command == "unlinkauth")
