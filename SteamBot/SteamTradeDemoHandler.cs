@@ -202,9 +202,11 @@ namespace SteamBot
         public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID)
         {
             Log.Warn("Trade ended awaiting email confirmation");
-            SendChatMessage("Please complete the email confirmation to finish the trade");
+            SendChatMessage("Please complete the email confirmation to finish the trade, you've got 10 minutes from now.");
+            CheckIfEmailConfirmationFinished(tradeOfferID, 120, 5); //120 tries, 5 seconds per try, therefore 10 mins by default
         }
 
+        
         public override void OnTradeAccept() 
         {
             if (Validate() | IsAdmin)
@@ -242,4 +244,5 @@ namespace SteamBot
     }
  
 }
+
 
