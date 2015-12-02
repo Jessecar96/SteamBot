@@ -472,7 +472,25 @@ namespace SteamAPI
 
             //If the JSON returns false it will be 0 (as it should be)
             [JsonProperty("more_start")]
-            public int MoreStart { get; set; }
+            private dynamic moreStart { get; set; }
+            public int MoreStart
+            {
+                get
+                {
+                    if (More)
+                    {
+                        return (int)moreStart;
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+                set
+                {
+                    moreStart = value;
+                }
+            }
 
             public class Item
             {

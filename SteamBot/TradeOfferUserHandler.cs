@@ -48,24 +48,47 @@ namespace SteamBot
         {
             if (IsAdmin)
             {
-                //creating a new trade offer
-                var tradeOffer = TradeOffers.CreateTrade(OtherSID);
-
-                //tradeOffer.AddMyItem(0, 0, 0);
-
-                var tradeOfferId = tradeOffer.SendTrade("message");
-                if (tradeOfferId > 0)
+                if (message == "auth")
                 {
-                    Log.Success("Trade offer sent : Offer ID " + tradeOfferId);
+                    Bot.SteamFriends.SendChatMessage(OtherSID, EChatEntryType.ChatMsg, Bot.SteamGuardAccount.GenerateSteamGuardCode());
                 }
-
-                // sending trade offer with token
-                // "token" should be replaced with the actual token from the other user
-                var tradeOfferIdWithToken = tradeOffer.SendTradeWithToken("message", "token");
-                if (tradeOfferIdWithToken > 0)
+                else if (message == "test")
                 {
-                    Log.Success("Trade offer sent : Offer ID " + tradeOfferIdWithToken);
+                    var tradeOffer = TradeOffers.CreateTrade(OtherSID);
+                    var inventories = FetchInventories(Bot.SteamClient.SteamID);
+                    var csgoInventory = inventories.GetInventory(440, 2);
+                    foreach (var item in csgoInventory)
+                    {
+                        tradeOffer.AddMyItem(440, 2, item.Id);
+                        break;
+                    }
+                    var tradeOfferIdWithToken = tradeOffer.SendTradeWithToken("message", "");
+                    if (tradeOfferIdWithToken > 0)
+                    {
+                        Log.Success("Trade offer sent : Offer ID " + tradeOfferIdWithToken);
+                    }
                 }
+                else
+                {
+                    //creating a new trade offer
+                    var tradeOffer = TradeOffers.CreateTrade(OtherSID);
+
+                    //tradeOffer.AddMyItem(0, 0, 0);
+
+                    var tradeOfferId = tradeOffer.SendTrade("message");
+                    if (tradeOfferId > 0)
+                    {
+                        Log.Success("Trade offer sent : Offer ID " + tradeOfferId);
+                    }
+
+                    // sending trade offer with token
+                    // "token" should be replaced with the actual token from the other user
+                    var tradeOfferIdWithToken = tradeOffer.SendTradeWithToken("message", "token");
+                    if (tradeOfferIdWithToken > 0)
+                    {
+                        Log.Success("Trade offer sent : Offer ID " + tradeOfferIdWithToken);
+                    }
+                }                
             }
         }
 

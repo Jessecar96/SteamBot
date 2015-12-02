@@ -17,6 +17,7 @@ namespace SteamAPI
         public List<ulong> OurPendingTradeOffers;
         private List<ulong> ReceivedPendingTradeOffers;
         private List<ulong> HandledTradeOffers;
+        private List<ulong> AwaitingConfirmationTradeOffers;
         private string AccountApiKey;
         private bool ShouldCheckPendingTradeOffers;
         private int TradeOfferRefreshRate;
@@ -36,6 +37,7 @@ namespace SteamAPI
 
             this.ReceivedPendingTradeOffers = new List<ulong>();
             this.HandledTradeOffers = new List<ulong>();
+            this.AwaitingConfirmationTradeOffers = new List<ulong>();
 
             new Thread(CheckPendingTradeOffers).Start();
         }
@@ -452,7 +454,16 @@ namespace SteamAPI
             Canceled = 6,
             Declined = 7,
             InvalidItems = 8,
-            AwaitingConfirmation = 9
+            NeedsConfirmation = 9,
+            CanceledBySecondFactor = 10,
+            InEscrow = 11
+        }
+
+        public enum TradeOfferConfirmationMethod
+        {
+            Invalid = 0,
+            Email = 1,
+            MobileApp = 2
         }
 
         public class GetTradeOfferAPI
@@ -540,13 +551,20 @@ namespace SteamAPI
             public bool IsOurOffer { get; set; }
 
             [JsonProperty("time_created")]
-            public ulong TimeCreated { get; set; }
+            public int TimeCreated { get; set; }
 
             [JsonProperty("time_updated")]
-            public ulong TimeUpdated { get; set; }
+            public int TimeUpdated { get; set; }
 
             [JsonProperty("from_real_time_trade")]
             public bool FromRealTimeTrade { get; set; }
+
+            [JsonProperty("escrow_end_date")]
+            public int EscrowEndDate { get; set; }
+
+            [JsonProperty("confirmation_method")]
+            private int confirmationMethod { get; set; }
+            public TradeOfferConfirmationMethod ConfirmationMethod { get { return (TradeOfferConfirmationMethod)confirmationMethod; } set { confirmationMethod = (int)value; } }
 
             public class CEconAsset
             {
@@ -1022,7 +1040,14 @@ namespace SteamAPI
                     var tradeOffers = GetTradeOffers(true);
                     foreach (var tradeOffer in tradeOffers)
                     {
-                        if (!tradeOffer.IsOurOffer && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
+                        if (tradeOffer.IsOurOffer)
+                        {
+                            if (!OurPendingTradeOffers.Contains(tradeOffer.Id))
+                            {
+                                OurPendingTradeOffers.Add(tradeOffer.Id);
+                            }
+                        }
+                        else if (!tradeOffer.IsOurOffer && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
                         {
                             var args = new TradeOfferEventArgs();
                             args.TradeOffer = tradeOffer;
@@ -1062,18 +1087,27 @@ namespace SteamAPI
                                 }
                                 else if (pendingTradeOffer.Offer.State != TradeOfferState.Active && pendingTradeOffer.Offer.State != TradeOfferState.Accepted)
                                 {
-                                    if (pendingTradeOffer.Offer.State == TradeOfferState.Invalid || pendingTradeOffer.Offer.State == TradeOfferState.InvalidItems)
+                                    if (pendingTradeOffer.Offer.State == TradeOfferState.NeedsConfirmation)
+                                    {
+                                        // fire event
+                                        OnTradeOfferNeedsConfirmation(args);
+                                    }
+                                    else if (pendingTradeOffer.Offer.State == TradeOfferState.Invalid || pendingTradeOffer.Offer.State == TradeOfferState.InvalidItems)
                                     {
                                         // fire event
                                         OnTradeOfferInvalid(args);
                                     }
-                                    else
+                                    else if (pendingTradeOffer.Offer.State != TradeOfferState.InEscrow)
                                     {
                                         // fire event
                                         OnTradeOfferDeclined(args);
                                     }
-                                    // remove from list
-                                    OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
+
+                                    if (pendingTradeOffer.Offer.State != TradeOfferState.InEscrow)
+                                    {
+                                        // remove from list only if not in escrow
+                                        OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
+                                    }                                    
                                 }
                             }
                         }
@@ -1137,11 +1171,24 @@ namespace SteamAPI
                 HandledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
+        protected virtual void OnTradeOfferNeedsConfirmation(TradeOfferEventArgs e)
+        {
+            if (!AwaitingConfirmationTradeOffers.Contains(e.TradeOffer.Id))
+            {
+                TradeOfferStatusEventHandler handler = TradeOfferNeedsConfirmation;
+                if (handler != null)
+                {
+                    handler(this, e);
+                }
+                AwaitingConfirmationTradeOffers.Add(e.TradeOffer.Id);
+            }
+        }
 
         public event TradeOfferStatusEventHandler TradeOfferReceived;
         public event TradeOfferStatusEventHandler TradeOfferAccepted;
         public event TradeOfferStatusEventHandler TradeOfferDeclined;
         public event TradeOfferStatusEventHandler TradeOfferInvalid;
+        public event TradeOfferStatusEventHandler TradeOfferNeedsConfirmation;
 
         public class TradeOfferEventArgs : EventArgs
         {

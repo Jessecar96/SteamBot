@@ -74,6 +74,17 @@ namespace SteamBot
             return GenericInventory.FetchInventories(steamId, Bot.SteamClient.SteamID, Bot.SteamWeb);
         }
 
+        public void OnTradeOfferNeedsConfirmation(TradeOffers.TradeOffer tradeOffer)
+        {
+            if (tradeOffer.IsOurOffer && tradeOffer.ConfirmationMethod == TradeOffers.TradeOfferConfirmationMethod.MobileApp)
+            {
+                var confirmations = Bot.SteamGuardAccount.FetchConfirmations();
+                foreach (var confirmation in confirmations)
+                {
+                    Bot.SteamGuardAccount.AcceptConfirmation(confirmation);
+                }
+            }
+        }
         public abstract void OnTradeOfferInvalid(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferReceived(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferAccepted(TradeOffers.TradeOffer tradeOffer);

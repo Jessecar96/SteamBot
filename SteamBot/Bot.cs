@@ -1,8 +1,5 @@
 using System;
-using System.Threading.Tasks;
-using System.Web;
 using System.Net;
-using System.Text;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
@@ -12,7 +9,7 @@ using SteamBot.SteamGroups;
 using SteamKit2;
 using SteamAPI;
 using SteamKit2.Internal;
-using System.Globalization;
+using SteamAuth;
 
 namespace SteamBot
 {
@@ -75,7 +72,7 @@ namespace SteamBot
         /// The api key of bot.
         /// </summary>
         public readonly string ApiKey;
-        public readonly SteamWeb SteamWeb;
+        public readonly SteamAPI.SteamWeb SteamWeb;
         /// <summary>
         /// The prefix shown before bot's display name.
         /// </summary>
@@ -109,6 +106,7 @@ namespace SteamBot
         public Log Log;
 
         public TradeOffers TradeOffers;
+        public SteamGuardAccount SteamGuardAccount;
         #endregion
 
         public IEnumerable<SteamID> FriendsList
@@ -170,7 +168,7 @@ namespace SteamBot
             CreateLog();
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
-            SteamWeb = new SteamWeb();
+            SteamWeb = new SteamAPI.SteamWeb();
 
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
@@ -486,20 +484,19 @@ namespace SteamBot
 
         string DoMobileAuth()
         {
-            if (File.Exists(Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username))))
+            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
+            if (File.Exists(authFile))
             {
-                var auth = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username))));
-                var steamGuardAccount = new SteamAuth.SteamGuardAccount();
-                steamGuardAccount.SharedSecret = auth.SharedSecret;
-                return steamGuardAccount.GenerateSteamGuardCode();
+                SteamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamGuardAccount>(File.ReadAllText(authFile));                
+                return SteamGuardAccount.GenerateSteamGuardCode();
             }
             else
             {
-                var login = new SteamAuth.UserLogin(logOnDetails.Username, logOnDetails.Password);
+                var login = new UserLogin(logOnDetails.Username, logOnDetails.Password);
                 var loginResult = login.DoLogin();
-                if (loginResult == SteamAuth.LoginResult.NeedEmail)
+                if (loginResult == LoginResult.NeedEmail)
                 {
-                    while (loginResult == SteamAuth.LoginResult.NeedEmail)
+                    while (loginResult == LoginResult.NeedEmail)
                     {
                         Console.WriteLine("Enter Email code:");
                         var emailCode = Console.ReadLine();
@@ -507,14 +504,14 @@ namespace SteamBot
                         loginResult = login.DoLogin();
                     }                    
                 }
-                if (loginResult == SteamAuth.LoginResult.LoginOkay)
+                if (loginResult == LoginResult.LoginOkay)
                 {
                     Log.Info("Linking mobile authenticator...");
-                    var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
+                    var authLinker = new AuthenticatorLinker(login.Session);
                     var addAuthResult = authLinker.AddAuthenticator();
-                    if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                    if (addAuthResult == AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                     {
-                        while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                        while (addAuthResult == AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                         {
                             Console.WriteLine("Enter phone number (must provide country code, e.g. +1XXXXXXXXXXX):");
                             var phoneNumber = Console.ReadLine();
@@ -522,13 +519,13 @@ namespace SteamBot
                             addAuthResult = authLinker.AddAuthenticator();
                         }
                     }
-                    if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.AwaitingFinalization)
+                    if (addAuthResult == AuthenticatorLinker.LinkResult.AwaitingFinalization)
                     {
-                        var auth = authLinker.LinkedAccount;
+                        SteamGuardAccount = authLinker.LinkedAccount;
                         try
                         {
                             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
-                            File.WriteAllText(Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username)), Newtonsoft.Json.JsonConvert.SerializeObject(auth));
+                            File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
                         }
                         catch
                         {
@@ -537,12 +534,10 @@ namespace SteamBot
                         Console.WriteLine("Enter SMS code:");
                         var smsCode = Console.ReadLine();
                         var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
-                        if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
+                        if (authResult == AuthenticatorLinker.FinalizeResult.Success)
                         {
-                            Log.Success("Linked authenticator.");
-                            var steamGuardAccount = new SteamAuth.SteamGuardAccount();
-                            steamGuardAccount.SharedSecret = auth.SharedSecret;
-                            return steamGuardAccount.GenerateSteamGuardCode();
+                            Log.Success("Linked authenticator.");                            
+                            return SteamGuardAccount.GenerateSteamGuardCode();
                         }
                         else
                         {
@@ -599,8 +594,14 @@ namespace SteamBot
             TradeOffers.TradeOfferDeclined += TradeOffers_TradeOfferDeclined;
             TradeOffers.TradeOfferReceived += TradeOffers_TradeOfferReceived;
             TradeOffers.TradeOfferInvalid += TradeOffers_TradeOfferInvalid;
+            TradeOffers.TradeOfferNeedsConfirmation += TradeOffers_TradeOfferNeedsConfirmation;
 
             GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
+        }
+
+        private void TradeOffers_TradeOfferNeedsConfirmation(object sender, TradeOffers.TradeOfferEventArgs e)
+        {
+            GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferNeedsConfirmation(e.TradeOffer);
         }
 
         private void TradeOffers_TradeOfferInvalid(object sender, TradeOffers.TradeOfferEventArgs e)
