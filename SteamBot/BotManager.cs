@@ -227,6 +227,37 @@ namespace SteamBot
             }
         }
 
+        public void SendInput(int index, string input)
+        {
+            mainLog.Debug(String.Format("Sending input \"{0}\" to Bot at index {1}", input, index));
+            if (index < botProcs.Count)
+            {
+                if (botProcs[index].IsRunning)
+                {
+                    if (botProcs[index].UsingProcesses)
+                    {
+                        //  Write out the exec command to the bot process' stdin
+                        StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
+
+                        BotStdIn.WriteLine("input " + input);
+                        BotStdIn.Flush();
+                    }
+                    else
+                    {
+                        botProcs[index].TheBot.HandleInput(input);
+                    }
+                }
+                else
+                {
+                    mainLog.Warn(String.Format("Bot at index {0} is not running. Use the 'Start' command first", index));
+                }
+            }
+            else
+            {
+                mainLog.Warn(String.Format("Invalid Bot index: {0}", index));
+            }
+        }
+
         /// <summary>
         /// A method to return an instance of the <c>bot.BotControlClass</c>.
         /// </summary>

@@ -36,6 +36,7 @@ namespace SteamBot
         private bool cookiesAreInvalid = true;
         private List<SteamID> friends;
         private bool disposed = false;
+        private string consoleInput;
         #endregion
 
         #region Public readonly variables
@@ -270,7 +271,25 @@ namespace SteamBot
         {
             try
             {
-                GetUserHandler(SteamClient.SteamID).OnBotCommand(command);
+                if (command == "linkauth")
+                {
+                    LinkMobileAuth();
+                }
+                else if (command == "getauth")
+                {
+                    try
+                    {
+                        Log.Info("Generated Steam Guard code: " + SteamGuardAccount.GenerateSteamGuardCode());
+                    }
+                    catch (NullReferenceException)
+                    {
+                        Log.Info("Unable to generate Steam Guard code.");
+                    }                    
+                }
+                else
+                {
+                    GetUserHandler(SteamClient.SteamID).OnBotCommand(command);
+                }                
             }
             catch (ObjectDisposedException e)
             {
@@ -284,6 +303,24 @@ namespace SteamBot
             catch (Exception e)
             {
                 Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
+            }
+        }
+
+        public void HandleInput(string input)
+        {
+            consoleInput = input;
+        }
+
+        public string WaitForInput()
+        {
+            consoleInput = null;
+            while (true)
+            {
+                if (consoleInput != null)
+                {
+                    return consoleInput;
+                }
+                Thread.Sleep(5);
             }
         }
 
@@ -490,7 +527,18 @@ namespace SteamBot
                 SteamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamGuardAccount>(File.ReadAllText(authFile));                
                 return SteamGuardAccount.GenerateSteamGuardCode();
             }
-            else
+            return string.Empty;   
+        }
+
+        /// <summary>
+        /// Link a mobile authenticator to bot account, using SteamTradeOffersBot as the authenticator.
+        /// Called from bot manager console. Usage: "exec [index] linkauth"
+        /// If successful, 2FA will be required upon the next login.
+        /// Use "exec [index] getauth" if you need to get a Steam Guard code for the account.
+        /// </summary>
+        void LinkMobileAuth()
+        {
+            new Thread(() =>
             {
                 var login = new UserLogin(logOnDetails.Username, logOnDetails.Password);
                 var loginResult = login.DoLogin();
@@ -498,11 +546,11 @@ namespace SteamBot
                 {
                     while (loginResult == LoginResult.NeedEmail)
                     {
-                        Console.WriteLine("Enter Email code:");
-                        var emailCode = Console.ReadLine();
+                        Log.Interface("Enter Steam Guard code from email (type \"input [index] [code]\"):");
+                        var emailCode = WaitForInput();
                         login.EmailCode = emailCode;
                         loginResult = login.DoLogin();
-                    }                    
+                    }
                 }
                 if (loginResult == LoginResult.LoginOkay)
                 {
@@ -513,8 +561,8 @@ namespace SteamBot
                     {
                         while (addAuthResult == AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
                         {
-                            Console.WriteLine("Enter phone number (must provide country code, e.g. +1XXXXXXXXXXX):");
-                            var phoneNumber = Console.ReadLine();
+                            Log.Interface("Enter phone number with country code, e.g. +1XXXXXXXXXXX (type \"input [index] [number]\"):");
+                            var phoneNumber = WaitForInput();
                             authLinker.PhoneNumber = phoneNumber;
                             addAuthResult = authLinker.AddAuthenticator();
                         }
@@ -524,6 +572,7 @@ namespace SteamBot
                         SteamGuardAccount = authLinker.LinkedAccount;
                         try
                         {
+                            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
                             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
                             File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
                         }
@@ -531,13 +580,12 @@ namespace SteamBot
                         {
 
                         }
-                        Console.WriteLine("Enter SMS code:");
-                        var smsCode = Console.ReadLine();
+                        Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
+                        var smsCode = WaitForInput();
                         var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
                         if (authResult == AuthenticatorLinker.FinalizeResult.Success)
                         {
-                            Log.Success("Linked authenticator.");                            
-                            return SteamGuardAccount.GenerateSteamGuardCode();
+                            Log.Success("Linked authenticator.");
                         }
                         else
                         {
@@ -547,14 +595,20 @@ namespace SteamBot
                     else
                     {
                         Log.Error("Error adding authenticator: " + addAuthResult);
-                    }                
+                    }
                 }
                 else
                 {
-                    Log.Error("Error performing mobile login: " + loginResult);
+                    if (loginResult == LoginResult.Need2FA)
+                    {
+                        Log.Error("Mobile authenticator has already been linked!");
+                    }
+                    else
+                    {
+                        Log.Error("Error performing mobile login: " + loginResult);
+                    }
                 }
-            }
-            return string.Empty;          
+            }).Start();
         }
 
         void UserLogOn()
