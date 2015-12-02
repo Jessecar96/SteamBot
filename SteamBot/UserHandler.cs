@@ -246,7 +246,7 @@ namespace SteamBot
             TradeOffer tradeOffer;
             if (Bot.TryGetTradeOffer(tradeOfferID.ToString(), out tradeOffer))
             {
-                if (tradeOffer.OfferState == TradeOfferState.TradeOfferStateAwaitingEmailConfirmation)
+                if (tradeOffer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
                 {
                     OnTradeAwaitingConfirmation(tradeOfferID);
                 }

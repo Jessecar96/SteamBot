@@ -48,7 +48,7 @@ namespace SteamTrade
                 case TradeStatusType.TradeFailed:
                     return "failed unexpectedly";
                 case TradeStatusType.PendingConfirmation:
-                    return "completed - pending e-mail confirmation";
+                    return "completed - pending confirmation";
                 default:
                     return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
             }
