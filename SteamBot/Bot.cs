@@ -341,7 +341,18 @@ namespace SteamBot
                     }
                     catch (NullReferenceException)
                     {
-                        Log.Info("Unable to generate Steam Guard code.");
+                        Log.Error("Unable to generate Steam Guard code.");
+                    }
+                }
+                else if (command == "unlinkauth")
+                {
+                    if (SteamGuardAccount.DeactivateAuthenticator())
+                    {
+                        Log.Success("Deactivated authenticator on this account.");
+                    }
+                    else
+                    {
+                        Log.Error("Failed to deactivate authenticator on this account.");
                     }
                 }
                 else
@@ -742,6 +753,7 @@ namespace SteamBot
         /// Called from bot manager console. Usage: "exec [index] linkauth"
         /// If successful, 2FA will be required upon the next login.
         /// Use "exec [index] getauth" if you need to get a Steam Guard code for the account.
+        /// To deactivate the authenticator, use "exec [index] unlinkauth".
         /// </summary>
         void LinkMobileAuth()
         {
