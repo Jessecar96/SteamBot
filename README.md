@@ -1,13 +1,14 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/7g6juohuug3m86d3/branch/master?svg=true)](https://ci.appveyor.com/project/waylaidwanderer/steamtradeoffersbot/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/7g6juohuug3m86d3?svg=true)](https://ci.appveyor.com/project/waylaidwanderer/steamtradeoffersbot)
 
 **SteamTradeOffersBot** is a fork of [SteamBot](https://github.com/Jessecar96/SteamBot/), with an easy-to-use Trade Offers library and a true generic inventory interface, written by waylaidwanderer. All code related to live trading have been removed for simplicity. The bot is publicly available under the MIT License. Check out [LICENSE] for more details.
 
 There are several things you must do in order to get SteamBot working:
 
-1. Download the source.
-2. Compile the source code.
-3. Configure the bot (username, password, etc.).
-4. *Optionally*, customize the bot by changing the source code.
+1. Clone the repo.
+2. Fetch submodules.
+3. Compile the bot (update/reinstall nuget packages if necessary).
+4. Configure the bot (username, password, etc.).
+5. *Optionally*, customize the bot by changing the source code.
 
 ## Getting the Source
 
