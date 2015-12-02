@@ -286,6 +286,17 @@ namespace SteamBot
                         Log.Info("Unable to generate Steam Guard code.");
                     }                    
                 }
+                else if (command == "unlinkauth")
+                {
+                    if (SteamGuardAccount.DeactivateAuthenticator())
+                    {
+                        Log.Success("Deactivated authenticator on this account.");
+                    }
+                    else
+                    {
+                        Log.Error("Failed to deactivate authenticator on this account.");
+                    }
+                }
                 else
                 {
                     GetUserHandler(SteamClient.SteamID).OnBotCommand(command);
