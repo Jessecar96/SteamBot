@@ -655,7 +655,32 @@ namespace SteamBot
 
         private void TradeOffers_TradeOfferNeedsConfirmation(object sender, TradeOffers.TradeOfferEventArgs e)
         {
-            GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferNeedsConfirmation(e.TradeOffer);
+            if (e.TradeOffer.IsOurOffer && e.TradeOffer.ConfirmationMethod == TradeOffers.TradeOfferConfirmationMethod.MobileApp)
+            {
+                if (SteamGuardAccount == null)
+                {
+                    Log.Warn("Bot account does not have 2FA enabled.");
+                }
+                else
+                {
+                    SteamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+                    SteamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+                    try
+                    {
+                        foreach (var confirmation in SteamGuardAccount.FetchConfirmations())
+                        {
+                            if (SteamGuardAccount.AcceptConfirmation(confirmation))
+                            {
+                                Log.Debug("Confirmed {0}. (Confirmation ID #{1})", confirmation.ConfirmationDescription, confirmation.ConfirmationID);
+                            }
+                        }
+                    }
+                    catch (SteamGuardAccount.WGTokenInvalidException)
+                    {
+                        Log.Error("Invalid session when trying to fetch trade confirmations.");
+                    }
+                }
+            }
         }
 
         private void TradeOffers_TradeOfferInvalid(object sender, TradeOffers.TradeOfferEventArgs e)
