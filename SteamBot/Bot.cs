@@ -176,7 +176,7 @@ namespace SteamBot
 
             Log.Debug ("Initializing Steam Bot...");
 
-            var mobileAuthCode = DoMobileAuth();
+            var mobileAuthCode = GetMobileAuthCode();
             if (!string.IsNullOrEmpty(mobileAuthCode))
             {
                 logOnDetails.TwoFactorCode = mobileAuthCode;
@@ -519,7 +519,7 @@ namespace SteamBot
             #endregion
         }
 
-        string DoMobileAuth()
+        string GetMobileAuthCode()
         {
             var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
             if (File.Exists(authFile))
