@@ -985,7 +985,7 @@ namespace SteamBot
         public void SubscribeTrade (Trade trade, UserHandler handler)
         {
             trade.OnSuccess += handler.OnTradeSuccess;
-            trade.OnAwaitingEmailConfirmation += handler.OnTradeAwaitingEmailConfirmation;
+            trade.OnAwaitingConfirmation += handler._OnTradeAwaitingConfirmation;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
             trade.OnStatusError += handler.OnStatusError;
@@ -1004,7 +1004,7 @@ namespace SteamBot
         public void UnsubscribeTrade (UserHandler handler, Trade trade)
         {
             trade.OnSuccess -= handler.OnTradeSuccess;
-            trade.OnAwaitingEmailConfirmation -= handler.OnTradeAwaitingEmailConfirmation;
+            trade.OnAwaitingConfirmation -= handler._OnTradeAwaitingConfirmation;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
             trade.OnStatusError -= handler.OnStatusError;
@@ -1028,6 +1028,33 @@ namespace SteamBot
                 log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
             }
             return inventory;
+        }
+
+        public void AcceptAllMobileTradeConfirmations()
+        {
+            if (SteamGuardAccount == null)
+            {
+                Log.Warn("Bot account does not have 2FA enabled.");
+            }
+            else
+            {
+                SteamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+                SteamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+                try
+                {
+                    foreach (var confirmation in SteamGuardAccount.FetchConfirmations())
+                    {
+                        if (SteamGuardAccount.AcceptConfirmation(confirmation))
+                        {
+                            Log.Success("Confirmed {0}. (Confirmation ID #{1})", confirmation.ConfirmationDescription, confirmation.ConfirmationID);
+                        }
+                    }
+                }
+                catch (SteamAuth.SteamGuardAccount.WGTokenInvalidException)
+                {
+                    Log.Error("Invalid session when trying to fetch trade confirmations.");
+                }
+            }                        
         }
 
         #region Background Worker Methods
