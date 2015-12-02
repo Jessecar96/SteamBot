@@ -55,7 +55,7 @@
     <Compile Include="Exceptions\TradeException.cs" />
     <Compile Include="ForeignInventory.cs" />
     <Compile Include="GenericInventory.cs" />
-    <Compile Include="TF2Value.cs" />
+    <Compile Include="Tf2Value.cs" />
     <Compile Include="Trade.cs" />
     <Compile Include="Schema.cs" />
     <Compile Include="Inventory.cs" />
