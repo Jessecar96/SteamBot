@@ -193,14 +193,7 @@ namespace SteamBot
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
 
-            Log.Debug ("Initializing Steam Bot...");
-
-            var mobileAuthCode = GetMobileAuthCode();
-            if (!string.IsNullOrEmpty(mobileAuthCode))
-            {
-                logOnDetails.TwoFactorCode = mobileAuthCode;
-            }
-
+            Log.Debug ("Initializing Steam Bot...");            
             SteamClient = new SteamClient();
             SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
@@ -476,7 +469,25 @@ namespace SteamBot
                     Log.Error("Login Error: {0}", callback.Result);
                 }
 
-                if (callback.Result == EResult.AccountLogonDenied)
+                if (callback.Result == EResult.AccountLogonDeniedNeedTwoFactorCode)
+                {
+                    var mobileAuthCode = GetMobileAuthCode();
+                    if (string.IsNullOrEmpty(mobileAuthCode))
+                    {
+                        Log.Error("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot.");
+                    }
+                    else
+                    {
+                        logOnDetails.TwoFactorCode = mobileAuthCode;
+                        Log.Success("Generated 2FA code.");
+                    }
+                }
+                else if (callback.Result == EResult.TwoFactorCodeMismatch)
+                {
+                    logOnDetails.TwoFactorCode = SteamGuardAccount.GenerateSteamGuardCode();
+                    Log.Success("Regenerated 2FA code.");
+                }
+                else if (callback.Result == EResult.AccountLogonDenied)
                 {
                     Log.Interface ("This account is SteamGuard enabled. Enter the code via the `auth' command.");
 
@@ -488,8 +499,7 @@ namespace SteamBot
                     else
                         logOnDetails.AuthCode = Console.ReadLine();
                 }
-
-                if (callback.Result == EResult.InvalidLoginAuthCode)
+                else if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
                     Log.Interface("The given SteamGuard code was invalid. Try again using the `auth' command.");
                     logOnDetails.AuthCode = Console.ReadLine();
