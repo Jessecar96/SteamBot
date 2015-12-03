@@ -330,7 +330,7 @@ namespace SteamBot
                 {
                     try
                     {
-                        Log.Info("Generated Steam Guard code: " + SteamGuardAccount.GenerateSteamGuardCode());
+                        Log.Success("Generated Steam Guard code: " + SteamGuardAccount.GenerateSteamGuardCode());
                     }
                     catch (NullReferenceException)
                     {
