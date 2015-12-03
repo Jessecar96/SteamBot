@@ -488,6 +488,7 @@ namespace SteamBot
                 }
                 else if (callback.Result == EResult.TwoFactorCodeMismatch)
                 {
+                    SteamAuth.TimeAligner.AlignTime();
                     logOnDetails.TwoFactorCode = SteamGuardAccount.GenerateSteamGuardCode();
                     Log.Success("Regenerated 2FA code.");
                 }
