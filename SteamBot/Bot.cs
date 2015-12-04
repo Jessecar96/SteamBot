@@ -193,14 +193,7 @@ namespace SteamBot
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
 
-            Log.Debug ("Initializing Steam Bot...");
-
-            var mobileAuthCode = GetMobileAuthCode();
-            if (!string.IsNullOrEmpty(mobileAuthCode))
-            {
-                logOnDetails.TwoFactorCode = mobileAuthCode;
-            }
-
+            Log.Debug ("Initializing Steam Bot...");            
             SteamClient = new SteamClient();
             SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
@@ -337,7 +330,7 @@ namespace SteamBot
                 {
                     try
                     {
-                        Log.Info("Generated Steam Guard code: " + SteamGuardAccount.GenerateSteamGuardCode());
+                        Log.Success("Generated Steam Guard code: " + SteamGuardAccount.GenerateSteamGuardCode());
                     }
                     catch (NullReferenceException)
                     {
@@ -346,7 +339,11 @@ namespace SteamBot
                 }
                 else if (command == "unlinkauth")
                 {
-                    if (SteamGuardAccount.DeactivateAuthenticator())
+                    if (SteamGuardAccount == null)
+                    {
+                        Log.Error("Mobile authenticator is not active on this bot.");
+                    }
+                    else if (SteamGuardAccount.DeactivateAuthenticator())
                     {
                         Log.Success("Deactivated authenticator on this account.");
                     }
@@ -476,7 +473,26 @@ namespace SteamBot
                     Log.Error("Login Error: {0}", callback.Result);
                 }
 
-                if (callback.Result == EResult.AccountLogonDenied)
+                if (callback.Result == EResult.AccountLogonDeniedNeedTwoFactorCode)
+                {
+                    var mobileAuthCode = GetMobileAuthCode();
+                    if (string.IsNullOrEmpty(mobileAuthCode))
+                    {
+                        Log.Error("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot.");
+                    }
+                    else
+                    {
+                        logOnDetails.TwoFactorCode = mobileAuthCode;
+                        Log.Success("Generated 2FA code.");
+                    }
+                }
+                else if (callback.Result == EResult.TwoFactorCodeMismatch)
+                {
+                    SteamAuth.TimeAligner.AlignTime();
+                    logOnDetails.TwoFactorCode = SteamGuardAccount.GenerateSteamGuardCode();
+                    Log.Success("Regenerated 2FA code.");
+                }
+                else if (callback.Result == EResult.AccountLogonDenied)
                 {
                     Log.Interface ("This account is SteamGuard enabled. Enter the code via the `auth' command.");
 
@@ -488,8 +504,7 @@ namespace SteamBot
                     else
                         logOnDetails.AuthCode = Console.ReadLine();
                 }
-
-                if (callback.Result == EResult.InvalidLoginAuthCode)
+                else if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
                     Log.Interface("The given SteamGuard code was invalid. Try again using the `auth' command.");
                     logOnDetails.AuthCode = Console.ReadLine();
@@ -794,22 +809,22 @@ namespace SteamBot
                             var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
                             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
                             File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
+                            Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
+                            var smsCode = WaitForInput();
+                            var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
+                            if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
+                            {
+                                Log.Success("Linked authenticator.");
+                            }
+                            else
+                            {
+                                Log.Error("Error linking authenticator: " + authResult);
+                            }
                         }
-                        catch
+                        catch (IOException)
                         {
-
-                        }
-                        Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
-                        var smsCode = WaitForInput();
-                        var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
-                        if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
-                        {
-                            Log.Success("Linked authenticator.");
-                        }
-                        else
-                        {
-                            Log.Error("Error linking authenticator: " + authResult);
-                        }
+                            Log.Error("Failed to save auth file. Aborting authentication.");
+                        }                        
                     }
                     else
                     {
