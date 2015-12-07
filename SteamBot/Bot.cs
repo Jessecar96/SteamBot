@@ -719,7 +719,8 @@ namespace SteamBot
                     CloseTrade();
                     Log.Warn("Disconnected from Steam Network!");
                 }
-
+                
+                Thread.Sleep(60 * 1000);
                 SteamClient.Connect ();
             });
             #endregion
