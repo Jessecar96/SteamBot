@@ -14,6 +14,7 @@ using SteamTrade;
 using SteamKit2.Internal;
 using SteamTrade.TradeOffer;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace SteamBot
 {
@@ -1083,6 +1084,74 @@ namespace SteamBot
                 }
             }                        
         }
+
+        /// <summary>
+        /// Get duration of escrow in days. Call this before sending a trade offer.
+        /// Credit to: https://www.reddit.com/r/SteamBot/comments/3w8j7c/code_getescrowduration_for_c/
+        /// </summary>
+        /// <param name="steamId">Steam ID of user you want to send a trade offer to</param>
+        /// <param name="token">User's trade token. Can be an empty string if user is on bot's friends list.</param>
+        /// <returns>TradeOfferEscrowDuration</returns>
+        public TradeOfferEscrowDuration GetEscrowDuration(SteamID steamId, string token)
+        {
+            var url = "https://steamcommunity.com/tradeoffer/new/";
+
+            var data = new System.Collections.Specialized.NameValueCollection();
+            data.Add("partner", steamId.AccountID.ToString());
+            if (!string.IsNullOrEmpty(token))
+            {
+                data.Add("token", token);
+            }            
+
+            var resp = SteamWeb.Fetch(url, "GET", data, false);
+            if (string.IsNullOrWhiteSpace(resp))
+            {
+                throw new NullReferenceException("Empty response from Steam when trying to retrieve escrow duration.");
+            }
+
+            return ParseEscrowResponse(resp);
+        }
+
+        /// <summary>
+        /// Get duration of escrow in days. Call this after receiving a trade offer.
+        /// </summary>
+        /// <param name="tradeOfferId">The ID of the trade offer</param>
+        /// <returns>TradeOfferEscrowDuration</returns>
+        public TradeOfferEscrowDuration GetEscrowDuration(string tradeOfferId)
+        {
+            var url = "http://steamcommunity.com/tradeoffer/" + tradeOfferId;
+
+            var resp = SteamWeb.Fetch(url, "GET", null, false);
+            if (string.IsNullOrWhiteSpace(resp))
+            {
+                throw new NullReferenceException("Empty response from Steam when trying to retrieve escrow duration.");
+            }
+
+            return ParseEscrowResponse(resp);
+        }
+
+        private TradeOfferEscrowDuration ParseEscrowResponse(string resp)
+        {
+            var myM = Regex.Match(resp, @"g_daysMyEscrow(?:[\s=]+)(?<days>[\d]+);", RegexOptions.IgnoreCase);
+            var theirM = Regex.Match(resp, @"g_daysTheirEscrow(?:[\s=]+)(?<days>[\d]+);", RegexOptions.IgnoreCase);
+            if (!myM.Groups["days"].Success || !theirM.Groups["days"].Success)
+            {
+                throw new TradeOfferEscrowDurationParseException();
+            }
+
+            return new TradeOfferEscrowDuration()
+            {
+                DaysMyEscrow = int.Parse(myM.Groups["days"].Value),
+                DaysTheirEscrow = int.Parse(theirM.Groups["days"].Value)
+            };
+        }
+
+        public class TradeOfferEscrowDuration
+        {
+            public int DaysMyEscrow { get; set; }
+            public int DaysTheirEscrow { get; set; }
+        }
+        public class TradeOfferEscrowDurationParseException : Exception { }
 
         #region Background Worker Methods
 
