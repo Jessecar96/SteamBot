@@ -454,8 +454,8 @@ namespace SteamBot
                     Log.Success ("Schema Downloaded!");
                 }
 
-                SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
-                SteamFriends.SetPersonaState (EPersonaState.Online);
+               // SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
+					SteamFriends.SetPersonaState (EPersonaState.Online);
 
                 Log.Success ("Steam Bot Logged In Completely!");
 

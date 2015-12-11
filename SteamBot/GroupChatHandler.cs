@@ -48,12 +48,15 @@ namespace SteamBot
 		public string MapStoragePath =  groupchatsettings["MapStoragePath"];
 		public string UserDatabase =  "users.json"; //Callback needs t be changed before making: groupchatsettings["UserDatabase"];
 		public static string GroupchatID =  groupchatsettings["GroupchatID"];
+		public string UploadCheckCommand= "!uploadcheck";
+		public string ServerListUrl = "http://redirect.tf2maps.net/maps";
 		//public bool SpreadsheetSync = true;
-		public static string PreviousMap1 = "";
-		public static string PreviousMap2 = "";
+		public static string PreviousMap1 = " ";
+		public static string PreviousMap2 = " ";
+		public static string DebugPreviousMap1 = " ";
 		public static bool SpreadsheetSync = true;
 		public static bool SyncRunning = false;
-		public SteamID OtherSID { get; private set; } //check
+		//public SteamID OtherSID { get; private set; } //check
 
 
 		SteamID Groupchat = ulong.Parse (GroupchatID);
@@ -74,6 +77,20 @@ namespace SteamBot
 		//TODO make this a foreach method
 		public void TickTasks(object sender, EventArgs e)
 		{
+		//	IPAddress[] Adresses = { "70.42.74.31", "91.121.155.109" };
+
+		//	foreach (IPAddress ServerIP in Adresses) 
+		//	{
+		//		System.Net.IPAddress ipaddress = System.Net.IPAddress.Parse(ServerIP); 
+		//		Steam.Query.ServerInfoResult Map = ServerQuery (ipaddress, 27015);
+		//	    Tuple<string,SteamID> Mapremoval = ImpRemove (Map.Map, 0, true);
+		//	}
+			if (SpreadsheetSync) 
+			{
+				SpreadsheetSync = false;
+				SheetSync(false);
+			}
+
 			System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("70.42.74.31");  
 			System.Net.IPAddress ipaddress2 = System.Net.IPAddress.Parse("91.121.155.109");
 
@@ -83,28 +100,41 @@ namespace SteamBot
 			Tuple<string,SteamID> Mapremoval = ImpRemove (Map1.Map, 0, true);
 			Tuple<string,SteamID> Mapremoval2 = ImpRemove (Map2.Map, 0, true);
 
-			if (Map1.Map != PreviousMap1 && Map1.Players > 2) {
-				Bot.SteamFriends.SendChatMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map1.Map.ToString() + " " + Map1.Players + "/" + Map1.MaxPlayers);
+
+			if ((Map1.Map != PreviousMap1) && Map1.Players > 2) {
+				SpreadsheetSync = true;
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map1.Map.ToString() + " " + Map1.Players + "/" + Map1.MaxPlayers);
 			}
-			if (Map2.Map != PreviousMap2 && Map2.Players > 2) {
-				Bot.SteamFriends.SendChatMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map2.Map.ToString() + " " + Map2.Players + "/" + Map2.MaxPlayers);
+			if ((Map2.Map != PreviousMap2) && Map2.Players > 2) {
+				SpreadsheetSync = true;
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map2.Map.ToString() + " " + Map2.Players + "/" + Map2.MaxPlayers);
 			}
+
+
 			PreviousMap1 = Map1.Map;
 			PreviousMap2 = Map2.Map;
-
+		
 			if (Mapremoval.Item2 != 0) {
-				Bot.SteamFriends.SendChatMessage (Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being imp'd!");
+				Bot.SteamFriends.SendChatMessage (Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played!");
+				SpreadsheetSync = true;
 			}
 			if (Mapremoval2.Item2 != 0){
-				Bot.SteamFriends.SendChatMessage (Mapremoval2.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval2.Item1 + " is being imp'd!");
+			    Bot.SteamFriends.SendChatMessage (Mapremoval2.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval2.Item1 + " is being played!");
+				SpreadsheetSync = true;
 			}
 
-			if (SpreadsheetSync) 
-			{
-				SpreadsheetSync = false;
-				SheetSync();
-			}
+
 				
+		}
+
+		public void DemoUpdate(){
+
+			WebClient client = new WebClient ();
+			string httpdata = client.DownloadString ("http://demos.geit.co.uk/Json");
+
+		
+
+			//Dictionary<string,string> Maplist = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (httpdata));
 		}
 			
 		//TODO add file decleration here for maps.json and stuff, so we can later implement per-chat file storage.
@@ -116,8 +146,7 @@ namespace SteamBot
 		/// <param name="ipadress">Ipadress that will be queried</param>
 		/// <param name="port"> The port that will be used, typically 27015 </param> 
 		Steam.Query.ServerInfoResult ServerQuery (System.Net.IPAddress ipaddress , Int32 port)
-		{
-			//System.Net.IPAddress ipaddress = System.Net.IPAddress.Parse("70.42.74.31");  
+		{ 
 			IPEndPoint ServerIP = new IPEndPoint( ipaddress , port);
 			Steam.Query.Server Information = new Steam.Query.Server (ServerIP);
 		    Steam.Query.ServerInfoResult ServerInformation = Information.GetServerInfo ().Result;
@@ -172,23 +201,24 @@ namespace SteamBot
 			
 		public override void OnLoginCompleted()
 		{
-			Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
+			//Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			InitTimer ();
 		}
 		public override void OnBotCommand(string command)
 		{
-			if (command.StartsWith ("Server_Q" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				//ServerQuery ();
-			}
 			if (command.StartsWith ("Say" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string send = command.Remove (0, 3);
 				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
 			}
-			if (command.StartsWith ("Google" , StringComparison.OrdinalIgnoreCase)) 
+			if (command.StartsWith ("demo" , StringComparison.OrdinalIgnoreCase)) 
 			{
-				SheetSync();
+				string send = command.Remove (0, 3);
+				DemoUpdate ();
+			}
+			if (command.StartsWith ("sync" , StringComparison.OrdinalIgnoreCase)) 
+			{
+				SheetSync(true);
 			}
 			if (command.StartsWith ("ID" , StringComparison.OrdinalIgnoreCase)) 
 			{
@@ -227,9 +257,9 @@ namespace SteamBot
 
 		//TODO ALLOW USERS TO SEND ADMIN COMMANDS VIA MSG
 		public override void OnMessage (string message, EChatEntryType type) {
-			SteamID ChatMsg = 0;
+			SteamID ChatMsg = OtherSID;
 			string adminresponse = null;
-			string response = Chatcommands (ChatMsg, ChatMsg, message);
+			string response = Chatcommands (ChatMsg, ChatMsg, message.ToLower());
 
 		    if (response != null) 
 			{
@@ -238,21 +268,22 @@ namespace SteamBot
 
 			//Log.Interface(OtherSID.ToString() + ": " + message ); //TODO EXTEND THIS FUCNTIONALITY
 
-			//if (admincheck(OtherSID)){
-			//	adminresponse = admincommands (OtherSID, message);
-			//}
-			//if (adminresponse != null) {
-			//	SendChatMessage (adminresponse);
-			//}
+			if (admincheck(OtherSID)){
+				adminresponse = admincommands (OtherSID, message);
+			}
+			if (adminresponse != null) {
+			  SendChatMessage (adminresponse);
+			}
 		}
+
 		public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
 		{
-			MapVolume ();
+			
 			string adminresponse = null;
 			if (admincheck(sender)){
-				adminresponse = admincommands (sender, message);
+				adminresponse = admincommands (sender, message.ToLower());
 			}
-			string response = Chatcommands(chatID, sender, message);
+			string response = Chatcommands(chatID, sender, message.ToLower());
 			if (response != null) {
 				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, response);
 			}
@@ -269,13 +300,17 @@ namespace SteamBot
 		/// <param name="message">The message sent</param>
 		public string admincommands (SteamID sender, string message)
 		{
-			
+			if (message.StartsWith ("!Say" , StringComparison.OrdinalIgnoreCase)) 
+			{
+				string send = message.Remove (0, 4);
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
+			}
+
 			if (message.StartsWith (clearcommand, StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @MapStoragePath;
 				File.Delete(path);
 				File.WriteAllText (path, "{}");
-				//SheetSync ();
 				SpreadsheetSync = true;
 				return "Wiped all Maps";
 			}
@@ -297,9 +332,41 @@ namespace SteamBot
 				OnlineSync = "false";
 				return "Disabled Sync";
 			}
+			if (message.StartsWith ("!rejoin" , StringComparison.OrdinalIgnoreCase)) 
+			{
+				Bot.SteamFriends.LeaveChat (new SteamID (Groupchat));
+				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
+			}
+			if (message.StartsWith ("!Debug_02", StringComparison.OrdinalIgnoreCase)) {
+				Log.Interface (PreviousMap1);
+				Log.Interface (PreviousMap1.ToString ());
+			}
 
-			return null;
-		}
+			if (message.StartsWith ("!Debug_01", StringComparison.OrdinalIgnoreCase)) {
+				System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse ("193.111.142.40");  
+				Steam.Query.ServerInfoResult Map1 = ServerQuery (ipaddress1, 27022);
+				Log.Interface (Map1.Map.ToString ());
+				int debug = Map1.Players + 1;
+				Log.Interface (debug.ToString ());
+				if ((Map1.Map != GroupChatHandler.PreviousMap1) && Map1.Players > 2) {
+					Log.Interface (Map1.Map.ToString ());
+					Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map1.Map.ToString () + " " + Map1.Players + "/" + Map1.MaxPlayers);
+				}
+				GroupChatHandler.DebugPreviousMap1 = Map1.Map.ToString ();
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, Map1.Map.ToString ());
+
+				if ((Map1.Map != GroupChatHandler.PreviousMap1) && Map1.Players > 2) {
+					Log.Interface (Map1.Map.ToString ());
+					Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map1.Map.ToString () + " " + Map1.Players + "/" + Map1.MaxPlayers);
+				}
+				GroupChatHandler.DebugPreviousMap1 = Map1.Map.ToString ();
+				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, Map1.Map.ToString ());
+			}
+				return null;
+			}
+
+			
+
 		/// <summary>
 		/// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
 		/// </summary>
@@ -315,15 +382,33 @@ namespace SteamBot
 			//Retrieves the database of users, checks if they're an admin, and enables admin only commands between brackets
 			if (rank) { 
 			}
-
+		
 			if (message.StartsWith (vdcCommand , StringComparison.OrdinalIgnoreCase)) 
 			{
 				string par1 = message.Remove (0, 5);
 				return GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
 			}
+			if (message.StartsWith ("!USSERVER" , StringComparison.OrdinalIgnoreCase)) 
+			{
+				System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("70.42.74.31");  
+
+				Steam.Query.ServerInfoResult Map1 = ServerQuery (ipaddress1, 27015);
+
+				return Map1.Map + " " + Map1.Players + "/" + Map1.MaxPlayers;
+
+				}
+			if (message.StartsWith ("!EUSERVER" , StringComparison.OrdinalIgnoreCase)) 
+			{
+				System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("91.121.155.109");  
+
+				Steam.Query.ServerInfoResult Map1 = ServerQuery (ipaddress1, 27015);
+
+				return Map1.Map + " " + Map1.Players + "/" + Map1.MaxPlayers;
+
+			}
 			if (message.StartsWith ("!Sync", StringComparison.OrdinalIgnoreCase)) 
 			{
-				SheetSync ();
+				SheetSync (true);
 				return null;
 			}
 
@@ -343,6 +428,16 @@ namespace SteamBot
 			{
 				string par1 = message.Remove (0, 5);
 				return GoogleSearch(par1, "https://wiki.teamfortress.com/", chatID);
+			}
+			if (message.StartsWith (UploadCheckCommand , StringComparison.OrdinalIgnoreCase)) 
+			{
+				string par1 = message.Remove (0, UploadCheckCommand.Length + 1);
+				if (par1 != null) {
+				return UploadCheck(par1).ToString();
+				}
+				else{
+					return "No map specified";
+				}
 			}
 			if (message.StartsWith ("ghost?" , StringComparison.OrdinalIgnoreCase)) 
 			{
@@ -370,30 +465,65 @@ namespace SteamBot
 			{
 				string map = message.Remove (0, 5);
 				Tuple<string,SteamID> removed = ImpRemove (map, sender, false);
-				//SheetSync ();
 				return "Removed map: " + removed.Item1;
-				//Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, removed);
 			}	
-		
-			if (message.StartsWith (impCommand , StringComparison.OrdinalIgnoreCase)) 
+			if (message.StartsWith (impCommand, StringComparison.OrdinalIgnoreCase)) {
+				
+				string[] words = message.Split(' '); //Splits the message by every space
+				if (words.Length == 1) {
+					return  "!add <mapname> <url> <notes> is the command. however if the map is uploaded you do not need to include the url";
+				}
+				int length = (words.Length > 2).GetHashCode(); //Checks if there are more than 3 or more words
+				int Uploaded = (UploadCheck (words [1])).GetHashCode(); //Checks if map is uploaded. Crashes if only one word //TODO FIX THAT
+				string UploadStatus = "Uploaded"; //Sets a string, that'll remain unless altered
+				if (length + Uploaded == 0 ) { //Checks if either test beforehand returned true
+					return "ERROR";
+				} else {
+					string[] notes = message.Split (new string[] { words [2 - Uploaded] }, StringSplitOptions.None); //Splits by the 2nd word (the uploadurl) but if it's already uploaded, it'll split by the map instead 
+					if (Uploaded == 0) //If the map isn't uploaded, it'll set the upload status to the 3rd word (The URL)
+					{ 
+						UploadStatus = words [2];
+					}
+					string status = ImpEntry (words [1], UploadStatus, notes[1], sender); //If there are no notes, but a map and url, this will crash.
+					SpreadsheetSync = true;
+					return status;
+				}
+
+			}
+
+			if (message.StartsWith ("!Beta" , StringComparison.OrdinalIgnoreCase)) 
 			{
+				//TODO This entire system needs a huge cleanup. Quereying so much is unacceptable 
 				string[] words = message.Split(' ');
-				//Log.Interface (words.LongLength.ToString () + " " + words.Length.ToString());
-				if (words.Length < 3)
+
+				string uploadstring = "";
+
+
+
+				if (words.Length < 3 & !UploadCheck(words[1]) ) //This should stop the code if there's only 2 words, but if the map is already uploaded it won't 
 				{
-					return "Missing commands! Please use the format: !add Mapname DownloadUrl";
+					return "Missing the upload! Either upload the map or add the url!";
 				} 
 				else 
 				{
-					string[] notes = message.Split (new string[] {words [2]}, StringSplitOptions.None);
+					string noteentry = "No Notes";
 
-
-					if (notes.Length < 2) {
-						notes [1] = "No notes";
+					if (words.Length > 2) {
+					string[] notes = message.Split (new string[] { words [2] }, StringSplitOptions.None);
+				    	if (notes.Length > 1) 
+						{
+							noteentry = notes [1];
+						}
+				}
+						
+					if (UploadCheck (words [1])) {
+						uploadstring = "Uploaded";
+					} else {
+						uploadstring = words [2];
 					}
-					string status = ImpEntry (words [1], words [2], notes [1], sender);
+					Log.Interface (words [1] + uploadstring + noteentry + sender);
+					string status = ImpEntry (words [1], uploadstring, noteentry, sender);
 					SpreadsheetSync = true;
-					//SheetSync();
 					return status;
 				}
 			}
@@ -407,8 +537,8 @@ namespace SteamBot
 				string DownloadListing = "";
 				foreach (var item in entrydata) 
 				{
-					Maplisting = Maplisting + item.Key + " , ";
-					DownloadListing = DownloadListing + item.Value.Item1 + " , ";
+					Maplisting = Maplisting + item.Key + ", ";
+					DownloadListing = DownloadListing + item.Value.Item1 + ", ";
 				}
 				Bot.SteamFriends.SendChatMessage (sender, EChatEntryType.ChatMsg, DownloadListing);
 				return Maplisting ;
@@ -422,20 +552,25 @@ namespace SteamBot
 		/// </summary>
 		public string ImpEntry(string map , string downloadurl , string notes, SteamID sender)
 		{
+			if (notes == null)
+			{
+				notes = "No Notes"; 
+			}
 			//Deserialises the current map list
 			string response = "Failed to add the map to the list";
-			Dictionary<string,Tuple<string,SteamID,string> > entrydata = new Dictionary<string,Tuple<string,SteamID,string>>();
-			if (JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string>>> (System.IO.File.ReadAllText (@MapStoragePath)) != null) 
-			{
-				entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string>>> (System.IO.File.ReadAllText (@MapStoragePath));
-			} 
+			Dictionary<string,Tuple<string,SteamID,string,bool> > entrydata = new Dictionary<string,Tuple<string,SteamID,string,bool>>();
+			if (JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>> (System.IO.File.ReadAllText (@MapStoragePath)) != null) {
+				entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>> (System.IO.File.ReadAllText (@MapStoragePath));
+			} else {
+				Log.Interface ("There was an error, here is the map file before it's wiped:" + System.IO.File.ReadAllText (@MapStoragePath));
+			}
 
 			if (entrydata.ContainsKey (map)) { //if it already exists, it deletes it so it can update the data
 				Log.Interface("duplicate");
 				response = "Error, the entry already exists! Please remove the existing entry";
 			} else {
 				//Adds the entry
-				entrydata.Add (map, new Tuple<string,SteamID,string> (downloadurl, sender, notes));
+				entrydata.Add (map, new Tuple<string,SteamID,string,bool> (downloadurl, sender, notes, UploadCheck(map)));
 				//Saves the data
 				System.IO.File.WriteAllText (@MapStoragePath, JsonConvert.SerializeObject (entrydata));
 				response = "Added " + map; 
@@ -449,8 +584,8 @@ namespace SteamBot
 		/// </summary>
 		public Tuple<string,SteamID> ImpRemove (string map , SteamID sender , bool ServerRemove)
 		{
-			Dictionary<string,Tuple<string,SteamID,string> > Maplist = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string>>> (System.IO.File.ReadAllText (@MapStoragePath));
-			Dictionary<string,Tuple<string,SteamID,string> > NewMaplist = new Dictionary<string, Tuple<string, SteamID,string>>();
+			Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>> (System.IO.File.ReadAllText (@MapStoragePath));
+			Dictionary<string,Tuple<string,SteamID,string,bool> > NewMaplist = new Dictionary<string, Tuple<string, SteamID,string,bool>>();
 			string removed = "The map was not found or you do not have sufficient privileges"; 
 			SteamID userremoved = 0;
 			foreach (var item in Maplist) {
@@ -468,6 +603,25 @@ namespace SteamBot
 			return RemoveInformation ;
 			{
 			}
+		}
+
+		/// <summary>
+		/// Checks if the Map is uploaded to a server
+		/// </summary>
+		/// <returns><c>true</c>, If the map was uploaded, <c>false</c> False if it isn't.</returns>
+		/// <param name="Mapname">Mapname, </param>
+		public bool UploadCheck(string Mapname){
+			if (Mapname.Contains("."))
+			{
+				Mapname = (Mapname.Split (new string[] { "." }, System.StringSplitOptions.None)).First();
+			}
+			WebClient client = new WebClient ();
+			string httpdata = client.DownloadString (ServerListUrl);
+			if (httpdata != null & httpdata.Contains(Mapname)){
+					return true; }
+				{
+				return false; }
+
 		}
 		///<summary> Checks if the given STEAMID is an admin in the database</summary>
 		public bool admincheck(SteamID sender)
@@ -538,15 +692,14 @@ namespace SteamBot
 		/// </summary>
 		/// 
 		//TODO Clean portions that need cleaning
-		public void SheetSync ()
+		public void SheetSync (bool ForceSync)
 		{
-			Dictionary<string,Tuple<string,SteamID, string> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string>>>(System.IO.File.ReadAllText(@MapStoragePath));
+			Dictionary<string,Tuple<string,SteamID,string,bool> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
 			Bot.SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
-			Log.Interface ("Initialising sync");
-			if (OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) {
+			Log.Interface (OnlineSync + " " + SyncRunning.ToString());
+			if ((OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) || ForceSync) {
 				SyncRunning = true;
-				Log.Interface ("BEGINNING ONLINE SYNC");
-			
+				Log.Interface ("Beginning Sync");
 				OAuth2Parameters parameters = new OAuth2Parameters ();
 				parameters.ClientId = CLIENT_ID;
 				parameters.ClientSecret = CLIENT_SECRET;
@@ -560,67 +713,85 @@ namespace SteamBot
 
 				GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory (null, IntegrationName, parameters);
 				SpreadsheetsService service = new SpreadsheetsService (IntegrationName);
+				Log.Interface ("Log 0");
+				CellQuery cellQuery = new CellQuery (SpreadSheetURI,"od6", "private","full" );
+
 				service.RequestFactory = requestFactory;
 
 				//TODO Put this in the settings file, and have his also be the result from !sheet
 				SpreadsheetQuery query = new SpreadsheetQuery (SpreadSheetURI);
-
 				SpreadsheetFeed feed = service.Query (query);
 				SpreadsheetEntry spreadsheet = (SpreadsheetEntry)feed.Entries [0];
 				WorksheetFeed wsFeed = spreadsheet.Worksheets;
 				WorksheetEntry worksheet = (WorksheetEntry)wsFeed.Entries [0];
 	
 				//Sets the size of the dictionary to the size of the JSON file, and updates
-				worksheet.Cols = 4;
+				worksheet.Cols = 5;
 
 				if (entrydata.Count + 2 > worksheet.RowCount.IntegerValue) {
 					worksheet.Rows = Convert.ToUInt32 (entrydata.Count + 2);
 				}
 
-				worksheet.Update ();
+				//worksheet.Update ();
 
-				CellQuery cellQuery = new CellQuery (worksheet.CellFeedLink);
-				cellQuery.ReturnEmpty = ReturnEmptyCells.yes;
+
+				Log.Interface ("Log 0");
+				//CellQuery cellQuery = new CellQuery (SpreadSheetURI,"od6", "private","full" );
+				Log.Interface("log0.1");
+
+				//cellQuery.ReturnEmpty = ReturnEmptyCells.yes;
 				CellFeed cellFeed = service.Query (cellQuery);
 
 				//TODO Updates the Bot Prefix to the map list
 				//SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
 
+				Log.Interface ("Test Locaton 1");
+
 
 				//Makes the current Cells empty, to be replaced by the existing Maps list
 				foreach (CellEntry cell in cellFeed.Entries) {
 					cell.InputValue = " ";
-					cell.Update ();
+					//cell.Update ();
 				}
 				// Iterate through each cell, updating its value if necessary. TODO Optimise this function to use batch upload, or just generally faster.
 
 				int Entries = 1;
-
+				Log.Interface ("Test Locaton 2");
+			
 				foreach (var item in entrydata) {
 					Entries = Entries + 1; 
 					foreach (CellEntry cell in cellFeed.Entries) {
 						if (cell.Title.Text == "A" + Entries.ToString ()) {
 							cell.InputValue = item.Key;
-							cell.Update ();
+							//cell.Update ();
 						}
 						if (cell.Title.Text == "B" + Entries.ToString ()) {
 							cell.InputValue = item.Value.Item1;
-							cell.Update ();
+							//cell.Update ();
 						}
 						if (cell.Title.Text == "C" + Entries.ToString ()) {
 							cell.InputValue = item.Value.Item2.ToString ();
-							cell.Update ();
+							//cell.Update ();
 						}
 						if (cell.Title.Text == "D" + Entries.ToString ()) {
 							cell.InputValue = item.Value.Item3.ToString ();
-							cell.Update ();
+							//cell.Update ();
+						}
+						if (cell.Title.Text == "E" + Entries.ToString ()) {
+							cell.InputValue = item.Value.Item4.ToString ();
+							//cell.Update ();
 						}
 					
 					
 					}
+				
 				}
+				Log.Interface ("Test Locaton 3");
 				worksheet.Rows = Convert.ToUInt32 (entrydata.Count + 2);
 				worksheet.Update ();
+				Log.Interface ("Test Locaton 4");
+				CellFeed batchResponse = (CellFeed)service.Batch(cellFeed, new Uri (cellFeed.Batch));
+				Log.Interface ("Test Locaton 5");
 				SyncRunning = false;
 			} else if (OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase)){
 				SpreadsheetSync = true;
@@ -629,7 +800,8 @@ namespace SteamBot
 
 		public string MapVolume ()
 		{
-			Dictionary<string,Tuple<string,SteamID,string> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string>>>(System.IO.File.ReadAllText(@MapStoragePath));
+			Dictionary<string,Tuple<string,SteamID,string,bool> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
+			Bot.SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
 			return entrydata.Count.ToString ();
 		}
 	
