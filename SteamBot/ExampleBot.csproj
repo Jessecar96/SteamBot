@@ -82,7 +82,6 @@
     <Compile Include="BotManager.cs" />
     <Compile Include="BotManagerInterpreter.cs" />
     <Compile Include="Configuration.cs" />
-    <Compile Include="Log.cs" />
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
@@ -92,6 +91,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <ProjectReference Include="..\Log\Logger.csproj">
+      <Project>{A5CACF74-47D0-4F99-A1E3-5FAA27AEEFFC}</Project>
+      <Name>Logger</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SteamAuth\SteamAuth\SteamAuth.csproj">
       <Project>{5ad0934e-f6c4-4ae5-83af-c788313b2a87}</Project>
       <Name>SteamAuth</Name>

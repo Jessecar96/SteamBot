@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace Logger
 {
@@ -31,7 +32,7 @@ namespace Logger
 
         public Log(string logFile, string botName = "", LogLevel consoleLogLevel = LogLevel.Info, LogLevel fileLogLevel = LogLevel.Info)
         {
-            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
+            Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "logs"));
             _FileStream = File.AppendText (Path.Combine("logs",logFile));
             _FileStream.AutoFlush = true;
             _botName = botName;
