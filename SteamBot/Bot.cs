@@ -14,6 +14,7 @@ using SteamTrade;
 using SteamKit2.Internal;
 using SteamTrade.TradeOffer;
 using System.Globalization;
+using Logger;
 
 namespace SteamBot
 {
