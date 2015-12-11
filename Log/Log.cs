@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 
-namespace SteamBot
+namespace Logger
 {
     public class Log : IDisposable
     {
