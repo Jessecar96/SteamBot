@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Remoting.Contexts;
 using System.Threading;
 using System.Threading.Tasks;
+using Logger;
 using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
@@ -16,6 +17,8 @@ namespace SteamTrade
     /// </summary>
     public partial class Trade
     {
+        private static readonly Logger.Log Log;
+
         #region Static Public data
 
         public static Schema CurrentSchema = null;
@@ -551,9 +554,8 @@ namespace SteamTrade
                 }
                 catch(Exception ex)
                 {
-                    // TODO: log to SteamBot.Log but... see issue #394
                     // realistically we should not throw anymore
-                    Console.WriteLine(ex);
+                    Log.Error(ex.ToString());
                 }
 
                 if(i != WEB_REQUEST_MAX_RETRIES)
@@ -753,7 +755,7 @@ namespace SteamTrade
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
                     if(schemaItem == null)
                     {
-                        Console.WriteLine("User added an unknown item to the trade.");
+                        Log.Warn("User added an unknown item to the trade.");
                     }
 
                     OnUserAddItem(schemaItem, item);
@@ -766,7 +768,7 @@ namespace SteamTrade
                         AppId = asset.appid,
                         ContextId = asset.contextid
                     };
-                    //Console.WriteLine("User added a non TF2 item to the trade.");
+                    //Log.Warn("User added a non TF2 item to the trade.");
                     OnUserAddItem(null, item);
                 }
             }
@@ -775,7 +777,7 @@ namespace SteamTrade
                 var schemaItem = GetItemFromPrivateBp(asset);
                 if(schemaItem == null)
                 {
-                    Console.WriteLine("User added an unknown item to the trade.");
+                    Log.Warn("User added an unknown item to the trade.");
                 }
 
                 OnUserAddItem(schemaItem, null);
@@ -821,20 +823,22 @@ namespace SteamTrade
                     Schema.Item schemaItem = CurrentSchema.GetItem(item.Defindex);
                     if(schemaItem == null)
                     {
-                        // TODO: Add log (counldn't find item in CurrentSchema)
+                        Log.Error("Couldn't find the item in CurrentSchema.");
                     }
 
                     OnUserRemoveItem(schemaItem, item);
                 }
                 else
                 {
-                    // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema
+                    // TODO: Log this (Couldn't find item in user's inventory can't find item in CurrentSchema)
+
                     item = new Inventory.Item
                     {
                         Id = asset.assetid,
                         AppId = asset.appid,
                         ContextId = asset.contextid
                     };
+
                     OnUserRemoveItem(null, item);
                 }
             }
@@ -843,7 +847,7 @@ namespace SteamTrade
                 var schemaItem = GetItemFromPrivateBp(asset);
                 if(schemaItem == null)
                 {
-                    // TODO: Add log (counldn't find item in CurrentSchema)
+                    Log.Error("Couldn't find the item in CurrentSchema.");
                 }
 
                 OnUserRemoveItem(schemaItem, null);

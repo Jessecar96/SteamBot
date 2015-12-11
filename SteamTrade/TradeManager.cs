@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
+using Logger;
 
 namespace SteamTrade
 {
@@ -14,6 +15,7 @@ namespace SteamTrade
         private const int TradePollingIntervalDefault = 800;
         private readonly string ApiKey;
         private readonly SteamWeb SteamWeb;
+        private static readonly Logger.Log Log;
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
@@ -361,11 +363,10 @@ namespace SteamTrade
         [Conditional ("DEBUG_TRADE_MANAGER")]
         private static void DebugPrint (string output)
         {
-            // I don't really want to add the Logger as a dependecy to TradeManager so I 
-            // print using the console directly. To enable this for debugging put this:
+            // To enable this for debugging put this:
             // #define DEBUG_TRADE_MANAGER
             // at the first line of this file.
-            System.Console.WriteLine (output);
+            Log.Info(output);
         }
     }
 }

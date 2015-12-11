@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
+using Logger;
 
 namespace SteamTrade
 {
@@ -15,6 +16,8 @@ namespace SteamTrade
     public class GenericInventory
     {
         private readonly SteamWeb SteamWeb;
+
+        public static readonly Log Log;
 
         public GenericInventory(SteamWeb steamWeb)
         {
@@ -90,18 +93,18 @@ namespace SteamTrade
 
             public void debug_app_data()
             {
-                Console.WriteLine("\n\"" + name + "\"");
+                Log.Info("\n\"" + name + "\"");
                 if (app_data == null)
                 {
-                    Console.WriteLine("Doesn't have app_data");
+                    Log.Info("Doesn't have app_data");
                     return;
                 }
 
                 foreach (var value in app_data)
                 {
-                    Console.WriteLine(string.Format("{0} = {1}", value.Key, value.Value));
+                    Log.Info(string.Format("{0} = {1}", value.Key, value.Value));
                 }
-                Console.WriteLine("");
+                Log.Info("");
             }
         }
 
@@ -204,7 +207,7 @@ namespace SteamTrade
             }//end try
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Log.Error(e.Message);
                 _errors.Add("Exception: " + e.Message);
             }
             isLoaded = true;
