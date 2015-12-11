@@ -257,7 +257,6 @@ namespace SteamTrade
         /// <summary>
         /// Helper method to verify our precious cookies.
         /// </summary>
-        /// <param name="cookies">CookieContainer with our cookies.</param>
         /// <returns>true if cookies are correct; false otherwise</returns>
         public bool VerifyCookies()
         {
