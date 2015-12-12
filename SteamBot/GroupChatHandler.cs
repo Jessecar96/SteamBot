@@ -201,8 +201,9 @@ namespace SteamBot
 			
 		public override void OnLoginCompleted()
 		{
-			//Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
-			InitTimer ();
+            //Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
+            Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
+            InitTimer ();
 		}
 		public override void OnBotCommand(string command)
 		{
@@ -365,30 +366,37 @@ namespace SteamBot
 				return null;
 			}
 
-			
 
-		/// <summary>
-		/// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
-		/// </summary>
-		/// <param name="chatID">ChatID of the chatroom</param>
-		/// <param name="sender">STEAMID of the sender</param>
-		/// <param name="message">The message sent</param>
-		public string Chatcommands (SteamID chatID, SteamID sender, string message)
-		{
-			base.OnChatRoomMessage (chatID, sender, message);
-			bool rank = admincheck(sender);
-			Log.Interface(Bot.SteamFriends.GetFriendPersonaName(sender) + ":" + "(" + rank + ")" + " " + message); 
-			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
-			//Retrieves the database of users, checks if they're an admin, and enables admin only commands between brackets
-			if (rank) { 
-			}
-		
-			if (message.StartsWith (vdcCommand , StringComparison.OrdinalIgnoreCase)) 
-			{
-				string par1 = message.Remove (0, 5);
-				return GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
-			}
-			if (message.StartsWith ("!USSERVER" , StringComparison.OrdinalIgnoreCase)) 
+
+        /// <summary>
+        /// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
+        /// </summary>
+        /// <param name="chatID">ChatID of the chatroom</param>
+        /// <param name="sender">STEAMID of the sender</param>
+        /// <param name="message">The message sent</param>
+        public string Chatcommands(SteamID chatID, SteamID sender, string message)
+        {
+            base.OnChatRoomMessage(chatID, sender, message);
+            bool rank = admincheck(sender);
+            Log.Interface(Bot.SteamFriends.GetFriendPersonaName(sender) + ":" + "(" + rank + ")" + " " + message);
+            Log.Info(Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message);
+            //Retrieves the database of users, checks if they're an admin, and enables admin only commands between brackets
+            if (rank) {
+            }
+
+            if (message.StartsWith(vdcCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string par1 = message.Remove(0, 5);
+                return GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
+            }
+            if (message.Contains( "Star Wars") | message.Contains("star wars") | message.Contains( "Star Wars") | message.Contains("Star wars") | message.Contains("SWFA") | message.Contains("SW:FA"))
+            {
+
+                return "There are people who do not want Star Wars spoiled, please be considerate and move any Star Wars film discussions to private chat until January 1st. Roger Roger.";
+
+
+            }
+            if (message.StartsWith ("!USSERVER" , StringComparison.OrdinalIgnoreCase)) 
 			{
 				System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("70.42.74.31");  
 
