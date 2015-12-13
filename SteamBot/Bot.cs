@@ -281,7 +281,11 @@ namespace SteamBot
                 }
                 else if (command == "unlinkauth")
                 {
-                    if (SteamGuardAccount.DeactivateAuthenticator())
+                    if (SteamGuardAccount == null)
+                    {
+                        Log.Error("Mobile authenticator is not active on this bot.");
+                    }
+                    else if (SteamGuardAccount.DeactivateAuthenticator())
                     {
                         Log.Success("Deactivated authenticator on this account.");
                     }
