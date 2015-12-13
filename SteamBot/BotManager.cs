@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using Config;
 using Logger;
 using Newtonsoft.Json;
 using SteamKit2;
