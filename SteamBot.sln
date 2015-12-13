@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamAuth", "SteamAuth\Stea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logger", "Log\Logger.csproj", "{A5CACF74-47D0-4F99-A1E3-5FAA27AEEFFC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Config", "Config\Config.csproj", "{B90A9271-BB8D-4663-82FA-B0335A34C71D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,10 @@ Global
 		{A5CACF74-47D0-4F99-A1E3-5FAA27AEEFFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5CACF74-47D0-4F99-A1E3-5FAA27AEEFFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5CACF74-47D0-4F99-A1E3-5FAA27AEEFFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B90A9271-BB8D-4663-82FA-B0335A34C71D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B90A9271-BB8D-4663-82FA-B0335A34C71D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B90A9271-BB8D-4663-82FA-B0335A34C71D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B90A9271-BB8D-4663-82FA-B0335A34C71D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
