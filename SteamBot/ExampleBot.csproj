@@ -38,9 +38,9 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.7\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="protobuf-net, Version=2.0.0.668, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -81,7 +81,6 @@
     <Compile Include="AdminUserHandler.cs" />
     <Compile Include="BotManager.cs" />
     <Compile Include="BotManagerInterpreter.cs" />
-    <Compile Include="Configuration.cs" />
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
@@ -91,6 +90,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <ProjectReference Include="..\Config\Config.csproj">
+      <Project>{b90a9271-bb8d-4663-82fa-b0335a34c71d}</Project>
+      <Name>Config</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Log\Logger.csproj">
       <Project>{A5CACF74-47D0-4F99-A1E3-5FAA27AEEFFC}</Project>
       <Name>Logger</Name>

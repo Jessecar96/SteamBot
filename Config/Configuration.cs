@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace SteamBot
+namespace Config
 {
     public class Configuration
     {
@@ -174,7 +174,7 @@ namespace SteamBot
             /// <c>true</c> to make the bot start on program load.
             /// </value>
             /// <remarks>
-            /// If <see cref="SteamBot.Configuration.AutoStartAllBots "/> is true,
+            /// If <see cref="Configuration.AutoStartAllBots "/> is true,
             /// then this property has no effect and is ignored.
             /// </remarks>
             [JsonProperty (Required = Required.Default, DefaultValueHandling = DefaultValueHandling.Populate)]
