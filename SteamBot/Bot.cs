@@ -1136,7 +1136,16 @@ namespace SteamBot
             var theirM = Regex.Match(resp, @"g_daysTheirEscrow(?:[\s=]+)(?<days>[\d]+);", RegexOptions.IgnoreCase);
             if (!myM.Groups["days"].Success || !theirM.Groups["days"].Success)
             {
-                throw new TradeOfferEscrowDurationParseException();
+                var steamErrorM = Regex.Match(resp, @"<div id=""error_msg"">([^>]+)<\/div>", RegexOptions.IgnoreCase);
+                if (steamErrorM.Groups.Count > 1)
+                {
+                    var steamError = Regex.Replace(steamErrorM.Groups[1].Value.Trim(), @"\t|\n|\r", ""); ;
+                    throw new TradeOfferEscrowDurationParseException(steamError);
+                }
+                else
+                {
+                    throw new TradeOfferEscrowDurationParseException(string.Empty);
+                }
             }
 
             return new TradeOfferEscrowDuration()
@@ -1151,7 +1160,11 @@ namespace SteamBot
             public int DaysMyEscrow { get; set; }
             public int DaysTheirEscrow { get; set; }
         }
-        public class TradeOfferEscrowDurationParseException : Exception { }
+        public class TradeOfferEscrowDurationParseException : Exception
+        {
+            public TradeOfferEscrowDurationParseException() : base() { }
+            public TradeOfferEscrowDurationParseException(string message) : base(message) { }
+        }
 
         #region Background Worker Methods
 
