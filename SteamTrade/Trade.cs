@@ -4,10 +4,12 @@ using System.Linq;
 using System.Runtime.Remoting.Contexts;
 using System.Threading;
 using System.Threading.Tasks;
+using Config;
 using Logger;
 using SteamKit2;
 using SteamTrade.Exceptions;
 using SteamTrade.TradeWebAPI;
+
 
 namespace SteamTrade
 {
@@ -17,7 +19,13 @@ namespace SteamTrade
     /// </summary>
     public partial class Trade
     {
-        private static readonly Logger.Log Log;
+        static readonly Configuration.BotInfo config = new Configuration.BotInfo();
+
+        static readonly Log.LogLevel consoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+
+        static readonly Log.LogLevel fileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
+
+        private static readonly Log Log = new Log(config.LogFile, config.DisplayName, consoleLogLevel, fileLogLevel);
 
         #region Static Public data
 

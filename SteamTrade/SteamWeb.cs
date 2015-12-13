@@ -11,6 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using Logger;
 using SteamKit2;
+using Config;
 
 namespace SteamTrade
 {
@@ -22,7 +23,15 @@ namespace SteamTrade
         public string TokenSecure { get; private set; }
 
         private CookieContainer _cookies = new CookieContainer();
-        private static readonly Logger.Log Log;
+
+        static readonly Configuration.BotInfo config = new Configuration.BotInfo();
+
+        static readonly Log.LogLevel consoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+
+        static readonly Log.LogLevel fileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
+
+        private static readonly Log Log = new Log(config.LogFile, config.DisplayName, consoleLogLevel, fileLogLevel);
+
 
         public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
         {
@@ -125,7 +134,7 @@ namespace SteamTrade
             string steamGuardId = "";
             do
             {
-                Log.Info("SteamWeb: Logging In...");
+                // Log.Info("SteamWeb: Logging In...");
 
                 bool captcha = loginJson != null && loginJson.captcha_needed == true;
                 bool steamGuard = loginJson != null && loginJson.emailauth_needed == true;
@@ -141,9 +150,9 @@ namespace SteamTrade
                 string capText = "";
                 if (captcha)
                 {
-                    Log.Warn("SteamWeb: Captcha is needed.");
+                    // Log.Warn("SteamWeb: Captcha is needed.");
                     System.Diagnostics.Process.Start("https://steamcommunity.com/public/captcha.php?gid=" + loginJson.captcha_gid);
-                    Log.Warn("SteamWeb: Type the captcha:");
+                    // Log.Warn("SteamWeb: Type the captcha:");
                     capText = Uri.EscapeDataString(Console.ReadLine());
                 }
 
@@ -154,8 +163,8 @@ namespace SteamTrade
                 // SteamGuard
                 if (steamGuard)
                 {
-                    Log.Warn("SteamWeb: SteamGuard is needed.");
-                    Log.Warn("SteamWeb: Type the code:");
+                    // Log.Warn("SteamWeb: SteamGuard is needed.");
+                    // Log.Warn("SteamWeb: Type the code:");
                     steamGuardText = Uri.EscapeDataString(Console.ReadLine());
                     steamGuardId = loginJson.emailsteamid;
                 }
@@ -190,7 +199,7 @@ namespace SteamTrade
             }
             else
             {
-                Log.Error("SteamWeb Error: " + loginJson.message);
+                // Log.Error("SteamWeb Error: " + loginJson.message);
                 return false;
             }
 

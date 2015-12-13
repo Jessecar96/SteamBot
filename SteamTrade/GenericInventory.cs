@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Config;
 using Newtonsoft.Json;
 using SteamKit2;
 using SteamTrade.TradeWebAPI;
@@ -17,7 +18,15 @@ namespace SteamTrade
     {
         private readonly SteamWeb SteamWeb;
 
-        public static readonly Log Log;
+
+        static readonly Configuration.BotInfo config = new Configuration.BotInfo();
+
+        static readonly Log.LogLevel consoleLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.LogLevel, true);
+
+        static readonly Log.LogLevel fileLogLevel = (Log.LogLevel)Enum.Parse(typeof(Log.LogLevel), config.FileLogLevel, true);
+
+        private static readonly Log Log = new Log(config.LogFile, config.DisplayName, consoleLogLevel, fileLogLevel);
+
 
         public GenericInventory(SteamWeb steamWeb)
         {
