@@ -1091,6 +1091,8 @@ namespace SteamBot
         /// </summary>
         /// <param name="steamId">Steam ID of user you want to send a trade offer to</param>
         /// <param name="token">User's trade token. Can be an empty string if user is on bot's friends list.</param>
+        /// <exception cref="NullReferenceException">Thrown when Steam returns an empty response.</exception>
+        /// <exception cref="TradeOfferEscrowDurationParseException">Thrown when the user is unavailable for trade or Steam returns invalid data.</exception>
         /// <returns>TradeOfferEscrowDuration</returns>
         public TradeOfferEscrowDuration GetEscrowDuration(SteamID steamId, string token)
         {
@@ -1116,6 +1118,8 @@ namespace SteamBot
         /// Get duration of escrow in days. Call this after receiving a trade offer.
         /// </summary>
         /// <param name="tradeOfferId">The ID of the trade offer</param>
+        /// <exception cref="NullReferenceException">Thrown when Steam returns an empty response.</exception>
+        /// <exception cref="TradeOfferEscrowDurationParseException">Thrown when the user is unavailable for trade or Steam returns invalid data.</exception>
         /// <returns>TradeOfferEscrowDuration</returns>
         public TradeOfferEscrowDuration GetEscrowDuration(string tradeOfferId)
         {
