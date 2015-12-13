@@ -392,7 +392,8 @@ namespace SteamBot
             if (message.Contains( "Star Wars") | message.Contains("star wars") | message.Contains( "Star Wars") | message.Contains("star Wars") | message.Contains("SWFA") | message.Contains("SW:FA"))
             {
 
-                return "There are people who do not want Star Wars spoiled, please be considerate and move any Star Wars film discussions to private chat until January 1st. Roger Roger.";
+                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, "There are people who do not want Star Wars spoiled, please be considerate and move any Star Wars film discussions to private chat until January 1st. Roger Roger.");
+                return null;
 
 
             }
