@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade.Exceptions;
-using Logger;
 
 namespace SteamTrade
 {
@@ -15,7 +14,6 @@ namespace SteamTrade
         private const int TradePollingIntervalDefault = 800;
         private readonly string ApiKey;
         private readonly SteamWeb SteamWeb;
-        private static readonly Logger.Log Log;
         private DateTime tradeStartTime;
         private DateTime lastOtherActionTime;
         private DateTime lastTimeoutMessage;
@@ -366,7 +364,7 @@ namespace SteamTrade
             // To enable this for debugging put this:
             // #define DEBUG_TRADE_MANAGER
             // at the first line of this file.
-            Log.Info(output);
+            Debug.Write(output);
         }
     }
 }
