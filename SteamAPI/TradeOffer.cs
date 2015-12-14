@@ -307,18 +307,18 @@ namespace SteamAPI
         /// </summary>
         /// <param name="tradeOfferId">The trade offer ID</param>
         /// <returns>True if successful, false if not</returns>
-        public bool DeclineTrade(ulong tradeOfferId)
+        public bool DeclineTrade(TradeOffer tradeOffer)
         {
-            return DeclineTrade(GetTradeOffer(tradeOfferId).Offer);
+            return DeclineTrade(tradeOffer.Id);
         }
         /// <summary>
         /// Declines a pending trade offer
         /// </summary>
         /// <param name="tradeOffer">The trade offer object</param>
         /// <returns>True if successful, false if not</returns>
-        public bool DeclineTrade(TradeOffer tradeOffer)
+        public bool DeclineTrade(ulong tradeOfferId)
         {
-            var url = "https://steamcommunity.com/tradeoffer/" + tradeOffer.Id + "/decline";
+            var url = "https://steamcommunity.com/tradeoffer/" + tradeOfferId + "/decline";
             var referer = "http://steamcommunity.com/";
             var data = new NameValueCollection();
             data.Add("sessionid", SteamWeb.SessionId);
