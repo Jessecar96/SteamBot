@@ -24,12 +24,15 @@ namespace SteamBot
 	
 	public class GroupChatHandler : UserHandler
 	{
+
 		//JSON files store data, check if this works later. 
 		double interval = 5000;
 		//TODO ADD CHECK IF THE FILE EXISTS OR NOT
 		public static string SettingsFile = "GroupChatHandler_Settings.json";
-		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@SettingsFile));
-		public string vdcCommand = groupchatsettings["vdcCommand"];
+		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
+        public static string UserDatabaseFile = "users.json"; 
+        public static Dictionary<string, EClanPermission> UserDatabase = UserDatabaseRetrieve(UserDatabaseFile);
+        public string vdcCommand = groupchatsettings["vdcCommand"];
 		public string tf2wCommand = groupchatsettings["tf2wCommand"];
 		public string impCommand = groupchatsettings["impCommand"];
 		public string mapListCommand = groupchatsettings["mapListCommand"];
@@ -45,8 +48,8 @@ namespace SteamBot
 		public string OnlineSync = groupchatsettings["OnlineSync"];
 		public string SpreadSheetURI =  groupchatsettings["SpreadSheetURI"]; //TODO CHANGE TO ID so you can just put in 1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o
 		public string IntegrationName =  groupchatsettings["IntegrationName"];
-		public string MapStoragePath =  groupchatsettings["MapStoragePath"];
-		public string UserDatabase =  "users.json"; //Callback needs t be changed before making: groupchatsettings["UserDatabase"];
+		public static string MapStoragePath =  groupchatsettings["MapStoragePath"];
+		
 		public static string GroupchatID =  groupchatsettings["GroupchatID"];
 		public string UploadCheckCommand= "!uploadcheck";
 		public string ServerListUrl = "http://redirect.tf2maps.net/maps";
@@ -56,25 +59,32 @@ namespace SteamBot
 		public static string DebugPreviousMap1 = " ";
 		public static bool SpreadsheetSync = true;
 		public static bool SyncRunning = false;
-		public static Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = new  Dictionary<string,Tuple<string,SteamID,string,bool> >();
+		public static Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = Maplistfile (MapStoragePath);
+        
+        public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplistfile( string MapStoragePath)
+        {
+            if (File.Exists(MapStoragePath))
 
-		//public SteamID OtherSID { get; private set; } //check
+        {
+                return JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID, string, bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
+            } else {
+                Dictionary<string, Tuple<string, SteamID, string, bool>>  EmptyMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+                System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(EmptyMaplist));
+                return EmptyMaplist;
+            }
+        }
 
-		public void Main() //TODO have this load with the bot
-		{
-			Log.Interface ("Error checking running");
-		if (File.Exists(MapStoragePath))
-		{
-			Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>> (System.IO.File.ReadAllText (@MapStoragePath));
-		} else {
-			//Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = new  Dictionary<string,Tuple<string,SteamID,string,bool> >();
-			System.IO.File.WriteAllText (@MapStoragePath, JsonConvert.SerializeObject (Maplist));
-		}
-		if (!File.Exists (SettingsFile))
-			{
-			Console.WriteLine("No Settings file has been found. Please add one");
-			}
-		}
+
+		public static Dictionary<string, EClanPermission> UserDatabaseRetrieve(string UserDatabase) { //TODO have this load with the bot
+        
+        if (!File.Exists(UserDatabase))
+        {
+            System.IO.File.WriteAllText(@UserDatabase, JsonConvert.SerializeObject(new Dictionary<string, EClanPermission>()));
+                Dictionary<string, EClanPermission> UserDatabaseData = new Dictionary<string, EClanPermission>();
+                return UserDatabaseData;
+        }
+			return JsonConvert.DeserializeObject<Dictionary<string, EClanPermission>>(System.IO.File.ReadAllText(@UserDatabase));
+        }
 		SteamID Groupchat = ulong.Parse (GroupchatID);
 
 		private Timer Tick;
@@ -205,7 +215,7 @@ namespace SteamBot
 			
 		public override void OnLoginCompleted()
 		{
-            //Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
+           
             Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
             InitTimer ();
 		}
@@ -249,12 +259,12 @@ namespace SteamBot
 						+ "request token.  Once that is complete, type in your access code to "
 						+ "continue...");
 					parameters.AccessCode = Console.ReadLine ();
-				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@SettingsFile));
+				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
 				OAuthUtil.GetAccessToken (parameters);
 				string refreshToken = parameters.RefreshToken;
 				entrydata.Remove ("GoogleAPI");
 				entrydata.Add ("GoogleAPI", refreshToken);
-				System.IO.File.WriteAllText (@SettingsFile, JsonConvert.SerializeObject (entrydata));
+				System.IO.File.WriteAllText (@"GroupChatHandler_Settings.json", JsonConvert.SerializeObject (entrydata));
 				GoogleAPI = refreshToken;
 				Log.Interface ("SYNC COMMANDS WILL NOT WORK UNTIL BOT RESTART, PLEASE RESTART");
 				} 
@@ -320,20 +330,20 @@ namespace SteamBot
 				return "Wiped all Maps";
 			}
 			if (message.StartsWith ("!EnableSync", StringComparison.OrdinalIgnoreCase)) {
-				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (@SettingsFile));
+				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (@"GroupChatHandler_Settings.json"));
 				//if it already exists, it deletes it so it can update the data
 				entrydata.Remove ("OnlineSync");
 				entrydata.Add ("OnlineSync", "true");
-				System.IO.File.WriteAllText (@SettingsFile, JsonConvert.SerializeObject (entrydata));
+				System.IO.File.WriteAllText (@"GroupChatHandler_Settings.json", JsonConvert.SerializeObject (entrydata));
 				OnlineSync = "true";
 				return "Enabled Sync";
 			}
 			if (message.StartsWith ("!DisableSync", StringComparison.OrdinalIgnoreCase)) {
-				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (@SettingsFile));
+				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>> (System.IO.File.ReadAllText (@"GroupChatHandler_Settings.json"));
 				//if it already exists, it deletes it so it can update the data
 				entrydata.Remove ("OnlineSync");
 				entrydata.Add ("OnlineSync", "false");
-				System.IO.File.WriteAllText (@SettingsFile, JsonConvert.SerializeObject (entrydata));
+				System.IO.File.WriteAllText (@"GroupChatHandler_Settings.json", JsonConvert.SerializeObject (entrydata));
 				OnlineSync = "false";
 				return "Disabled Sync";
 			}
@@ -556,7 +566,8 @@ namespace SteamBot
 				}
 			}
 			System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(NewMaplist));
-			Tuple<string,SteamID> RemoveInformation = new Tuple<string,SteamID> (removed, userremoved); 
+			Tuple<string,SteamID> RemoveInformation = new Tuple<string,SteamID> (removed, userremoved);
+            Maplist = NewMaplist;
 			return RemoveInformation ;
 			{
 			}
@@ -583,11 +594,9 @@ namespace SteamBot
 		///<summary> Checks if the given STEAMID is an admin in the database</summary>
 		public bool admincheck(SteamID sender)
 		{
-			//string filedata = System.IO.File.ReadAllText(@"users.json");
-			Dictionary<string,EClanPermission> Dictionary = JsonConvert.DeserializeObject<Dictionary<string,EClanPermission>>(System.IO.File.ReadAllText(@UserDatabase));
-			if (Dictionary.ContainsKey (sender.ToString ())) { //If the STEAMID is in the dictionary
+			if (UserDatabase.ContainsKey (sender.ToString ())) { //If the STEAMID is in the dictionary
 				string Key = sender.ToString (); 
-				EClanPermission UserPermissions = Dictionary [Key]; //It will get the permissions value
+				EClanPermission UserPermissions = UserDatabase [Key]; //It will get the permissions value
 				if((UserPermissions & EClanPermission.OwnerOfficerModerator) > 0) //Checks if it has sufficient privilages
 				{
 					return true; //If there's sufficient privilages, it'll return true
@@ -651,8 +660,8 @@ namespace SteamBot
 		//TODO Clean portions that need cleaning
 		public void SheetSync (bool ForceSync)
 		{
-			Dictionary<string,Tuple<string,SteamID,string,bool> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID,string,bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
-			Bot.SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
+			
+			Bot.SteamFriends.SetPersonaName ("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
 			Log.Interface (OnlineSync + " " + SyncRunning.ToString());
 			if ((OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) || ForceSync) {
 				SyncRunning = true;
@@ -687,8 +696,8 @@ namespace SteamBot
 				//Sets the size of the dictionary to the size of the JSON file, and updates
 				worksheet.Cols = 5;
 
-				if (entrydata.Count + 2 > worksheet.RowCount.IntegerValue) {
-					worksheet.Rows = Convert.ToUInt32 (entrydata.Count + 2);
+                if (Maplist.Count + 2 > worksheet.RowCount.IntegerValue) {
+					worksheet.Rows = Convert.ToUInt32 (Maplist.Count + 2);
 				}
 
 				//worksheet.Update ();
@@ -717,7 +726,7 @@ namespace SteamBot
 				int Entries = 1;
 				Log.Interface ("Test Locaton 2");
 			
-				foreach (var item in entrydata) {
+				foreach (var item in Maplist) {
 					Entries = Entries + 1; 
 					foreach (CellEntry cell in cellFeed.Entries) {
 						if (cell.Title.Text == "A" + Entries.ToString ()) {
@@ -746,10 +755,11 @@ namespace SteamBot
 				
 				}
 				Log.Interface ("Test Locaton 3");
-				worksheet.Rows = Convert.ToUInt32 (entrydata.Count + 2);
+				worksheet.Rows = Convert.ToUInt32 (Maplist.Count + 2);
 				worksheet.Update ();
 				Log.Interface ("Test Locaton 4");
-				CellFeed batchRequest = new CellFeed(SpreadSheetURI, service);
+                Uri SheetURI = new Uri(SpreadSheetURI);
+				CellFeed batchRequest = new CellFeed(SheetURI, service);
 				CellFeed batchResponse = (CellFeed)service.Batch(batchRequest, new Uri (cellFeed.Batch));
 				Log.Interface ("Test Locaton 5");
 				SyncRunning = false;
