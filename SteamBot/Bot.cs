@@ -601,21 +601,21 @@ namespace SteamBot
                             var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
                             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
                             File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
+                            Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
+                            var smsCode = WaitForInput();
+                            var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
+                            if (authResult == AuthenticatorLinker.FinalizeResult.Success)
+                            {
+                                Log.Success("Linked authenticator.");
+                            }
+                            else
+                            {
+                                Log.Error("Error linking authenticator: " + authResult);
+                            }
                         }
-                        catch
+                        catch (IOException)
                         {
-
-                        }
-                        Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
-                        var smsCode = WaitForInput();
-                        var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
-                        if (authResult == AuthenticatorLinker.FinalizeResult.Success)
-                        {
-                            Log.Success("Linked authenticator.");
-                        }
-                        else
-                        {
-                            Log.Error("Error linking authenticator: " + authResult);
+                            Log.Error("Failed to save auth file. Aborting authentication.");
                         }
                     }
                     else
