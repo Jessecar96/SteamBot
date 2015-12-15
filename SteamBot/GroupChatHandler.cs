@@ -323,7 +323,7 @@ namespace SteamBot
 			
 			string adminresponse = null;
 			if (admincheck(sender)){
-				adminresponse = admincommands (sender, message.ToLower());
+				adminresponse = admincommands (sender, message);
 			}
 			string response = Chatcommands(chatID, sender, message.ToLower());
 			if (response != null) {
@@ -350,6 +350,11 @@ namespace SteamBot
 
             if (message.StartsWith("!SetMOTD", StringComparison.OrdinalIgnoreCase))
             {
+                string Response;
+                if (MOTD != null)
+                {
+                    return "There is currently a MOTD, please remove it first";
+                }
                 string send = message.Remove(0, 9);
                 if (send != null)
                 {
@@ -359,7 +364,11 @@ namespace SteamBot
                 }
                 return "Make sure to include a MOTD to display!";
             }
-
+            if (message.StartsWith("!RemoveMOTD", StringComparison.OrdinalIgnoreCase))
+            {
+                MOTD = null;
+                return "Removed MOTD";
+            }
             if (message.StartsWith (clearcommand, StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @MapStoragePath;
@@ -694,6 +703,7 @@ namespace SteamBot
 		/// </summary>
 		/// 
 		//TODO Clean portions that need cleaning
+       
 		public void SheetSync (bool ForceSync)
 		{
 			
@@ -722,11 +732,7 @@ namespace SteamBot
                 WorksheetEntry worksheet = (WorksheetEntry)wsFeed.Entries[0];
              
                 worksheet.Cols = 5;
-
-                if (Maplist.Count + 2 > worksheet.RowCount.IntegerValue)
-                {
-                    worksheet.Rows = Convert.ToUInt32(Maplist.Count + 2);
-                }
+                worksheet.Rows = Convert.ToUInt32(Maplist.Count + 1);
 
                 worksheet.Update();
 
@@ -735,12 +741,6 @@ namespace SteamBot
                 CellFeed cellFeed = service.Query(cellQuery);
                 CellFeed batchRequest = new CellFeed(cellQuery.Uri, service);
 
-
-                foreach (CellEntry cell in cellFeed.Entries)
-                {
-                    cell.InputValue = " ";
-                    
-                }
                 int Entries = 1;
 
                 foreach (var item in Maplist)
