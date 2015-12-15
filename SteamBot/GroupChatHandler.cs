@@ -27,8 +27,13 @@ namespace SteamBot
 
 		//JSON files store data, check if this works later. 
 		double interval = 5000;
-		//TODO ADD CHECK IF THE FILE EXISTS OR NOT
-		public static string SettingsFile = "GroupChatHandler_Settings.json";
+        private Timer Tick;
+        private Timer MOTDTick;
+        private int MOTDPosted = 0;
+        double MOTDHourInterval = 1;
+        public static string MOTD = null;
+        //TODO ADD CHECK IF THE FILE EXISTS OR NOT
+        public static string SettingsFile = "GroupChatHandler_Settings.json";
 		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
         public static string UserDatabaseFile = "users.json"; 
         public static Dictionary<string, EClanPermission> UserDatabase = UserDatabaseRetrieve(UserDatabaseFile);
@@ -87,7 +92,7 @@ namespace SteamBot
         }
 		SteamID Groupchat = ulong.Parse (GroupchatID);
 
-		private Timer Tick;
+	
 
 
 		//initialises the timer for the TickTasks() method to execute on
@@ -98,10 +103,33 @@ namespace SteamBot
 			Tick.Interval = interval; // in miliseconds
 			Tick.Start();
 		}
-			
-		//When the timer is 'ticked'
-		//TODO make this a foreach method
-		public void TickTasks(object sender, EventArgs e)
+        //initialises MOTD timer
+        public void InitMOTDTimer()
+        {
+            MOTDTick = new Timer();
+            MOTDTick.Elapsed += new ElapsedEventHandler(MOTDPost);
+            MOTDTick.Interval = MOTDHourInterval * 1000 * 60 * 60; // in miliseconds
+            MOTDTick.Start();
+            
+        }
+        public void MOTDPost(object sender, EventArgs e)
+        {
+            if ( (MOTD == null)  | (MOTDPosted == 24)  )
+            {
+                MOTDTick.Stop();
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Please Set a new MOTD");
+
+            }
+            else
+            {
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, MOTD); //Posts to the chat the MOTD
+            }
+       
+        }
+
+        //When the timer is 'ticked'
+        //TODO make this a foreach method
+        public void TickTasks(object sender, EventArgs e)
 		{
 			if (SpreadsheetSync) 
 			{
@@ -215,8 +243,7 @@ namespace SteamBot
 			
 		public override void OnLoginCompleted()
 		{
-           
-            Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
+           // Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
             InitTimer ();
 		}
 		public override void OnBotCommand(string command)
@@ -321,7 +348,19 @@ namespace SteamBot
 				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
 			}
 
-			if (message.StartsWith (clearcommand, StringComparison.OrdinalIgnoreCase)) 
+            if (message.StartsWith("!SetMOTD", StringComparison.OrdinalIgnoreCase))
+            {
+                string send = message.Remove(0, 9);
+                if (send != null)
+                {
+                    MOTD = send;
+                    InitMOTDTimer();
+                    return "MOTD Set to: " + send;
+                }
+                return "Make sure to include a MOTD to display!";
+            }
+
+            if (message.StartsWith (clearcommand, StringComparison.OrdinalIgnoreCase)) 
 			{
 				string path = @MapStoragePath;
 				File.Delete(path);
@@ -397,17 +436,14 @@ namespace SteamBot
             //Retrieves the database of users, checks if they're an admin, and enables admin only commands between brackets
             if (rank) {
             }
-
-            if (message.StartsWith(vdcCommand, StringComparison.OrdinalIgnoreCase))
+            if (message.StartsWith("!Motd", StringComparison.OrdinalIgnoreCase))
+            {
+                return MOTD;
+            }
+                if (message.StartsWith(vdcCommand, StringComparison.OrdinalIgnoreCase))
             {
                 string par1 = message.Remove(0, 5);
                 return GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
-            }
-            if (message.Contains( "Star Wars") | message.Contains("star wars") | message.Contains( "Star Wars") | message.Contains("star Wars") | message.Contains("SWFA") | message.Contains("SW:FA"))
-            {
-
-                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, "There are people who do not want Star Wars spoiled, please be considerate and move any Star Wars film discussions to private chat until January 1st. Roger Roger.");
-                return null;
             }
             if (message.StartsWith ("!USSERVER" , StringComparison.OrdinalIgnoreCase)) 
 			{
@@ -671,98 +707,77 @@ namespace SteamBot
 				parameters.ClientSecret = CLIENT_SECRET;
 				parameters.RedirectUri = REDIRECT_URI;
 				parameters.Scope = SCOPE;
-				//parameters.AccessToken = GoogleAPI;
 				parameters.AccessType = "offline";
 				parameters.RefreshToken = GoogleAPI;
 				OAuthUtil.RefreshAccessToken (parameters);
 				string accessToken = parameters.AccessToken;
 
-				//GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory (null, IntegrationName, parameters);
-				SpreadsheetsService service = new SpreadsheetsService (IntegrationName);
-				Log.Interface ("Log 0");
-				CellQuery cellQuery = new CellQuery (SpreadSheetURI ,"od6", "private","full" );
-				CellFeed cellFeed = service.Query (cellQuery);
-				//service.RequestFactory = requestFactory;
+                GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory(null, IntegrationName, parameters);
+                SpreadsheetsService service = new SpreadsheetsService (IntegrationName);
+                service.RequestFactory = requestFactory;
+                SpreadsheetQuery query = new SpreadsheetQuery(SpreadSheetURI);
+                SpreadsheetFeed feed = service.Query(query);
+                SpreadsheetEntry spreadsheet = (SpreadsheetEntry)feed.Entries[0];
+                WorksheetFeed wsFeed = spreadsheet.Worksheets;
+                WorksheetEntry worksheet = (WorksheetEntry)wsFeed.Entries[0];
+             
+                worksheet.Cols = 5;
 
-				Log.Interface ("Log 0");
+                if (Maplist.Count + 2 > worksheet.RowCount.IntegerValue)
+                {
+                    worksheet.Rows = Convert.ToUInt32(Maplist.Count + 2);
+                }
 
-				//TODO Put this in the settings file, and have his also be the result from !sheet
-				SpreadsheetQuery query = new SpreadsheetQuery (SpreadSheetURI);
-				SpreadsheetFeed feed = service.Query (query);
-				SpreadsheetEntry spreadsheet = (SpreadsheetEntry)feed.Entries [0];
-				WorksheetFeed wsFeed = spreadsheet.Worksheets;
-				WorksheetEntry worksheet = (WorksheetEntry)wsFeed.Entries [0];
-	
-				//Sets the size of the dictionary to the size of the JSON file, and updates
-				worksheet.Cols = 5;
+                worksheet.Update();
 
-                if (Maplist.Count + 2 > worksheet.RowCount.IntegerValue) {
-					worksheet.Rows = Convert.ToUInt32 (Maplist.Count + 2);
-				}
-
-				//worksheet.Update ();
+                CellQuery cellQuery = new CellQuery(worksheet.CellFeedLink);
+                cellQuery.ReturnEmpty = ReturnEmptyCells.yes;
+                CellFeed cellFeed = service.Query(cellQuery);
+                CellFeed batchRequest = new CellFeed(cellQuery.Uri, service);
 
 
+                foreach (CellEntry cell in cellFeed.Entries)
+                {
+                    cell.InputValue = " ";
+                    
+                }
+                int Entries = 1;
 
-				//CellQuery cellQuery = new CellQuery (SpreadSheetURI,"od6", "private","full" );
-				Log.Interface("log0.1");
+                foreach (var item in Maplist)
+                {
+                    Entries = Entries + 1;
+                    foreach (CellEntry cell in cellFeed.Entries)
+                    {
+                        if (cell.Title.Text == "A" + Entries.ToString())
+                        {
+                            cell.InputValue = item.Key;
+                        }
+                        if (cell.Title.Text == "B" + Entries.ToString())
+                        {
+                            cell.InputValue = item.Value.Item1;
+                            
+                        }
+                        if (cell.Title.Text == "C" + Entries.ToString())
+                        {
+                            cell.InputValue = item.Value.Item2.ToString();
+                            
+                        }
+                        if (cell.Title.Text == "D" + Entries.ToString())
+                        {
+                            cell.InputValue = item.Value.Item3.ToString();
+                            
+                        }
+                        if (cell.Title.Text == "E" + Entries.ToString())
+                        {
+                            cell.InputValue = item.Value.Item4.ToString();
+                        }   
+                    }
+                }
 
-				//cellQuery.ReturnEmpty = ReturnEmptyCells.yes;
-
-
-				//TODO Updates the Bot Prefix to the map list
-				//SteamFriends.SetPersonaName ("[" + entrydata.Count.ToString() + "] " + Bot.DisplayName);
-
-				Log.Interface ("Test Locaton 1");
-
-
-				//Makes the current Cells empty, to be replaced by the existing Maps list
-				foreach (CellEntry cell in cellFeed.Entries) {
-					cell.InputValue = " ";
-					//cell.Update ();
-				}
-				// Iterate through each cell, updating its value if necessary. TODO Optimise this function to use batch upload, or just generally faster.
-
-				int Entries = 1;
-				Log.Interface ("Test Locaton 2");
-			
-				foreach (var item in Maplist) {
-					Entries = Entries + 1; 
-					foreach (CellEntry cell in cellFeed.Entries) {
-						if (cell.Title.Text == "A" + Entries.ToString ()) {
-							cell.InputValue = item.Key;
-							//cell.Update ();
-						}
-						if (cell.Title.Text == "B" + Entries.ToString ()) {
-							cell.InputValue = item.Value.Item1;
-							//cell.Update ();
-						}
-						if (cell.Title.Text == "C" + Entries.ToString ()) {
-							cell.InputValue = item.Value.Item2.ToString ();
-							//cell.Update ();
-						}
-						if (cell.Title.Text == "D" + Entries.ToString ()) {
-							cell.InputValue = item.Value.Item3.ToString ();
-							//cell.Update ();
-						}
-						if (cell.Title.Text == "E" + Entries.ToString ()) {
-							cell.InputValue = item.Value.Item4.ToString ();
-							//cell.Update ();
-						}
-					
-					
-					}
-				
-				}
-				Log.Interface ("Test Locaton 3");
-				worksheet.Rows = Convert.ToUInt32 (Maplist.Count + 2);
-				worksheet.Update ();
-				Log.Interface ("Test Locaton 4");
-                Uri SheetURI = new Uri(SpreadSheetURI);
-				CellFeed batchRequest = new CellFeed(SheetURI, service);
-				CellFeed batchResponse = (CellFeed)service.Batch(batchRequest, new Uri (cellFeed.Batch));
-				Log.Interface ("Test Locaton 5");
+                cellFeed.Publish();
+                CellFeed batchResponse = (CellFeed)service.Batch(batchRequest, new Uri(cellFeed.Batch));
 				SyncRunning = false;
+
 			} else if (OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase)){
 				SpreadsheetSync = true;
 			}
