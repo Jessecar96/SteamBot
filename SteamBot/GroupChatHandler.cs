@@ -34,7 +34,7 @@ namespace SteamBot
         private int MOTDPosted = 0;
         double MOTDHourInterval = 1;
         public static string MOTD = null;
-		public static string[] Feeds = {"http://tf2maps.net/forums/server-events.35/index.rss","http://tf2maps.net/forums/contests.25/index.rss","http://tf2maps.net/forums/team-fortress-2-news.21/index.rss" , "http://tf2maps.net/forums/featured-news.43/index.rss" };
+		public static string[] Feeds = {"http://www.teamfortress.com/rss.xml"};
 
 		public static string [] StoredFeeditems = new string[Feeds.Length];
 
@@ -110,6 +110,15 @@ namespace SteamBot
 			Tick.Start();
 		}
 
+		//initialises the timer for the TickTasks() method to execute on
+		public void RSSTimer()
+		{
+			RSSTick = new Timer();
+			RSSTick.Elapsed += new ElapsedEventHandler(RSSTracker);
+			RSSTick.Interval = 10000; // in miliseconds
+			RSSTick.Start();
+		}
+
         //initialises MOTD timer
         public void InitMOTDTimer()
         {
@@ -129,7 +138,9 @@ namespace SteamBot
             }
             else
             {
+				Bot.SteamFriends.SetPersonaName ("MOTD:");
                 Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, MOTD); //Posts to the chat the MOTD
+				Bot.SteamFriends.SetPersonaName ("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
             }
        
         }
@@ -249,6 +260,7 @@ namespace SteamBot
 		{
            // Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
             InitTimer();
+			RSSTimer ();
 
 		}
 		public override void OnBotCommand(string command)
@@ -410,7 +422,7 @@ namespace SteamBot
 				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			}
 			if (message.StartsWith ("!Debug_02", StringComparison.OrdinalIgnoreCase)) {
-				RSSTracker();
+				RSSTimer ();
 			}
 
 			if (message.StartsWith ("!Debug_01", StringComparison.OrdinalIgnoreCase)) {
@@ -709,32 +721,28 @@ namespace SteamBot
 		/// <summary>
 		/// Checks for RSS feed updates, and posts on action
 		/// </summary>
-		public void RSSTracker ()
+		public void RSSTracker (object sender, EventArgs e)
 		{
-			
+			RSSTick.Close ();
 			int count = 0;
 			var reader = new FeedReader();
 			foreach (string item in Feeds) 
 			{
-				Log.Interface (item);
-
 				var FeedItems = reader.RetrieveFeed(item);
-				Log.Interface (FeedItems.FirstOrDefault().Title.ToString ());
 
-				if ( StoredFeeditems.Length < Feeds.Length | FeedItems.FirstOrDefault ().Title.ToString () != StoredFeeditems [count]) {
+
+				Log.Interface (FeedItems.FirstOrDefault ().Title.ToString());
+				//Log.Interface (FeedItems.FirstOrDefault ());
+				//bool Content = FeedItems.FirstOrDefault ().Content.Contains ("<slash:comments>0</slash:comments>");
+				if ( StoredFeeditems[count] == null | FeedItems.FirstOrDefault ().Title.ToString () != StoredFeeditems[count]) {
 					StoredFeeditems[count] = FeedItems.FirstOrDefault().Title.ToString();
-
-					if (!FeedItems.FirstOrDefault().Content.Contains ("<slash:comments>0</slash:comments>") && item.Contains ("http://tf2maps.net/")) { //TODO Clean this to logically output at true opposed to false
-					} else {
-						Log.Interface ("Ran");
-						//Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, FeedItems.FirstOrDefault ().Title.ToString () + " " + FeedItems.FirstOrDefault ().Uri.ToString ());
-					}
+					Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, FeedItems.FirstOrDefault ().Title.ToString () + " " + FeedItems.FirstOrDefault ().Uri.ToString ());
 					}
 			    count = count + 1; 
 
 			}
-			System.Threading.Thread.Sleep (3000);
-			RSSTracker ();
+			RSSTimer ();
+
 		}
 
 
