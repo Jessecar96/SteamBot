@@ -17,6 +17,7 @@ using SteamKit2.Internal;
 using Newtonsoft.Json;
 using Google.GData.Client;
 using Google.GData.Spreadsheets;
+using SimpleFeedReader;
 
 
 namespace SteamBot
@@ -29,9 +30,15 @@ namespace SteamBot
 		double interval = 5000;
         private Timer Tick;
         private Timer MOTDTick;
+		private Timer RSSTick;
         private int MOTDPosted = 0;
         double MOTDHourInterval = 1;
         public static string MOTD = null;
+		public static string[] Feeds = {"http://tf2maps.net/forums/server-events.35/index.rss","http://tf2maps.net/forums/contests.25/index.rss","http://tf2maps.net/forums/team-fortress-2-news.21/index.rss" , "http://tf2maps.net/forums/featured-news.43/index.rss" };
+
+		public static string [] StoredFeeditems = new string[Feeds.Length];
+
+
         //TODO ADD CHECK IF THE FILE EXISTS OR NOT
         public static string SettingsFile = "GroupChatHandler_Settings.json";
 		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
@@ -54,7 +61,6 @@ namespace SteamBot
 		public string SpreadSheetURI =  groupchatsettings["SpreadSheetURI"]; //TODO CHANGE TO ID so you can just put in 1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o
 		public string IntegrationName =  groupchatsettings["IntegrationName"];
 		public static string MapStoragePath =  groupchatsettings["MapStoragePath"];
-		
 		public static string GroupchatID =  groupchatsettings["GroupchatID"];
 		public string UploadCheckCommand= "!uploadcheck";
 		public string ServerListUrl = "http://redirect.tf2maps.net/maps";
@@ -103,6 +109,7 @@ namespace SteamBot
 			Tick.Interval = interval; // in miliseconds
 			Tick.Start();
 		}
+
         //initialises MOTD timer
         public void InitMOTDTimer()
         {
@@ -131,6 +138,7 @@ namespace SteamBot
         //TODO make this a foreach method
         public void TickTasks(object sender, EventArgs e)
 		{
+
 			if (SpreadsheetSync) 
 			{
 				SpreadsheetSync = false;
@@ -194,10 +202,6 @@ namespace SteamBot
 			return ServerInformation;
 		}
 		///<summary>Prints the Input to the interface</summary>
-		public void LogRSS(string par1)
-		{
-			Log.Interface (par1);
-		}
 
 		public GroupChatHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
@@ -244,7 +248,8 @@ namespace SteamBot
 		public override void OnLoginCompleted()
 		{
            // Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
-            InitTimer ();
+            InitTimer();
+
 		}
 		public override void OnBotCommand(string command)
 		{
@@ -252,6 +257,10 @@ namespace SteamBot
 			{
 				string send = command.Remove (0, 3);
 				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
+			}
+			if (command.StartsWith ("Join", StringComparison.OrdinalIgnoreCase)) {
+				Bot.SteamFriends.LeaveChat (new SteamID (Groupchat));
+				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			}
 			if (command.StartsWith ("demo" , StringComparison.OrdinalIgnoreCase)) 
 			{
@@ -401,8 +410,7 @@ namespace SteamBot
 				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			}
 			if (message.StartsWith ("!Debug_02", StringComparison.OrdinalIgnoreCase)) {
-				Log.Interface (PreviousMap1);
-				Log.Interface (PreviousMap1.ToString ());
+				RSSTracker();
 			}
 
 			if (message.StartsWith ("!Debug_01", StringComparison.OrdinalIgnoreCase)) {
@@ -699,11 +707,44 @@ namespace SteamBot
 			}
 		}
 		/// <summary>
+		/// Checks for RSS feed updates, and posts on action
+		/// </summary>
+		public void RSSTracker ()
+		{
+			
+			int count = 0;
+			var reader = new FeedReader();
+			foreach (string item in Feeds) 
+			{
+				Log.Interface (item);
+
+				var FeedItems = reader.RetrieveFeed(item);
+				Log.Interface (FeedItems.FirstOrDefault().Title.ToString ());
+
+				if ( StoredFeeditems.Length < Feeds.Length | FeedItems.FirstOrDefault ().Title.ToString () != StoredFeeditems [count]) {
+					StoredFeeditems[count] = FeedItems.FirstOrDefault().Title.ToString();
+
+					if (!FeedItems.FirstOrDefault().Content.Contains ("<slash:comments>0</slash:comments>") && item.Contains ("http://tf2maps.net/")) { //TODO Clean this to logically output at true opposed to false
+					} else {
+						Log.Interface ("Ran");
+						//Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, FeedItems.FirstOrDefault ().Title.ToString () + " " + FeedItems.FirstOrDefault ().Uri.ToString ());
+					}
+					}
+			    count = count + 1; 
+
+			}
+			System.Threading.Thread.Sleep (3000);
+			RSSTracker ();
+		}
+
+
+
+
+		/// <summary>
 		/// Updates the online spreadsheet according the maps file
 		/// </summary>
 		/// 
 		//TODO Clean portions that need cleaning
-       
 		public void SheetSync (bool ForceSync)
 		{
 			
@@ -794,62 +835,7 @@ namespace SteamBot
 
 
 
-		//The list of feeds that will be updated, where each will be saved, and if they will be posted to chat, obsolete
-		public void rssfeedupdates()
-		{
-			rssloop("https://www.reddit.com/r/AskReddit/new/.rss" , "Debug.log" , false);
-			rssloop("http://steamcommunity.com/groups/TF2Mappers/rss/" , "GroupEvents.log" , true);
-			rssloop("http://steamcommunity.com/groups/tf2maps_twitter/rss/" , "twitterbot.log" , true);
-			rssloop("http://www.teamfortress.com/rss.xml", "tf2site.log", true);
-		}
 
-		//Gets the RSS feed, then saves it
-		public void rssloop (string feed , string filename , Boolean sendtochat)
-		{
-			getrssfirstentry (feed);
-			string latest = getrssfirstentry(feed);
-			RSSWrite (@"logs\", filename, latest, sendtochat);
-		}
-
-		//Gets the feed sent, and returns the first entry
-		string getrssfirstentry(string feedtoread)
-		{
-			//	string url = feedtoread ;
-			//	XmlReader reader = XmlReader.Create(url);
-			//	SyndicationFeed feed = SyndicationFeed.Load(reader);
-			//	string file = reader.ToString();
-			// Closing this, will it change anything? reader.Close();
-			//	var latest = feed.Items.FirstOrDefault().Title.Text;
-			return "THIS HAS BEEN FROZEN DUE TO AN ERROR";
-		}
-
-		//Will compare the LOG file with the RSS feed's first entry.
-		public void RSSWrite (string path , string filename , string content, Boolean SendtoChat)
-		{
-			string filepath = path + filename;
-			if (!File.Exists (filepath)) //Checks if the RSS feed is stored already, if not it writes it
-			{
-				File.WriteAllText (filepath, content);
-			}
-			else
-			{
-				string readText = File.ReadAllText (filepath);
-				if (content != readText)
-				{ //Checks if the existing entry is the same or different
-					File.WriteAllText (filepath, content);
-					LogRSS ("New Entry");
-					LogRSS (content);
-					if (SendtoChat == true)
-					{
-						Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, content); //Posts to the chat the new entry if it's set to
-					}
-				}
-				else
-				{
-					LogRSS ("No new entry"); //Logs that there is no new entry
-				}
-			}
-		}
 	}
 }
 
