@@ -115,7 +115,7 @@ namespace SteamBot
 		{
 			RSSTick = new Timer();
 			RSSTick.Elapsed += new ElapsedEventHandler(RSSTracker);
-			RSSTick.Interval = 10000; // in miliseconds
+			RSSTick.Interval = 30000; // in miliseconds
 			RSSTick.Start();
 		}
 
@@ -729,11 +729,6 @@ namespace SteamBot
 			foreach (string item in Feeds) 
 			{
 				var FeedItems = reader.RetrieveFeed(item);
-
-
-				Log.Interface (FeedItems.FirstOrDefault ().Title.ToString());
-				//Log.Interface (FeedItems.FirstOrDefault ());
-				//bool Content = FeedItems.FirstOrDefault ().Content.Contains ("<slash:comments>0</slash:comments>");
 				if ( StoredFeeditems[count] == null | FeedItems.FirstOrDefault ().Title.ToString () != StoredFeeditems[count]) {
 					StoredFeeditems[count] = FeedItems.FirstOrDefault().Title.ToString();
 					Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, FeedItems.FirstOrDefault ().Title.ToString () + " " + FeedItems.FirstOrDefault ().Uri.ToString ());
@@ -742,7 +737,6 @@ namespace SteamBot
 
 			}
 			RSSTimer ();
-
 		}
 
 
