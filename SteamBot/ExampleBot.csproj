@@ -37,6 +37,22 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Google.Apis, Version=1.10.0.25332, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.1.10.0\lib\net40\Google.Apis.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Google.Apis.Core, Version=1.10.0.25331, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Core.1.10.0\lib\portable-net40+sl50+win+wpa81+wp80\Google.Apis.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Google.Apis.Customsearch.v1, Version=1.10.0.46, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.Customsearch.v1.1.10.0.460\lib\portable-net40+sl50+win+wpa81+wp80\Google.Apis.Customsearch.v1.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Google.Apis.PlatformServices, Version=1.10.0.25332, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Apis.1.10.0\lib\net40\Google.Apis.PlatformServices.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net" />
@@ -77,20 +93,11 @@
     </Reference>
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Net.Http.WebRequest" />
-    <Reference Include="Google.Apis.Core">
-      <HintPath>..\packages\Google.Apis.Core.1.9.3\lib\portable-net40+sl50+win+wpa81+wp80\Google.Apis.Core.dll</HintPath>
-    </Reference>
     <Reference Include="log4net">
       <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
     </Reference>
     <Reference Include="Zlib.Portable">
       <HintPath>..\packages\Zlib.Portable.Signed.1.11.0\lib\portable-net4+sl5+wp8+win8+wpa81+MonoTouch+MonoAndroid\Zlib.Portable.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis">
-      <HintPath>..\packages\Google.Apis.1.9.3\lib\net40\Google.Apis.dll</HintPath>
-    </Reference>
-    <Reference Include="Google.Apis.PlatformServices">
-      <HintPath>..\packages\Google.Apis.1.9.3\lib\net40\Google.Apis.PlatformServices.dll</HintPath>
     </Reference>
     <Reference Include="Steam.Query">
       <HintPath>..\packages\Steam.Query.1.0.21.0\lib\net451\Steam.Query.dll</HintPath>

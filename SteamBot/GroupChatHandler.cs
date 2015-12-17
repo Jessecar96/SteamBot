@@ -18,27 +18,41 @@ using Newtonsoft.Json;
 using Google.GData.Client;
 using Google.GData.Spreadsheets;
 using SimpleFeedReader;
+using Google.Apis.Customsearch;
+using Google.Apis.Services;
+using Newtonsoft.Json.Linq; 
 
 
 namespace SteamBot
 {
-	
-	public class GroupChatHandler : UserHandler
-	{
 
-		//JSON files store data, check if this works later. 
-		double interval = 5000;
+    public class GroupChatHandler : UserHandler
+    {
+
+        //JSON files store data, check if this works later. 
+        double interval = 5000;
         private Timer Tick;
         private Timer MOTDTick;
-		private Timer RSSTick;
+        private Timer RSSTick;
         private int MOTDPosted = 0;
         double MOTDHourInterval = 1;
         public static string MOTD = null;
-		public static string[] Feeds = {"http://www.teamfortress.com/rss.xml"};
+        public static string[] Feeds = { "http://www.teamfortress.com/rss.xml" };
+        public static string[] StoredFeeditems = new string[Feeds.Length];
+        public static Tuple<string, IPAddress, string, Int32>[] Servers =
+           {
+            Tuple.Create("US Server" ,System.Net.IPAddress.Parse("70.42.74.31"), "!Usserver" , 27015),
+            Tuple.Create("EU Server" ,System.Net.IPAddress.Parse("91.121.155.109"),  "!EUserver", 27015),
+            };
+        Dictionary<string, string> GoogleSearches = new Dictionary<string, string>() {  //TODO Finish this new system
+            {"!vdc", "url"},
+            {"!vdc2", "url"},
+            {"!vdc3", "url"},
+            };
 
-		public static string [] StoredFeeditems = new string[Feeds.Length];
 
 
+        public static string[] PreviousData = new string[Servers.Length];
         //TODO ADD CHECK IF THE FILE EXISTS OR NOT
         public static string SettingsFile = "GroupChatHandler_Settings.json";
 		public static Dictionary<string,string> groupchatsettings = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
@@ -155,37 +169,29 @@ namespace SteamBot
 				SpreadsheetSync = false;
 				SheetSync(false);
 			}
-
-			System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("70.42.74.31");  
-			System.Net.IPAddress ipaddress2 = System.Net.IPAddress.Parse("91.121.155.109");
-
-			Steam.Query.ServerInfoResult Map1 = ServerQuery (ipaddress1, 27015);
-			Steam.Query.ServerInfoResult Map2 = ServerQuery (ipaddress2, 27015);
-
-			Tuple<string,SteamID> Mapremoval = ImpRemove (Map1.Map, 0, true);
-			Tuple<string,SteamID> Mapremoval2 = ImpRemove (Map2.Map, 0, true);
-
-			if ((Map1.Map != PreviousMap1) && Map1.Players > 2) {
-				SpreadsheetSync = true;
-				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map1.Map.ToString() + " " + Map1.Players + "/" + Map1.MaxPlayers);
-			}
-			if ((Map2.Map != PreviousMap2) && Map2.Players > 2) {
-				SpreadsheetSync = true;
-				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + Map2.Map.ToString() + " " + Map2.Players + "/" + Map2.MaxPlayers);
-			}
-				
-			PreviousMap1 = Map1.Map;
-			PreviousMap2 = Map2.Map;
-
-			if (Mapremoval.Item2 != 0) {
-				Bot.SteamFriends.SendChatMessage (Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played!");
-				SpreadsheetSync = true;
-			}
-			if (Mapremoval2.Item2 != 0){
-			    Bot.SteamFriends.SendChatMessage (Mapremoval2.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval2.Item1 + " is being played!");
-				SpreadsheetSync = true;
-			}
+            MapChangeTracker();
 		}
+        public void MapChangeTracker()
+        {
+            int count = 0;
+            
+
+            foreach (Tuple<string,IPAddress, string, Int32> ServerAddress in Servers)
+            {
+                Steam.Query.ServerInfoResult ServerData = ServerQuery(ServerAddress.Item2, 27015);
+                if ((ServerData.Map != PreviousMap1) && ServerData.Players > 2)
+                {
+                    Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true);
+                    Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played!");
+                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " " + ServerData.Players + "/" + ServerData.MaxPlayers);                
+                }
+                PreviousData[count] = ServerData.Map;
+                count = count + 1; 
+            }
+            SpreadsheetSync = true;
+        }
+
+
 
 		public void DemoUpdate(){
 
@@ -422,7 +428,7 @@ namespace SteamBot
 				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
 			}
 			if (message.StartsWith ("!Debug_02", StringComparison.OrdinalIgnoreCase)) {
-				RSSTimer ();
+                AdvancedGoogleSearch("decompiled maps", "tf2maps.net", 0);
 			}
 
 			if (message.StartsWith ("!Debug_01", StringComparison.OrdinalIgnoreCase)) {
@@ -474,24 +480,6 @@ namespace SteamBot
                 string par1 = message.Remove(0, 5);
                 return GoogleSearch(par1, "https://developer.valvesoftware.com/", chatID);
             }
-            if (message.StartsWith ("!USSERVER" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("70.42.74.31");  
-
-				Steam.Query.ServerInfoResult Map1 = ServerQuery (ipaddress1, 27015);
-
-				return Map1.Map + " " + Map1.Players + "/" + Map1.MaxPlayers;
-
-				}
-			if (message.StartsWith ("!EUSERVER" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				System.Net.IPAddress ipaddress1 = System.Net.IPAddress.Parse("91.121.155.109");  
-
-				Steam.Query.ServerInfoResult Map1 = ServerQuery (ipaddress1, 27015);
-
-				return Map1.Map + " " + Map1.Players + "/" + Map1.MaxPlayers;
-
-			}
 			if (message.StartsWith ("!Sync", StringComparison.OrdinalIgnoreCase)) 
 			{
 				SheetSync (true);
@@ -581,7 +569,15 @@ namespace SteamBot
 				Bot.SteamFriends.SendChatMessage (sender, EChatEntryType.ChatMsg, DownloadListing);
 				return Maplisting ;
 			}
-			return null;
+            foreach (Tuple<string, IPAddress, string, Int32> ServerAddress in Servers)
+            {
+                if (message.StartsWith(ServerAddress.Item3, StringComparison.OrdinalIgnoreCase))
+                {
+                    Steam.Query.ServerInfoResult ServerData = ServerQuery(ServerAddress.Item2, ServerAddress.Item4);
+                    return ServerData.Map + " " + ServerData.Players + "/" + ServerData.MaxPlayers;
+                }
+            }
+                return null;
 		}
 		/// <summary>
 		/// Adds a map to the database
@@ -669,13 +665,32 @@ namespace SteamBot
 			}
 			return false; //If there is no entry in the database, or there aren't sufficient privalages, it'll return false
 		}
+      
+        /// <summary>
+        /// Makes a google search, and restricts results to only a single URL.
+        /// Returns the URL of the first result
+        /// </summary>
+        // TODO Clean up the code so it properly uses the google API and is a return function
+        public string AdvancedGoogleSearch(string searchquery, string url, SteamID chatid)
+        {
+            
+            WebClient client = new WebClient();
+            var search = client.DownloadString("https://www.googleapis.com/customsearch/v1?q=" + searchquery + "&cx=" + "001607953254528177127%3A0vuo216cctc" + "&siteSearch=" + url  + "&key=" +  "AIzaSyDljqLyfAQbD2xFEayW2Lfk_AKhW835S3o");
+           // var data = JsonConvert.SerializeObject(search);
+           // Log.Interface(data.ToString());
 
-		/// <summary>
-		/// Makes a google search, and restricts results to only a single URL.
-		/// Returns the URL of the first result
-		/// </summary>
-		// TODO Clean up the code so it properly uses the google API and is a return function
-		public string GoogleSearch(string searchquerey , string url, SteamID chatID) {
+
+            var obj = JObject.Parse(search);
+            var info = (string)obj["items"][0]["link"];
+            Log.Interface(info.ToString());
+
+            return info;
+            
+            //https://developers.google.com/apis-explorer/#p/customsearch/v1/search.cse.list?q=Search&siteSearch=tf2maps.net&_h=2&
+
+
+        }
+        public string GoogleSearch(string searchquerey , string url, SteamID chatID) {
 			WebClient client = new WebClient ();
 			string search = "http://www.google.com.au/search?q=" + searchquerey + "+site:" + url;
 			string httpdata = client.DownloadString (search);
@@ -729,11 +744,12 @@ namespace SteamBot
 			foreach (string item in Feeds) 
 			{
 				var FeedItems = reader.RetrieveFeed(item);
-				if ( StoredFeeditems[count] == null | FeedItems.FirstOrDefault ().Title.ToString () != StoredFeeditems[count]) {
-					StoredFeeditems[count] = FeedItems.FirstOrDefault().Title.ToString();
+				if ( StoredFeeditems[count] != null & FeedItems.FirstOrDefault ().Title.ToString () != StoredFeeditems[count]) {
+					
 					Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, FeedItems.FirstOrDefault ().Title.ToString () + " " + FeedItems.FirstOrDefault ().Uri.ToString ());
 					}
-			    count = count + 1; 
+                StoredFeeditems[count] = FeedItems.FirstOrDefault().Title.ToString();
+                count = count + 1; 
 
 			}
 			RSSTimer ();

@@ -38,74 +38,10 @@ namespace SteamBot
 
         public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
 		{
-			Log.Info (Bot.SteamFriends.GetFriendPersonaName (sender) + ": " + message);
-			base.OnChatRoomMessage (chatID, sender, message);
-			if (message.StartsWith ("!VDC")) 
-			{
-				string par1 = message.Remove (0, 5);
-				GoogleSearch(par1, "https://developer.valvesoftware.com/" , chatID);
-			}
-
-			if (message.StartsWith ("You have a leak")) 
-			{
-				string output = "https://developer.valvesoftware.com/wiki/leak";
-				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, output);
-			}
-			if (message.StartsWith ("!TF2")) 
-			{
-				string par1 = message.Remove (0, 5);
-				GoogleSearch(par1, "https://wiki.teamfortress.com/" , chatID);
-		    }
-			if (message.StartsWith ("!DEBUG_01")) 
-			{
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
-			}
-
-			if (message.StartsWith ("!RSS")) 
-			{
-				//string url = "http://fooblog.com/feed";
-				//XmlReader reader = XmlReader.Create(url);
-				//SyndicationFeed feed = SyndicationFeed.Load(reader);
-				//reader.Close();
-				//foreach (SyndicationItem item in feed.Items)
-				//{
-				//	string subject = item.Title.Text;    
-				//	string summary = item.Summary.Text;
-					 
-				//	Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, subject);
-				//}
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, "RETURN TO SENDER");
-			}
-			if (message.StartsWith ("!DEBUG_02")) 
-			{
-				Bot.SteamFriends.SendChatRoomMessage (103582791429594873, EChatEntryType.ChatMsg, "SEND TO:" + "103582791429594873");
-			}
-
-			if (message.StartsWith ("!IMP")) 
-			{
-				string[] words = message.Split(' ');
-				string save = message.Substring (5, message.Length - 5);
-				maps (save);
-			}
-			if (message.StartsWith ("!MAPS")) 
-			{
-				string path = @"logs\maps.log";
-				// Open the file to read from.
-				string readText = File.ReadAllText(path);
-				Log.Interface (readText);
-				Bot.SteamFriends.SendChatRoomMessage (chatID, EChatEntryType.ChatMsg, readText);
-
-			}
-
-			if (message.StartsWith ("!CLEAR")) 
-			{
-				string path = @"logs\maps.log";
-				File.Delete(path);
-				File.WriteAllText (path, Environment.NewLine);
-			}
+			
 
      }
-		public void GoogleSearch(string par1 , string url, SteamID chatID) {
+		public void AdvancedGoogleSearch2(string par1 , string url, SteamID chatID) {
 			
 			WebClient client = new WebClient ();
 			string search = "http://www.google.com.au/search?q=" + par1 + "+site:" + url;
