@@ -26,10 +26,11 @@
       "mapListCommand":"!MAPS",
       "clearcommand":"!CLEAR",
       "deletecommand":"!del",
-      "chatroomID":"103582791429594873",
+      "chatroomID":"Chat ID Goes Here",
       "OnlineSync":"false",
       "OnlineSearch":"false",
-	  "MapStoragePath":"maps.json",
+      "MapListUrl":"http://redirect.tf2maps.net/maps"
+      "MapStoragePath":"maps.json",
       "UserDatabase":"users.json",
 	  
       "GoogleAPI":"Google API goes here",
