@@ -26,22 +26,22 @@
       "mapListCommand":"!MAPS",
       "clearcommand":"!CLEAR",
       "deletecommand":"!del",
-      "chatroomID":"Chat ID Goes Here",
-      "OnlineSync":"false",
-      "OnlineSearch":"false",
+      "chatroomID":"103582791429594873",
       "MapListUrl":"http://redirect.tf2maps.net/maps",
+      "OnlineSync":"true",
+      "OnlineSearch":"true",
       "MapStoragePath":"maps.json",
       "UserDatabase":"users.json",
 	  
-      "GoogleAPI":"Google API goes here",
-      "CLIENT_ID":"Client ID goes here",
-      "CLIENT_SECRET":"Client Secret Goes here",
-      "SCOPE":"Scope Goes here",
-      "REDIRECT_URI":"Redirect URI goes here",
-      "SpreadSheetURI":"Spreadsheet URI goes here",
+      "GoogleAPI":"1/nZ9JZ2MfZvPBaOvJWKRPY10MCUdNK3o58yi8XArMIl4",
+      "CLIENT_ID":"1051172542633-h0o3vs60pulsmfh3lnko6pfqqa6ccut3.apps.googleusercontent.com",
+      "CLIENT_SECRET":"SxkTlJTvRr3KJhO5N70KtTvZ",
+      "SCOPE":"https://spreadsheets.google.com/feeds https://docs.google.com/feeds",
+      "REDIRECT_URI":"urn:ietf:wg:oauth:2.0:oob",
+      "SpreadSheetURI":"https://spreadsheets.google.com/feeds/spreadsheets/private/full/1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o",
       "IntegrationName":"MySpreadsheetIntegration-v1",
-      "CX":"Google Search CX goes here",
-      "APIKEY":"Google Search API goes here"
+      "CX":"001607953254528177127%3A0vuo216cctc",
+      "APIKEY":"AIzaSyDljqLyfAQbD2xFEayW2Lfk_AKhW835S3o"
       
    },
    "InstantReplies":{                     

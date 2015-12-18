@@ -29,7 +29,7 @@ namespace SteamBot
     {
         //JSON files store data, check if this works later. 
         double interval = 5000;
-        int GhostCheck = 120;
+        public static int GhostCheck = 120;
         private Timer Tick;
         private Timer MOTDTick;
         private Timer RSSTick;
@@ -291,7 +291,8 @@ namespace SteamBot
 				string refreshToken = parameters.RefreshToken;
 				entrydata.Remove ("GoogleAPI");
 				entrydata.Add ("GoogleAPI", refreshToken);
-				System.IO.File.WriteAllText (@"GroupChatHandler_Settings.json", JsonConvert.SerializeObject (entrydata));
+                Log.Interface("Your refresh token needs to be added to your settings file it is as follows:");
+                Log.Interface(refreshToken);
 				GoogleAPI = refreshToken;
 				Log.Interface ("SYNC COMMANDS WILL NOT WORK UNTIL BOT RESTART, PLEASE RESTART");
 				} 

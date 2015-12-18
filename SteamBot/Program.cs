@@ -55,12 +55,7 @@ namespace SteamBot
                 Console.WriteLine("No settings.json file found.");
                 return;
             }
-            if (!File.Exists("GroupChatHandler_Settings.json"))
-            {
-                Console.WriteLine("No GroupChatHandler Settings file has been found. Please add one");
-                return;
-            }
-
+           
             Configuration configObject;
             try
             {
@@ -124,7 +119,7 @@ namespace SteamBot
             var loadedOk = manager.LoadConfiguration("settings.json");
 
             
-            if (!loadedOk | !File.Exists("GroupChatHandler_Settings.json"))
+            if (!loadedOk | !File.Exists("ExtraSettings.JSON"))
             {
                 Console.WriteLine(
                     "Configuration file Does not exist or is corrupt. Please rename 'settings-template.json' to 'settings.json' and modify the settings to match your environment. Alternatively, the groupchathandler_settings file may be missing or corrupted.");
