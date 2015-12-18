@@ -25,10 +25,8 @@ using Newtonsoft.Json.Linq;
 
 namespace SteamBot
 {
-
-    public class GroupChatHandler : UserHandler
+    public class GroupChatHandler : UserHandler 
     {
-
         //JSON files store data, check if this works later. 
         double interval = 5000;
         int GhostCheck = 120;
@@ -78,13 +76,20 @@ namespace SteamBot
 		public static string MapStoragePath =  groupchatsettings["MapStoragePath"];
 		
 		public string UploadCheckCommand= "!uploadcheck";
-		public string ServerListUrl = "http://redirect.tf2maps.net/maps";
-		
-		public static string PreviousMap1 = " ";
+		public string ServerListUrl = groupchatsettings["MapListUrl"];
+
+        public static string PreviousMap1 = " ";
 		public static string PreviousMap2 = " ";
 		public static string DebugPreviousMap1 = " ";
 		public static bool SpreadsheetSync = true;
 		public static bool SyncRunning = false;
+
+        public override void OnTradeClose()
+        {
+            base.OnTradeClose();
+        }
+       
+
         
         public static Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = Maplistfile (MapStoragePath);
         
@@ -165,7 +170,7 @@ namespace SteamBot
             }
        
         }
-
+        
       /// <summary>
       /// The Main Timer's method, executed per tick
       /// </summary>
