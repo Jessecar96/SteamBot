@@ -47,15 +47,15 @@ namespace SteamBot
             public Dictionary<string, string> Settings { get; set; }
             public Dictionary<string, string> InstantReplies { get; set; }
         }
-        public static ExtraSettings Main = JsonConvert.DeserializeObject<ExtraSettings>(System.IO.File.ReadAllText(@"ExtraSettings.json"));
-        public static Dictionary<string, string> DataLOG = Main.Searches;
-        public static Dictionary<string, string> InstantReplies = Main.InstantReplies;
-        public static Tuple<string, string, string, Int32>[] Servers = Main.Servers;
+        public static ExtraSettings ExtraSettingsData = JsonConvert.DeserializeObject<ExtraSettings>(System.IO.File.ReadAllText(@"ExtraSettings.json"));
+        public static Dictionary<string, string> DataLOG = ExtraSettingsData.Searches;
+        public static Dictionary<string, string> InstantReplies = ExtraSettingsData.InstantReplies;
+        public static Tuple<string, string, string, Int32>[] Servers = ExtraSettingsData.Servers;
         public static string[] PreviousData = new string[Servers.Length];
-        public static string[] Feeds = Main.Feeds;
+        public static string[] Feeds = ExtraSettingsData.Feeds;
         public static string[] StoredFeeditems = new string[Feeds.Length];
 
-		public static Dictionary<string,string> groupchatsettings = Main.Settings;
+		public static Dictionary<string,string> groupchatsettings = ExtraSettingsData.Settings;
         public static string UserDatabaseFile = "users.json"; 
         public static Dictionary<string, EClanPermission> UserDatabase = UserDatabaseRetrieve(UserDatabaseFile);
         public string impCommand = groupchatsettings["impCommand"];
@@ -79,7 +79,7 @@ namespace SteamBot
 		
 		public string UploadCheckCommand= "!uploadcheck";
 		public string ServerListUrl = "http://redirect.tf2maps.net/maps";
-		//public bool SpreadsheetSync = true;
+		
 		public static string PreviousMap1 = " ";
 		public static string PreviousMap2 = " ";
 		public static string DebugPreviousMap1 = " ";
@@ -386,14 +386,14 @@ namespace SteamBot
                 OnlineSync = "true";
                 groupchatsettings.Remove("OnlineSync");
                 groupchatsettings.Add("OnlineSync", "true");
-                System.IO.File.WriteAllText(@"ExtraSettings.json", JsonConvert.SerializeObject(Main));
+                System.IO.File.WriteAllText(@"ExtraSettings.json", JsonConvert.SerializeObject(ExtraSettingsData));
                 return "Disabled Sync";
             }
 			if (message.StartsWith ("!DisableSync", StringComparison.OrdinalIgnoreCase)) {
                 OnlineSync = "false";
                 groupchatsettings.Remove ("OnlineSync");
 				groupchatsettings.Add ("OnlineSync", "false");
-				System.IO.File.WriteAllText (@"ExtraSettings.json", JsonConvert.SerializeObject (Main));
+				System.IO.File.WriteAllText (@"ExtraSettings.json", JsonConvert.SerializeObject (ExtraSettingsData));
 				return "Disabled Sync";
 			}
 			if (message.StartsWith ("!join" , StringComparison.OrdinalIgnoreCase)) 
