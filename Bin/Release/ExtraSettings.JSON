@@ -29,7 +29,7 @@
       "chatroomID":"Chat ID Goes Here",
       "OnlineSync":"false",
       "OnlineSearch":"false",
-      "MapListUrl":"http://redirect.tf2maps.net/maps"
+      "MapListUrl":"http://redirect.tf2maps.net/maps",
       "MapStoragePath":"maps.json",
       "UserDatabase":"users.json",
 	  
