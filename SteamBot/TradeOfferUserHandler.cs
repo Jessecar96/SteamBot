@@ -44,6 +44,20 @@ namespace SteamBot
             Log.Warn("Trade offer #{0} is invalid, with state: {1}.", tradeOffer.Id, tradeOffer.State);
         }
 
+        public override void OnTradeOfferFailedConfirmation(TradeOffers.TradeOffer tradeOffer)
+        {
+            // confirmation failed, so cancel it just to be safe
+            if (tradeOffer.IsOurOffer)
+            {
+                TradeOffers.CancelTrade(tradeOffer);
+            }
+            else
+            {
+                TradeOffers.DeclineTrade(tradeOffer);
+            }
+            Log.Warn("Trade offer #{0} failed to confirm. Cancelled the trade.");
+        }
+
         public override void OnMessage(string message, EChatEntryType type)
         {
             if (IsAdmin)

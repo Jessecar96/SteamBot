@@ -78,6 +78,7 @@ namespace SteamBot
         public abstract void OnTradeOfferReceived(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferAccepted(TradeOffers.TradeOffer tradeOffer);
         public abstract void OnTradeOfferDeclined(TradeOffers.TradeOffer tradeOffer);
+        public abstract void OnTradeOfferFailedConfirmation(TradeOffers.TradeOffer tradeOffer);
 
         /// <summary>
         /// Called when the bot is invited to a Steam group

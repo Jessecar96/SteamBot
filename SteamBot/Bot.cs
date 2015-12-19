@@ -11,6 +11,7 @@ using SteamAPI;
 using SteamKit2.Internal;
 using SteamAuth;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace SteamBot
 {
@@ -682,7 +683,7 @@ namespace SteamBot
 
         private void TradeOffers_TradeOfferNeedsConfirmation(object sender, TradeOffers.TradeOfferEventArgs e)
         {
-            if (e.TradeOffer.IsOurOffer && e.TradeOffer.ConfirmationMethod == TradeOffers.TradeOfferConfirmationMethod.MobileApp)
+            if (e.TradeOffer.ConfirmationMethod == TradeOffers.TradeOfferConfirmationMethod.MobileApp)
             {
                 if (SteamGuardAccount == null)
                 {
@@ -690,21 +691,33 @@ namespace SteamBot
                 }
                 else
                 {
+                    var confirmed = false;
                     SteamGuardAccount.Session.SteamLogin = SteamWeb.Token;
                     SteamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
                     try
                     {
                         foreach (var confirmation in SteamGuardAccount.FetchConfirmations())
                         {
-                            if (SteamGuardAccount.AcceptConfirmation(confirmation))
+                            var tradeOfferId = GetTradeOfferIdFromConfirmation(confirmation.ConfirmationID);
+                            if (tradeOfferId == e.TradeOffer.Id)
                             {
-                                Log.Debug("Confirmed {0}. (Confirmation ID #{1})", confirmation.ConfirmationDescription, confirmation.ConfirmationID);
+                                if (SteamGuardAccount.AcceptConfirmation(confirmation))
+                                {
+                                    Log.Debug("Confirmed {0}. (Confirmation ID #{1})", confirmation.ConfirmationDescription, confirmation.ConfirmationID);
+                                    confirmed = true;
+                                }
+                                break;
                             }
                         }
                     }
                     catch (SteamGuardAccount.WGTokenInvalidException)
                     {
                         Log.Error("Invalid session when trying to fetch trade confirmations.");
+                    }
+
+                    if (!confirmed)
+                    {
+                        GetUserHandler(e.TradeOffer.OtherSteamId).OnTradeOfferFailedConfirmation(e.TradeOffer);
                     }
                 }
             }
@@ -896,6 +909,51 @@ namespace SteamBot
         {
             public TradeOfferEscrowDurationParseException() : base() { }
             public TradeOfferEscrowDurationParseException(string message) : base(message) { }
+        }
+
+        public ulong GetTradeOfferIdFromConfirmation(string confId)
+        {
+            try
+            {
+                string url = GenerateConfirmationOfferIdURL(confId);
+
+                CookieContainer cookies = new CookieContainer();
+                SteamGuardAccount.Session.AddCookies(cookies);
+
+                string response = SteamAuth.SteamWeb.Request(url, "GET", null, cookies);
+                var offerResponse = JsonConvert.DeserializeObject<ConfirmationDetailsResponse>(response);
+
+                Regex offerIdRegex = new Regex("id=\"tradeofferid_([0-9]+)\"");
+
+                //Console.WriteLine(offerIdRegex.IsMatch(offerResponse.Response.Html));
+                if (offerResponse == null || !offerResponse.Success || !offerIdRegex.IsMatch(offerResponse.Html))
+                    throw new SteamGuardAccount.WGTokenInvalidException();
+
+                MatchCollection OfferIdMatch = offerIdRegex.Matches(offerResponse.Html);
+
+                return Convert.ToUInt64(OfferIdMatch[0].Groups[1].Value);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+                return 0;
+            }
+        }
+
+        public string GenerateConfirmationOfferIdURL(string confId, string tag = "details")
+        {
+            string endpoint = APIEndpoints.COMMUNITY_BASE + "/mobileconf/details/" + confId + "?";
+            string queryString = SteamGuardAccount.GenerateConfirmationQueryParams(tag);
+            return endpoint + queryString;
+        }
+
+        private class ConfirmationDetailsResponse
+        {
+            [JsonProperty("success")]
+            public bool Success { get; set; }
+
+            [JsonProperty("html")]
+            public string Html;
         }
 
         #region Background Worker Methods

@@ -1047,15 +1047,19 @@ namespace SteamAPI
                                 OurPendingTradeOffers.Add(tradeOffer.Id);
                             }
                         }
-                        else if (!tradeOffer.IsOurOffer && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
+                        else if (!tradeOffer.IsOurOffer)
                         {
                             var args = new TradeOfferEventArgs();
                             args.TradeOffer = tradeOffer;
 
-                            if (tradeOffer.State == TradeOfferState.Active)
+                            if (tradeOffer.State == TradeOfferState.Active && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
                             {
                                 ReceivedPendingTradeOffers.Add(tradeOffer.Id);
                                 OnTradeOfferReceived(args);
+                            }
+                            else if (tradeOffer.State == TradeOfferState.NeedsConfirmation && !AwaitingConfirmationTradeOffers.Contains(tradeOffer.Id))
+                            {
+                                OnTradeOfferNeedsConfirmation(args);
                             }
                         }
                     }
