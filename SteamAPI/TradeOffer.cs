@@ -1054,12 +1054,15 @@ namespace SteamAPI
 
                             if (tradeOffer.State == TradeOfferState.Active && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
                             {
-                                ReceivedPendingTradeOffers.Add(tradeOffer.Id);
-                                OnTradeOfferReceived(args);
-                            }
-                            else if (tradeOffer.State == TradeOfferState.NeedsConfirmation && !AwaitingConfirmationTradeOffers.Contains(tradeOffer.Id))
-                            {
-                                OnTradeOfferNeedsConfirmation(args);
+                                if (tradeOffer.ConfirmationMethod != TradeOfferConfirmationMethod.Invalid)
+                                {
+                                    OnTradeOfferNeedsConfirmation(args);
+                                }
+                                else
+                                {
+                                    ReceivedPendingTradeOffers.Add(tradeOffer.Id);
+                                    OnTradeOfferReceived(args);
+                                }                                
                             }
                         }
                     }
