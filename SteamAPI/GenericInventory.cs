@@ -42,7 +42,7 @@ namespace SteamAPI
             {
                 this.steamWeb = steamWeb;
                 string baseInventoryUrl = "http://steamcommunity.com/profiles/" + steamId.ConvertToUInt64() + "/inventory/";
-                string response = RetryWebRequest(baseInventoryUrl, botId);
+                string response = RetryWebRequest(baseInventoryUrl);
                 Regex reg = new Regex("var g_rgAppContextData = (.*?);");
                 Match m = reg.Match(response);
                 if (m.Success)
@@ -126,7 +126,7 @@ namespace SteamAPI
 
         private Inventory FetchInventory(string inventoryUrl, SteamID steamId, SteamID botId, int appId, ulong contextId, int start = 0)
         {
-            string response = RetryWebRequest(inventoryUrl + "&start=" + start, botId);
+            string response = RetryWebRequest(inventoryUrl + "&start=" + start);
             try
             {
                 var inventory = JsonConvert.DeserializeObject<Inventory>(response);
@@ -283,7 +283,7 @@ namespace SteamAPI
         /// WEB_REQUEST_MAX_RETRIES attempts (with WEB_REQUEST_TIME_BETWEEN_RETRIES_MS between attempts)
         /// </summary>
         /// <returns>The result of the function if it succeeded, or an empty string otherwise</returns>
-        private string RetryWebRequest(string url, SteamID botId)
+        private string RetryWebRequest(string url)
         {
             for (int i = 0; i < WEB_REQUEST_MAX_RETRIES; i++)
             {
