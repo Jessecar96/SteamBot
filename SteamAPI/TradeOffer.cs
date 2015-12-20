@@ -15,7 +15,6 @@ namespace SteamAPI
         public SteamID BotId;
         private SteamWeb SteamWeb;
         public List<ulong> OurPendingTradeOffers;
-        private List<ulong> ReceivedPendingTradeOffers;
         private List<ulong> HandledTradeOffers;
         private List<ulong> AwaitingConfirmationTradeOffers;
         private string AccountApiKey;
@@ -35,7 +34,6 @@ namespace SteamAPI
             else
                 this.OurPendingTradeOffers = pendingTradeOffers;
 
-            this.ReceivedPendingTradeOffers = new List<ulong>();
             this.HandledTradeOffers = new List<ulong>();
             this.AwaitingConfirmationTradeOffers = new List<ulong>();
 
@@ -1052,7 +1050,7 @@ namespace SteamAPI
                             var args = new TradeOfferEventArgs();
                             args.TradeOffer = tradeOffer;
 
-                            if (tradeOffer.State == TradeOfferState.Active && !ReceivedPendingTradeOffers.Contains(tradeOffer.Id))
+                            if (tradeOffer.State == TradeOfferState.Active)
                             {
                                 if (tradeOffer.ConfirmationMethod != TradeOfferConfirmationMethod.Invalid)
                                 {
@@ -1060,7 +1058,6 @@ namespace SteamAPI
                                 }
                                 else
                                 {
-                                    ReceivedPendingTradeOffers.Add(tradeOffer.Id);
                                     OnTradeOfferReceived(args);
                                 }                                
                             }
