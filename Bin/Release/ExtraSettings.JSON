@@ -14,12 +14,14 @@
       }
    ],
    "Feeds":[  
-      "http://www.teamfortress.com/rss.xml"
+      "http://www.teamfortress.com/rss.xml" , 
+      "http://steamcommunity.com/groups/tf2maps_twitter/rss/"
    ],
    "Searches":{  
       "!vdc":"developer.valvesoftware.com",
       "!tf2w":"wiki.teamfortress.com",
-      "!mal":"myanimelist.net"
+      "!mal":"myanimelist.net",
+      "!tf2m":"tf2maps.net"
    },
    "Settings":{  
       "impCommand":"!add",
@@ -33,19 +35,21 @@
       "MapStoragePath":"maps.json",
       "UserDatabase":"users.json",
 	  
-      "GoogleAPI":"1/nZ9JZ2MfZvPBaOvJWKRPY10MCUdNK3o58yi8XArMIl4",
+      "GoogleAPI":"1/NPS3ed9fnQ1Zb4GR_6T7IyfoQkwIkBQe8wQfgUV9rFA",
       "CLIENT_ID":"1051172542633-h0o3vs60pulsmfh3lnko6pfqqa6ccut3.apps.googleusercontent.com",
-      "CLIENT_SECRET":"SxkTlJTvRr3KJhO5N70KtTvZ",
+      "CLIENT_SECRET":"iEnsqA3uWPuC3F6ptHsNIfRI",
       "SCOPE":"https://spreadsheets.google.com/feeds https://docs.google.com/feeds",
       "REDIRECT_URI":"urn:ietf:wg:oauth:2.0:oob",
-      "SpreadSheetURI":"https://spreadsheets.google.com/feeds/spreadsheets/private/full/1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o",
+      "SpreadSheetURI":"1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o",
       "IntegrationName":"MySpreadsheetIntegration-v1",
+      
       "CX":"001607953254528177127%3A0vuo216cctc",
       "APIKEY":"AIzaSyDljqLyfAQbD2xFEayW2Lfk_AKhW835S3o"
       
    },
    "InstantReplies":{                     
-      "ghost?":"no",
-      "!help":"http://tf2maps.net/threads/we-now-have-a-steam-chat-bot.26274/"
+      "ghost?":"Nope",
+      "!help":"http://tf2maps.net/threads/we-now-have-a-steam-chat-bot.26274/",
+      "!Sheet":"https://goo.gl/Q5bQxg"
    }
 }

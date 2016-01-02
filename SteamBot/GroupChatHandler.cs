@@ -25,7 +25,7 @@ using Newtonsoft.Json.Linq;
 
 namespace SteamBot
 {
-    public class GroupChatHandler : UserHandler 
+    public class GroupChatHandler : UserHandler
     {
         //JSON files store data, check if this works later. 
         double interval = 5000;
@@ -53,90 +53,92 @@ namespace SteamBot
         public static string[] Feeds = ExtraSettingsData.Feeds;
         public static string[] StoredFeeditems = new string[Feeds.Length];
 
-		public static Dictionary<string,string> groupchatsettings = ExtraSettingsData.Settings;
-        public static string UserDatabaseFile = "users.json"; 
+        public static Dictionary<string, string> groupchatsettings = ExtraSettingsData.Settings;
+        public static string UserDatabaseFile = "users.json";
         public static Dictionary<string, EClanPermission> UserDatabase = UserDatabaseRetrieve(UserDatabaseFile);
         public string impCommand = groupchatsettings["impCommand"];
-		public string mapListCommand = groupchatsettings["mapListCommand"];
-		public string deletecommand = groupchatsettings["deletecommand"];
-		public string clearcommand = groupchatsettings["clearcommand"];
-		public static string chatroomID = groupchatsettings["chatroomID"];
+        public string mapListCommand = groupchatsettings["mapListCommand"];
+        public string deletecommand = groupchatsettings["deletecommand"];
+        public string clearcommand = groupchatsettings["clearcommand"];
+        public static string chatroomID = groupchatsettings["chatroomID"];
 
         public string OnlineSearch = groupchatsettings["OnlineSearch"];
         public string CX = groupchatsettings["CX"];
         public string APIKEY = groupchatsettings["APIKEY"];
         public string GoogleAPI = groupchatsettings["GoogleAPI"];
-		public string CLIENT_ID = groupchatsettings["CLIENT_ID"];
-		public string CLIENT_SECRET = groupchatsettings["CLIENT_SECRET"];
-		public string SCOPE = groupchatsettings["SCOPE"];
-		public string REDIRECT_URI = groupchatsettings["REDIRECT_URI"];
-		public string OnlineSync = groupchatsettings["OnlineSync"];
-		public string SpreadSheetURI = "https://spreadsheets.google.com/feeds/spreadsheets/private/full/" + groupchatsettings["SpreadSheetURI"];
-        public string IntegrationName =  groupchatsettings["IntegrationName"];
-		public static string MapStoragePath =  groupchatsettings["MapStoragePath"];
-		
-		public string UploadCheckCommand= "!uploadcheck";
-		public string ServerListUrl = groupchatsettings["MapListUrl"];
+        public string CLIENT_ID = groupchatsettings["CLIENT_ID"];
+        public string CLIENT_SECRET = groupchatsettings["CLIENT_SECRET"];
+        public string SCOPE = groupchatsettings["SCOPE"];
+        public string REDIRECT_URI = groupchatsettings["REDIRECT_URI"];
+        public string OnlineSync = groupchatsettings["OnlineSync"];
+        public string SpreadSheetURI = "https://spreadsheets.google.com/feeds/spreadsheets/private/full/" + groupchatsettings["SpreadSheetURI"];
+        public string IntegrationName = groupchatsettings["IntegrationName"];
+        public static string MapStoragePath = groupchatsettings["MapStoragePath"];
+
+        public string UploadCheckCommand = "!uploadcheck";
+        public string ServerListUrl = groupchatsettings["MapListUrl"];
+        public static bool EnableRSS = true;
 
         public static string PreviousMap1 = " ";
-		public static string PreviousMap2 = " ";
-		public static string DebugPreviousMap1 = " ";
-		public static bool SpreadsheetSync = true;
-		public static bool SyncRunning = false;
+        public static string PreviousMap2 = " ";
+        public static string DebugPreviousMap1 = " ";
+        public static bool SpreadsheetSync = true;
+        public static bool SyncRunning = false;
+        public static bool DoOnce = true;
 
         public override void OnTradeClose()
         {
             base.OnTradeClose();
         }
-       
 
-        
-        public static Dictionary<string,Tuple<string,SteamID,string,bool> > Maplist = Maplistfile (MapStoragePath);
-        
-        public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplistfile( string MapStoragePath)
+
+
+        public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = Maplistfile(MapStoragePath);
+
+        public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplistfile(string MapStoragePath)
         {
             if (File.Exists(MapStoragePath))
 
-        {
+            {
                 return JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID, string, bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
             } else {
-                Dictionary<string, Tuple<string, SteamID, string, bool>>  EmptyMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+                Dictionary<string, Tuple<string, SteamID, string, bool>> EmptyMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
                 System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(EmptyMaplist));
                 return EmptyMaplist;
             }
         }
-		public static Dictionary<string, EClanPermission> UserDatabaseRetrieve(string UserDatabase) { //TODO have this load with the bot
-        
-        if (!File.Exists(UserDatabase))
-        {
-            System.IO.File.WriteAllText(@UserDatabase, JsonConvert.SerializeObject(new Dictionary<string, EClanPermission>()));
+        public static Dictionary<string, EClanPermission> UserDatabaseRetrieve(string UserDatabase) { //TODO have this load with the bot
+
+            if (!File.Exists(UserDatabase))
+            {
+                System.IO.File.WriteAllText(@UserDatabase, JsonConvert.SerializeObject(new Dictionary<string, EClanPermission>()));
                 Dictionary<string, EClanPermission> UserDatabaseData = new Dictionary<string, EClanPermission>();
                 return UserDatabaseData;
+            }
+            return JsonConvert.DeserializeObject<Dictionary<string, EClanPermission>>(System.IO.File.ReadAllText(@UserDatabase));
         }
-			return JsonConvert.DeserializeObject<Dictionary<string, EClanPermission>>(System.IO.File.ReadAllText(@UserDatabase));
-        }
-		SteamID Groupchat = ulong.Parse (chatroomID);
-		/// <summary>
+        SteamID Groupchat = ulong.Parse(chatroomID);
+        /// <summary>
         /// Initialises the main timer
         /// </summary>
-		public void InitTimer()
-		{
-			Tick = new Timer();
-			Tick.Elapsed += new ElapsedEventHandler(TickTasks);
-			Tick.Interval = interval; // in miliseconds
-			Tick.Start();
-		}
+        public void InitTimer()
+        {
+            Tick = new Timer();
+            Tick.Elapsed += new ElapsedEventHandler(TickTasks);
+            Tick.Interval = interval; // in miliseconds
+            Tick.Start();
+        }
 
-		/// <summary>
+        /// <summary>
         /// Initialises the Timer that RSS feeds will be checked on
         /// </summary>
-		public void RSSTimer()
-		{
-			RSSTick = new Timer();
-			RSSTick.Elapsed += new ElapsedEventHandler(RSSTracker);
-			RSSTick.Interval = 30000; // in miliseconds
-			RSSTick.Start();
-		}
+        public void RSSTimer()
+        {
+            RSSTick = new Timer();
+            RSSTick.Elapsed += new ElapsedEventHandler(RSSTracker);
+            RSSTick.Interval = 30000; // in miliseconds
+            RSSTick.Start();
+        }
 
         /// <summary>
         /// Initialises the MOTD timer
@@ -147,7 +149,7 @@ namespace SteamBot
             MOTDTick.Elapsed += new ElapsedEventHandler(MOTDPost);
             MOTDTick.Interval = MOTDHourInterval * 1000 * 60 * 60; // in miliseconds TODO update this to formulate once a day
             MOTDTick.Start();
-            
+
         }
         /// <summary>
         /// Posts the MOTD to the group chat
@@ -156,33 +158,34 @@ namespace SteamBot
         /// <param name="e"></param>
         public void MOTDPost(object sender, EventArgs e)
         {
-            if ( (MOTD == null)  | (MOTDPosted == 24)  )
+            if ((MOTD == null) | (MOTDPosted >= 24))
             {
-                MOTDTick.Stop();
-                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Please Set a new MOTD");
-
+                MOTD = null;
+                Log.Interface("No MOTD set");
+                MOTDPosted = 0;
             }
             else
             {
-				Bot.SteamFriends.SetPersonaName ("MOTD:");
-                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, MOTD); 
-				Bot.SteamFriends.SetPersonaName ("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
+                MOTDPosted = MOTDPosted + 1;
+                Bot.SteamFriends.SetPersonaName("MOTD");
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, MOTD);
+                Bot.SteamFriends.SetPersonaName("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
             }
-       
+
         }
-        
-      /// <summary>
-      /// The Main Timer's method, executed per tick
-      /// </summary>
-      /// <param name="sender"></param>
-      /// <param name="e"></param>
+
+        /// <summary>
+        /// The Main Timer's method, executed per tick
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void TickTasks(object sender, EventArgs e)
-		{
-			if (SpreadsheetSync) 
-			{
-				SpreadsheetSync = false;
-				SheetSync(false);
-			}
+        {
+            if (SpreadsheetSync)
+            {
+                SpreadsheetSync = false;
+                SheetSync(false);
+            }
             MapChangeTracker();
             GhostCheck = GhostCheck - 1;
             if (GhostCheck <= 1)
@@ -190,8 +193,8 @@ namespace SteamBot
                 GhostCheck = 120;
                 Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
                 Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
-            } 
-		}
+            }
+        }
 
         /// <summary>
         /// Tracks all maps in the server list and posts to the group when there's a map change
@@ -199,127 +202,133 @@ namespace SteamBot
         public void MapChangeTracker()
         {
             int count = 0;
-            
 
-            foreach (Tuple<string,string, string, Int32> ServerAddress in Servers)
+
+            foreach (Tuple<string, string, string, Int32> ServerAddress in Servers)
             {
                 Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), 27015);
                 if ((ServerData.Map != PreviousData[count]) && ServerData.Players > 2)
                 {
                     Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true);
                     Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item3 + "!");
-                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " " + ServerData.Players + "/" + ServerData.MaxPlayers);                
+                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " " + ServerData.Players + "/" + ServerData.MaxPlayers);
                 }
                 PreviousData[count] = ServerData.Map;
-                count = count + 1; 
+                count = count + 1;
             }
             SpreadsheetSync = true;
         }
 
-		/// <summary>
-		/// Queries the server and returns the information
-		/// </summary>
-		/// <param name="ipadress">Ipadress that will be queried</param>
-		/// <param name="port"> The port that will be used, typically 27015 </param> 
-		Steam.Query.ServerInfoResult ServerQuery (System.Net.IPAddress ipaddress , Int32 port)
-		{ 
-			IPEndPoint ServerIP = new IPEndPoint( ipaddress , port);
-			Steam.Query.Server Information = new Steam.Query.Server (ServerIP);
-		    Steam.Query.ServerInfoResult ServerInformation = Information.GetServerInfo ().Result;
-			return ServerInformation;
-		}
+        /// <summary>
+        /// Queries the server and returns the information
+        /// </summary>
+        /// <param name="ipadress">Ipadress that will be queried</param>
+        /// <param name="port"> The port that will be used, typically 27015 </param> 
+        Steam.Query.ServerInfoResult ServerQuery(System.Net.IPAddress ipaddress, Int32 port)
+        {
+            IPEndPoint ServerIP = new IPEndPoint(ipaddress, port);
+            Steam.Query.Server Information = new Steam.Query.Server(ServerIP);
+            Steam.Query.ServerInfoResult ServerInformation = Information.GetServerInfo().Result;
+            return ServerInformation;
+        }
         /// <summary>
         /// The bot's actions upon entering chat
         /// </summary>
         /// <param name="callback"></param>
-		public void OnChatEnter(SteamKit2.SteamFriends.ChatEnterCallback callback){
-			Log.Interface ("Entered Chat");
-		}
+		public void OnChatEnter(SteamKit2.SteamFriends.ChatEnterCallback callback) {
+            Log.Interface("Entered Chat");
+        }
 
         /// <summary>
         /// The bot's actions upon logging in
         /// </summary>
         /// <param name="callback"></param>
         public override void OnLoginCompleted()
-		{
+        {
             Log.Interface("Use 'exec 0 join' to join a chatroom");
-            InitTimer();
-			RSSTimer ();
-		}
+            Log.Interface("RSS Enabled By default");
+            if (DoOnce == true)
+            {
+                InitTimer();
+                RSSTimer();
+                InitMOTDTimer();
+                DoOnce = false;
+                Log.Interface("Initialised Timers");
+            }
+        }
 
         /// <summary>
         /// Commands that the bot can execute, inputted via the console
         /// </summary>
         /// <param name="command"></param>
 		public override void OnBotCommand(string command)
-		{
-			if (command.StartsWith ("Say" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				string send = command.Remove (0, 3);
-				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
-			}
-			if (command.StartsWith ("Join", StringComparison.OrdinalIgnoreCase)) {
-				Bot.SteamFriends.LeaveChat (new SteamID (Groupchat));
-				Bot.SteamFriends.JoinChat (new SteamID (Groupchat));
-			}
-			if (command.StartsWith ("sync" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				SheetSync(true);
-			}
-			if (command.StartsWith("!AUTHENTICATE" , StringComparison.OrdinalIgnoreCase))  
-				{
-				OAuth2Parameters parameters = new OAuth2Parameters ();
+        {
+            if (command.StartsWith("Say", StringComparison.OrdinalIgnoreCase))
+            {
+                string send = command.Remove(0, 3);
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
+            }
+            if (command.StartsWith("Join", StringComparison.OrdinalIgnoreCase)) {
+                Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
+                Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
+            }
+            if (command.StartsWith("sync", StringComparison.OrdinalIgnoreCase))
+            {
+                SheetSync(true);
+            }
+            if (command.StartsWith("!AUTHENTICATE", StringComparison.OrdinalIgnoreCase))
+            {
+                OAuth2Parameters parameters = new OAuth2Parameters();
 
-				parameters.ClientId = CLIENT_ID;
+                parameters.ClientId = CLIENT_ID;
 
-				parameters.ClientSecret = CLIENT_SECRET;
+                parameters.ClientSecret = CLIENT_SECRET;
 
-				parameters.RedirectUri = REDIRECT_URI;
+                parameters.RedirectUri = REDIRECT_URI;
 
-				parameters.Scope = SCOPE;
-					
-					string authorizationUrl = OAuthUtil.CreateOAuth2AuthorizationUrl (parameters);
-					Log.Interface (authorizationUrl);
-				    Log.Info (authorizationUrl);
-				    Log.Debug (authorizationUrl);
-				    Log.Interface ("Please visit the URL above to authorize your OAuth "
-						+ "request token.  Once that is complete, type in your access code to "
-						+ "continue...");
-					parameters.AccessCode = Console.ReadLine ();
-				Dictionary<string,string> entrydata = JsonConvert.DeserializeObject<Dictionary<string,string>>(System.IO.File.ReadAllText(@"GroupChatHandler_Settings.json"));
-				OAuthUtil.GetAccessToken (parameters);
-				string refreshToken = parameters.RefreshToken;
-				entrydata.Remove ("GoogleAPI");
-				entrydata.Add ("GoogleAPI", refreshToken);
+                parameters.Scope = SCOPE;
+
+                string authorizationUrl = OAuthUtil.CreateOAuth2AuthorizationUrl(parameters);
+                Log.Interface(authorizationUrl);
+                Log.Info(authorizationUrl);
+                Log.Debug(authorizationUrl);
+                Log.Interface("Please visit the URL above to authorize your OAuth "
+                    + "request token.  Once that is complete, type in your access code to "
+                    + "continue...");
+                parameters.AccessCode = Console.ReadLine();
+                OAuthUtil.GetAccessToken(parameters);
+                string refreshToken = parameters.RefreshToken;
                 Log.Interface("Your refresh token needs to be added to your settings file it is as follows:");
                 Log.Interface(refreshToken);
-				GoogleAPI = refreshToken;
-				Log.Interface ("SYNC COMMANDS WILL NOT WORK UNTIL BOT RESTART, PLEASE RESTART");
-				} 
-		}
+                GoogleAPI = refreshToken;
+                Log.Interface("SYNC COMMANDS WILL NOT WORK UNTIL BOT RESTART, PLEASE RESTART");
+                groupchatsettings.Remove("GoogleAPI");
+                groupchatsettings.Add("GoogleAPI", refreshToken);
+            }
+        }
 
-		/// <summary>
+        /// <summary>
         /// The Method executed upon the bot being messaged via chat
         /// </summary>
         /// <param name="message"> The message itself</param>
         /// <param name="type"></param>
-		public override void OnMessage (string message, EChatEntryType type) {
-			SteamID ChatMsg = OtherSID;
-			string adminresponse = null;
-			string response = Chatcommands (ChatMsg, ChatMsg, message.ToLower());
+        public override void OnMessage(string message, EChatEntryType type) {
+            SteamID ChatMsg = OtherSID;
+            string adminresponse = null;
+            string response = Chatcommands(ChatMsg, ChatMsg, message.ToLower());
 
-		    if (response != null) 
-			{
-				SendChatMessage (response);
-			}
+            if (response != null)
+            {
+                SendChatMessage(response);
+            }
 
-			if (admincheck(OtherSID)){
-				adminresponse = admincommands (OtherSID, message);
-			}
-			if (adminresponse != null) {
-			  SendChatMessage (adminresponse);
-			}
-		}
+            if (admincheck(OtherSID)) {
+                adminresponse = admincommands(OtherSID, message);
+            }
+            if (adminresponse != null) {
+                SendChatMessage(adminresponse);
+            }
+        }
         /// <summary>
         /// The method executed upon the bot receiving messages in group chat
         /// </summary>
@@ -327,38 +336,38 @@ namespace SteamBot
         /// <param name="sender"> The SteamID of the person who sent the msg</param>
         /// <param name="message">The message</param>
 		public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
-		{
+        {
             GhostCheck = 120;
             string adminresponse = null;
-			if (admincheck(sender)){
-				adminresponse = admincommands (sender, message);
-			}
-			string response = Chatcommands(chatID, sender, message.ToLower());
-			if (response != null) {
-				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, response);
-			}
-			if (adminresponse != null) {
-				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, adminresponse);
-			}
-		}
+            if (admincheck(sender)) {
+                adminresponse = admincommands(sender, message);
+            }
+            string response = Chatcommands(chatID, sender, message.ToLower());
+            if (response != null) {
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
+            }
+            if (adminresponse != null) {
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, adminresponse);
+            }
+        }
 
-		/// <summary>
-		/// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
-		/// </summary>
-		/// <param name="chatID">ChatID of the chatroom</param>
-		/// <param name="message">The message sent</param>
-		public string admincommands (SteamID sender, string message)
-		{
+        /// <summary>
+        /// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
+        /// </summary>
+        /// <param name="chatID">ChatID of the chatroom</param>
+        /// <param name="message">The message sent</param>
+        public string admincommands(SteamID sender, string message)
+        {
             if (message.StartsWith("!ReJoin", StringComparison.OrdinalIgnoreCase))
             {
                 Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
                 Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
             }
-            if (message.StartsWith ("!Say" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				string send = message.Remove (0, 4);
-				Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, send);
-			}
+            if (message.StartsWith("!Say", StringComparison.OrdinalIgnoreCase))
+            {
+                string send = message.Remove(0, 4);
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, send);
+            }
 
             if (message.StartsWith("!SetMOTD", StringComparison.OrdinalIgnoreCase))
             {
@@ -366,11 +375,10 @@ namespace SteamBot
                 {
                     return "There is currently a MOTD, please remove it first";
                 }
-                string send = message.Remove(0, 9);
-                if (send != null)
+                else
                 {
+                    string send = message.Remove(0, 9);
                     MOTD = send;
-                    InitMOTDTimer();
                     return "MOTD Set to: " + send;
                 }
                 return "Make sure to include a MOTD to display!";
@@ -380,35 +388,45 @@ namespace SteamBot
                 MOTD = null;
                 return "Removed MOTD";
             }
-            if (message.StartsWith (clearcommand, StringComparison.OrdinalIgnoreCase)) 
-			{
-				string path = @MapStoragePath;
-				File.Delete(path);
-				File.WriteAllText (path, "{}");
-				SpreadsheetSync = true;
-				return "Wiped all Maps";
-			}
-			if (message.StartsWith ("!EnableSync", StringComparison.OrdinalIgnoreCase)) {
+            if (message.StartsWith(clearcommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string path = @MapStoragePath;
+                File.Delete(path);
+                File.WriteAllText(path, "{}");
+                SpreadsheetSync = true;
+                return "Wiped all Maps";
+            }
+            if (message.StartsWith("!EnableSync", StringComparison.OrdinalIgnoreCase)) {
                 OnlineSync = "true";
                 groupchatsettings.Remove("OnlineSync");
                 groupchatsettings.Add("OnlineSync", "true");
                 System.IO.File.WriteAllText(@"ExtraSettings.json", JsonConvert.SerializeObject(ExtraSettingsData));
+                return "Enabled Sync";
+            }
+            if (message.StartsWith("!DisableSync", StringComparison.OrdinalIgnoreCase)) {
+                OnlineSync = "false";
+                groupchatsettings.Remove("OnlineSync");
+                groupchatsettings.Add("OnlineSync", "false");
+                System.IO.File.WriteAllText(@"ExtraSettings.json", JsonConvert.SerializeObject(ExtraSettingsData));
                 return "Disabled Sync";
             }
-			if (message.StartsWith ("!DisableSync", StringComparison.OrdinalIgnoreCase)) {
-                OnlineSync = "false";
-                groupchatsettings.Remove ("OnlineSync");
-				groupchatsettings.Add ("OnlineSync", "false");
-				System.IO.File.WriteAllText (@"ExtraSettings.json", JsonConvert.SerializeObject (ExtraSettingsData));
-				return "Disabled Sync";
-			}
-			if (message.StartsWith ("!join" , StringComparison.OrdinalIgnoreCase)) 
-			{
-				Bot.SteamFriends.LeaveChat (new SteamID (chatroomID));
-				Bot.SteamFriends.JoinChat (new SteamID (chatroomID));
-			}
-				return null;
-			}
+            if (message.StartsWith("!EnableRSS", StringComparison.OrdinalIgnoreCase))
+            {
+                EnableRSS = true;
+                return "Enabled RSS";
+            }
+            if (message.StartsWith("!DisableRSS", StringComparison.OrdinalIgnoreCase))
+            {
+                EnableRSS = false;
+                return "Disabled RSS";
+            }
+            if (message.StartsWith("!join", StringComparison.OrdinalIgnoreCase))
+            {
+                Bot.SteamFriends.LeaveChat(new SteamID(chatroomID));
+                Bot.SteamFriends.JoinChat(new SteamID(chatroomID));
+            }
+            return null;
+        }
 
 
 
@@ -430,11 +448,11 @@ namespace SteamBot
                 {
                     string par1 = message.Remove(0, Entry.Key.Length);
                     return AdvancedGoogleSearch(par1, Entry.Value, chatID);
-                } 
+                }
             }
             foreach (KeyValuePair<string, string> Entry in InstantReplies) //TODO Disable autocorrections
             {
-                
+
                 if (message.StartsWith(Entry.Key, StringComparison.OrdinalIgnoreCase))
                 {
                     return Entry.Value;
@@ -448,63 +466,103 @@ namespace SteamBot
             {
                 return MOTD;
             }
-			if (message.StartsWith ("!Sync", StringComparison.OrdinalIgnoreCase)) 
-			{
-				SheetSync (true);
-				return null;
-			}
-			if (message.StartsWith (UploadCheckCommand , StringComparison.OrdinalIgnoreCase)) 
-			{
-				string par1 = message.Remove (0, UploadCheckCommand.Length + 1);
-				if (par1 != null) {
-				return UploadCheck(par1).ToString();
-				}
-				else{
-					return "No map specified";
-				}
-			}
-			if (message.StartsWith(deletecommand ,  StringComparison.OrdinalIgnoreCase))
-			{
-				string map = message.Remove (0, 5);
-				Tuple<string,SteamID> removed = ImpRemove (map, sender, false);
-				return "Removed map: " + removed.Item1;
-			}	
-			if (message.StartsWith (impCommand, StringComparison.OrdinalIgnoreCase)) {
-				
-				string[] words = message.Split(' '); //Splits the message by every space
-				if (words.Length == 1) {
-					return  "!add <mapname> <url> <notes> is the command. however if the map is uploaded you do not need to include the url";
-				}
-				int length = (words.Length > 2).GetHashCode(); //Checks if there are more than 3 or more words
-				int Uploaded = (UploadCheck (words [1])).GetHashCode(); //Checks if map is uploaded. Crashes if only one word //TODO FIX THAT
-				string UploadStatus = "Uploaded"; //Sets a string, that'll remain unless altered
-				if (length + Uploaded == 0 ) { //Checks if either test beforehand returned true
-					return "Make sure to include the download URL!";
-				} else {
-					string[] notes = message.Split (new string[] { words [2 - Uploaded] }, StringSplitOptions.None); //Splits by the 2nd word (the uploadurl) but if it's already uploaded, it'll split by the map instead 
-					if (Uploaded == 0) //If the map isn't uploaded, it'll set the upload status to the 3rd word (The URL)
-					{ 
-						UploadStatus = words [2];
-					}
-					string status = ImpEntry (words [1], UploadStatus, notes[1], sender); //If there are no notes, but a map and url, this will crash.
-					SpreadsheetSync = true;
-					return status;
-				}
+            if (message.StartsWith("!Sync", StringComparison.OrdinalIgnoreCase))
+            {
+                SheetSync(true);
+                return null;
+            }
+            if (message.StartsWith(UploadCheckCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string par1 = message.Remove(0, UploadCheckCommand.Length + 1);
+                if (par1 != null) {
+                    return UploadCheck(par1).ToString();
+                }
+                else {
+                    return "No map specified";
+                }
+            }
+            if (message.StartsWith(deletecommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string map = message.Remove(0, deletecommand.Length + 1 );
+                Tuple<string, SteamID> removed = ImpRemove(map, sender, false);
+                return "Removed map: " + removed.Item1;
+            }
+            if (message.StartsWith(impCommand, StringComparison.OrdinalIgnoreCase)) {
 
-			}
-			if (message.StartsWith (mapListCommand , StringComparison.OrdinalIgnoreCase)) 
-			{
-				Dictionary<string,Tuple<string,SteamID> > entrydata = JsonConvert.DeserializeObject<Dictionary<string,Tuple<string,SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath));
-				string Maplisting = "";
-				string DownloadListing = "";
-				foreach (var item in entrydata) 
-				{
-					Maplisting = Maplisting + item.Key + " , ";
-					DownloadListing = DownloadListing + item.Value.Item1 + " , ";
-				}
-				Bot.SteamFriends.SendChatMessage (sender, EChatEntryType.ChatMsg, DownloadListing);
-				return Maplisting ;
-			}
+                string[] words = message.Split(' '); //Splits the message by every space
+                if (words.Length == 1) {
+                    return "!add <mapname> <url> <notes> is the command. however if the map is uploaded you do not need to include the url";
+                }
+                int length = (words.Length > 2).GetHashCode(); //Checks if there are more than 3 or more words
+                int Uploaded = (UploadCheck(words[1])).GetHashCode(); //Checks if map is uploaded. Crashes if only one word //TODO FIX THAT
+                string UploadStatus = "Uploaded"; //Sets a string, that'll remain unless altered
+                if (length + Uploaded == 0) { //Checks if either test beforehand returned true
+                    return "Make sure to include the download URL!";
+                } else {
+                    string[] notes = message.Split(new string[] { words[2 - Uploaded] }, StringSplitOptions.None); //Splits by the 2nd word (the uploadurl) but if it's already uploaded, it'll split by the map instead 
+                    if (Uploaded == 0) //If the map isn't uploaded, it'll set the upload status to the 3rd word (The URL)
+                    {
+                        UploadStatus = words[2];
+                    }
+                    string status = ImpEntry(words[1], UploadStatus, notes[1], sender); //If there are no notes, but a map and url, this will crash.
+                    SpreadsheetSync = true;
+                    return status;
+                }
+
+            }
+            if (message.StartsWith("!updatemap ", StringComparison.OrdinalIgnoreCase))
+            {
+                string[] FullMessageWordArray = message.Split(' '); //Splits the message by every space
+                if (FullMessageWordArray.Length <= 2)  //Checks if there are less than 2 words, the previous map and map to change
+                {
+                    return "!impupdate <PreviousMapName> <NewMapName> <url> <notes> is the command.";
+                }
+
+                string[] FullMessageCutArray = FullMessageWordArray.Skip(2).ToArray();
+
+                int length = (FullMessageCutArray.Length > 1).GetHashCode(); //Checks if there are more than 3 or more words
+
+                int Uploaded = 0;
+
+                if (FullMessageWordArray.Length > 0)
+                {
+                    Log.Interface("Checking " + FullMessageCutArray[0]);
+                    Uploaded = (UploadCheck(FullMessageCutArray[0])).GetHashCode();
+                }
+                //Log.Interface("Checking if" + UploadCheck(FullMessageCutArray[1]) + "Is uploaded");
+
+                //Checks if map is uploaded. Crashes if only one word //TODO FIX THAT
+                string UploadStatus = "Uploaded"; //Sets a string, that'll remain unless altered
+                if (length + Uploaded == 0)
+                { //Checks if either test beforehand returned true
+                    return "Make sure to include the download URL!";
+                }
+                else {
+                    string[] notes = message.Split(new string[] { FullMessageCutArray[1 - Uploaded] }, StringSplitOptions.None); //Splits by the 2nd word (the uploadurl) but if it's already uploaded, it'll split by the map instead 
+                    if (Uploaded == 0) //If the map isn't uploaded, it'll set the upload status to the 3rd word (The URL)
+                    {
+                        UploadStatus = FullMessageCutArray[1];
+                    }
+                    string status = ImpEntryUpdate(FullMessageWordArray[1], FullMessageCutArray[0], UploadStatus, notes[1], sender); //If there are no notes, but a map and url, this will crash.
+                    SpreadsheetSync = true;
+                    return status;
+                }
+
+            }
+            if (message.StartsWith(mapListCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                // Dictionary<string, Tuple<string, SteamID>> entrydata = JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath)); //TODO can we get rid of this?
+                
+                string Maplisting = "";
+                string DownloadListing = "";
+                foreach (var item in Maplist)
+                {
+                    Maplisting = Maplisting + item.Key + " , ";
+                    DownloadListing = DownloadListing + item.Value.Item1 + " , ";
+                }
+                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, DownloadListing);
+                return Maplisting;
+            }
             foreach (Tuple<string, string, string, Int32> ServerAddress in Servers)
             {
                 if (message.StartsWith(ServerAddress.Item3, StringComparison.OrdinalIgnoreCase))
@@ -513,41 +571,101 @@ namespace SteamBot
                     return ServerData.Map + " " + ServerData.Players + "/" + ServerData.MaxPlayers;
                 }
             }
-                return null;
-		}
-		/// <summary>
-		/// Adds a map to the database
-		/// </summary>
-		public string ImpEntry(string map , string downloadurl , string notes, SteamID sender)
-		{
-			if (notes == null)
-			{
-				notes = "No Notes"; 
-			}
-			//Deserialises the current map list
-			string response = "Failed to add the map to the list";
-			Dictionary<string,Tuple<string,SteamID,string,bool> > entrydata = Maplist;
-			if (Maplist == null) {
-			Log.Interface ("There was an error, here is the map file before it's wiped:" + System.IO.File.ReadAllText (@MapStoragePath));
-			}
-			if (entrydata.ContainsKey (map)) { //if it already exists, it deletes it so it can update the data
-				response = "Error, the entry already exists! Please remove the existing entry";
-			} else {
-				//Adds the entry
-				entrydata.Add (map, new Tuple<string,SteamID,string,bool> (downloadurl, sender, notes, UploadCheck(map)));
-				//Saves the data
-				Maplist = entrydata;
-				response = "Added: " + map; 
-			}
-			System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(entrydata));
-			SpreadsheetSync = true;
-			return response;
-		}
-		/// <summary>
-		/// Removes specified map from the database.
-		/// Checks if the user is an admin or the setter
-		/// </summary>
-		public Tuple<string,SteamID> ImpRemove (string map , SteamID sender , bool ServerRemove)
+            return null;
+        }
+        /// <summary>
+        /// Adds a map to the database
+        /// </summary>
+        public string ImpEntry(string map, string downloadurl, string notes, SteamID sender)
+        {
+            if (notes == null)
+            {
+                notes = "No Notes";
+            }
+            //Deserialises the current map list
+            string response = "Failed to add the map to the list";
+            Dictionary<string, Tuple<string, SteamID, string, bool>> entrydata = Maplist;
+            if (Maplist == null) {
+                Log.Interface("There was an error, here is the map file before it's wiped:" + System.IO.File.ReadAllText(@MapStoragePath));
+            }
+            if (entrydata.ContainsKey(map)) { //if it already exists, it deletes it so it can update the data
+                response = "Error, the entry already exists! Please remove the existing entry";
+            } else {
+                //Adds the entry
+                entrydata.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, UploadCheck(map)));
+                //Saves the data
+                Maplist = entrydata;
+                response = "Added: " + map;
+            }
+            System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(entrydata));
+            SpreadsheetSync = true;
+            return response;
+        }
+        /// <summary>
+        /// Updates a map in the maplist, and keeps the position in the array
+        /// </summary>
+        /// <param name="maptochange"></param>
+        /// <param name="map"></param>
+        /// <param name="downloadurl"></param>
+        /// <param name="notes"></param>
+        /// <param name="sender"></param>
+        /// <returns></returns>
+        public string ImpEntryUpdate(string maptochange, string map, string downloadurl, string notes, SteamID sender)
+        {
+            Log.Interface("Reached Here");
+
+            if (notes == null)
+            {
+                notes = "No Notes";
+            }
+            int EntryCount = 0;
+
+            if (admincheck(sender) == true | sender == Maplist[maptochange].Item2)
+            {
+
+                foreach (KeyValuePair<string, Tuple<string, SteamID, string, bool>> entry in Maplist)
+                {
+                    EntryCount = EntryCount + 1;
+
+                    if (entry.Key == maptochange)
+                    {
+                        UpdateEntryExecute(EntryCount , maptochange ,  map , downloadurl, notes, sender);
+                        return "Map has been updated";
+                    }
+                }
+                
+            }
+
+            return "The entry was not found";
+
+        }
+
+        public void UpdateEntryExecute (int EntryCount , string maptochange, string map, string downloadurl, string notes, SteamID sender)
+        {
+            Dictionary<string, Tuple<string, SteamID, string, bool>> NewMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+            foreach (KeyValuePair<string, Tuple<string, SteamID, string, bool>> OldMaplistEntry in Maplist)
+            {
+                if (NewMaplist.Count() + 1 != EntryCount)
+                {
+                    NewMaplist.Add(OldMaplistEntry.Key, OldMaplistEntry.Value);
+                }
+                else
+                {
+                    NewMaplist.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, UploadCheck(map)));
+                    NewMaplist.Add(OldMaplistEntry.Key, OldMaplistEntry.Value);
+                }
+                Maplist = NewMaplist;
+                Maplist.Remove(maptochange);
+                System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(Maplist));
+                SpreadsheetSync = true;
+            }
+        }
+
+        /// <summary>
+        /// Removes specified map from the database.
+        /// Checks if the user is an admin or the setter
+        /// </summary>
+        public Tuple<string,SteamID> ImpRemove (string map , SteamID sender , bool ServerRemove)
 		{
 			Dictionary<string,Tuple<string,SteamID,string,bool> > NewMaplist = new Dictionary<string, Tuple<string, SteamID,string,bool>>();
 			string removed = "The map was not found or you do not have sufficient privileges"; 
@@ -631,13 +749,18 @@ namespace SteamBot
 			foreach (string item in Feeds) 
 			{
 				var FeedItems = reader.RetrieveFeed(item);
-				if ( StoredFeeditems[count] != null & (FeedItems != null & FeedItems.FirstOrDefault().Title.ToString() != StoredFeeditems[count])) {
-					
+				if ( ( 
+                    (StoredFeeditems[count] != null) & 
+                    (FeedItems != null) & 
+                    (FeedItems.FirstOrDefault().Title.ToString() != StoredFeeditems[count])
+                    & (EnableRSS = true)
+                    )) 
+                    {
+                    Log.Interface(FeedItems.FirstOrDefault().Uri.ToString());
 					Bot.SteamFriends.SendChatRoomMessage (Groupchat, EChatEntryType.ChatMsg, FeedItems.FirstOrDefault ().Title.ToString () + " " + FeedItems.FirstOrDefault ().Uri.ToString ());
 					}
                 StoredFeeditems[count] = FeedItems.FirstOrDefault().Title.ToString();
                 count = count + 1; 
-
 			}
 			RSSTimer ();
 		}
@@ -651,7 +774,7 @@ namespace SteamBot
 			
 			if ((OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) || ForceSync) {
 				SyncRunning = true;
-				Log.Interface ("Beginning Sync");
+				//Log.Interface ("Beginning Sync");
 				OAuth2Parameters parameters = new OAuth2Parameters ();
 				parameters.ClientId = CLIENT_ID;
 				parameters.ClientSecret = CLIENT_SECRET;
@@ -716,7 +839,7 @@ namespace SteamBot
 
                 cellFeed.Publish();
                 CellFeed batchResponse = (CellFeed)service.Batch(batchRequest, new Uri(cellFeed.Batch));
-                Log.Interface("Completed Sync");
+               // Log.Interface("Completed Sync");
 				SyncRunning = false;
 
 			} else if (OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase)){
