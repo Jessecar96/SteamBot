@@ -721,6 +721,19 @@ namespace SteamBot
                     }
                 }
             }
+            else if (e.TradeOffer.ConfirmationMethod == TradeOffers.TradeOfferConfirmationMethod.Email)
+            {
+                if (e.TradeOffer.IsOurOffer)
+                {
+                    TradeOffers.CancelTrade(e.TradeOffer);
+                    Log.Error("Cancelling our trade offer #{0} because it needs email confirmation.", e.TradeOffer.Id);
+                }
+                else
+                {
+                    TradeOffers.DeclineTrade(e.TradeOffer);
+                    Log.Error("Declining trade offer #{0} because it needs email confirmation.", e.TradeOffer.Id);
+                }
+            }
         }
 
         private void TradeOffers_TradeOfferInvalid(object sender, TradeOffers.TradeOfferEventArgs e)
