@@ -1089,7 +1089,7 @@ namespace SteamAPI
                                     // remove from list
                                     OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
                                 }
-                                else if (pendingTradeOffer.Offer.State != TradeOfferState.Active && pendingTradeOffer.Offer.State != TradeOfferState.Accepted)
+                                else
                                 {
                                     if (pendingTradeOffer.Offer.State == TradeOfferState.NeedsConfirmation)
                                     {
