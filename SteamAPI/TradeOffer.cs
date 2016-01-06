@@ -13,29 +13,26 @@ namespace SteamAPI
     public class TradeOffers
     {
         public SteamID BotId;
-        private SteamWeb SteamWeb;
+        private readonly SteamWeb _steamWeb;
         public List<ulong> OurPendingTradeOffers;
-        private List<ulong> HandledTradeOffers;
-        private List<ulong> AwaitingConfirmationTradeOffers;
-        private string AccountApiKey;
-        private bool ShouldCheckPendingTradeOffers;
-        private int TradeOfferRefreshRate;
+        private readonly List<ulong> _handledTradeOffers;
+        private readonly List<ulong> _awaitingConfirmationTradeOffers;
+        private readonly string _accountApiKey;
+        private bool _shouldCheckPendingTradeOffers;
+        private readonly int _tradeOfferRefreshRate;
 
         public TradeOffers(SteamID botId, SteamWeb steamWeb, string accountApiKey, int tradeOfferRefreshRate, List<ulong> pendingTradeOffers = null)
         {
             this.BotId = botId;
-            this.SteamWeb = steamWeb;
-            this.AccountApiKey = accountApiKey;
-            this.ShouldCheckPendingTradeOffers = true;
-            this.TradeOfferRefreshRate = tradeOfferRefreshRate;
+            this._steamWeb = steamWeb;
+            this._accountApiKey = accountApiKey;
+            this._shouldCheckPendingTradeOffers = true;
+            this._tradeOfferRefreshRate = tradeOfferRefreshRate;
 
-            if (pendingTradeOffers == null)
-                this.OurPendingTradeOffers = new List<ulong>();
-            else
-                this.OurPendingTradeOffers = pendingTradeOffers;
+            this.OurPendingTradeOffers = pendingTradeOffers ?? new List<ulong>();
 
-            this.HandledTradeOffers = new List<ulong>();
-            this.AwaitingConfirmationTradeOffers = new List<ulong>();
+            this._handledTradeOffers = new List<ulong>();
+            this._awaitingConfirmationTradeOffers = new List<ulong>();
 
             new Thread(CheckPendingTradeOffers).Start();
         }
@@ -47,25 +44,26 @@ namespace SteamAPI
         /// <returns>A 'Trade' object in which you can apply further actions</returns>
         public Trade CreateTrade(SteamID partnerId)
         {
-            return new Trade(this, partnerId, SteamWeb);
+            return new Trade(this, partnerId, _steamWeb);
         }
 
         public class Trade
         {
-            private TradeOffers TradeOffers;
-            private CookieContainer cookies = new CookieContainer();
-            private SteamWeb steamWeb;
-            private SteamID partnerId;
+            private readonly TradeOffers _tradeOffers;
+            private readonly SteamWeb _steamWeb;
+            private readonly SteamID _partnerId;
             public TradeStatus tradeStatus;
 
             public Trade(TradeOffers tradeOffers, SteamID partnerId, SteamWeb steamWeb)
             {
-                this.TradeOffers = tradeOffers;
-                this.partnerId = partnerId;
-                this.steamWeb = steamWeb;
-                tradeStatus = new TradeStatus();
-                tradeStatus.version = 1;
-                tradeStatus.newversion = true;
+                _tradeOffers = tradeOffers;
+                _partnerId = partnerId;
+                _steamWeb = steamWeb;
+                tradeStatus = new TradeStatus
+                {
+                    version = 1,
+                    newversion = true
+                };
                 tradeStatus.me = new TradeStatusUser(ref tradeStatus);
                 tradeStatus.them = new TradeStatusUser(ref tradeStatus);
             }
@@ -88,23 +86,28 @@ namespace SteamAPI
             /// <returns>-1 if response fails to deserialize (general error), 0 if no tradeofferid exists (Steam error), or the Trade Offer ID of the newly created trade offer.</returns>
             public ulong SendTrade(string message, string token = "")
             {
-                var url = "https://steamcommunity.com/tradeoffer/new/send";
-                var referer = "https://steamcommunity.com/tradeoffer/new/?partner=" + partnerId.AccountID;
-                var data = new NameValueCollection();
-                data.Add("sessionid", steamWeb.SessionId);
-                data.Add("serverid", "1");
-                data.Add("partner", partnerId.ConvertToUInt64().ToString());
-                data.Add("tradeoffermessage", message);
-                data.Add("json_tradeoffer", JsonConvert.SerializeObject(this.tradeStatus));
-                data.Add("trade_offer_create_params", token == "" ? "{}" : "{\"trade_offer_access_token\":\"" + token + "\"}");
+                const string url = "https://steamcommunity.com/tradeoffer/new/send";
+                var referer = "https://steamcommunity.com/tradeoffer/new/?partner=" + _partnerId.AccountID;
+                var data = new NameValueCollection
+                {
+                    {"sessionid", _steamWeb.SessionId},
+                    {"serverid", "1"},
+                    {"partner", _partnerId.ConvertToUInt64().ToString()},
+                    {"tradeoffermessage", message},
+                    {"json_tradeoffer", JsonConvert.SerializeObject(this.tradeStatus)},
+                    {
+                        "trade_offer_create_params",
+                        token == "" ? "{}" : "{\"trade_offer_access_token\":\"" + token + "\"}"
+                    }
+                };
                 try
                 {
-                    string response = RetryWebRequest(steamWeb, url, "POST", data, true, referer);
+                    var response = RetryWebRequest(_steamWeb, url, "POST", data, true, referer);
                     dynamic jsonResponse = JsonConvert.DeserializeObject<dynamic>(response);
                     try
                     {
                         ulong tradeOfferId = Convert.ToUInt64(jsonResponse.tradeofferid);
-                        this.TradeOffers.AddPendingTradeOfferToList(tradeOfferId);
+                        _tradeOffers.AddPendingTradeOfferToList(tradeOfferId);
                         return tradeOfferId;
                     }
                     catch
@@ -212,10 +215,10 @@ namespace SteamAPI
 
             public class TradeAsset
             {
-                public int appid;
-                public string contextid;
-                public int amount;
-                public string assetid;
+                public readonly int appid;
+                public readonly string contextid;
+                public readonly int amount;
+                public readonly string assetid;
 
                 public TradeAsset(int appId, ulong contextId, ulong itemId, int amount)
                 {
@@ -238,11 +241,8 @@ namespace SteamAPI
                     if (obj == null)
                         return false;
 
-                    TradeAsset other = obj as TradeAsset;
-                    if ((Object)other == null)
-                        return false;
-
-                    return Equals(other);
+                    var other = obj as TradeAsset;
+                    return other != null && Equals(other);
                 }
 
                 public bool Equals(TradeAsset other)
@@ -267,7 +267,7 @@ namespace SteamAPI
         /// <returns>True if successful, false if not</returns>
         public bool AcceptTrade(ulong tradeOfferId)
         {
-            GetTradeOfferAPI.GetTradeOfferResponse tradeOfferResponse = GetTradeOffer(tradeOfferId);
+            var tradeOfferResponse = GetTradeOffer(tradeOfferId);
             return AcceptTrade(tradeOfferResponse.Offer);
         }
         private bool AcceptTrade(TradeOffer tradeOffer)
@@ -275,35 +275,34 @@ namespace SteamAPI
             var tradeOfferId = tradeOffer.Id;
             var url = "https://steamcommunity.com/tradeoffer/" + tradeOfferId + "/accept";
             var referer = "http://steamcommunity.com/tradeoffer/" + tradeOfferId + "/";
-            var data = new NameValueCollection();
-            data.Add("sessionid", SteamWeb.SessionId);
-            data.Add("serverid", "1");
-            data.Add("tradeofferid", tradeOfferId.ToString());
-            data.Add("partner", tradeOffer.OtherSteamId.ToString());
-            string response = RetryWebRequest(SteamWeb, url, "POST", data, true, referer);
+            var data = new NameValueCollection
+            {
+                {"sessionid", _steamWeb.SessionId},
+                {"serverid", "1"},
+                {"tradeofferid", tradeOfferId.ToString()},
+                {"partner", tradeOffer.OtherSteamId.ToString()}
+            };
+            string response = RetryWebRequest(_steamWeb, url, "POST", data, true, referer);
             if (string.IsNullOrEmpty(response))
             {
                 return ValidateTradeAccept(tradeOffer);
             }
-            else
+            try
             {
-                try
-                {
-                    dynamic json = JsonConvert.DeserializeObject(response);
-                    var id = json.tradeid;
-                    return true;
-                }
-                catch
-                {
-                    return ValidateTradeAccept(tradeOffer);
-                }
+                dynamic json = JsonConvert.DeserializeObject(response);
+                var id = json.tradeid;
+                return true;
+            }
+            catch
+            {
+                return ValidateTradeAccept(tradeOffer);
             }
         }
 
         /// <summary>
         /// Declines a pending trade offer
         /// </summary>
-        /// <param name="tradeOfferId">The trade offer ID</param>
+        /// <param name="tradeOffer">The trade offer object</param>
         /// <returns>True if successful, false if not</returns>
         public bool DeclineTrade(TradeOffer tradeOffer)
         {
@@ -312,16 +311,14 @@ namespace SteamAPI
         /// <summary>
         /// Declines a pending trade offer
         /// </summary>
-        /// <param name="tradeOffer">The trade offer object</param>
+        /// <param name="tradeOfferId">The trade offer ID</param>
         /// <returns>True if successful, false if not</returns>
         public bool DeclineTrade(ulong tradeOfferId)
         {
             var url = "https://steamcommunity.com/tradeoffer/" + tradeOfferId + "/decline";
-            var referer = "http://steamcommunity.com/";
-            var data = new NameValueCollection();
-            data.Add("sessionid", SteamWeb.SessionId);
-            data.Add("serverid", "1");
-            string response = RetryWebRequest(SteamWeb, url, "POST", data, true, referer);
+            const string referer = "http://steamcommunity.com/";
+            var data = new NameValueCollection {{"sessionid", _steamWeb.SessionId}, {"serverid", "1"}};
+            var response = RetryWebRequest(_steamWeb, url, "POST", data, true, referer);
             try
             {
                 dynamic json = JsonConvert.DeserializeObject(response);
@@ -351,10 +348,9 @@ namespace SteamAPI
         public bool CancelTrade(ulong tradeOfferId)
         {
             var url = "https://steamcommunity.com/tradeoffer/" + tradeOfferId + "/cancel";
-            var referer = "http://steamcommunity.com/";
-            var data = new NameValueCollection();
-            data.Add("sessionid", SteamWeb.SessionId);
-            string response = RetryWebRequest(SteamWeb, url, "POST", data, true, referer);
+            const string referer = "http://steamcommunity.com/";
+            var data = new NameValueCollection {{"sessionid", _steamWeb.SessionId}};
+            string response = RetryWebRequest(_steamWeb, url, "POST", data, true, referer);
             try
             {
                 dynamic json = JsonConvert.DeserializeObject(response);
@@ -373,9 +369,9 @@ namespace SteamAPI
         /// <returns>An 'int' list of trade offer IDs</returns>
         public List<ulong> GetIncomingTradeOffers()
         {
-            List<ulong> IncomingTradeOffers = new List<ulong>();
+            var incomingTradeOffers = new List<ulong>();
             var url = "http://steamcommunity.com/profiles/" + BotId.ConvertToUInt64() + "/tradeoffers/";
-            var html = RetryWebRequest(SteamWeb, url, "GET", null);
+            var html = RetryWebRequest(_steamWeb, url, "GET", null);
             var reg = new Regex("ShowTradeOffer\\((.*?)\\);");
             var matches = reg.Matches(html);
             foreach (Match match in matches)
@@ -383,17 +379,17 @@ namespace SteamAPI
                 if (match.Success)
                 {
                     var tradeId = Convert.ToUInt64(match.Groups[1].Value.Replace("'", ""));
-                    if (!IncomingTradeOffers.Contains(tradeId))
-                        IncomingTradeOffers.Add(tradeId);
+                    if (!incomingTradeOffers.Contains(tradeId))
+                        incomingTradeOffers.Add(tradeId);
                 }
             }
-            return IncomingTradeOffers;
+            return incomingTradeOffers;
         }
 
         public GetTradeOfferAPI.GetTradeOfferResponse GetTradeOffer(ulong tradeOfferId)
         {
-            string url = String.Format("https://api.steampowered.com/IEconService/GetTradeOffer/v1/?key={0}&tradeofferid={1}&language={2}", AccountApiKey, tradeOfferId, "en_us");
-            string response = RetryWebRequest(SteamWeb, url, "GET", null, false, "http://steamcommunity.com");
+            var url = String.Format("https://api.steampowered.com/IEconService/GetTradeOffer/v1/?key={0}&tradeofferid={1}&language={2}", _accountApiKey, tradeOfferId, "en_us");
+            var response = RetryWebRequest(_steamWeb, url, "GET", null, false, "http://steamcommunity.com");
             var result = JsonConvert.DeserializeObject<GetTradeOfferAPI>(response);
             if (result.Response != null && result.Response.Offer != null)
             {
@@ -410,16 +406,16 @@ namespace SteamAPI
         public List<TradeOffer> GetTradeOffers(bool getActive = false)
         {
             var temp = new List<TradeOffer>();
-            var url = "https://api.steampowered.com/IEconService/GetTradeOffers/v1/?key=" + AccountApiKey + "&get_sent_offers=1&get_received_offers=1";
+            var url = "https://api.steampowered.com/IEconService/GetTradeOffers/v1/?key=" + _accountApiKey + "&get_sent_offers=1&get_received_offers=1";
             if (getActive)
             {
-                url += "&active_only=1&time_historical_cutoff=" + (int)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+                url += "&active_only=1&time_historical_cutoff=" + (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
             }
             else
             {
                 url += "&active_only=0";
             }
-            var response = RetryWebRequest(SteamWeb, url, "GET", null, false, "http://steamcommunity.com");
+            var response = RetryWebRequest(_steamWeb, url, "GET", null, false, "http://steamcommunity.com");
             var json = JsonConvert.DeserializeObject<dynamic>(response);
             var sentTradeOffers = json.response.trade_offers_sent;
             if (sentTradeOffers != null)
@@ -495,7 +491,7 @@ namespace SteamAPI
                 }
                 set
                 {
-                    OtherSteamId = value;
+                    
                 }
             }
 
@@ -675,6 +671,7 @@ namespace SteamAPI
 
         /// <summary>
         /// Manually validate if a trade offer went through by checking /inventoryhistory/
+        /// You shouldn't use this since it may be exploitable.
         /// </summary>
         /// <param name="tradeOffer">A 'TradeOffer' object</param>
         /// <returns>True if the trade offer was successfully accepted, false if otherwise</returns>
@@ -737,20 +734,21 @@ namespace SteamAPI
         /// Retrieves completed trades from /inventoryhistory/
         /// </summary>
         /// <param name="limit">Max number of trades to retrieve</param>
+        /// <param name="numPages">How many pages to retrieve</param>
         /// <returns>A List of 'TradeHistory' objects</returns>
         public List<TradeHistory> GetTradeHistory(int limit = 0, int numPages = 1)
         {
             var tradeHistoryPages = new Dictionary<int, TradeHistory[]>();
-            for (int i = 0; i < numPages; i++)
+            for (var i = 0; i < numPages; i++)
             {
                 var tradeHistoryPageList = new TradeHistory[30];
                 try
                 {
                     var url = "http://steamcommunity.com/profiles/" + BotId.ConvertToUInt64() + "/inventoryhistory/?p=" + i;
-                    var html = RetryWebRequest(SteamWeb, url, "GET", null);
+                    var html = RetryWebRequest(_steamWeb, url, "GET", null);
                     // TODO: handle rgHistoryCurrency as well
-                    Regex reg = new Regex("rgHistoryInventory = (.*?)};");
-                    Match m = reg.Match(html);
+                    var reg = new Regex("rgHistoryInventory = (.*?)};");
+                    var m = reg.Match(html);
                     if (m.Success)
                     {
                         var json = m.Groups[1].Value + "}";
@@ -759,29 +757,27 @@ namespace SteamAPI
                         var tradeMatches = trades.Matches(html);
                         foreach (Match match in tradeMatches)
                         {
-                            if (match.Success)
+                            if (!match.Success) continue;
+                            var historyString = match.Groups[1].Value.Replace("'", "").Replace(" ", "");
+                            var split = historyString.Split(',');
+                            var tradeString = split[0];
+                            var tradeStringSplit = tradeString.Split('_');
+                            var tradeNum = Convert.ToInt32(tradeStringSplit[0].Replace("trade", ""));
+                            if (limit > 0 && tradeNum >= limit) break;
+                            if (tradeHistoryPageList[tradeNum] == null)
                             {
-                                var historyString = match.Groups[1].Value.Replace("'", "").Replace(" ", "");
-                                var split = historyString.Split(',');
-                                var tradeString = split[0];
-                                var tradeStringSplit = tradeString.Split('_');
-                                var tradeNum = Convert.ToInt32(tradeStringSplit[0].Replace("trade", ""));
-                                if (limit > 0 && tradeNum >= limit) break;
-                                if (tradeHistoryPageList[tradeNum] == null)
-                                {
-                                    tradeHistoryPageList[tradeNum] = new TradeHistory();
-                                }
-                                var tradeHistoryItem = tradeHistoryPageList[tradeNum];
-                                var appId = Convert.ToInt32(split[1]);
-                                var contextId = Convert.ToUInt64(split[2]);
-                                var itemId = Convert.ToUInt64(split[3]);
-                                var amount = Convert.ToInt32(split[4]);
-                                var historyItem = schemaResult[appId][contextId][itemId];
-                                if (historyItem.OwnerId == 0)
-                                    tradeHistoryItem.ReceivedItems.Add(historyItem);
-                                else
-                                    tradeHistoryItem.GivenItems.Add(historyItem);
+                                tradeHistoryPageList[tradeNum] = new TradeHistory();
                             }
+                            var tradeHistoryItem = tradeHistoryPageList[tradeNum];
+                            var appId = Convert.ToInt32(split[1]);
+                            var contextId = Convert.ToUInt64(split[2]);
+                            var itemId = Convert.ToUInt64(split[3]);
+                            var amount = Convert.ToInt32(split[4]);
+                            var historyItem = schemaResult[appId][contextId][itemId];
+                            if (historyItem.OwnerId == 0)
+                                tradeHistoryItem.ReceivedItems.Add(historyItem);
+                            else
+                                tradeHistoryItem.GivenItems.Add(historyItem);
                         }
                     }
                 }
@@ -792,15 +788,7 @@ namespace SteamAPI
                 }
                 tradeHistoryPages.Add(i, tradeHistoryPageList);
             }
-            var tradeHistoryList = new List<TradeHistory>();
-            foreach (var tradeHistoryPage in tradeHistoryPages.Values)
-            {
-                foreach (var tradeHistory in tradeHistoryPage)
-                {
-                    tradeHistoryList.Add(tradeHistory);
-                }
-            }
-            return tradeHistoryList;
+            return tradeHistoryPages.Values.SelectMany(tradeHistoryPage => tradeHistoryPage).ToList();
         }
 
         public class TradeHistory
@@ -816,20 +804,16 @@ namespace SteamAPI
 
             public class HistoryItem
             {
-                private Trade.TradeAsset tradeAsset = null;
+                private Trade.TradeAsset _tradeAsset;
                 public Trade.TradeAsset TradeAsset
                 {
                     get
                     {
-                        if (tradeAsset == null)
-                        {
-                            tradeAsset = new Trade.TradeAsset(AppId, ContextId, Id, Amount);
-                        }
-                        return tradeAsset;
+                        return _tradeAsset ?? (_tradeAsset = new Trade.TradeAsset(AppId, ContextId, Id, Amount));
                     }
                     set
                     {
-                        tradeAsset = value;
+                        _tradeAsset = value;
                     }
                 }
 
@@ -843,18 +827,18 @@ namespace SteamAPI
                 public int Amount { get; set; }
 
                 [JsonProperty("owner")]
-                private dynamic owner { get; set; }
+                private dynamic _owner { get; set; }
                 public ulong OwnerId
                 {
                     get
                     {
                         ulong ownerId = 0;
-                        ulong.TryParse(Convert.ToString(owner), out ownerId);
+                        ulong.TryParse(Convert.ToString(_owner), out ownerId);
                         return ownerId;
                     }
                     set
                     {
-                        owner = value.ToString();
+                        _owner = value.ToString();
                     }
                 }
 
@@ -916,41 +900,41 @@ namespace SteamAPI
                 public dynamic FraudWarnings { get; set; }
 
                 [JsonProperty("descriptions")]
-                private dynamic descriptions { get; set; }
+                private dynamic _descriptions { get; set; }
                 public DescriptionsData[] Descriptions
                 {
                     get
                     {
-                        if (!string.IsNullOrEmpty(Convert.ToString(descriptions)))
+                        if (!string.IsNullOrEmpty(Convert.ToString(_descriptions)))
                         {
                             try
                             {
-                                return JsonConvert.DeserializeObject<DescriptionsData[]>(descriptions);
+                                return JsonConvert.DeserializeObject<DescriptionsData[]>(_descriptions);
                             }
                             catch
                             {
-
+                                // ignored
                             }
                         }
                         return new DescriptionsData[0];
                     }
                     set
                     {
-                        descriptions = JsonConvert.SerializeObject(value);
+                        _descriptions = JsonConvert.SerializeObject(value);
                     }
                 }
 
                 [JsonProperty("actions")]
-                private dynamic actions { get; set; }
+                private dynamic _actions { get; set; }
                 public ActionsData[] Actions
                 {
                     get
                     {
-                        if (!string.IsNullOrEmpty(Convert.ToString(actions)))
+                        if (!string.IsNullOrEmpty(Convert.ToString(_actions)))
                         {
                             try
                             {
-                                return JsonConvert.DeserializeObject<ActionsData[]>(actions);
+                                return JsonConvert.DeserializeObject<ActionsData[]>(_actions);
                             }
                             catch
                             {
@@ -961,7 +945,7 @@ namespace SteamAPI
                     }
                     set
                     {
-                        descriptions = JsonConvert.SerializeObject(value);
+                        _actions = JsonConvert.SerializeObject(value);
                     }
                 }
 
@@ -1026,14 +1010,14 @@ namespace SteamAPI
 
         public void StopCheckingPendingTradeOffers()
         {
-            this.ShouldCheckPendingTradeOffers = false;
+            _shouldCheckPendingTradeOffers = false;
         }
 
         private void CheckPendingTradeOffers()
         {
             new Thread(() =>
             {
-                while (ShouldCheckPendingTradeOffers)
+                while (_shouldCheckPendingTradeOffers)
                 {
                     var tradeOffers = GetTradeOffers(true);
                     foreach (var tradeOffer in tradeOffers)
@@ -1047,8 +1031,7 @@ namespace SteamAPI
                         }
                         else if (!tradeOffer.IsOurOffer)
                         {
-                            var args = new TradeOfferEventArgs();
-                            args.TradeOffer = tradeOffer;
+                            var args = new TradeOfferEventArgs {TradeOffer = tradeOffer};
 
                             if (tradeOffer.State == TradeOfferState.Active)
                             {
@@ -1063,59 +1046,54 @@ namespace SteamAPI
                             }
                         }
                     }
-                    Thread.Sleep(TradeOfferRefreshRate);
+                    Thread.Sleep(_tradeOfferRefreshRate);
                 }
             }).Start();
-            while (ShouldCheckPendingTradeOffers)
+            while (_shouldCheckPendingTradeOffers)
             {
                 var checkingThreads = new List<Thread>();
-                foreach (var tradeOfferId in OurPendingTradeOffers.ToList())
+                foreach (var thread in OurPendingTradeOffers.ToList().Select(tradeOfferId => new Thread(() =>
                 {
-                    var thread = new Thread(() =>
+                    var pendingTradeOffer = GetTradeOffer(tradeOfferId);
+                    if (pendingTradeOffer == null) return;
+                    if (pendingTradeOffer.Offer.State == TradeOfferState.Active) return;
+
+                    var args = new TradeOfferEventArgs {TradeOffer = pendingTradeOffer.Offer};
+
+                    // check if trade offer has been accepted/declined, or items unavailable (manually validate)
+                    if (pendingTradeOffer.Offer.State == TradeOfferState.Accepted)
                     {
-                        var pendingTradeOffer = GetTradeOffer(tradeOfferId);
-                        if (pendingTradeOffer != null)
+                        // fire event                            
+                        OnTradeOfferAccepted(args);
+                        // remove from list
+                        OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
+                    }
+                    else
+                    {
+                        if (pendingTradeOffer.Offer.State == TradeOfferState.NeedsConfirmation)
                         {
-                            if (pendingTradeOffer.Offer.State != TradeOfferState.Active)
-                            {
-                                var args = new TradeOfferEventArgs();
-                                args.TradeOffer = pendingTradeOffer.Offer;
-
-                                // check if trade offer has been accepted/declined, or items unavailable (manually validate)
-                                if (pendingTradeOffer.Offer.State == TradeOfferState.Accepted)
-                                {
-                                    // fire event                            
-                                    OnTradeOfferAccepted(args);
-                                    // remove from list
-                                    OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
-                                }
-                                else
-                                {
-                                    if (pendingTradeOffer.Offer.State == TradeOfferState.NeedsConfirmation)
-                                    {
-                                        // fire event
-                                        OnTradeOfferNeedsConfirmation(args);
-                                    }
-                                    else if (pendingTradeOffer.Offer.State == TradeOfferState.Invalid || pendingTradeOffer.Offer.State == TradeOfferState.InvalidItems)
-                                    {
-                                        // fire event
-                                        OnTradeOfferInvalid(args);
-                                    }
-                                    else if (pendingTradeOffer.Offer.State != TradeOfferState.InEscrow)
-                                    {
-                                        // fire event
-                                        OnTradeOfferDeclined(args);
-                                    }
-
-                                    if (pendingTradeOffer.Offer.State != TradeOfferState.InEscrow)
-                                    {
-                                        // remove from list only if not in escrow
-                                        OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
-                                    }                                    
-                                }
-                            }
+                            // fire event
+                            OnTradeOfferNeedsConfirmation(args);
                         }
-                    });
+                        else if (pendingTradeOffer.Offer.State == TradeOfferState.Invalid || pendingTradeOffer.Offer.State == TradeOfferState.InvalidItems)
+                        {
+                            // fire event
+                            OnTradeOfferInvalid(args);
+                        }
+                        else if (pendingTradeOffer.Offer.State != TradeOfferState.InEscrow)
+                        {
+                            // fire event
+                            OnTradeOfferDeclined(args);
+                        }
+
+                        if (pendingTradeOffer.Offer.State != TradeOfferState.InEscrow)
+                        {
+                            // remove from list only if not in escrow
+                            OurPendingTradeOffers.Remove(pendingTradeOffer.Offer.Id);
+                        }                                    
+                    }
+                })))
+                {
                     checkingThreads.Add(thread);
                     thread.Start();
                 }
@@ -1123,68 +1101,68 @@ namespace SteamAPI
                 {
                     thread.Join();
                 }
-                Thread.Sleep(TradeOfferRefreshRate);
+                Thread.Sleep(_tradeOfferRefreshRate);
             }
         }
 
         protected virtual void OnTradeOfferReceived(TradeOfferEventArgs e)
         {
-            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
+            if (!_handledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                TradeOfferStatusEventHandler handler = TradeOfferReceived;
+                var handler = TradeOfferReceived;
                 if (handler != null)
                 {
                     handler(this, e);
                 }
-                HandledTradeOffers.Add(e.TradeOffer.Id);
+                _handledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
         protected virtual void OnTradeOfferAccepted(TradeOfferEventArgs e)
         {
-            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
+            if (!_handledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                TradeOfferStatusEventHandler handler = TradeOfferAccepted;
+                var handler = TradeOfferAccepted;
                 if (handler != null)
                 {
                     handler(this, e);
                 }
-                HandledTradeOffers.Add(e.TradeOffer.Id);
+                _handledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
         protected virtual void OnTradeOfferDeclined(TradeOfferEventArgs e)
         {
-            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
+            if (!_handledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                TradeOfferStatusEventHandler handler = TradeOfferDeclined;
+                var handler = TradeOfferDeclined;
                 if (handler != null)
                 {
                     handler(this, e);
                 }
-                HandledTradeOffers.Add(e.TradeOffer.Id);
+                _handledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
         protected virtual void OnTradeOfferInvalid(TradeOfferEventArgs e)
         {
-            if (!HandledTradeOffers.Contains(e.TradeOffer.Id))
+            if (!_handledTradeOffers.Contains(e.TradeOffer.Id))
             {
-                TradeOfferStatusEventHandler handler = TradeOfferInvalid;
+                var handler = TradeOfferInvalid;
                 if (handler != null)
                 {
                     handler(this, e);
                 }
-                HandledTradeOffers.Add(e.TradeOffer.Id);
+                _handledTradeOffers.Add(e.TradeOffer.Id);
             }
         }
         protected virtual void OnTradeOfferNeedsConfirmation(TradeOfferEventArgs e)
         {
-            if (!AwaitingConfirmationTradeOffers.Contains(e.TradeOffer.Id))
+            if (!_awaitingConfirmationTradeOffers.Contains(e.TradeOffer.Id))
             {
-                TradeOfferStatusEventHandler handler = TradeOfferNeedsConfirmation;
+                var handler = TradeOfferNeedsConfirmation;
                 if (handler != null)
                 {
                     handler(this, e);
                 }
-                AwaitingConfirmationTradeOffers.Add(e.TradeOffer.Id);
+                _awaitingConfirmationTradeOffers.Add(e.TradeOffer.Id);
             }
         }
 
@@ -1202,7 +1180,7 @@ namespace SteamAPI
 
         private static string RetryWebRequest(SteamWeb steamWeb, string url, string method, NameValueCollection data, bool ajax = false, string referer = "")
         {
-            for (int i = 0; i < 10; i++)
+            for (var i = 0; i < 10; i++)
             {
                 try
                 {
@@ -1236,7 +1214,7 @@ namespace SteamAPI
                     }
                     catch
                     {
-
+                        // ignored
                     }
                 }
                 catch (Exception ex)
