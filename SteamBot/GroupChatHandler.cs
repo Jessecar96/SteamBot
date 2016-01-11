@@ -20,7 +20,8 @@ using Google.GData.Spreadsheets;
 using SimpleFeedReader;
 using Google.Apis.Customsearch;
 using Google.Apis.Services;
-using Newtonsoft.Json.Linq; 
+using Newtonsoft.Json.Linq;
+
 
 
 namespace SteamBot
@@ -36,6 +37,8 @@ namespace SteamBot
         private int MOTDPosted = 0;
         double MOTDHourInterval = 1;
         public static string MOTD = null;
+        public static string MOTDSetter = null;
+
 
         public class ExtraSettings
         {
@@ -78,6 +81,7 @@ namespace SteamBot
         public string UploadCheckCommand = "!uploadcheck";
         public string ServerListUrl = groupchatsettings["MapListUrl"];
         public static bool EnableRSS = true;
+   
 
         public static string PreviousMap1 = " ";
         public static string PreviousMap2 = " ";
@@ -85,6 +89,8 @@ namespace SteamBot
         public static bool SpreadsheetSync = true;
         public static bool SyncRunning = false;
         public static bool DoOnce = true;
+
+        public static string SteamIDCommand = "!SteamID";
 
         public override void OnTradeClose()
         {
@@ -209,14 +215,17 @@ namespace SteamBot
                 Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), 27015);
                 if ((ServerData.Map != PreviousData[count]) && ServerData.Players > 2)
                 {
-                    Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true);
-                    Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item3 + "!");
-                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " " + ServerData.Players + "/" + ServerData.MaxPlayers);
+                    Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true , null);
+                    Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item1 + "!");
+                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " on the " + ServerAddress.Item1 + " " + ServerData.Players + "/" + ServerData.MaxPlayers);
+                   
+                    SpreadsheetSync = true;
                 }
                 PreviousData[count] = ServerData.Map;
                 count = count + 1;
             }
-            SpreadsheetSync = true;
+
+            
         }
 
         /// <summary>
@@ -378,6 +387,7 @@ namespace SteamBot
                 else
                 {
                     string send = message.Remove(0, 9);
+                    MOTDSetter = Bot.SteamFriends.GetFriendPersonaName(sender) + " " + sender;
                     MOTD = send;
                     return "MOTD Set to: " + send;
                 }
@@ -458,10 +468,34 @@ namespace SteamBot
                     return Entry.Value;
                 }
             }
+            if (message.StartsWith(SteamIDCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string par1 = message.Remove(0, SteamIDCommand.Length + 1);
+                if (par1 != null)
+                {
+                    return GetSteamIDFromUrl(par1);
+                }
+                else {
+                    return "URL is missing, please add a url";
+                }
+            }
+            if (message.StartsWith("!MySteamID", StringComparison.OrdinalIgnoreCase))
+            {
+                return sender.ToString();
+            }
             if (message.StartsWith("!Join", StringComparison.OrdinalIgnoreCase))
             {
                 Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
             }
+            if (message.StartsWith("!MOTDSetter", StringComparison.OrdinalIgnoreCase))
+            {
+                return MOTDSetter;
+            }
+            if (message.StartsWith("!MOTDTick", StringComparison.OrdinalIgnoreCase))
+            {
+                return MOTDTick.ToString();
+            }
+
             if (message.StartsWith("!Motd", StringComparison.OrdinalIgnoreCase))
             {
                 return MOTD;
@@ -483,8 +517,9 @@ namespace SteamBot
             }
             if (message.StartsWith(deletecommand, StringComparison.OrdinalIgnoreCase))
             {
-                string map = message.Remove(0, deletecommand.Length + 1 );
-                Tuple<string, SteamID> removed = ImpRemove(map, sender, false);
+                string[] Words = message.Split(' ');
+                string[] Reason = message.Split(new string[] { Words[1] }, StringSplitOptions.None);
+                Tuple<string, SteamID> removed = ImpRemove(Words[1], sender, false,Reason[1]);
                 return "Removed map: " + removed.Item1;
             }
             if (message.StartsWith(impCommand, StringComparison.OrdinalIgnoreCase)) {
@@ -515,7 +550,7 @@ namespace SteamBot
                 string[] FullMessageWordArray = message.Split(' '); //Splits the message by every space
                 if (FullMessageWordArray.Length <= 2)  //Checks if there are less than 2 words, the previous map and map to change
                 {
-                    return "!impupdate <PreviousMapName> <NewMapName> <url> <notes> is the command.";
+                    return "!updatemap <PreviousMapName> <NewMapName> <url> <notes> is the command.";
                 }
 
                 string[] FullMessageCutArray = FullMessageWordArray.Skip(2).ToArray();
@@ -665,7 +700,7 @@ namespace SteamBot
         /// Removes specified map from the database.
         /// Checks if the user is an admin or the setter
         /// </summary>
-        public Tuple<string,SteamID> ImpRemove (string map , SteamID sender , bool ServerRemove)
+        public Tuple<string,SteamID> ImpRemove (string map , SteamID sender , bool ServerRemove, string DeletionReason)
 		{
 			Dictionary<string,Tuple<string,SteamID,string,bool> > NewMaplist = new Dictionary<string, Tuple<string, SteamID,string,bool>>();
 			string removed = "The map was not found or you do not have sufficient privileges"; 
@@ -676,7 +711,11 @@ namespace SteamBot
 					removed = map;
 					userremoved = item.Value.Item2;
 					SpreadsheetSync = true;
-				} else {
+                    if (DeletionReason != null)
+                    {
+                        Bot.SteamFriends.SendChatMessage(item.Value.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + item.Key + " was removed from the map list, reason given:" + DeletionReason);
+                    }
+                } else {
 					NewMaplist.Add (item.Key, item.Value);
 				}
 			}
@@ -689,12 +728,40 @@ namespace SteamBot
 			}
 		}
 
-		/// <summary>
-		/// Checks if the Map is uploaded to a server
-		/// </summary>
-		/// <returns><c>true</c>, If the map was uploaded, <c>false</c> False if it isn't.</returns>
-		/// <param name="Mapname">Mapname</param>
-		public bool UploadCheck(string Mapname){
+
+        public string GetSteamIDFromUrl (string url)
+        {
+           WebClient client = new WebClient();
+           string SteamPage = client.DownloadString(url);
+            
+            string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
+            
+            string[] SteamIDReturn = SteamIDPreCut[1].Split(new string[] { "\"" }, StringSplitOptions.None);
+            Log.Interface(SteamIDReturn[0]);
+
+            var Steam64Int = long.Parse(SteamIDReturn[0]);
+
+            var steamId64 = Steam64Int;
+
+            var universe = (steamId64 >> 56) & 0xFF;
+            if (universe == 1) universe = 0;
+
+            var accountIdLowBit = steamId64 & 1;
+
+            var accountIdHighBits = (steamId64 >> 1) & 0x7FFFFFF;
+
+            // should hopefully produce "STEAM_0:0:35928448"
+            var legacySteamId = "STEAM_" + universe + ":" + accountIdLowBit + ":" + accountIdHighBits;
+
+            return legacySteamId;
+        }
+
+        /// <summary>
+        /// Checks if the Map is uploaded to a server
+        /// </summary>
+        /// <returns><c>true</c>, If the map was uploaded, <c>false</c> False if it isn't.</returns>
+        /// <param name="Mapname">Mapname</param>
+        public bool UploadCheck(string Mapname){
 		if (Mapname.Contains("."))
 			{
 				Mapname = (Mapname.Split (new string[] { "." }, System.StringSplitOptions.None)).First();
@@ -770,7 +837,7 @@ namespace SteamBot
 		/// 
 		public void SheetSync (bool ForceSync)
 		{
-			Bot.SteamFriends.SetPersonaName ("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
+			Bot.SteamFriends.SetPersonaName ("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName );
 			
 			if ((OnlineSync.StartsWith ("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) || ForceSync) {
 				SyncRunning = true;
