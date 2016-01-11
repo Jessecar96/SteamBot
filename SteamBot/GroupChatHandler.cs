@@ -493,7 +493,7 @@ namespace SteamBot
             }
             if (message.StartsWith("!MOTDTick", StringComparison.OrdinalIgnoreCase))
             {
-                return MOTDTick.ToString();
+                return MOTDPosted.ToString();
             }
 
             if (message.StartsWith("!Motd", StringComparison.OrdinalIgnoreCase))
