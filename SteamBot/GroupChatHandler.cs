@@ -78,6 +78,7 @@ namespace SteamBot
         public string IntegrationName = groupchatsettings["IntegrationName"];
         public static string MapStoragePath = groupchatsettings["MapStoragePath"];
 
+
         public string UploadCheckCommand = "!uploadcheck";
         public string ServerListUrl = groupchatsettings["MapListUrl"];
         public static bool EnableRSS = true;
@@ -91,13 +92,31 @@ namespace SteamBot
         public static bool DoOnce = true;
 
         public static string SteamIDCommand = "!SteamID";
+        public static string BanListFilePath = "Banlist.json";
+        public static string[] Debug = { "debug_01", "debug_02","debug_03"};
+
 
         public override void OnTradeClose()
         {
             base.OnTradeClose();
         }
 
+        public static Dictionary<string, int> BanList = BanListFile(BanListFilePath);
 
+        public static Dictionary<string, int> BanListFile(string BanListFilePath)
+        {
+            if (File.Exists(BanListFilePath))
+
+            {
+                return JsonConvert.DeserializeObject<Dictionary<string, int>>(System.IO.File.ReadAllText(@BanListFilePath));
+            }
+            else {
+                Dictionary<string, int> EmptyBanListFile = new Dictionary<string, int>();
+                System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(EmptyBanListFile));
+                return EmptyBanListFile;
+            }
+        }
+        
 
         public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = Maplistfile(MapStoragePath);
 
@@ -177,15 +196,20 @@ namespace SteamBot
                 Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, MOTD);
                 Bot.SteamFriends.SetPersonaName("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
             }
+            foreach (KeyValuePair<string, int> Key in BanList)
+            {
+                BanList.Remove(Key.Key);
+                BanList.Add(Key.Key, Key.Value - 1);
+            }
+            System.IO.File.WriteAllText(@BanListFilePath, JsonConvert.SerializeObject(BanList));
+    }
 
-        }
-
-        /// <summary>
-        /// The Main Timer's method, executed per tick
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        public void TickTasks(object sender, EventArgs e)
+    /// <summary>
+    /// The Main Timer's method, executed per tick
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    public void TickTasks(object sender, EventArgs e)
         {
             if (SpreadsheetSync)
             {
@@ -351,10 +375,19 @@ namespace SteamBot
             if (admincheck(sender)) {
                 adminresponse = admincommands(sender, message);
             }
-            string response = Chatcommands(chatID, sender, message.ToLower());
+            string response = null;
+            response = Chatcommands(chatID, sender, message.ToLower());
             if (response != null) {
-                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
-            }
+                if (!BanList.ContainsKey(sender.ToString()) || admincheck(sender))
+                {
+                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
+                }
+                else
+                {
+                    Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, "You are currently banned from using the bot, hours remaining: " + BanList[sender.ToString()]);
+                }
+
+                }
             if (adminresponse != null) {
                 Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, adminresponse);
             }
@@ -367,6 +400,13 @@ namespace SteamBot
         /// <param name="message">The message sent</param>
         public string admincommands(SteamID sender, string message)
         {
+            message.Replace("  ", " ");
+           
+            if (Debug.Any(debug => message.StartsWith(debug,StringComparison.OrdinalIgnoreCase)))
+            {
+                return "DOOT DOOT DOOT";
+            }
+            
             if (message.StartsWith("!ReJoin", StringComparison.OrdinalIgnoreCase))
             {
                 Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
@@ -392,6 +432,10 @@ namespace SteamBot
                     return "MOTD Set to: " + send;
                 }
                 return "Make sure to include a MOTD to display!";
+            }
+            if (message.StartsWith("Say my name", StringComparison.OrdinalIgnoreCase))
+            {
+                return Bot.SteamFriends.GetFriendPersonaName(sender);
             }
             if (message.StartsWith("!RemoveMOTD", StringComparison.OrdinalIgnoreCase))
             {
@@ -435,6 +479,47 @@ namespace SteamBot
                 Bot.SteamFriends.LeaveChat(new SteamID(chatroomID));
                 Bot.SteamFriends.JoinChat(new SteamID(chatroomID));
             }
+            if (message.StartsWith("!Unban", StringComparison.OrdinalIgnoreCase))
+            {
+                string[] Words = message.Split(' ');
+                if (Words.Length > 1) ;
+                string Userid = GetSteamIDFromUrl(Words[1], true);
+                if (BanList.ContainsKey(Userid.ToString()))
+                {
+                    BanList.Remove(Userid);
+                    return "The ban has now been lifted";
+                }
+                else
+                {
+                    return "User is not banned";
+                }
+            }
+
+            if (message.StartsWith("!Ban", StringComparison.OrdinalIgnoreCase))
+            {
+                string[] Words = message.Split(' ');
+              
+                if (Words.Length > 3)
+                {
+                    string[] Reason = message.Split(new string[] {" " + Words[2] + " "}, StringSplitOptions.RemoveEmptyEntries);
+                
+                    SteamID Userid = new SteamID(GetSteamIDFromUrl(Words[1], true));
+                  
+                    if (BanList.ContainsKey(Userid.ToString()))
+                    {
+                        return "This user has already been banned, their ban has " + BanList[Userid.ToString()] + " remainig";
+                    }
+                    BanList.Add(Userid.ToString(), int.Parse(Words[2]) * 24 );
+                    System.IO.File.WriteAllText(@BanListFilePath, JsonConvert.SerializeObject(BanList));
+
+                    Bot.SteamFriends.SendChatMessage(Userid, EChatEntryType.ChatMsg,"You have been banned from using all bot features for " + Words[2] + "days. Reason given: " + Reason[1]);
+                    return "Banned user:" + Userid.ToString() + " (" + Bot.SteamFriends.GetFriendPersonaName(Userid).ToString() + ") for: " + Words[2] + " days. Reason given: " + Reason[1];
+                }
+                else
+                {
+                    return "The command is: " + "!Ban" + " <url of user>, Duration in days, Reason";
+                }
+            }
             return null;
         }
 
@@ -473,7 +558,7 @@ namespace SteamBot
                 string par1 = message.Remove(0, SteamIDCommand.Length + 1);
                 if (par1 != null)
                 {
-                    return GetSteamIDFromUrl(par1);
+                    return GetSteamIDFromUrl(par1, true);
                 }
                 else {
                     return "URL is missing, please add a url";
@@ -729,12 +814,13 @@ namespace SteamBot
 		}
 
 
-        public string GetSteamIDFromUrl (string url)
+        public string GetSteamIDFromUrl (string url , bool HumanReadable)
         {
            WebClient client = new WebClient();
            string SteamPage = client.DownloadString(url);
+
             
-            string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
+                string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
             
             string[] SteamIDReturn = SteamIDPreCut[1].Split(new string[] { "\"" }, StringSplitOptions.None);
             Log.Interface(SteamIDReturn[0]);
@@ -750,10 +836,19 @@ namespace SteamBot
 
             var accountIdHighBits = (steamId64 >> 1) & 0x7FFFFFF;
 
+            
             // should hopefully produce "STEAM_0:0:35928448"
-            var legacySteamId = "STEAM_" + universe + ":" + accountIdLowBit + ":" + accountIdHighBits;
-
-            return legacySteamId;
+            if (HumanReadable == true)
+            {
+                var legacySteamId = "STEAM_" + universe + ":" + accountIdLowBit + ":" + accountIdHighBits;
+                return legacySteamId;
+            }
+            else
+            {
+                var legacySteamId =  universe + accountIdLowBit + accountIdHighBits;
+                return legacySteamId.ToString();
+            }
+            
         }
 
         /// <summary>
