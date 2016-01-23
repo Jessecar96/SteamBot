@@ -11,7 +11,7 @@
     <AssemblyName>SteamBot</AssemblyName>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -92,6 +92,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <ProjectReference Include="..\SteamAuth\SteamAuth\SteamAuth.csproj">
+      <Project>{5ad0934e-f6c4-4ae5-83af-c788313b2a87}</Project>
+      <Name>SteamAuth</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SteamTrade\SteamTrade.csproj">
       <Project>{6CEC0333-81EB-40EE-85D1-941363626FC7}</Project>
       <Name>SteamTrade</Name>
