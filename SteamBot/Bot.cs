@@ -714,13 +714,15 @@ namespace SteamBot
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
             {
+                var mobileAuthCode = GetMobileAuthCode();
                 if(IsLoggedIn)
                 {
                     IsLoggedIn = false;
                     CloseTrade();
                     Log.Warn("Disconnected from Steam Network!");
-                }
-
+				} else if(string.IsNullOrEmpty(mobileAuthCode)) {						
+					Thread.Sleep(60 * 1000);
+				}
                 SteamClient.Connect ();
             });
             #endregion
