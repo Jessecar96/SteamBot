@@ -1091,6 +1091,8 @@ namespace SteamBot
         /// </summary>
         /// <param name="steamId">Steam ID of user you want to send a trade offer to</param>
         /// <param name="token">User's trade token. Can be an empty string if user is on bot's friends list.</param>
+        /// <exception cref="NullReferenceException">Thrown when Steam returns an empty response.</exception>
+        /// <exception cref="TradeOfferEscrowDurationParseException">Thrown when the user is unavailable for trade or Steam returns invalid data.</exception>
         /// <returns>TradeOfferEscrowDuration</returns>
         public TradeOfferEscrowDuration GetEscrowDuration(SteamID steamId, string token)
         {
@@ -1116,6 +1118,8 @@ namespace SteamBot
         /// Get duration of escrow in days. Call this after receiving a trade offer.
         /// </summary>
         /// <param name="tradeOfferId">The ID of the trade offer</param>
+        /// <exception cref="NullReferenceException">Thrown when Steam returns an empty response.</exception>
+        /// <exception cref="TradeOfferEscrowDurationParseException">Thrown when the user is unavailable for trade or Steam returns invalid data.</exception>
         /// <returns>TradeOfferEscrowDuration</returns>
         public TradeOfferEscrowDuration GetEscrowDuration(string tradeOfferId)
         {
@@ -1136,7 +1140,16 @@ namespace SteamBot
             var theirM = Regex.Match(resp, @"g_daysTheirEscrow(?:[\s=]+)(?<days>[\d]+);", RegexOptions.IgnoreCase);
             if (!myM.Groups["days"].Success || !theirM.Groups["days"].Success)
             {
-                throw new TradeOfferEscrowDurationParseException();
+                var steamErrorM = Regex.Match(resp, @"<div id=""error_msg"">([^>]+)<\/div>", RegexOptions.IgnoreCase);
+                if (steamErrorM.Groups.Count > 1)
+                {
+                    var steamError = Regex.Replace(steamErrorM.Groups[1].Value.Trim(), @"\t|\n|\r", ""); ;
+                    throw new TradeOfferEscrowDurationParseException(steamError);
+                }
+                else
+                {
+                    throw new TradeOfferEscrowDurationParseException(string.Empty);
+                }
             }
 
             return new TradeOfferEscrowDuration()
@@ -1151,7 +1164,11 @@ namespace SteamBot
             public int DaysMyEscrow { get; set; }
             public int DaysTheirEscrow { get; set; }
         }
-        public class TradeOfferEscrowDurationParseException : Exception { }
+        public class TradeOfferEscrowDurationParseException : Exception
+        {
+            public TradeOfferEscrowDurationParseException() : base() { }
+            public TradeOfferEscrowDurationParseException(string message) : base(message) { }
+        }
 
         #region Background Worker Methods
 
