@@ -93,7 +93,7 @@ namespace SteamTrade.TradeOffer
             IsOurOffer = offer.IsOurOffer;
             ExpirationTime = offer.ExpirationTime;
             TimeCreated = offer.TimeCreated;
-            TimeUpdated = TimeUpdated;
+            TimeUpdated = offer.TimeUpdated;
             Message = offer.Message;
             Items = new TradeStatus(myAssets, theirAssets);
         }

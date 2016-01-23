@@ -80,6 +80,7 @@ namespace SteamBot
 
             string AuthSet = "auth";
             string ExecCommand = "exec";
+            string InputCommand = "input";
 
             // this loop is needed to keep the botmode console alive.
             // instead of just sleeping, this loop will handle console input
@@ -104,6 +105,10 @@ namespace SteamBot
                     else if (cs[0].Equals(ExecCommand, StringComparison.CurrentCultureIgnoreCase))
                     {
                         b.HandleBotCommand(c.Remove(0, cs[0].Length + 1));
+                    }
+                    else if (cs[0].Equals(InputCommand, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        b.HandleInput(c.Remove(0, cs[0].Length + 1));
                     }
                 }
             }

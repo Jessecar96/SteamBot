@@ -39,7 +39,10 @@ namespace SteamBot
                                              AuthSet),
                         new BotManagerOption("exec", 
                                              "exec (X) (Y) where X = the username or index of the bot and Y = your custom command to execute",
-                                             ExecCommand)
+                                             ExecCommand),
+                        new BotManagerOption("input",
+                                             "input (X) (Y) where X = the username or index of the bot and Y = your input",
+                                             InputCommand)
                     };
         }
 
@@ -190,6 +193,46 @@ namespace SteamBot
                     if (manager.ConfigObject.Bots[index].Username.Equals(cs[0], StringComparison.CurrentCultureIgnoreCase))
                     {
                         manager.SendCommand(index, command);
+                        return;
+                    }
+                }
+            }
+            // Print error
+            Console.WriteLine("Error: Bot " + cs[0] + " not found.");
+        }
+
+        private void InputCommand(string inpt)
+        {
+            inpt = inpt.Trim();
+
+            var cs = inpt.Split(' ');
+
+            if (cs.Length < 2)
+            {
+                Console.WriteLine("Error: No input given.");
+                return;
+            }
+
+            // Take the rest of the input as is
+            var input = inpt.Remove(0, cs[0].Length + 1);
+
+            int index;
+            // Try index first then search usernames
+            if (int.TryParse(cs[0], out index) && (index < manager.ConfigObject.Bots.Length))
+            {
+                if (manager.ConfigObject.Bots.Length > index)
+                {
+                    manager.SendInput(index, input);
+                    return;
+                }
+            }
+            else if (!String.IsNullOrEmpty(cs[0]))
+            {
+                for (index = 0; index < manager.ConfigObject.Bots.Length; index++)
+                {
+                    if (manager.ConfigObject.Bots[index].Username.Equals(cs[0], StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        manager.SendInput(index, input);
                         return;
                     }
                 }

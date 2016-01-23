@@ -87,10 +87,10 @@ namespace SteamBot
             Log.Success("Trade Complete.");
         }
 
-        public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID)
+        public override void OnTradeAwaitingConfirmation(long tradeOfferID)
         {
-            Log.Warn("Trade ended awaiting email confirmation");
-            SendChatMessage("Please complete the email confirmation to finish the trade");
+            Log.Warn("Trade ended awaiting confirmation");
+            SendChatMessage("Please complete the confirmation to finish the trade");
         }
 
         public override void OnTradeAccept() 
