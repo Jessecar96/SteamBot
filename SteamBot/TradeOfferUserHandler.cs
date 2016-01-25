@@ -28,12 +28,12 @@ namespace SteamBot
 
                 //do validation logic etc
                 if (DummyValidation(myItems, theirItems))
-                {
-                    string tradeid;
-                    if (offer.Accept(out tradeid))
-                    {
+                {                    
+                    TradeOfferAcceptResponse acceptResp = offer.Accept();
+                    if (acceptResp.Accepted)
+                    {                        
                         Bot.AcceptAllMobileTradeConfirmations();
-                        Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
+                        Log.Success("Accepted trade offer successfully : Trade ID: " + acceptResp.TradeId);
                     }
                 }
                 else

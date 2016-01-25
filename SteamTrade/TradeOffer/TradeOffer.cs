@@ -155,34 +155,46 @@ namespace SteamTrade.TradeOffer
 
         /// <summary>
         /// Accepts the current offer
-        /// </summary>
-        /// <param name="tradeId">the tradeid if successful</param>
-        /// <returns>true if successful, otherwise false</returns>
-        public bool Accept(out string tradeId)
+        /// </summary>        
+        /// <returns>TradeOfferAcceptResponse object containing accept result</returns>
+        public TradeOfferAcceptResponse Accept()
         {
-            tradeId = String.Empty;
             if (TradeOfferId == null)
             {
-                Debug.WriteLine("Can't accept a trade without a tradeofferid");
-                throw new ArgumentException("TradeOfferId");
+                return new TradeOfferAcceptResponse { TradeError = "Can't accept a trade without a tradeofferid" };                
             }
             if (!IsOurOffer && OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                return Session.Accept(TradeOfferId, out tradeId);
+                return Session.Accept(TradeOfferId);
             }
             //todo: log wrong state
-            Debug.WriteLine("Can't accept a trade that is not active");
-            return false;
+            return new TradeOfferAcceptResponse { TradeError = "Can't accept a trade that is not active" };            
         }
 
+
         /// <summary>
-        /// Accepts the current offer
+        /// Accepts the current offer. Old signature for compatibility
         /// </summary>
+        /// <param name="tradeId">the tradeid if successful</param>
         /// <returns>true if successful, otherwise false</returns>
-        public bool Accept()
+        [Obsolete("Use TradeOfferAcceptResponse Accept()")]
+        public bool Accept(out string tradeId)
         {
-            string tradeId;
-            return Accept(out tradeId);
+            tradeId = String.Empty;
+            if (TradeOfferId == null) 
+            {   
+                //throw like original function did             
+                throw new ArgumentException("TradeOfferId");
+            }
+            else 
+            {
+                TradeOfferAcceptResponse result = Accept();
+                if (result.Accepted) 
+                {
+                    tradeId = result.TradeId;
+                }
+                return result.Accepted;
+            }            
         }
 
         /// <summary>
