@@ -139,10 +139,6 @@
     <Compile Include="SimpleUserHandler.cs" />
     <Compile Include="GroupChatHandler.cs" />
     <Compile Include="ChatMember.cs" />
-    <Compile Include="VBot\BackgroundWork.cs" />
-    <Compile Include="VBot\UserDatabaseHandler.cs" />
-    <Compile Include="VBot\ImpMaster.cs" />
-    <Compile Include="VBot\VBotCommands.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

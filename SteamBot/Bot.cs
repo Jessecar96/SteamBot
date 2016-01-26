@@ -570,11 +570,11 @@ namespace SteamBot
 					//Sets up dictionary for the JSON file	
 					
 					//Adds a new entry to the dictionary, or overwrites an existing	
-						if (UserDatabaseHandler.UserDatabase.ContainsKey(User)) //if it already exists, it deletes it so it can update the data
+						if (GroupChatHandler.UserDatabase.ContainsKey(User)) //if it already exists, it deletes it so it can update the data
 							{
-                            UserDatabaseHandler.UserDatabase.Remove(User);
+                                  GroupChatHandler.UserDatabase.Remove(User);
 							}
-                        UserDatabaseHandler.UserDatabase.Add(User,Status);
+                    GroupChatHandler.UserDatabase.Add(User,Status);
 					//Resaves it into a usable JSON format to later save
 					
 					//Shows on the screen	
