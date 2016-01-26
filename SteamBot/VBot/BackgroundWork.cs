@@ -92,7 +92,7 @@ namespace SteamBot
 
             foreach (Tuple<string, string, string, Int32> ServerAddress in Servers)
             {
-                Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), 27015);
+                Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), ServerAddress.Item4);
                 if ((ServerData.Map != PreviousData[count]) && ServerData.Players > 2)
                 {
                     Tuple<string, SteamID> Mapremoval = ImpMaster.ImpRemove(ServerData.Map, 0, true, null);
@@ -142,6 +142,7 @@ namespace SteamBot
         /// <param name="e"></param>
         public static void TickTasks(object sender, EventArgs e)
         {
+            Bot.SteamFriends.SetPersonaName("[" + ImpMaster.Maplist.Count.ToString() + "] " + Bot.DisplayName);
             if (GroupChatHandler.SpreadsheetSync)
             {
                 GroupChatHandler.SpreadsheetSync = false;

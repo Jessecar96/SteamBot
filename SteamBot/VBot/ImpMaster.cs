@@ -9,10 +9,49 @@ using Newtonsoft.Json;
 
 namespace SteamBot
 {
-    class ImpMaster
+    public class ImpMaster
     {
-        public static string MapStoragePath = GroupChatHandler.groupchatsettings["MapStoragePath"];
-        public static Bot Bot { get; set; }
+
+        //public static string MapStoragePath = GroupChatHandler.groupchatsettings["MapStoragePath"];
+
+        public static string MapStoragePath { get; set; }
+
+        bool SpreadsheetSync { get; set; }
+
+        public static SpreadSheetSyncDelegate SpreadSheetSyncDelegatePassedMethod { get; set; }
+
+        public delegate bool SpreadSheetSyncDelegate(bool UpdateSheet);
+
+        public static bool SpreadSheetSyncrhonise(bool UpdateSheet, SpreadSheetSyncDelegate SpreadSheetSynchroniser)
+        {
+            return SpreadSheetSynchroniser(UpdateSheet);
+        }
+
+
+        public static FileUploadCheckDelegate FileUploadCheckPassedMethod { get; set; }
+
+        public delegate bool FileUploadCheckDelegate(string map);
+
+        public static bool FileUploadCheck(string map, FileUploadCheckDelegate UploadChecker)
+        {
+            return UploadChecker(map);
+        }
+
+
+
+        public static AdminVerifyDelegate AdminVerifyPassedMethod { get; set; }
+
+        public delegate bool AdminVerifyDelegate(SteamID User);
+
+        public static bool AdminVerification(SteamID user, AdminVerifyDelegate AdminVerify)
+        {
+            return AdminVerify(user);
+        }
+
+
+        
+        
+
         public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = Maplistfile(MapStoragePath);
 
         public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplistfile(string MapStoragePath)
@@ -27,6 +66,16 @@ namespace SteamBot
                 System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(EmptyMaplist));
                 return EmptyMaplist;
             }
+        }
+
+        public static Dictionary<string, Tuple<string, SteamID, string, bool>> GetMapList ()
+        {
+            if (File.Exists(MapStoragePath))
+
+            {
+                return JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID, string, bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
+            }
+            return null;
         }
 
         /// <summary>
@@ -51,13 +100,18 @@ namespace SteamBot
             }
             else {
                 //Adds the entry
-                entrydata.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, GroupChatHandler.UploadCheck(map)));
+                entrydata.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, FileUploadCheck(map,FileUploadCheckPassedMethod)));
+               
                 //Saves the data
                 Maplist = entrydata;
                 response = "Added: " + map;
             }
             System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(entrydata));
-            GroupChatHandler.SpreadsheetSync = true;
+
+            //GroupChatHandler.SpreadsheetSync = true;
+            SpreadSheetSyncrhonise(true,SpreadSheetSyncDelegatePassedMethod);
+
+
             return response;
         }
 
@@ -78,7 +132,7 @@ namespace SteamBot
             }
             int EntryCount = 0;
 
-            if (UserDatabaseHandler.admincheck(sender) == true | sender == Maplist[maptochange].Item2)
+            if (AdminVerification(sender, AdminVerifyPassedMethod) == true | sender == Maplist[maptochange].Item2)
             {
                 foreach (KeyValuePair<string, Tuple<string, SteamID, string, bool>> entry in Maplist)
                 {
@@ -105,14 +159,29 @@ namespace SteamBot
                 }
                 else
                 {
-                    NewMaplist.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, GroupChatHandler.UploadCheck(map)));
+                    NewMaplist.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, FileUploadCheck(map, FileUploadCheckPassedMethod)));
                     NewMaplist.Add(OldMaplistEntry.Key, OldMaplistEntry.Value);
                 }
                 Maplist = NewMaplist;
                 Maplist.Remove(maptochange);
                 System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(Maplist));
-                GroupChatHandler.SpreadsheetSync = true;
+
+                //GroupChatHandler.SpreadsheetSync = true;
+                SpreadSheetSyncrhonise(true, SpreadSheetSyncDelegatePassedMethod);
             }
+        }
+        public static void WipeAllMaps ()
+        {
+
+            Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+
+            System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(Maplist));
+
+            Maplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+
+            SpreadSheetSyncrhonise(true, SpreadSheetSyncDelegatePassedMethod);
+
+            return ;
         }
 
         /// <summary>
@@ -124,17 +193,20 @@ namespace SteamBot
             Dictionary<string, Tuple<string, SteamID, string, bool>> NewMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
             string removed = "The map was not found or you do not have sufficient privileges";
             SteamID userremoved = 0;
+
             foreach (var item in Maplist)
             {
                 //TODO DEBUG
-                if (item.Key == map && (UserDatabaseHandler.admincheck(sender) || sender == item.Value.Item2 || ServerRemove))
+                if (item.Key == map && (AdminVerification(sender, AdminVerifyPassedMethod) || sender == item.Value.Item2 || ServerRemove))
                 {
                     removed = map;
                     userremoved = item.Value.Item2;
-                    GroupChatHandler.SpreadsheetSync = true;
+                    //GroupChatHandler.SpreadsheetSync = true;
+                    SpreadSheetSyncrhonise(true, SpreadSheetSyncDelegatePassedMethod);
+
                     if (DeletionReason != null)
                     {
-                        Bot.SteamFriends.SendChatMessage(item.Value.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + item.Key + " was removed from the map list, reason given:" + DeletionReason);
+                        //Bot.SteamFriends.SendChatMessage(item.Value.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + item.Key + " was removed from the map list, reason given:" + DeletionReason);
                     }
                 }
                 else {
@@ -142,8 +214,11 @@ namespace SteamBot
                 }
             }
             System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(NewMaplist));
+
             Tuple<string, SteamID> RemoveInformation = new Tuple<string, SteamID>(removed, userremoved);
+
             Maplist = NewMaplist;
+
             return RemoveInformation;
         }
       

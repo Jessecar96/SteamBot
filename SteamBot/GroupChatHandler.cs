@@ -1,5 +1,4 @@
-﻿
-using SteamKit2;
+﻿using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
 using SteamTrade.TradeWebAPI;
@@ -30,7 +29,7 @@ namespace SteamBot
     {
         //JSON files store data, check if this works later. 
 
-      
+
 
         public class ExtraSettings
         {
@@ -40,6 +39,13 @@ namespace SteamBot
             public Dictionary<string, string> Settings { get; set; }
             public Dictionary<string, string> InstantReplies { get; set; }
         }
+
+
+        public ImpMaster ImpMasterHandler = new ImpMaster();
+
+        
+
+
         public static UserDatabaseHandler UserDatabase { get; set; }
         public string CLIENT_ID = groupchatsettings["CLIENT_ID"];
         public string CLIENT_SECRET = groupchatsettings["CLIENT_SECRET"];
@@ -57,19 +63,20 @@ namespace SteamBot
         public static string[] StoredFeeditems = new string[Feeds.Length];
 
         public static Dictionary<string, string> groupchatsettings = ExtraSettingsData.Settings;
-        
-        
+
+
         public string impCommand = groupchatsettings["impCommand"];
         public string mapListCommand = groupchatsettings["mapListCommand"];
         public string deletecommand = groupchatsettings["deletecommand"];
         public string clearcommand = groupchatsettings["clearcommand"];
         public static string chatroomID = groupchatsettings["chatroomID"];
+        public static string HelpLink = groupchatsettings["HelpLink"];
 
         public static string OnlineSearch = groupchatsettings["OnlineSearch"];
         public static string CX = groupchatsettings["CX"];
         public static string APIKEY = groupchatsettings["APIKEY"];
-       
-      
+
+
         public static string OnlineSync = groupchatsettings["OnlineSync"];
 
         public static string MapStoragePath = groupchatsettings["MapStoragePath"];
@@ -78,21 +85,21 @@ namespace SteamBot
 
         public string UploadCheckCommand = "!uploadcheck";
         public static string ServerListUrl = groupchatsettings["MapListUrl"];
-        public static bool EnableRSS = true;
-   
+        public static bool EnableRSS = false;
+
 
         public static string PreviousMap1 = " ";
         public static string PreviousMap2 = " ";
         public static string DebugPreviousMap1 = " ";
         public static bool SpreadsheetSync = true;
-        
+
         public static bool DoOnce = true;
 
         public static string SteamIDCommand = "!SteamID";
-        
-       
-        public VBotCommands VBotCommands { get; private set; }
-       
+
+
+        public static VBotCommands VBotCommander { get; private set; }
+
 
         public static SteamID Groupchat = ulong.Parse(chatroomID);
 
@@ -101,8 +108,8 @@ namespace SteamBot
             base.OnTradeClose();
         }
 
-        
-        
+
+
 
         public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = Maplistfile(MapStoragePath);
 
@@ -112,22 +119,26 @@ namespace SteamBot
 
             {
                 return JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID, string, bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
-            } else {
+            }
+            else {
                 Dictionary<string, Tuple<string, SteamID, string, bool>> EmptyMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
                 System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(EmptyMaplist));
                 return EmptyMaplist;
             }
         }
-       
-       
-       
+
         /// <summary>
         /// The bot's actions upon entering chat
         /// </summary>
         /// <param name="callback"></param>
-		public void OnChatEnter(SteamKit2.SteamFriends.ChatEnterCallback callback) {
+        public void OnChatEnter(SteamKit2.SteamFriends.ChatEnterCallback callback)
+        {
             Log.Interface("Entered Chat");
         }
+
+        public static string[] newstring = { "1", "2" };
+
+        public static Dictionary<string, Tuple<string, string[]>> Dictionary = new Dictionary<string, Tuple<string, string[]>>();
 
         /// <summary>
         /// The bot's actions upon logging in
@@ -135,11 +146,11 @@ namespace SteamBot
         /// <param name="callback"></param>
         public override void OnLoginCompleted()
         {
-            Log.Interface("Use 'exec 0 join' to join a chatroom");
-            Log.Interface("RSS Enabled By default");
+
+
             if (DoOnce == true)
             {
-
+                Bot.SteamFriends.SetPersonaName("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
                 BackgroundWork.InitTimer();
                 BackgroundWork.RSSTimer();
                 BackgroundWork.InitMOTDTimer();
@@ -159,7 +170,8 @@ namespace SteamBot
                 string send = command.Remove(0, 3);
                 Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, send); //Posts to the chat the entry put in by the bot
             }
-            if (command.StartsWith("Join", StringComparison.OrdinalIgnoreCase)) {
+            if (command.StartsWith("Join", StringComparison.OrdinalIgnoreCase))
+            {
                 Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
                 Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
             }
@@ -203,21 +215,32 @@ namespace SteamBot
         /// </summary>
         /// <param name="message"> The message itself</param>
         /// <param name="type"></param>
-        public override void OnMessage(string message, EChatEntryType type) {
-            SteamID ChatMsg = OtherSID;
+        public override void OnMessage(string message, EChatEntryType type)
+        {
+
+
+            string response = null;
             string adminresponse = null;
-            string response = VBotCommands.Chatcommands(ChatMsg, ChatMsg, message.ToLower());
 
-            if (response != null)
+            if (!UserDatabaseHandler.BanList.ContainsKey(OtherSID.ToString()) || UserDatabaseHandler.admincheck(OtherSID))
             {
-                SendChatMessage(response);
+                response = VBotCommands.Chatcommands(OtherSID, OtherSID, message.ToLower(), Bot);
+                if (response != null)
+                {
+                    SendChatMessage(response);
+                }
+            }
+            else
+            {
+                SendChatMessage("You are currently banned from using the Bot");
             }
 
-            if (UserDatabaseHandler.admincheck(OtherSID)) {
-               
-            //    adminresponse = SteamBot.VBot.VBotCommands.admincommands(OtherSID, message);
+            if (UserDatabaseHandler.admincheck(OtherSID))
+            {
+                adminresponse = VBotCommands.admincommands(OtherSID, message, Bot);
             }
-            if (adminresponse != null) {
+            if (adminresponse != null)
+            {
                 SendChatMessage(adminresponse);
             }
         }
@@ -229,41 +252,44 @@ namespace SteamBot
         /// <param name="message">The message</param>
 		public override void OnChatRoomMessage(SteamID chatID, SteamID sender, string message)
         {
+            Bot.SteamFriends.SetPersonaName("[" + ImpMaster.Maplist.Count.ToString() + "] " + Bot.DisplayName);
             BackgroundWork.GhostCheck = 120;
             string adminresponse = null;
-            if (UserDatabaseHandler.admincheck(sender)) {
-                adminresponse = VBotCommands.admincommands(sender, message);
-            }
             string response = null;
-            response = VBotCommands.Chatcommands(chatID, sender, message.ToLower());
-            if (response != null) {
-                if (!UserDatabaseHandler.BanList.ContainsKey(sender.ToString()) || UserDatabaseHandler.admincheck(sender))
-                {
-                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
-                }
-                else
-                {
-                    Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, "You are currently banned from using the bot, hours remaining: " + UserDatabaseHandler.BanList[sender.ToString()]);
-                }
 
-                }
-            if (adminresponse != null) {
+            if (UserDatabaseHandler.admincheck(sender))
+            {
+                adminresponse = VBotCommands.admincommands(sender, message, Bot);
+            }
+            if (!UserDatabaseHandler.BanList.ContainsKey(sender.ToString()) || UserDatabaseHandler.admincheck(sender))
+            {
+                response = VBotCommands.Chatcommands(chatID, sender, message.ToLower(), Bot);
+            }
+
+            if (response != null)
+            {
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
+            }
+
+            if (adminresponse != null)
+            {
+
                 Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, adminresponse);
             }
         }
 
-        
-        
-        public static string GetSteamIDFromUrl (string url , bool HumanReadable)
-        {
-           WebClient client = new WebClient();
-           string SteamPage = client.DownloadString(url);
 
-            
-                string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
-            
+
+        public static string GetSteamIDFromUrl(string url, bool HumanReadable)
+        {
+            WebClient client = new WebClient();
+            string SteamPage = client.DownloadString(url);
+
+
+            string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
+
             string[] SteamIDReturn = SteamIDPreCut[1].Split(new string[] { "\"" }, StringSplitOptions.None);
-           
+
 
             var Steam64Int = long.Parse(SteamIDReturn[0]);
 
@@ -276,7 +302,7 @@ namespace SteamBot
 
             var accountIdHighBits = (steamId64 >> 1) & 0x7FFFFFF;
 
-            
+
             // should hopefully produce "STEAM_0:0:35928448"
             if (HumanReadable == true)
             {
@@ -285,32 +311,12 @@ namespace SteamBot
             }
             else
             {
-                var legacySteamId =  universe + accountIdLowBit + accountIdHighBits;
+                var legacySteamId = universe + accountIdLowBit + accountIdHighBits;
                 return legacySteamId.ToString();
             }
-            
+
         }
 
-        /// <summary>
-        /// Checks if the Map is uploaded to a server
-        /// </summary>
-        /// <returns><c>true</c>, If the map was uploaded, <c>false</c> False if it isn't.</returns>
-        /// <param name="Mapname">Mapname</param>
-        public static bool UploadCheck(string Mapname){
-		if (Mapname.Contains("."))
-			{
-				Mapname = (Mapname.Split (new string[] { "." }, System.StringSplitOptions.None)).First();
-			}
-		WebClient client = new WebClient ();
-		string httpdata = client.DownloadString (ServerListUrl);
-		if (httpdata != null & httpdata.Contains(Mapname))
-			{
-			return true; 
-			}
-		return false; 
-		}
-		
-      
         /// <summary>
         /// Makes a google search, and restricts results to only a single URL.
         /// Returns the URL of the first result
@@ -327,7 +333,34 @@ namespace SteamBot
             }
             return null;
         }
-		
+
+        /// <summary>
+        /// Checks if the Map is uploaded to a server
+        /// </summary>
+        /// <returns><c>true</c>, If the map was uploaded, <c>false</c> False if it isn't.</returns>
+        /// <param name="Mapname">Mapname</param>
+        public static bool UploadCheck(string Mapname)
+        {
+            if (Mapname.Contains("."))
+            {
+                Mapname = (Mapname.Split(new string[] { "." }, System.StringSplitOptions.None)).First();
+            }
+            WebClient client = new WebClient();
+            string httpdata = client.DownloadString(ServerListUrl);
+            if (httpdata != null & httpdata.Contains(Mapname))
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+
+        public void InitialiseImpMaster()
+        {
+
+        }
+
         public GroupChatHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
         public override void OnFriendRemove() { }
@@ -368,4 +401,5 @@ namespace SteamBot
 
     }
 }
+
 
