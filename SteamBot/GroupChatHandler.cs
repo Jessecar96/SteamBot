@@ -81,8 +81,11 @@ namespace SteamBot
 
         public static string MapStoragePath = groupchatsettings["MapStoragePath"];
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> parent of 238c28b... Bot fixes
         public string UploadCheckCommand = "!uploadcheck";
         public static string ServerListUrl = groupchatsettings["MapListUrl"];
         public static bool EnableRSS = false;
@@ -96,7 +99,10 @@ namespace SteamBot
         public static bool DoOnce = true;
 
         public static string SteamIDCommand = "!SteamID";
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 238c28b... Bot fixes
 
         public static VBotCommands VBotCommander { get; private set; }
 
@@ -108,7 +114,10 @@ namespace SteamBot
             base.OnTradeClose();
         }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 238c28b... Bot fixes
 
 
         public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = Maplistfile(MapStoragePath);
@@ -127,6 +136,134 @@ namespace SteamBot
             }
         }
 
+<<<<<<< HEAD
+=======
+            if (!File.Exists(UserDatabase))
+            {
+                System.IO.File.WriteAllText(@UserDatabase, JsonConvert.SerializeObject(new Dictionary<string, EClanPermission>()));
+                Dictionary<string, EClanPermission> UserDatabaseData = new Dictionary<string, EClanPermission>();
+                return UserDatabaseData;
+            }
+            return JsonConvert.DeserializeObject<Dictionary<string, EClanPermission>>(System.IO.File.ReadAllText(@UserDatabase));
+        }
+        SteamID Groupchat = ulong.Parse(chatroomID);
+        /// <summary>
+        /// Initialises the main timer
+        /// </summary>
+        public void InitTimer()
+        {
+            Tick = new Timer();
+            Tick.Elapsed += new ElapsedEventHandler(TickTasks);
+            Tick.Interval = interval; // in miliseconds
+            Tick.Start();
+        }
+
+        /// <summary>
+        /// Initialises the Timer that RSS feeds will be checked on
+        /// </summary>
+        public void RSSTimer()
+        {
+            RSSTick = new Timer();
+            RSSTick.Elapsed += new ElapsedEventHandler(RSSTracker);
+            RSSTick.Interval = 30000; // in miliseconds
+            RSSTick.Start();
+        }
+
+        /// <summary>
+        /// Initialises the MOTD timer
+        /// </summary>
+        public void InitMOTDTimer()
+        {
+            MOTDTick = new Timer();
+            MOTDTick.Elapsed += new ElapsedEventHandler(MOTDPost);
+            MOTDTick.Interval = MOTDHourInterval * 1000 * 60 * 60; // in miliseconds TODO update this to formulate once a day
+            MOTDTick.Start();
+
+        }
+        /// <summary>
+        /// Posts the MOTD to the group chat
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void MOTDPost(object sender, EventArgs e)
+        {
+            if ((MOTD == null) | (MOTDPosted >= 24))
+            {
+                MOTD = null;
+                Log.Interface("No MOTD set");
+                MOTDPosted = 0;
+            }
+            else
+            {
+                MOTDPosted = MOTDPosted + 1;
+                Bot.SteamFriends.SetPersonaName("MOTD");
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, MOTD);
+                Bot.SteamFriends.SetPersonaName("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
+            }
+
+        }
+
+        /// <summary>
+        /// The Main Timer's method, executed per tick
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void TickTasks(object sender, EventArgs e)
+        {
+            if (SpreadsheetSync)
+            {
+                SpreadsheetSync = false;
+                SheetSync(false);
+            }
+            MapChangeTracker();
+            GhostCheck = GhostCheck - 1;
+            if (GhostCheck <= 1)
+            {
+                GhostCheck = 120;
+                Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
+                Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
+            }
+        }
+
+        /// <summary>
+        /// Tracks all maps in the server list and posts to the group when there's a map change
+        /// </summary>
+        public void MapChangeTracker()
+        {
+            int count = 0;
+
+
+            foreach (Tuple<string, string, string, Int32> ServerAddress in Servers)
+            {
+                Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), 27015);
+                if ((ServerData.Map != PreviousData[count]) && ServerData.Players > 2)
+                {
+                    Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true , null);
+                    Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item1 + "!");
+                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " on the " + ServerAddress.Item1 + " " + ServerData.Players + "/" + ServerData.MaxPlayers);
+                   
+                    SpreadsheetSync = true;
+                }
+                PreviousData[count] = ServerData.Map;
+                count = count + 1;
+            }
+
+            
+        }
+
+        /// <summary>
+        /// Queries the server and returns the information
+        /// </summary>
+        /// <param name="ipadress">Ipadress that will be queried</param>
+        /// <param name="port"> The port that will be used, typically 27015 </param> 
+        Steam.Query.ServerInfoResult ServerQuery(System.Net.IPAddress ipaddress, Int32 port)
+        {
+            IPEndPoint ServerIP = new IPEndPoint(ipaddress, port);
+            Steam.Query.Server Information = new Steam.Query.Server(ServerIP);
+            Steam.Query.ServerInfoResult ServerInformation = Information.GetServerInfo().Result;
+            return ServerInformation;
+        }
+>>>>>>> parent of 238c28b... Bot fixes
         /// <summary>
         /// The bot's actions upon entering chat
         /// </summary>
@@ -255,9 +392,144 @@ namespace SteamBot
             Bot.SteamFriends.SetPersonaName("[" + ImpMaster.Maplist.Count.ToString() + "] " + Bot.DisplayName);
             BackgroundWork.GhostCheck = 120;
             string adminresponse = null;
+<<<<<<< HEAD
             string response = null;
 
             if (UserDatabaseHandler.admincheck(sender))
+=======
+            if (admincheck(sender)) {
+                adminresponse = admincommands(sender, message);
+            }
+            string response = Chatcommands(chatID, sender, message.ToLower());
+            if (response != null) {
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
+            }
+            if (adminresponse != null) {
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, adminresponse);
+            }
+        }
+
+        /// <summary>
+        /// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
+        /// </summary>
+        /// <param name="chatID">ChatID of the chatroom</param>
+        /// <param name="message">The message sent</param>
+        public string admincommands(SteamID sender, string message)
+        {
+            if (message.StartsWith("!ReJoin", StringComparison.OrdinalIgnoreCase))
+            {
+                Bot.SteamFriends.LeaveChat(new SteamID(Groupchat));
+                Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
+            }
+            if (message.StartsWith("!Say", StringComparison.OrdinalIgnoreCase))
+            {
+                string send = message.Remove(0, 4);
+                Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, send);
+            }
+
+            if (message.StartsWith("!SetMOTD", StringComparison.OrdinalIgnoreCase))
+            {
+                if (MOTD != null)
+                {
+                    return "There is currently a MOTD, please remove it first";
+                }
+                else
+                {
+                    string send = message.Remove(0, 9);
+                    MOTDSetter = Bot.SteamFriends.GetFriendPersonaName(sender) + " " + sender;
+                    MOTD = send;
+                    return "MOTD Set to: " + send;
+                }
+                return "Make sure to include a MOTD to display!";
+            }
+            if (message.StartsWith("!RemoveMOTD", StringComparison.OrdinalIgnoreCase))
+            {
+                MOTD = null;
+                return "Removed MOTD";
+            }
+            if (message.StartsWith(clearcommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string path = @MapStoragePath;
+                File.Delete(path);
+                File.WriteAllText(path, "{}");
+                SpreadsheetSync = true;
+                return "Wiped all Maps";
+            }
+            if (message.StartsWith("!EnableSync", StringComparison.OrdinalIgnoreCase)) {
+                OnlineSync = "true";
+                groupchatsettings.Remove("OnlineSync");
+                groupchatsettings.Add("OnlineSync", "true");
+                System.IO.File.WriteAllText(@"ExtraSettings.json", JsonConvert.SerializeObject(ExtraSettingsData));
+                return "Enabled Sync";
+            }
+            if (message.StartsWith("!DisableSync", StringComparison.OrdinalIgnoreCase)) {
+                OnlineSync = "false";
+                groupchatsettings.Remove("OnlineSync");
+                groupchatsettings.Add("OnlineSync", "false");
+                System.IO.File.WriteAllText(@"ExtraSettings.json", JsonConvert.SerializeObject(ExtraSettingsData));
+                return "Disabled Sync";
+            }
+            if (message.StartsWith("!EnableRSS", StringComparison.OrdinalIgnoreCase))
+            {
+                EnableRSS = true;
+                return "Enabled RSS";
+            }
+            if (message.StartsWith("!DisableRSS", StringComparison.OrdinalIgnoreCase))
+            {
+                EnableRSS = false;
+                return "Disabled RSS";
+            }
+            if (message.StartsWith("!join", StringComparison.OrdinalIgnoreCase))
+            {
+                Bot.SteamFriends.LeaveChat(new SteamID(chatroomID));
+                Bot.SteamFriends.JoinChat(new SteamID(chatroomID));
+            }
+            return null;
+        }
+
+
+
+        /// <summary>
+        /// The commands that users can use by msg'ing the system. Returns a string with the appropriate responses
+        /// </summary>
+        /// <param name="chatID">ChatID of the chatroom</param>
+        /// <param name="sender">STEAMID of the sender</param>
+        /// <param name="message">The message sent</param>
+        public string Chatcommands(SteamID chatID, SteamID sender, string message)
+        {
+            base.OnChatRoomMessage(chatID, sender, message);
+            bool rank = admincheck(sender);
+            Log.Interface(Bot.SteamFriends.GetFriendPersonaName(sender) + ":" + "(" + rank + ")" + " " + message);
+            Log.Info(Bot.SteamFriends.GetFriendPersonaName(sender) + ": " + message);
+            foreach (KeyValuePair<string, string> Entry in DataLOG) //TODO Disable autocorrections
+            {
+                if (message.StartsWith(Entry.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    string par1 = message.Remove(0, Entry.Key.Length);
+                    return AdvancedGoogleSearch(par1, Entry.Value, chatID);
+                }
+            }
+            foreach (KeyValuePair<string, string> Entry in InstantReplies) //TODO Disable autocorrections
+            {
+
+                if (message.StartsWith(Entry.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Entry.Value;
+                }
+            }
+            if (message.StartsWith(SteamIDCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                string par1 = message.Remove(0, SteamIDCommand.Length + 1);
+                if (par1 != null)
+                {
+                    return GetSteamIDFromUrl(par1);
+                }
+                else {
+                    return "URL is missing, please add a url";
+                }
+            }
+            if (message.StartsWith("!MySteamID", StringComparison.OrdinalIgnoreCase))
+>>>>>>> parent of 238c28b... Bot fixes
             {
                 adminresponse = VBotCommands.admincommands(sender, message, Bot);
             }
@@ -285,9 +557,52 @@ namespace SteamBot
             WebClient client = new WebClient();
             string SteamPage = client.DownloadString(url);
 
+<<<<<<< HEAD
 
             string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
 
+=======
+        /// <summary>
+        /// Removes specified map from the database.
+        /// Checks if the user is an admin or the setter
+        /// </summary>
+        public Tuple<string,SteamID> ImpRemove (string map , SteamID sender , bool ServerRemove, string DeletionReason)
+		{
+			Dictionary<string,Tuple<string,SteamID,string,bool> > NewMaplist = new Dictionary<string, Tuple<string, SteamID,string,bool>>();
+			string removed = "The map was not found or you do not have sufficient privileges"; 
+			SteamID userremoved = 0;
+			foreach (var item in Maplist) {
+				//TODO DEBUG
+				if (item.Key == map && (admincheck (sender) || sender == item.Value.Item2 || ServerRemove )) {
+					removed = map;
+					userremoved = item.Value.Item2;
+					SpreadsheetSync = true;
+                    if (DeletionReason != null)
+                    {
+                        Bot.SteamFriends.SendChatMessage(item.Value.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + item.Key + " was removed from the map list, reason given:" + DeletionReason);
+                    }
+                } else {
+					NewMaplist.Add (item.Key, item.Value);
+				}
+			}
+           
+			System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(NewMaplist));
+			Tuple<string,SteamID> RemoveInformation = new Tuple<string,SteamID> (removed, userremoved);
+            Maplist = NewMaplist;
+			return RemoveInformation ;
+			{
+			}
+		}
+
+
+        public string GetSteamIDFromUrl (string url)
+        {
+           WebClient client = new WebClient();
+           string SteamPage = client.DownloadString(url);
+            
+            string[] SteamIDPreCut = SteamPage.Split(new string[] { "steamid\":\"" }, StringSplitOptions.None);
+            
+>>>>>>> parent of 238c28b... Bot fixes
             string[] SteamIDReturn = SteamIDPreCut[1].Split(new string[] { "\"" }, StringSplitOptions.None);
 
 
@@ -302,6 +617,7 @@ namespace SteamBot
 
             var accountIdHighBits = (steamId64 >> 1) & 0x7FFFFFF;
 
+<<<<<<< HEAD
 
             // should hopefully produce "STEAM_0:0:35928448"
             if (HumanReadable == true)
@@ -315,6 +631,12 @@ namespace SteamBot
                 return legacySteamId.ToString();
             }
 
+=======
+            // should hopefully produce "STEAM_0:0:35928448"
+            var legacySteamId = "STEAM_" + universe + ":" + accountIdLowBit + ":" + accountIdHighBits;
+
+            return legacySteamId;
+>>>>>>> parent of 238c28b... Bot fixes
         }
 
         /// <summary>
