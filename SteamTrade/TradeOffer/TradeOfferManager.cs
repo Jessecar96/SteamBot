@@ -2,12 +2,13 @@
 using System.Diagnostics;
 using SteamKit2;
 using System;
+using System.Linq;
 
 namespace SteamTrade.TradeOffer
 {
     public class TradeOfferManager
     {
-        private readonly HashSet<string> tradeOfferHistory = new HashSet<string>();
+        private readonly Dictionary<string, TradeOfferState> knownTradeOffers = new Dictionary<string, TradeOfferState>();
         private readonly OfferSession session;
         private readonly TradeOfferWebAPI webApi;
 
@@ -56,12 +57,12 @@ namespace SteamTrade.TradeOffer
 
         private bool HandleTradeOffersResponse(OffersResponse offers)
         {
-            if (offers?.TradeOffersReceived == null)
+            if (offers?.AllOffers == null)
                 return false;
 
-            foreach(var offer in offers.TradeOffersReceived)
+            foreach(var offer in offers.AllOffers)
             {
-                if(offer.TradeOfferState == TradeOfferState.TradeOfferStateActive && !tradeOfferHistory.Contains(offer.TradeOfferId))
+                if(!knownTradeOffers.ContainsKey(offer.TradeOfferId) || knownTradeOffers[offer.TradeOfferId] != offer.TradeOfferState)
                 {
                     //make sure the api loaded correctly sometimes the items are missing
                     if(IsOfferValid(offer))
@@ -105,7 +106,7 @@ namespace SteamTrade.TradeOffer
         private void SendOfferToHandler(Offer offer)
         {
             var tradeOffer = new TradeOffer(session, offer);
-            tradeOfferHistory.Add(offer.TradeOfferId);
+            knownTradeOffers[offer.TradeOfferId] = offer.TradeOfferState;
             OnNewTradeOffer(tradeOffer);
         }
 

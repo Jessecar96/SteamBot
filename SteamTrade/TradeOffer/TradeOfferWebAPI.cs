@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace SteamTrade.TradeOffer
 {
@@ -193,6 +194,19 @@ namespace SteamTrade.TradeOffer
 
         [JsonProperty("descriptions")]
         public List<AssetDescription> Descriptions { get; set; }
+
+        public IEnumerable<Offer> AllOffers
+        {
+            get
+            {
+                if (TradeOffersSent == null)
+                {
+                    return TradeOffersReceived;
+                }
+
+                return (TradeOffersReceived == null ? TradeOffersSent : TradeOffersSent.Union(TradeOffersReceived));
+            }
+        }
     }
 
     public class Offer
