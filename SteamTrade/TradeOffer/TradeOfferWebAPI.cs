@@ -51,6 +51,11 @@ namespace SteamTrade.TradeOffer
             return TradeOfferState.TradeOfferStateUnknown;
         }
 
+        public OffersResponse GetAllTradeOffers(string timeHistoricalCutoff = "1389106496", string language = "en_us")
+        {
+            return GetTradeOffers(true, true, false, true, true, timeHistoricalCutoff, language);
+        }
+
         public OffersResponse GetActiveTradeOffers(bool getSentOffers, bool getReceivedOffers, bool getDescriptions, string language = "en_us")
         {
             return GetTradeOffers(getSentOffers, getReceivedOffers, getDescriptions, true, false, "1389106496", language);

@@ -30,6 +30,12 @@ namespace SteamTrade.TradeOffer
         /// </summary>
         public event NewOfferHandler OnNewTradeOffer;
 
+        public bool GetAllTradeOffers()
+        {
+            var offers = webApi.GetAllTradeOffers();
+            return HandleTradeOffersResponse(offers);
+        }
+
         /// <summary>
         /// Gets the currently active trade offers from the web api and processes them
         /// </summary>
@@ -44,7 +50,7 @@ namespace SteamTrade.TradeOffer
         /// </summary>
         public bool GetTradeOffersSince(DateTime dateTime)
         {
-            var offers = webApi.GetTradeOffers(false, true, false, true, false, GetUnixTimeStamp(dateTime).ToString());
+            var offers = webApi.GetAllTradeOffers(GetUnixTimeStamp(dateTime).ToString());
             return HandleTradeOffersResponse(offers);
         }
 
@@ -81,7 +87,7 @@ namespace SteamTrade.TradeOffer
 
         public bool GetOffers()
         {
-            bool offersChecked = (LastTimeCheckedOffers == DateTime.MinValue ? GetActiveTradeOffers() : GetTradeOffersSince(LastTimeCheckedOffers));
+            bool offersChecked = (LastTimeCheckedOffers == DateTime.MinValue ? GetAllTradeOffers() : GetTradeOffersSince(LastTimeCheckedOffers));
 
             if(offersChecked)
                 LastTimeCheckedOffers = DateTime.Now;
