@@ -119,7 +119,7 @@ namespace SteamBot
             var loadedOk = manager.LoadConfiguration("settings.json");
 
             
-            if (!loadedOk | !File.Exists("ExtraSettings.JSON"))
+            if (!loadedOk | !File.Exists("ExtraSettings.json"))
             {
                 Console.WriteLine(
                     "Configuration file Does not exist or is corrupt. Please rename 'settings-template.json' to 'settings.json' and modify the settings to match your environment. Alternatively, the groupchathandler_settings file may be missing or corrupted.");
