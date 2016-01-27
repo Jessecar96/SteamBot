@@ -79,7 +79,7 @@ namespace SteamBot
 
         public string UploadCheckCommand = "!uploadcheck";
         public string ServerListUrl = groupchatsettings["MapListUrl"];
-        public static bool EnableRSS = true;
+        public static bool EnableRSS = false;
    
 
         public static string PreviousMap1 = " ";
@@ -298,7 +298,7 @@ namespace SteamBot
         public override void OnLoginCompleted()
         {
             Log.Interface("Use 'exec 0 join' to join a chatroom");
-            Log.Interface("RSS Enabled By default");
+            Log.Interface("RSS disabled By default");
             if (DoOnce == true)
             {
                 InitTimer();
@@ -398,19 +398,21 @@ namespace SteamBot
             }
             string response = null;
            
-            if (response != null) {
+        
                 if (!BanList.ContainsKey(sender.ToString()) || admincheck(sender))
                 {
                     response = Chatcommands(chatID, sender, message.ToLower());
-                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
+                    if (response != null)
+                    {
+                        Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
+                    }
                 }
                 else
                 {
-                    response = Chatcommands(chatID, sender, message.ToLower());
-                    Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, "You are currently banned from using the bot, hours remaining: " + BanList[sender.ToString()]);
+                   
                 }
 
-                }
+               
             if (adminresponse != null) {
                 Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, adminresponse);
             }
@@ -426,7 +428,7 @@ namespace SteamBot
 
             FullMessage.Replace(@"\s+", " ");
             string[] Words = FullMessage.Split();
-            string Message = FullMessage.Remove(Words[0].Length + (Words.Length > 0).GetHashCode());
+            string Message = FullMessage.Remove(0, ((Words[0].Length) * (Words.Length > 1).GetHashCode()) + (Words.Length > 1).GetHashCode());
 
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["Rejoin"].Item2))
                 if (FullMessage.StartsWith("!ReJoin", StringComparison.OrdinalIgnoreCase))
@@ -521,6 +523,72 @@ namespace SteamBot
                 }
             }
 
+            if (DoesMessageStartWith(Words[0], ChatCommandsArray["AddCommands"].Item2))
+            {
+                if (Words.Length > 1)
+                {
+                    foreach (KeyValuePair<string, Tuple<string, List<string>>> Entry in ChatCommandsArray)
+                    {
+                        if (Entry.Value.Item2.Contains(Words[1], StringComparer.OrdinalIgnoreCase))
+
+                        {
+                            foreach (KeyValuePair<string, Tuple<string, List<string>>> EntryRecheck in ChatCommandsArray)
+                            {
+                                if (EntryRecheck.Value.Item2.Contains(Words[2], StringComparer.OrdinalIgnoreCase))
+
+                                {
+                                    return "Sorry this command already exists!";
+                                }
+                                else
+                                {
+                                    if (Words[2].StartsWith("!"))
+                                    {
+                                        Entry.Value.Item2.Add(Words[2]);
+                                    }
+                                    else
+                                    {
+                                        Entry.Value.Item2.Add("!" + Words[2]);
+                                    }
+                                    System.IO.File.WriteAllText(@"ChatCommands.json", JsonConvert.SerializeObject(ChatCommandsArray));
+                                    return "Added: " + Words[2] + " to " + Entry.Key;
+                                }
+
+                            }
+
+                            return "Command not found";
+                        }
+
+                    }
+                }
+                else
+                {
+                    return HelpLink;
+                }
+            }
+            if (DoesMessageStartWith(Words[0], ChatCommandsArray["RemoveCommands"].Item2))
+            {
+                if (Words.Length > 1)
+                {
+                    foreach (KeyValuePair<string, Tuple<string, List<string>>> Entry in ChatCommandsArray)
+                    {
+                        if (Entry.Value.Item2.Contains(Words[1], StringComparer.OrdinalIgnoreCase))
+                            {
+                                Entry.Value.Item2.Remove(Words[1]);
+                                System.IO.File.WriteAllText(@"ChatCommands.json", JsonConvert.SerializeObject(ChatCommandsArray));
+                                return "Removed: " + Words[1];
+                            }
+                            else
+                            {
+                                return "Couldn't find command, try again";
+                            }
+
+                    }
+                }
+                else
+                {
+                    return HelpLink;
+                }
+            }
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["Ban"].Item2))
 
             {
@@ -547,6 +615,24 @@ namespace SteamBot
                     return "The command is: " + "!Ban" + " <url of user>, Duration in days, Reason";
                 }
             }
+            if (DoesMessageStartWith(Words[0], ChatCommandsArray["RemoveReply"].Item2) & Words.Length > 1)
+            {
+                if (ChatCommandsArray.ContainsKey(Words[1]))
+                {
+                    return "Sorry that reply already exists";
+                }
+                foreach (KeyValuePair<string, Tuple<string, SteamID>> Entry in InstantChatReplies)
+                {
+                    if ((Entry.Key == Words[1]) && (sender == Entry.Value.Item2) | admincheck(sender))
+                    {
+                        Bot.SteamFriends.SendChatMessage(Entry.Value.Item2, EChatEntryType.ChatMsg, "Hi, your instant reply has been removed.");
+                        InstantChatReplies.Remove(Words[1]);
+                        System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
+
+                    }
+                }
+
+            }
             return null;
         }
 
@@ -567,19 +653,9 @@ namespace SteamBot
             FullMessage.Replace(@"\s+", " ");
             string[] Words = FullMessage.Split();
 
-            if (Words.Length > 0)
-            {
+            string Message = FullMessage.Remove(0, ((Words[0].Length) * (Words.Length > 1).GetHashCode()) + (Words.Length > 1).GetHashCode());
 
-            }
-            else
-            {
-
-            }
-            //string Message = FullMessage.Remove(Words[0].Length - 1 + ((Words.Length > 0).GetHashCode() * 2 ));
-            string Message = FullMessage.Remove(0, (Words[0].Length + 1) * (Words.Length > 1).GetHashCode());
-
-            Log.Interface(Message);
-
+            
             foreach (KeyValuePair<string, string> Entry in DataLOG) //TODO Disable autocorrections
             {
                 if (Words[0].StartsWith(Entry.Key, StringComparison.OrdinalIgnoreCase))
@@ -774,24 +850,7 @@ namespace SteamBot
                     return "Set reply for: " + Words[1] + " which is: " + Reply;
                 }
             }
-            if (DoesMessageStartWith(Words[0], ChatCommandsArray["RemoveReply"].Item2) & Words.Length > 1)
-            {
-                if (ChatCommandsArray.ContainsKey(Words[1]))
-                {
-                    return "Sorry that reply already exists";
-                }
-                foreach (KeyValuePair<string, Tuple<string, SteamID>> Entry in InstantChatReplies)
-                {
-                    if (  ( Entry.Key == Words[1] ) &&  (sender == Entry.Value.Item2) | admincheck(sender))
-                    {
-                        Bot.SteamFriends.SendChatMessage(Entry.Value.Item2, EChatEntryType.ChatMsg, "Hi, your instant reply has been removed.");
-                        InstantChatReplies.Remove(Words[1]);
-                        System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
-
-                    }
-                }
-              
-            }
+            
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["ReplyCheck"].Item2) & Words.Length > 1)
             {
                 foreach (KeyValuePair<string, Tuple<string, SteamID>> Entry in InstantChatReplies)
@@ -804,48 +863,7 @@ namespace SteamBot
                 }
 
             }
-            if (DoesMessageStartWith(Words[0], ChatCommandsArray["AddCommands"].Item2))
-            {
-                if (Words.Length > 1)
-                {
-                    foreach (KeyValuePair<string, Tuple<string, List<string>>> Entry in ChatCommandsArray)
-                    {
-                        if (Entry.Value.Item2.Contains(Words[1], StringComparer.OrdinalIgnoreCase))
-
-                        {
-                            foreach (KeyValuePair<string, Tuple<string, List<string>>> EntryRecheck in ChatCommandsArray)
-                            {
-                                if (EntryRecheck.Value.Item2.Contains(Words[2], StringComparer.OrdinalIgnoreCase))
-
-                                {
-                                    return "Sorry this command already exists!";
-                                }
-                                else
-                                {
-                                    if (Words[2].StartsWith("!"))
-                                    {
-                                        Entry.Value.Item2.Add(Words[2]);
-                                    }
-                                    else
-                                    {
-                                        Entry.Value.Item2.Add("!" + Words[2]);
-                                    }
-                                    System.IO.File.WriteAllText(@"ChatCommands.json", JsonConvert.SerializeObject(ChatCommandsArray));
-                                    return "Added: " + Words[2] + " to " + Entry.Key;
-                                }
-
-                            }
-
-                            return "Command not found" ;
-                        }
-
-                    }
-                }
-                else
-                {
-                    return HelpLink;
-                }
-            }
+           
 
             foreach (KeyValuePair<string, Tuple<string,SteamID>> Entry in InstantChatReplies) //TODO Disable autocorrections
             {
