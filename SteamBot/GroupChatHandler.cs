@@ -515,6 +515,7 @@ namespace SteamBot
                 if (BanList.ContainsKey(Userid.ToString()))
                 {
                     BanList.Remove(Userid);
+                    System.IO.File.WriteAllText(@BanListFilePath, JsonConvert.SerializeObject(BanList));
                     return "The ban has now been lifted";
                 }
                 else
@@ -1095,9 +1096,19 @@ namespace SteamBot
                 WebClient client = new WebClient();
                 var search = client.DownloadString("https://www.googleapis.com/customsearch/v1?q=" + searchquery + "&cx=" + CX + "&siteSearch=" + url + "&key=" + APIKEY);
                 var obj = JObject.Parse(search);
-                var info = (string)obj["items"][0]["link"];
-                Log.Interface(info.ToString());
-                return info;
+                if (obj["items"] != null)
+                {
+                    var info = (string)obj["items"][0]["link"];
+                    if (info != null)
+                    {
+                        return info;
+                    }
+                    
+                }
+                else
+                {
+                    return "invalid search";
+                }
             }
             return null;
         }
