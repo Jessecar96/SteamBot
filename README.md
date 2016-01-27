@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/r2ml39xoa5svu61y/branch/master?svg=true)](https://ci.appveyor.com/project/Jessecar96/steambot/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/rjl5fo0qwd7o1cyi?svg=true)](https://ci.appveyor.com/project/Winwardo/steambot)
 
 ## TF2Maps SteamBot
 
@@ -6,6 +6,7 @@ This Repo is an UNOFFICIAL bot that is utilised to help moderate the chat at TF2
 The bot comes with a settings file which is automatically in the release and debug folders inside bin, which must be utilised in order for the bot to properly function (however leaving them as they are are perfectly fine, but you wont be able to use multiple features).
 This bot also offers integration with google's custom search api, as well as their sheets api, which you can see in the code and settings file.
 For more information please check here: http://tf2maps.net/threads/we-now-have-a-steam-chat-bot.26274/
+
 
 ## Everything below this is part of the SteamBot
 
