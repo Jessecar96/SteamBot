@@ -134,6 +134,10 @@
     <Compile Include="3rdparty\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TF2GC\MsgDelete.cs" />
+    <Compile Include="VBot\BackgroundWork.cs" />
+    <Compile Include="VBot\ImpMaster.cs" />
+    <Compile Include="VBot\UserDatabaseHandler.cs" />
+    <Compile Include="VBot\VBotCommands.cs" />
     <Compile Include="TradeOfferUserHandler.cs" />
     <Compile Include="UserHandler.cs" />
     <Compile Include="SimpleUserHandler.cs" />

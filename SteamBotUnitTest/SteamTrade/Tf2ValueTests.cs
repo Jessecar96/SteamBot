@@ -9,7 +9,7 @@ using SteamTrade;
 namespace SteamBotUnitTest.SteamTrade
 {
     [TestFixture]
-    class TF2ValueTests
+    public class TF2ValueTests
     {
         [Test]
         public void GetItemWorthStringKeysTest()
