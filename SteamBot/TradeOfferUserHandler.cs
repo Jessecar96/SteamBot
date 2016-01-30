@@ -32,8 +32,22 @@ namespace SteamBot
                     string tradeid;
                     if (offer.Accept(out tradeid))
                     {
-                        Bot.AcceptAllMobileTradeConfirmations();
-                        Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
+                        if (myItems.Count > 0 && Bot.SteamGuardAccount != null)
+                        {
+                            // confirmation is needed if bot is giving away items and mobile auth is linked
+                            if (Bot.AcceptTradeConfirmation(tradeid))
+                            {
+                                Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
+                            }
+                            else
+                            {
+                                Log.Error("Failed to confirm trade offer #{0}!", tradeid);
+                            }
+                        }
+                        else if (Bot.SteamGuardAccount == null)
+                        {
+                            Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
+                        }
                     }
                 }
                 else
@@ -47,8 +61,22 @@ namespace SteamBot
                         string newOfferId;
                         if (offer.CounterOffer(out newOfferId))
                         {
-                            Bot.AcceptAllMobileTradeConfirmations();
-                            Log.Success("Counter offered successfully : New Offer ID: " + newOfferId);
+                            if (myItems.Count > 0 && Bot.SteamGuardAccount != null)
+                            {
+                                // confirmation is needed if bot is giving away items and mobile auth is linked
+                                if (Bot.AcceptTradeConfirmation(newOfferId))
+                                {
+                                    Log.Success("Counter offered successfully : New Offer ID: " + newOfferId);
+                                }
+                                else
+                                {
+                                    Log.Error("Failed to confirm trade offer #{0}!", newOfferId);
+                                }
+                            }
+                            else if (Bot.SteamGuardAccount == null)
+                            {
+                                Log.Success("Counter offered successfully : New Offer ID: " + newOfferId);
+                            }
                         }
                     }
                 }
@@ -76,8 +104,22 @@ namespace SteamBot
                     string newOfferId;
                     if (offer.Send(out newOfferId))
                     {
-                        Bot.AcceptAllMobileTradeConfirmations();
-                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                        if (offer.Items.GetMyItems().Count > 0 && Bot.SteamGuardAccount != null)
+                        {
+                            // confirmation is needed if bot is giving away items and mobile auth is linked
+                            if (Bot.AcceptTradeConfirmation(newOfferId))
+                            {
+                                Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                            }
+                            else
+                            {
+                                Log.Error("Failed to confirm trade offer #{0}!", newOfferId);
+                            }
+                        }
+                        else if (Bot.SteamGuardAccount == null)
+                        {
+                            Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                        }
                     }
                 }
 
@@ -91,8 +133,22 @@ namespace SteamBot
                     // "token" should be replaced with the actual token from the other user
                     if (offerWithToken.SendWithToken(out newOfferId, "token"))
                     {
-                        Bot.AcceptAllMobileTradeConfirmations();
-                        Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                        if (offer.Items.GetMyItems().Count > 0 && Bot.SteamGuardAccount != null)
+                        {
+                            // confirmation is needed if bot is giving away items and mobile auth is linked
+                            if (Bot.AcceptTradeConfirmation(newOfferId))
+                            {
+                                Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                            }
+                            else
+                            {
+                                Log.Error("Failed to confirm trade offer #{0}!", newOfferId);
+                            }
+                        }
+                        else if (Bot.SteamGuardAccount == null)
+                        {
+                            Log.Success("Trade offer sent : Offer ID " + newOfferId);
+                        }
                     }
                 }
             }

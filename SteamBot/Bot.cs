@@ -1058,6 +1058,39 @@ namespace SteamBot
             return inventory;
         }
 
+        public bool AcceptTradeConfirmation(string tradeOfferId)
+        {
+            var confirmed = false;
+            if (SteamGuardAccount == null)
+            {
+                Log.Warn("Bot account does not have 2FA enabled.");
+            }
+            else
+            {
+                SteamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+                SteamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+                try
+                {
+                    foreach (var confirmation in SteamGuardAccount.FetchConfirmations())
+                    {
+                        var confirmationTradeOfferId = SteamGuardAccount.GetConfirmationTradeOfferID(confirmation);
+                        if (tradeOfferId != confirmationTradeOfferId.ToString()) continue;
+                        if (SteamGuardAccount.AcceptConfirmation(confirmation))
+                        {
+                            confirmed = true;
+                            Log.Success("Confirmed {0}. (Confirmation ID #{1})", confirmation.ConfirmationDescription, confirmation.ConfirmationID);
+                            break;
+                        }
+                    }
+                }
+                catch (SteamAuth.SteamGuardAccount.WGTokenInvalidException)
+                {
+                    Log.Error("Invalid session when trying to fetch trade confirmations.");
+                }
+            }
+            return confirmed;
+        }
+
         public void AcceptAllMobileTradeConfirmations()
         {
             if (SteamGuardAccount == null)
@@ -1082,7 +1115,7 @@ namespace SteamBot
                 {
                     Log.Error("Invalid session when trying to fetch trade confirmations.");
                 }
-            }                        
+            }
         }
 
         /// <summary>
