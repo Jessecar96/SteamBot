@@ -765,7 +765,7 @@ namespace SteamBot
         }
 
         /// <summary>
-        /// Link a mobile authenticator to bot account, using SteamTradeOffersBot as the authenticator.
+        /// Link a mobile authenticator to bot account, using SteamBot as the authenticator.
         /// Called from bot manager console. Usage: "exec [index] linkauth"
         /// If successful, 2FA will be required upon the next login.
         /// Use "exec [index] getauth" if you need to get a Steam Guard code for the account.
