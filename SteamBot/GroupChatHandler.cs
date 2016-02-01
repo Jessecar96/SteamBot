@@ -367,7 +367,7 @@ namespace SteamBot
         public override void OnMessage(string message, EChatEntryType type) {
             SteamID ChatMsg = OtherSID;
             string adminresponse = null;
-            string response = Chatcommands(ChatMsg, ChatMsg, message.ToLower());
+            string response = Chatcommands(ChatMsg, ChatMsg, message);
 
             if (response != null)
             {
@@ -401,7 +401,7 @@ namespace SteamBot
         
                 if (!BanList.ContainsKey(sender.ToString()) || admincheck(sender))
                 {
-                    response = Chatcommands(chatID, sender, message.ToLower());
+                    response = Chatcommands(chatID, sender, message);
                     if (response != null)
                     {
                         Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, response);
@@ -515,6 +515,7 @@ namespace SteamBot
                 if (BanList.ContainsKey(Userid.ToString()))
                 {
                     BanList.Remove(Userid);
+                    System.IO.File.WriteAllText(@BanListFilePath, JsonConvert.SerializeObject(BanList));
                     return "The ban has now been lifted";
                 }
                 else
@@ -628,10 +629,35 @@ namespace SteamBot
                         Bot.SteamFriends.SendChatMessage(Entry.Value.Item2, EChatEntryType.ChatMsg, "Hi, your instant reply has been removed.");
                         InstantChatReplies.Remove(Words[1]);
                         System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
+                        return "The reply has been removed";
 
                     }
                 }
 
+            }
+
+            if (DoesMessageStartWith(Words[0], ChatCommandsArray["AddReplies"].Item2) & Words.Length > 2)
+            {
+                if (InstantChatReplies.ContainsKey(Words[1]))
+                {
+                    return "Sorry that reply already exists";
+                }
+                else
+                {
+                    string Reply = Message.Remove(0, (Words[1].Length + 1));
+                    Tuple<string, SteamID> Data = Tuple.Create<string, SteamID>(Reply, sender);
+                    if (Words[1].StartsWith("/"))
+                    {
+                        InstantChatReplies.Add(Words[1], Data);
+                        System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
+                    }
+                    else
+                    {
+                        InstantChatReplies.Add("/" + Words[1], Data);
+                        System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
+                    }
+                    return "Set reply for: " + Words[1] + " which is: " + Reply;
+                }
             }
             return null;
         }
@@ -826,30 +852,7 @@ namespace SteamBot
                     return HelpLink;
                 }
             }
-
-            if (DoesMessageStartWith(Words[0], ChatCommandsArray["AddReplies"].Item2) & Words.Length > 2)
-            {
-                if(InstantChatReplies.ContainsKey(Words[1]))
-                {
-                    return "Sorry that reply already exists";
-                }
-                else
-                { 
-                string Reply = Message.Remove(0, (Words[1].Length +1 ));
-                Tuple<string,SteamID> Data = Tuple.Create<string, SteamID>(Reply, sender);
-                    if (Words[1].StartsWith("/"))
-                    { 
-                        InstantChatReplies.Add( Words[1] , Data);
-                        System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
-                    }
-                    else
-                    {
-                        InstantChatReplies.Add("/" + Words[1], Data);
-                        System.IO.File.WriteAllText(@InstantRepliesFile, JsonConvert.SerializeObject(InstantChatReplies));
-                    }
-                    return "Set reply for: " + Words[1] + " which is: " + Reply;
-                }
-            }
+            
             
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["ReplyCheck"].Item2) & Words.Length > 1)
             {
@@ -1095,9 +1098,19 @@ namespace SteamBot
                 WebClient client = new WebClient();
                 var search = client.DownloadString("https://www.googleapis.com/customsearch/v1?q=" + searchquery + "&cx=" + CX + "&siteSearch=" + url + "&key=" + APIKEY);
                 var obj = JObject.Parse(search);
-                var info = (string)obj["items"][0]["link"];
-                Log.Interface(info.ToString());
-                return info;
+                if (obj["items"] != null)
+                {
+                    var info = (string)obj["items"][0]["link"];
+                    if (info != null)
+                    {
+                        return info;
+                    }
+                    
+                }
+                else
+                {
+                    return "invalid search";
+                }
             }
             return null;
         }
