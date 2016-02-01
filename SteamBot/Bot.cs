@@ -558,7 +558,7 @@ namespace SteamBot
                     if (callback.StateChangeInfo.MemberInfo != null)
 					{
 					string User = callback.StateChangeInfo.MemberInfo.SteamID.ToString();
-					log.Interface(User.ToString());
+					
 					//Retrieves the database of users	
 					string filedata = System.IO.File.ReadAllText(@"users.json");
                         //Converts the JSON file to a dictionary
