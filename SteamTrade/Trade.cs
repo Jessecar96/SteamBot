@@ -28,7 +28,7 @@ namespace SteamTrade
             TradeCancelled = 3,
             SessionExpired = 4,
             TradeFailed = 5,
-            PendingEmail = 6
+            PendingConfirmation = 6
         }
 
         public string GetTradeStatusErrorString(TradeStatusType tradeStatusType)
@@ -47,8 +47,8 @@ namespace SteamTrade
                     return String.Format("expired because {0} timed out", (otherUserTimingOut ? "other user" : "bot"));
                 case TradeStatusType.TradeFailed:
                     return "failed unexpectedly";
-                case TradeStatusType.PendingEmail:
-                    return "completed - pending e-mail confirmation";
+                case TradeStatusType.PendingConfirmation:
+                    return "completed - pending confirmation";
                 default:
                     return "STATUS IS UNKNOWN - THIS SHOULD NEVER HAPPEN!";
             }
@@ -196,14 +196,14 @@ namespace SteamTrade
         /// Gets a value indicating whether the trade completed awaiting email confirmation. This
         /// is independent of other flags.
         /// </summary>
-        public bool IsTradeAwaitingEmailConfirmation { get; private set; }
+        public bool IsTradeAwaitingConfirmation { get; private set; }
 
         /// <summary>
         /// Gets a value indicating whether the trade has finished (regardless of the cause, eg. success, cancellation, error, etc)
         /// </summary>
         public bool HasTradeEnded
         {
-            get { return OtherUserCancelled || HasTradeCompletedOk || IsTradeAwaitingEmailConfirmation || tradeCancelledByBot; }
+            get { return OtherUserCancelled || HasTradeCompletedOk || IsTradeAwaitingConfirmation || tradeCancelledByBot; }
         }
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace SteamTrade
         /// <summary>
         /// Called when the trade ends awaiting email confirmation
         /// </summary>
-        public event WaitingForEmailHandler OnAwaitingEmailConfirmation;
+        public event WaitingForEmailHandler OnAwaitingConfirmation;
 
         /// <summary>
         /// This is for handling errors that may occur, like inventories
@@ -601,9 +601,9 @@ namespace SteamTrade
                     HasTradeCompletedOk = true;
                     return false;
 
-                // Email confirmation
-                case TradeStatusType.PendingEmail:
-                    IsTradeAwaitingEmailConfirmation = true;
+                // Email/mobile confirmation
+                case TradeStatusType.PendingConfirmation:
+                    IsTradeAwaitingConfirmation = true;
                     tradeOfferID = long.Parse(status.tradeid);
                     return false;
 
@@ -858,12 +858,12 @@ namespace SteamTrade
                 onSuccessEvent();
         }
 
-        internal void FireOnAwaitingEmailConfirmation()
+        internal void FireOnAwaitingConfirmation()
         {
-            var onAwaitingEmailConfirmation = OnAwaitingEmailConfirmation;
+            var onAwaitingConfirmation = OnAwaitingConfirmation;
 
-            if (onAwaitingEmailConfirmation != null)
-                onAwaitingEmailConfirmation(tradeOfferID);
+            if (onAwaitingConfirmation != null)
+                onAwaitingConfirmation(tradeOfferID);
         }
 
         internal void FireOnCloseEvent()

@@ -295,8 +295,8 @@ namespace SteamTrade
                         {
                             if(trade.HasTradeCompletedOk)
                                 trade.FireOnSuccessEvent();
-                            else if(trade.IsTradeAwaitingEmailConfirmation)
-                                trade.FireOnAwaitingEmailConfirmation();
+                            else if(trade.IsTradeAwaitingConfirmation)
+                                trade.FireOnAwaitingConfirmation();
                         }
                         finally
                         {
