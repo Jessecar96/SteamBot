@@ -1,6 +1,6 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/a5petxelkfi82u6l/branch/master?svg=true)](https://ci.appveyor.com/project/Winwardo/steambot-wc94x/branch/master)
 
-## TF2Maps SteamBot
+## TF2Maps VBot
 
 This Repo is an UNOFFICIAL bot that is utilised to help moderate the chat at TF2Maps, , there are changes particularly to the bot.cs file and the addition of several other files (notably groupchathandler).
 The bot comes with a settings file which is automatically in the release and debug folders inside bin, which must be utilised in order for the bot to properly function (however leaving them as they are are perfectly fine, but you wont be able to use multiple features).
