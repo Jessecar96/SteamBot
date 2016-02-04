@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/TF2Maps/SteamBot.svg?branch=master)](https://travis-ci.org/TF2Maps/SteamBot)
+[![Build status](https://ci.appveyor.com/api/projects/status/a5petxelkfi82u6l/branch/master?svg=true)](https://ci.appveyor.com/project/Winwardo/steambot-wc94x/branch/master)
 
 ## TF2Maps SteamBot
 
