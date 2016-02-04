@@ -1265,8 +1265,6 @@ namespace SteamBot
 
         public override void OnTradeSuccess() { }
 
-        public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID) { }
-
         public override void OnTradeAccept() { }
 
         public override bool OnGroupAdd()
