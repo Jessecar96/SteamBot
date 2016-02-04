@@ -1287,6 +1287,10 @@ namespace SteamBot
             base.OnTradeClose();
         }
 
+        public override void OnTradeAwaitingConfirmation(long tradeOfferID)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 
