@@ -886,16 +886,7 @@ namespace SteamBot
 
         public static bool DoesMessageStartWith(string Message, List<string> Comparison)
         {
-
-            foreach (string CommandWord in Comparison)
-            {
-                if (Message.StartsWith(CommandWord, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            return false;
-
+            return new Utilities().DoesMessageStartWith(Message, Comparison);
         }
         /// <summary>
         /// Adds a map to the database
