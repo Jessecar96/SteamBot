@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleBot", "SteamBot\Exam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamTrade", "SteamTrade\SteamTrade.csproj", "{6CEC0333-81EB-40EE-85D1-941363626FC7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VBotTests", "VBotTests\VBotTests.csproj", "{F3CE0353-B823-4C72-AE0D-677DDEBF2D38}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C8129CC9-FBBA-4F80-831B-94BDE64D263C}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\Microsoft.Build.dll = .nuget\Microsoft.Build.dll
