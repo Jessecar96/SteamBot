@@ -1,0 +1,26 @@
+{
+"Admins":["234567"],
+"ApiKey":"Steam API Key goes here!",
+"mainLog": "syslog.log",
+"UseSeparateProcesses": "false",
+"AutoStartAllBots": "true",
+"Bots": [
+        {
+            "Username":"BOT USERNAME",
+            "Password":"BOT PASSWORD",
+            "ApiKey":"Bot specific apiKey",
+            "DisplayName":"TestBot",
+            "ChatResponse":"Hi there bro",
+            "logFile": "TestBot.log",
+            "BotControlClass": "SteamBot.SimpleUserHandler",
+            "MaximumTradeTime":180,
+            "MaximumActionGap":30,
+            "DisplayNamePrefix":"[AutomatedBot] ",
+            "TradePollingInterval":800,
+            "ConsoleLogLevel":"Success",
+            "FileLogLevel":"Info",
+            "AutoStart": "true",
+            "SchemaLang":"en"
+        }
+    ]
+}
