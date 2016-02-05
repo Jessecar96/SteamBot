@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleBot", "SteamBot\ExampleBot.csproj", "{E81DED36-EDF5-41A5-8666-A3A0C581762F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5AD0934E-F6C4-4AE5-83AF-C788313B2A87} = {5AD0934E-F6C4-4AE5-83AF-C788313B2A87}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamTrade", "SteamTrade\SteamTrade.csproj", "{6CEC0333-81EB-40EE-85D1-941363626FC7}"
 EndProject
@@ -19,6 +22,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestBed", "SteamAuth\TestBed\TestBed.csproj", "{8A732227-C090-4011-9F0A-51180CFE6271}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamAuth", "SteamAuth\SteamAuth\SteamAuth.csproj", "{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8A732227-C090-4011-9F0A-51180CFE6271} = {8A732227-C090-4011-9F0A-51180CFE6271}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
