@@ -240,6 +240,16 @@ namespace SteamTrade.TradeOffer
 
         [JsonProperty("time_updated")]
         public int TimeUpdated { get; set; }
+
+        [JsonProperty("from_real_time_trade")]
+        public bool FromRealTimeTrade { get; set; }
+
+        [JsonProperty("escrow_end_date")]
+        public int EscrowEndDate { get; set; }
+
+        [JsonProperty("confirmation_method")]
+        private int confirmationMethod { get; set; }
+        public TradeOfferConfirmationMethod ConfirmationMethod { get { return (TradeOfferConfirmationMethod)confirmationMethod; } set { confirmationMethod = (int)value; } }
     }
 
     public enum TradeOfferState
@@ -252,9 +262,17 @@ namespace SteamTrade.TradeOffer
         TradeOfferStateCanceled = 6,
         TradeOfferStateDeclined = 7,
         TradeOfferStateInvalidItems = 8,
-        TradeOfferStateAwaitingEmailConfirmation = 9,
-        TradeOfferStateEmailConfirmationCancelled = 10,
+        TradeOfferStateNeedsConfirmation = 9,
+        TradeOfferStateCanceledBySecondFactor = 10,
+        TradeOfferStateInEscrow = 11,
         TradeOfferStateUnknown
+    }
+
+    public enum TradeOfferConfirmationMethod
+    {
+        TradeOfferConfirmationMethodInvalid = 0,
+        TradeOfferConfirmationMethodEmail = 1,
+        TradeOfferConfirmationMethodMobileApp = 2
     }
 
     public class CEconAsset

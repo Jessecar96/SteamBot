@@ -32,6 +32,7 @@ namespace SteamBot
                     string tradeid;
                     if (offer.Accept(out tradeid))
                     {
+                        Bot.AcceptAllMobileTradeConfirmations();
                         Log.Success("Accepted trade offer successfully : Trade ID: " + tradeid);
                     }
                 }
@@ -46,6 +47,7 @@ namespace SteamBot
                         string newOfferId;
                         if (offer.CounterOffer(out newOfferId))
                         {
+                            Bot.AcceptAllMobileTradeConfirmations();
                             Log.Success("Counter offered successfully : New Offer ID: " + newOfferId);
                         }
                     }
@@ -74,6 +76,7 @@ namespace SteamBot
                     string newOfferId;
                     if (offer.Send(out newOfferId))
                     {
+                        Bot.AcceptAllMobileTradeConfirmations();
                         Log.Success("Trade offer sent : Offer ID " + newOfferId);
                     }
                 }
@@ -88,6 +91,7 @@ namespace SteamBot
                     // "token" should be replaced with the actual token from the other user
                     if (offerWithToken.SendWithToken(out newOfferId, "token"))
                     {
+                        Bot.AcceptAllMobileTradeConfirmations();
                         Log.Success("Trade offer sent : Offer ID " + newOfferId);
                     }
                 }
@@ -110,7 +114,7 @@ namespace SteamBot
 
         public override void OnTradeSuccess() { }
 
-        public override void OnTradeAwaitingEmailConfirmation(long tradeOfferID) { }
+        public override void OnTradeAwaitingConfirmation(long tradeOfferID) { }
 
         public override void OnTradeInit() { }
 
