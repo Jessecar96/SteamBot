@@ -1,0 +1,23 @@
+version: 1.0.{build}
+configuration: Release
+clone_depth: 50
+install:
+- cmd: >-
+    git submodule update --init --recursive
+
+    xcopy .\SteamAuthPackagesOverride.config SteamAuth\SteamAuth\packages.config /y
+before_build:
+- cmd: >-
+    nuget restore "SteamAuth\SteamAuth\SteamAuth.sln"
+
+    msbuild "SteamAuth\SteamAuth\SteamAuth.sln" /m /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+build:
+  project: SteamBot.sln
+  parallel: true
+  verbosity: minimal
+after_build:
+- cmd: xcopy ExtraSettings.JSON bin\release
+artifacts:
+- path: Bin\Release\*
+  name: Release
+deploy: off
