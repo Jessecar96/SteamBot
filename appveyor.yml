@@ -16,7 +16,7 @@ build:
   parallel: true
   verbosity: minimal
 after_build:
-- cmd: xcopy ExtraSettings.JSON bin\release
+- cmd: xcopy Config Bin\Release /y
 artifacts:
 - path: Bin\Release\*
   name: Release
