@@ -1,0 +1,25 @@
+{
+"Admins":["234567"],
+"ApiKey":"D2558BA724157D4F92044DE87BE073A8",
+"mainLog": "syslog.log",
+"UseSeparateProcesses": "false",
+"AutoStartAllBots": "true",
+"Bots": [
+        {
+            "Username":"Fantaserver",
+            "Password":"purple steady ranch reader",
+            "ApiKey":"D2558BA724157D4F92044DE87BE073A8",
+            "DisplayName":"VBot.exe",
+            "ChatResponse":"Hello, please talk to fantasma for more information",
+            "logFile": "TestBot.log",
+            "BotControlClass": "SteamBot.GroupChatHandler",
+            "MaximumTradeTime":180,
+            "MaximumActionGap":30,
+            "DisplayNamePrefix":"[Bot]",
+            "TradePollingInterval":800,
+            "ConsoleLogLevel":"Success",
+            "FileLogLevel":"Info",
+            "AutoStart": "true"
+        }
+    ]
+}
