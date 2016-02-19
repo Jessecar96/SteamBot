@@ -2,24 +2,15 @@
 using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
-using SteamTrade.TradeWebAPI;
 using System.Net;
-using System.Xml;
-//using System.ServiceModel;
-//using System.ServiceModel.Web;
-//using System.ServiceModel.Syndication;
 using System;
 using System.IO;
-using System.Text;
 using System.Linq;
 using System.Timers;
-using SteamKit2.Internal;
 using Newtonsoft.Json;
 using Google.GData.Client;
 using Google.GData.Spreadsheets;
 using SimpleFeedReader;
-using Google.Apis.Customsearch;
-using Google.Apis.Services;
 using Newtonsoft.Json.Linq;
 
 
@@ -313,6 +304,7 @@ namespace SteamBot
                 DoOnce = false;
                 Log.Interface("Initialised Timers");
             }
+            Bot.SteamFriends.JoinChat(new SteamID(Groupchat));
         }
 
         /// <summary>

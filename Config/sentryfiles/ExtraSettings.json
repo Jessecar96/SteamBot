@@ -1,0 +1,52 @@
+{  
+   "Servers":[  
+      {  
+         "Item1":"US Server",
+         "Item2":"70.42.74.31",
+         "Item3":"!Usserver",
+         "Item4":27015
+      },
+      {  
+         "Item1":"EU Server",
+         "Item2":"91.121.155.109",
+         "Item3":"!EUserver",
+         "Item4":27015
+      }
+   ],
+   "Feeds":[  
+      "http://www.teamfortress.com/rss.xml"
+   ],
+   "Searches":{  
+      "!vdc":"developer.valvesoftware.com",
+      "!tf2w":"wiki.teamfortress.com",
+      "!mal":"myanimelist.net"
+   },
+   "Settings":{  
+      "impCommand":"!add",
+      "mapListCommand":"!MAPS",
+      "clearcommand":"!CLEAR",
+      "deletecommand":"!del",
+      "chatroomID":"103582791429594873",
+      "MapListUrl":"http://redirect.tf2maps.net/maps",
+      "OnlineSync":"true",
+      "OnlineSearch":"true",
+      "MapStoragePath":"maps.json",
+      "UserDatabase":"users.json",
+	  
+      "GoogleAPI":"1/NPS3ed9fnQ1Zb4GR_6T7IyfoQkwIkBQe8wQfgUV9rFA",
+      "CLIENT_ID":"1051172542633-h0o3vs60pulsmfh3lnko6pfqqa6ccut3.apps.googleusercontent.com",
+      "CLIENT_SECRET":"iEnsqA3uWPuC3F6ptHsNIfRI",
+      "SCOPE":"https://spreadsheets.google.com/feeds https://docs.google.com/feeds",
+      "REDIRECT_URI":"urn:ietf:wg:oauth:2.0:oob",
+      "SpreadSheetURI":"1BGqQLnUFc2tO8NhALm7eLGlFRTSteMTGb5v4isVjK6o",
+      "IntegrationName":"MySpreadsheetIntegration-v1",
+      
+      "CX":"001607953254528177127%3A0vuo216cctc",
+      "APIKEY":"AIzaSyDljqLyfAQbD2xFEayW2Lfk_AKhW835S3o"
+      
+   },
+   "InstantReplies":{                     
+      "ghost?":"no",
+      "!help":"http://tf2maps.net/threads/we-now-have-a-steam-chat-bot.26274/"
+   }
+}
