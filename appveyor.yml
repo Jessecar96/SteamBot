@@ -23,4 +23,15 @@ after_build:
 artifacts:
 - path: Bin\Release\*
   name: Release
-deploy: on
+deploy:
+- provider: FTP
+  host: lamia.geit.uk
+  protocol: ftp
+  username: puff
+  password:
+    secure: gw1w12yvTDsgUfpW/go6bT4IqEVekYeOf3veoHSKZYE=
+  artifact: Release
+  beta: true
+  debug: true
+  on:
+    branch: master
