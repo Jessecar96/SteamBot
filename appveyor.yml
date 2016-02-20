@@ -17,8 +17,6 @@ build:
   verbosity: minimal
 after_build:
 - cmd: >-
-    xcopy Config Bin\Release /y
-
     copy NUL > Bin\Release\zzz.update
 artifacts:
 - path: Bin\Release\*
