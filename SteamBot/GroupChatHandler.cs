@@ -826,8 +826,8 @@ namespace SteamBot
                 string DownloadListing = "";
                 foreach (var item in Maplist)
                 {
-                    Maplisting = Maplisting + item.Key + " , ";
-                    DownloadListing = DownloadListing + item.Value.Item1 + " , ";
+                    Maplisting = Maplisting + item.Key + ", ";
+                    DownloadListing = DownloadListing + item.Value.Item1 + ", ";
                 }
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, DownloadListing);
                 return Maplisting;
