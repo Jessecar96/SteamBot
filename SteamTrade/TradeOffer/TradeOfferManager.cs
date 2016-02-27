@@ -24,12 +24,12 @@ namespace SteamTrade.TradeOffer
             session = new OfferSession(webApi, steamWeb);
         }
 
-        public delegate void NewOfferHandler(TradeOffer offer);
+        public delegate void TradeOfferUpdatedHandler(TradeOffer offer);
 
         /// <summary>
         /// Occurs when a new trade offer has been made by the other user
         /// </summary>
-        public event NewOfferHandler OnNewTradeOffer;
+        public event TradeOfferUpdatedHandler OnTradeOfferUpdated;
 
         public bool GetAllTradeOffers()
         {
@@ -107,7 +107,7 @@ namespace SteamTrade.TradeOffer
         {
             var tradeOffer = new TradeOffer(session, offer);
             knownTradeOffers[offer.TradeOfferId] = offer.TradeOfferState;
-            OnNewTradeOffer(tradeOffer);
+            OnTradeOfferUpdated(tradeOffer);
         }
 
         private uint GetUnixTimeStamp(DateTime dateTime)

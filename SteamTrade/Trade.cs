@@ -247,11 +247,6 @@ namespace SteamTrade
         public event CloseHandler OnClose;
 
         /// <summary>
-        /// Called when the trade completes successfully.
-        /// </summary>
-        public event CompleteHandler OnSuccess;
-
-        /// <summary>
         /// Called when the trade ends awaiting email confirmation
         /// </summary>
         public event WaitingForEmailHandler OnAwaitingConfirmation;
@@ -848,14 +843,6 @@ namespace SteamTrade
 
                 OnUserRemoveItem(schemaItem, null);
             }
-        }
-
-        internal void FireOnSuccessEvent()
-        {
-            var onSuccessEvent = OnSuccess;
-
-            if(onSuccessEvent != null)
-                onSuccessEvent();
         }
 
         internal void FireOnAwaitingConfirmation()

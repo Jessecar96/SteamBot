@@ -293,9 +293,7 @@ namespace SteamTrade
                     {
                         try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
                         {
-                            if(trade.HasTradeCompletedOk)
-                                trade.FireOnSuccessEvent();
-                            else if(trade.IsTradeAwaitingConfirmation)
+                            if(trade.IsTradeAwaitingConfirmation)
                                 trade.FireOnAwaitingConfirmation();
                         }
                         finally

@@ -993,18 +993,18 @@ namespace SteamBot
         {
             if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
             {
-                GetUserHandler(offer.PartnerSteamId).OnNewTradeOffer(offer);
+                GetUserHandler(offer.PartnerSteamId).OnTradeOfferUpdated(offer);
             }
         }
         public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
         {
-            tradeOfferManager.OnNewTradeOffer += TradeOfferRouter;
+            tradeOfferManager.OnTradeOfferUpdated += TradeOfferRouter;
         }
 
         //todo: should unsubscribe eventually...
         public void UnsubscribeTradeOffer(TradeOfferManager tradeOfferManager)
         {
-            tradeOfferManager.OnNewTradeOffer -= TradeOfferRouter;
+            tradeOfferManager.OnTradeOfferUpdated -= TradeOfferRouter;
         }
 
         /// <summary>
@@ -1012,7 +1012,6 @@ namespace SteamBot
         /// </summary>
         public void SubscribeTrade (Trade trade, UserHandler handler)
         {
-            trade.OnSuccess += handler.OnTradeSuccess;
             trade.OnAwaitingConfirmation += handler._OnTradeAwaitingConfirmation;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
@@ -1031,7 +1030,6 @@ namespace SteamBot
         /// </summary>
         public void UnsubscribeTrade (UserHandler handler, Trade trade)
         {
-            trade.OnSuccess -= handler.OnTradeSuccess;
             trade.OnAwaitingConfirmation -= handler._OnTradeAwaitingConfirmation;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
@@ -1053,7 +1051,7 @@ namespace SteamBot
             var inventory = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
             if(inventory.IsPrivate)
             {
-                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
+                Log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
             }
             return inventory;
         }

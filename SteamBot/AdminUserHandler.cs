@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using SteamKit2;
 using SteamTrade;
 using System.Collections.Generic;
+using SteamTrade.TradeOffer;
 
 namespace SteamBot
 {
@@ -129,9 +130,12 @@ namespace SteamBot
             Trade.SetReady(true);
         }
 
-        public override void OnTradeSuccess()
+        public override void OnTradeOfferUpdated(TradeOffer offer)
         {
-            Log.Success("Trade Complete.");
+            if(offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
+            {
+                Log.Success("Trade Complete.");
+            }
         }
 
         public override void OnTradeAwaitingConfirmation(long tradeOfferID)

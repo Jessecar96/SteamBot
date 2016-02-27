@@ -165,13 +165,12 @@ namespace SteamBot
 
 
         /// <summary>
-        /// Called when a new trade offer is received
+        /// Called when a trade offer is updated, including the first time it is seen.
+        /// When the bot is restarted, this might get called again for trade offers it's been previously called on.  Thus, you can't rely on
+        /// this method being called only once after an offer is accepted!  If you need to rely on that functionality (say for giving users non-Steam currency),
+        ///  you need to keep track of which trades have been paid out yourself
         /// </summary>
-        /// <param name="offer"></param>
-        public virtual void OnNewTradeOffer(TradeOffer offer)
-        {
-
-        }
+        public abstract void OnTradeOfferUpdated(TradeOffer offer);
 
         /// <summary>
         /// Called when a chat message is sent in a chatroom
@@ -237,8 +236,6 @@ namespace SteamBot
         }
 
         public abstract void OnTradeTimeout ();
-
-        public abstract void OnTradeSuccess ();
 
         public void _OnTradeAwaitingConfirmation(long tradeOfferID)
         {
