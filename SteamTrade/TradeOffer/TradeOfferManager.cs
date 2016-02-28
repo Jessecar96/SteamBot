@@ -3,6 +3,7 @@ using System.Diagnostics;
 using SteamKit2;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SteamTrade.TradeOffer
 {
@@ -11,6 +12,7 @@ namespace SteamTrade.TradeOffer
         private readonly Dictionary<string, TradeOfferState> knownTradeOffers = new Dictionary<string, TradeOfferState>();
         private readonly OfferSession session;
         private readonly TradeOfferWebAPI webApi;
+        private readonly Queue<Offer> unhandledTradeOfferUpdates; 
 
         public DateTime LastTimeCheckedOffers { get; private set; }
 
@@ -22,6 +24,7 @@ namespace SteamTrade.TradeOffer
             LastTimeCheckedOffers = DateTime.MinValue;
             webApi = new TradeOfferWebAPI(apiKey, steamWeb);
             session = new OfferSession(webApi, steamWeb);
+            unhandledTradeOfferUpdates = new Queue<Offer>();
         }
 
         public delegate void TradeOfferUpdatedHandler(TradeOffer offer);
@@ -31,69 +34,73 @@ namespace SteamTrade.TradeOffer
         /// </summary>
         public event TradeOfferUpdatedHandler OnTradeOfferUpdated;
 
-        public bool GetAllTradeOffers()
+        public void EnqueueUpdatedOffers()
         {
-            var offers = webApi.GetAllTradeOffers();
-            return HandleTradeOffersResponse(offers);
+            DateTime startTime = DateTime.Now;
+
+            var offersResponse = (LastTimeCheckedOffers == DateTime.MinValue
+                ? webApi.GetAllTradeOffers()
+                : webApi.GetAllTradeOffers(GetUnixTimeStamp(LastTimeCheckedOffers).ToString()));
+            AddTradeOffersToQueue(offersResponse);
+
+            LastTimeCheckedOffers = startTime;
         }
 
-        /// <summary>
-        /// Gets the currently active trade offers from the web api and processes them
-        /// </summary>
-        public bool GetActiveTradeOffers()
-        {
-            var offers = webApi.GetActiveTradeOffers(false, true, false);
-            return HandleTradeOffersResponse(offers);
-        }
-
-        /// <summary>
-        /// Get any updated offers
-        /// </summary>
-        public bool GetTradeOffersSince(DateTime dateTime)
-        {
-            var offers = webApi.GetAllTradeOffers(GetUnixTimeStamp(dateTime).ToString());
-            return HandleTradeOffersResponse(offers);
-        }
-
-        private bool HandleTradeOffersResponse(OffersResponse offers)
+        private void AddTradeOffersToQueue(OffersResponse offers)
         {
             if (offers?.AllOffers == null)
-                return false;
+                return;
 
-            foreach(var offer in offers.AllOffers)
+            lock(unhandledTradeOfferUpdates)
             {
-                if(!knownTradeOffers.ContainsKey(offer.TradeOfferId) || knownTradeOffers[offer.TradeOfferId] != offer.TradeOfferState)
+                foreach(var offer in offers.AllOffers)
                 {
-                    //make sure the api loaded correctly sometimes the items are missing
-                    if(IsOfferValid(offer))
-                    {
-                        SendOfferToHandler(offer);
-                    }
-                    else
-                    {
-                        var resp = webApi.GetTradeOffer(offer.TradeOfferId);
-                        if(IsOfferValid(resp.Offer))
-                        {
-                            SendOfferToHandler(resp.Offer);
-                        }
-                        else
-                        {
-                            Debug.WriteLine("Offer returned from steam api is not valid : " + resp.Offer.TradeOfferId);
-                        }
-                    }
+                    unhandledTradeOfferUpdates.Enqueue(offer);
+                }
+            }
+        }
+
+        public bool HandleNextPendingTradeOfferUpdate()
+        {
+            Offer nextOffer;
+            lock (unhandledTradeOfferUpdates)
+            {
+                if (!unhandledTradeOfferUpdates.Any())
+                {
+                    return false;
+                }
+                nextOffer = unhandledTradeOfferUpdates.Dequeue();
+            }
+
+            return HandleTradeOfferUpdate(nextOffer);
+        }
+
+        private bool HandleTradeOfferUpdate(Offer offer)
+        {
+            if(knownTradeOffers.ContainsKey(offer.TradeOfferId) && knownTradeOffers[offer.TradeOfferId] == offer.TradeOfferState)
+            {
+                return false;
+            }
+
+            //make sure the api loaded correctly sometimes the items are missing
+            if(IsOfferValid(offer))
+            {
+                SendOfferToHandler(offer);
+            }
+            else
+            {
+                var resp = webApi.GetTradeOffer(offer.TradeOfferId);
+                if(IsOfferValid(resp.Offer))
+                {
+                    SendOfferToHandler(resp.Offer);
+                }
+                else
+                {
+                    Debug.WriteLine("Offer returned from steam api is not valid : " + resp.Offer.TradeOfferId);
+                    return false;
                 }
             }
             return true;
-        }
-
-        public bool GetOffers()
-        {
-            bool offersChecked = (LastTimeCheckedOffers == DateTime.MinValue ? GetAllTradeOffers() : GetTradeOffersSince(LastTimeCheckedOffers));
-
-            if(offersChecked)
-                LastTimeCheckedOffers = DateTime.Now;
-
-            return offersChecked;
         }
 
         private bool IsOfferValid(Offer offer)
@@ -105,9 +112,8 @@ namespace SteamTrade.TradeOffer
 
         private void SendOfferToHandler(Offer offer)
         {
-            var tradeOffer = new TradeOffer(session, offer);
             knownTradeOffers[offer.TradeOfferId] = offer.TradeOfferState;
-            OnTradeOfferUpdated(tradeOffer);
+            OnTradeOfferUpdated(new TradeOffer(session, offer));
         }
 
         private uint GetUnixTimeStamp(DateTime dateTime)
@@ -121,7 +127,7 @@ namespace SteamTrade.TradeOffer
             return new TradeOffer(session, other);
         }
 
-        public bool GetOffer(string offerId, out TradeOffer tradeOffer)
+        public bool TryGetOffer(string offerId, out TradeOffer tradeOffer)
         {
             tradeOffer = null;
             var resp = webApi.GetTradeOffer(offerId);

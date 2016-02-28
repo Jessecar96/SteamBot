@@ -17,6 +17,7 @@
             "MaximumActionGap":30,
             "DisplayNamePrefix":"[AutomatedBot] ",
             "TradePollingInterval":800,
+            "TradeOfferPollingIntervalSecs":30,
             "ConsoleLogLevel":"Success",
             "FileLogLevel":"Info",
             "AutoStart": "true",

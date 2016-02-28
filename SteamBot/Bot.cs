@@ -41,12 +41,14 @@ namespace SteamBot
         private TradeManager tradeManager;
         private TradeOfferManager tradeOfferManager;
         private int tradePollingInterval;
+        private int tradeOfferPollingIntervalSecs;
         private string myUserNonce;
         private string myUniqueId;
         private bool cookiesAreInvalid = true;
         private List<SteamID> friends;
         private bool disposed = false;
         private string consoleInput;
+        private Thread tradeOfferThread;
         #endregion
 
         #region Public readonly variables
@@ -156,6 +158,7 @@ namespace SteamBot
             MaximumActionGap = config.MaximumActionGap;
             DisplayNamePrefix = config.DisplayNamePrefix;
             tradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
+            tradeOfferPollingIntervalSecs = (config.TradeOfferPollingIntervalSecs == 0 ? 30 : config.TradeOfferPollingIntervalSecs);
             schemaLang = config.SchemaLang != null && config.SchemaLang.Length == 2 ? config.SchemaLang.ToLower() : "en";
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
@@ -316,7 +319,7 @@ namespace SteamBot
         /// <returns></returns>
         public bool TryGetTradeOffer(string offerId, out TradeOffer tradeOffer)
         {
-            return tradeOfferManager.GetOffer(offerId, out tradeOffer);
+            return tradeOfferManager.TryGetOffer(offerId, out tradeOffer);
         }
 
         public void HandleBotCommand(string command)
@@ -370,6 +373,37 @@ namespace SteamBot
             catch (Exception e)
             {
                 Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
+            }
+        }
+
+        protected void SpawnTradeOfferPollingThread()
+        {
+            if (tradeOfferThread != null)
+            {
+                tradeOfferThread = new Thread(TradeOfferPollingFunction);
+                tradeOfferThread.Start();
+            }
+        }
+
+        protected void CancelTradeOfferPollingThread()
+        {
+            tradeOfferThread = null;
+        }
+
+        protected void TradeOfferPollingFunction()
+        {
+            while (tradeOfferThread == Thread.CurrentThread)
+            {
+                try
+                {
+                    tradeOfferManager.EnqueueUpdatedOffers();
+                }
+                catch (Exception e)
+                {
+                    Log.Error("Error while polling trade offers: " + e);
+                }
+
+                Thread.Sleep(tradeOfferPollingIntervalSecs*1000);
             }
         }
 
@@ -710,6 +744,7 @@ namespace SteamBot
             {
                 IsLoggedIn = false;
                 Log.Warn("Logged off Steam.  Reason: {0}", callback.Result);
+                CancelTradeOfferPollingThread();
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
@@ -719,6 +754,7 @@ namespace SteamBot
                     IsLoggedIn = false;
                     CloseTrade();
                     Log.Warn("Disconnected from Steam Network!");
+                    CancelTradeOfferPollingThread();
                 }
 
                 SteamClient.Connect ();
@@ -726,22 +762,6 @@ namespace SteamBot
             #endregion
 
             #region Notifications
-            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(callback =>
-            {
-                //currently only appears to be of trade offer
-                if (callback.Notifications.Count != 0)
-                {
-                    foreach (var notification in callback.Notifications)
-                    {
-                        Log.Info(notification.UserNotificationType + " notification");
-        }
-                }
-
-                // Get offers only if cookies are valid
-                if (CheckCookies())
-                    tradeOfferManager.GetOffers();
-            });
-
             msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
             {
                 //various types of comment notifications on profile/activity feed etc
@@ -882,8 +902,9 @@ namespace SteamBot
             tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
             SubscribeTradeOffer(tradeOfferManager);
             cookiesAreInvalid = false;
+
             // Success, check trade offers which we have received while we were offline
-            tradeOfferManager.GetOffers();
+            SpawnTradeOfferPollingThread();
         }
 
         /// <summary>
@@ -1197,8 +1218,12 @@ namespace SteamBot
             {
                 try
                 {
-                    msg = SteamClient.WaitForCallback(true);
-                    HandleSteamMessage(msg);
+                    msg = SteamClient.GetCallback(true);
+                    if (msg != null)
+                    {
+                        HandleSteamMessage(msg);
+                    }
+                    tradeOfferManager.HandleNextPendingTradeOfferUpdate();
                 }
                 catch (WebException e)
                 {
@@ -1207,8 +1232,7 @@ namespace SteamBot
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e.ToString());
-                    Log.Warn("Restarting bot...");
+                    Log.Error("Unhandled exception occurred in bot: " + e);
                 }
             }
         }

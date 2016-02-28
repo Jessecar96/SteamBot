@@ -158,6 +158,7 @@ namespace SteamBot
             public int MaximumActionGap { get; set; }
             public string DisplayNamePrefix { get; set; }
             public int TradePollingInterval { get; set; }
+            public int TradeOfferPollingIntervalSecs { get; set; }
             public string ConsoleLogLevel { get; set; }
             public string FileLogLevel { get; set; }
             [JsonConverter(typeof(JsonToSteamID))]
