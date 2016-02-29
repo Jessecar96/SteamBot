@@ -240,14 +240,7 @@ namespace SteamBot
         public void _OnTradeAwaitingConfirmation(long tradeOfferID)
         {
             Bot.AcceptAllMobileTradeConfirmations();
-            TradeOffer tradeOffer;
-            if (Bot.TryGetTradeOffer(tradeOfferID.ToString(), out tradeOffer))
-            {
-                if (tradeOffer.OfferState == TradeOfferState.TradeOfferStateNeedsConfirmation)
-                {
-                    OnTradeAwaitingConfirmation(tradeOfferID);
-                }
-            }            
+            OnTradeAwaitingConfirmation(tradeOfferID);
         }
         public abstract void OnTradeAwaitingConfirmation(long tradeOfferID);
 
