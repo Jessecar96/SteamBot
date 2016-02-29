@@ -46,5 +46,17 @@ namespace SteamBot.Tests
         {
             Assert.AreEqual(new SteamBot.Utilities().SanitizeMapName("ctf_mexico_b1"), "ctf_mexico_b1");
         }
+
+        [TestMethod()]
+        public void GivenATypicalWorkshopMap_ItIsCleanedUp()
+        {
+            Assert.AreEqual(new SteamBot.Utilities().SanitizeMapName("workshop/arena_discovery_b4.ugc"), "arena_discovery_b4");
+        }
+
+        [TestMethod()]
+        public void GivenATypicalWorkshopMapButWithATruncatedName_ItIsCleanedUp()
+        {
+            Assert.AreEqual(new SteamBot.Utilities().SanitizeMapName("workshop/arena_discovery123_b4.u"), "arena_discovery123_b4");
+        }
     }
 }
