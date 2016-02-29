@@ -40,5 +40,11 @@ namespace SteamBot.Tests
         {
             Assert.IsFalse(new SteamBot.Utilities().DoesMessageStartWith("!addreply something", new List<string>(new string[] { "!add" })));
         }
+
+        [TestMethod()]
+        public void GivenANormaMapName_ItIsUnchangedWhenSanitized()
+        {
+            Assert.AreEqual(new SteamBot.Utilities().SanitizeMapName("ctf_mexico_b1"), "ctf_mexico_b1");
+        }
     }
 }

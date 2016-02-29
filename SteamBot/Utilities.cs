@@ -17,5 +17,10 @@ namespace SteamBot
 
             return false;
         }
+
+        public string SanitizeMapName(string MapName)
+        {
+            return MapName;
+        }
     }
 }
