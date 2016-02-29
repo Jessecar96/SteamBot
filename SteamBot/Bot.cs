@@ -378,7 +378,7 @@ namespace SteamBot
 
         protected void SpawnTradeOfferPollingThread()
         {
-            if (tradeOfferThread != null)
+            if (tradeOfferThread == null)
             {
                 tradeOfferThread = new Thread(TradeOfferPollingFunction);
                 tradeOfferThread.Start();
@@ -616,25 +616,25 @@ namespace SteamBot
                                 RemoveUserHandler(friend.SteamID);
                             }
                             else if (friend.Relationship == EFriendRelationship.RequestRecipient)
-                    {
+                            {
                                 if (GetUserHandler(friend.SteamID).OnFriendAdd())
                                 {
-                        if (!friends.Contains(friend.SteamID))
-                        {
-                            friends.Add(friend.SteamID);
+                                    if (!friends.Contains(friend.SteamID))
+                                    {
+                                        friends.Add(friend.SteamID);
                                     }
-                                    else
-                            {
-                                        Log.Error("Friend was added who was already in friends list: " + friend.SteamID);
+                                    SteamFriends.AddFriend(friend.SteamID);
+                                }
+                                else
+                                {
+                                    if(friends.Contains(friend.SteamID))
+                                    {
+                                        friends.Remove(friend.SteamID);
                                     }
-                                SteamFriends.AddFriend(friend.SteamID);
-                            }
-                        else
-                        {
                                     SteamFriends.RemoveFriend(friend.SteamID);
-                                RemoveUserHandler(friend.SteamID);
+                                    RemoveUserHandler(friend.SteamID);
+                                }
                             }
-                        }
                             break;
                     }
                 }
@@ -938,7 +938,7 @@ namespace SteamBot
             return true;
         }
 
-        UserHandler GetUserHandler(SteamID sid)
+        public UserHandler GetUserHandler(SteamID sid)
         {
             if (!userHandlers.ContainsKey(sid))
                 userHandlers[sid] = createHandler(this, sid);
@@ -1012,10 +1012,7 @@ namespace SteamBot
 
         public void TradeOfferRouter(TradeOffer offer)
         {
-            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
-            {
-                GetUserHandler(offer.PartnerSteamId).OnTradeOfferUpdated(offer);
-            }
+            GetUserHandler(offer.PartnerSteamId).OnTradeOfferUpdated(offer);
         }
         public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
         {
@@ -1223,7 +1220,13 @@ namespace SteamBot
                     {
                         HandleSteamMessage(msg);
                     }
-                    tradeOfferManager.HandleNextPendingTradeOfferUpdate();
+
+                    if(tradeOfferManager != null)
+                    {
+                        tradeOfferManager.HandleNextPendingTradeOfferUpdate();
+                    }
+
+                    Thread.Sleep(1);
                 }
                 catch (WebException e)
                 {
