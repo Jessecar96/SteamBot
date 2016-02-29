@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace SteamBot
 {
@@ -16,6 +17,16 @@ namespace SteamBot
             }
 
             return false;
+        }
+
+        public string SanitizeMapName(string MapName)
+        {
+            string stripWorkshop = MapName.Replace("workshop/", "");
+
+            Regex regex = new Regex("\\.(.*)");
+            string stripUGC = regex.Replace(stripWorkshop, "");
+
+            return stripUGC;
         }
     }
 }

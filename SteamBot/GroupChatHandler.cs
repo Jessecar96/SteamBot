@@ -246,6 +246,7 @@ namespace SteamBot
         /// </summary>
         public void MapChangeTracker()
         {
+            Utilities utilities = new Utilities();
             int count = 0;
 
 
@@ -256,7 +257,17 @@ namespace SteamBot
                 {
                     Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true, null);
                     Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item1 + "!");
-                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, "Map changed to: " + ServerData.Map.ToString() + " on the " + ServerAddress.Item1 + " " + ServerData.Players + "/" + ServerData.MaxPlayers + " - Join at: steam://connect/" + ServerAddress.Item2 + ":" + ServerAddress.Item4);
+
+                    string groupMessage = String.Format(
+                        "Map changed to {0} on the {1} {2}/{3} - Join at: steam://connect/{4}:{5}",
+                        utilities.SanitizeMapName(ServerData.Map.ToString()),
+                        ServerAddress.Item1,
+                        ServerData.Players,
+                        ServerData.MaxPlayers,
+                        ServerAddress.Item2,
+                        ServerAddress.Item4
+                    );
+                    Bot.SteamFriends.SendChatRoomMessage(Groupchat, EChatEntryType.ChatMsg, groupMessage);
 
                     SpreadsheetSync = true;
                 }
@@ -676,6 +687,7 @@ namespace SteamBot
         /// <param name="message">The message sent</param>
         public string Chatcommands(SteamID chatID, SteamID sender, string FullMessage)
         {
+            Utilities utilities = new Utilities();
             base.OnChatRoomMessage(chatID, sender, FullMessage);
 
             bool rank = admincheck(sender);
@@ -837,7 +849,14 @@ namespace SteamBot
                 if (Words[0].StartsWith(ServerAddress.Item3, StringComparison.OrdinalIgnoreCase))
                 {
                     Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), ServerAddress.Item4);
-                    return ServerData.Map + " " + ServerData.Players + "/" + ServerData.MaxPlayers + " - Join at: steam://connect/" + ServerAddress.Item2 + ":" + ServerAddress.Item4;
+                    return String.Format(
+                         "{0} {1}/{2} - join at: steam://connect/{3}:{4}",
+                         utilities.SanitizeMapName(ServerData.Map),
+                         ServerData.Players,
+                         ServerData.MaxPlayers,
+                         ServerAddress.Item2,
+                         ServerAddress.Item4
+                    );
                 }
             }
 
