@@ -43,7 +43,7 @@ namespace SteamTrade.TradeOffer
                 : webApi.GetAllTradeOffers(GetUnixTimeStamp(LastTimeCheckedOffers).ToString()));
             AddTradeOffersToQueue(offersResponse);
 
-            LastTimeCheckedOffers = startTime;
+            LastTimeCheckedOffers = startTime - TimeSpan.FromMinutes(5); //Lazy way to make sure we don't miss any trade offers due to slightly differing clocks
         }
 
         private void AddTradeOffersToQueue(OffersResponse offers)
