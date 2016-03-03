@@ -74,7 +74,7 @@ namespace SteamTrade
                     }
                 }
             }
-        }       
+        }
 
         /// <summary>
         /// Custom wrapper for creating a HttpWebRequest, edited for Steam.
@@ -131,14 +131,15 @@ namespace SteamTrade
             {
                 return request.GetResponse() as HttpWebResponse;
             }
-            // Write the data to the body for POST and other methods.
-                byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
-                request.ContentLength = dataBytes.Length;
 
-                using (Stream requestStream = request.GetRequestStream())
-                {
-                    requestStream.Write(dataBytes, 0, dataBytes.Length);
-                }
+            // Write the data to the body for POST and other methods.
+            byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
+            request.ContentLength = dataBytes.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(dataBytes, 0, dataBytes.Length);
+            }
 
             // Get the response and return it.
             try 
@@ -314,7 +315,7 @@ namespace SteamTrade
         ///<summary>
         /// Authenticate using SteamKit2 and ISteamUserAuth. 
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
-        /// </summary> 
+        /// </summary>
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
         /// <param name="myUniqueId">Id what you get to login.</param>
         /// <param name="client">An instance of a SteamClient.</param>
