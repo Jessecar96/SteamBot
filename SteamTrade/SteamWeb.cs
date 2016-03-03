@@ -13,7 +13,7 @@ using System.Net.Security;
 using SteamKit2;
 
 namespace SteamTrade
-{   
+{
 
     /// <summary>
     /// SteamWeb class to create an API endpoint to the Steam Web.
@@ -53,12 +53,13 @@ namespace SteamTrade
         /// <param name="data">A NameValueCollection including Headers added to the request.</param>
         /// <param name="ajax">A bool to define if the http request is an ajax request.</param>
         /// <param name="referer">Gets information about the URL of the client's previous request that linked to the current URL.</param>
+        /// <param name="fetchError">If true, response codes other than HTTP 200 will still be returned, rather than throwing exceptions</param>
         /// <returns>The string of the http return stream.</returns>
         /// <remarks>If you want to know how the request method works, use: <see cref="SteamWeb.Request"/></remarks>
-        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        public string Fetch(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
         {
             // Reading the response as stream and read it to the end. After that happened return the result as string.
-            using (HttpWebResponse response = Request(url, method, data, ajax, referer))
+            using (HttpWebResponse response = Request(url, method, data, ajax, referer, fetchError))
             {
                 using (Stream responseStream = response.GetResponseStream())
                 {
@@ -83,8 +84,9 @@ namespace SteamTrade
         /// <param name="data">A NameValueCollection including Headers added to the request.</param>
         /// <param name="ajax">A bool to define if the http request is an ajax request.</param>
         /// <param name="referer">Gets information about the URL of the client's previous request that linked to the current URL.</param>
+        /// <param name="fetchError">Return response even if its status code is not 200</param>
         /// <returns>An instance of a HttpWebResponse object.</returns>
-        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "")
+        public HttpWebResponse Request(string url, string method, NameValueCollection data = null, bool ajax = true, string referer = "", bool fetchError = false)
         {
             // Append the data to the URL for GET-requests.
             bool isGetMethod = (method.ToLower() == "get");
@@ -129,6 +131,7 @@ namespace SteamTrade
             {
                 return request.GetResponse() as HttpWebResponse;
             }
+
             // Write the data to the body for POST and other methods.
             byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
             request.ContentLength = dataBytes.Length;
@@ -139,7 +142,23 @@ namespace SteamTrade
             }
 
             // Get the response and return it.
-            return request.GetResponse() as HttpWebResponse;
+            try 
+            {
+                return request.GetResponse() as HttpWebResponse;
+            }
+            catch (WebException ex) 
+            {
+                //this is thrown if response code is not 200
+                if (fetchError) 
+                {
+                    var resp = ex.Response as HttpWebResponse;
+                    if (resp != null) 
+                    {
+                        return resp;
+                    }
+                }
+                throw;                
+            }            
         }
 
         /// <summary>
@@ -156,7 +175,7 @@ namespace SteamTrade
             // First get the RSA key with which we will encrypt our password.
             string response = Fetch("https://steamcommunity.com/login/getrsakey", "POST", data, false);
             GetRsaKey rsaJson = JsonConvert.DeserializeObject<GetRsaKey>(response);
-            
+
             // Validate, if we could get the rsa key.
             if (!rsaJson.success)
             {
@@ -170,14 +189,14 @@ namespace SteamTrade
                 Exponent = HexToByte(rsaJson.publickey_exp),
                 Modulus = HexToByte(rsaJson.publickey_mod)
             };
-            
+
             rsa.ImportParameters(rsaParameters);
 
             // Encrypt the password and convert it.
             byte[] bytePassword = Encoding.ASCII.GetBytes(password);
             byte[] encodedPassword = rsa.Encrypt(bytePassword, false);
             string encryptedBase64Password = Convert.ToBase64String(encodedPassword);
-            
+
             SteamResult loginJson = null;
             CookieCollection cookieCollection;
             string steamGuardText = "";
@@ -192,7 +211,7 @@ namespace SteamTrade
                 bool steamGuard = loginJson != null && loginJson.emailauth_needed;
 
                 string time = Uri.EscapeDataString(rsaJson.timestamp);
-                
+
                 string capGid = string.Empty;
                 // Response does not need to send if captcha is needed or not.
                 // ReSharper disable once MergeSequentialChecks
@@ -214,7 +233,7 @@ namespace SteamTrade
                     if (!string.IsNullOrEmpty(consoleText))
                     {
                         capText = Uri.EscapeDataString(consoleText);
-                    }
+                }
                 }
 
                 data.Add("captchagid", captcha ? capGid : "");
@@ -293,7 +312,7 @@ namespace SteamTrade
 
         }
 
-        /// <summary>
+        ///<summary>
         /// Authenticate using SteamKit2 and ISteamUserAuth. 
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
         /// </summary>
@@ -397,7 +416,7 @@ namespace SteamTrade
         /// <returns>The byte value.</returns>
         private byte[] HexToByte(string hex)
         {
-            if (hex.Length%2 == 1)
+            if (hex.Length % 2 == 1)
             {
                 throw new Exception("The binary key cannot have an odd number of digits");
             }
