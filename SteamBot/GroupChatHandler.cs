@@ -1088,6 +1088,7 @@ namespace SteamBot
         /// <param name="Mapname">Mapname</param>
         public bool UploadCheck(string Mapname)
         {
+            return false;  //Error Check for Invalid Website needs to be added 
             if (Mapname.Contains("."))
             {
                 Mapname = (Mapname.Split(new string[] { "." }, System.StringSplitOptions.None)).First();
@@ -1098,7 +1099,6 @@ namespace SteamBot
             {
                 return true;
             }
-            return false;
         }
         ///<summary> Checks if the given STEAMID is an admin in the database</summary>
         public bool admincheck(SteamID sender)
