@@ -48,7 +48,7 @@ namespace SteamTrade.TradeOffer
 
         private void AddTradeOffersToQueue(OffersResponse offers)
         {
-            if (offers?.AllOffers == null)
+            if (offers == null || offers.AllOffers == null)
                 return;
 
             lock(unhandledTradeOfferUpdates)
