@@ -836,12 +836,15 @@ namespace SteamBot
 
                 string Maplisting = "";
                 string DownloadListing = "";
+                string NoteListing = "";
                 foreach (var item in Maplist)
                 {
                     Maplisting = Maplisting + item.Key + ", ";
-                    DownloadListing = DownloadListing + item.Value.Item1 + ", ";
+                    DownloadListing = DownloadListing + item.Value.Item1 + " , ";
+                    NoteListing = NoteListing + item.Value.Item3;  
                 }
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, DownloadListing);
+                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, NoteListing);
                 return Maplisting;
             }
             foreach (Tuple<string, string, string, Int32> ServerAddress in Servers)
