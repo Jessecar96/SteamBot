@@ -214,7 +214,10 @@ namespace SteamBot
             foreach (KeyValuePair<string, int> Key in BanList)
             {
                 BanList.Remove(Key.Key);
-                BanList.Add(Key.Key, Key.Value - 1);
+                if (Key.Value > 0)
+                {
+                    BanList.Add(Key.Key, Key.Value - 1);
+                }
             }
             System.IO.File.WriteAllText(@BanListFilePath, JsonConvert.SerializeObject(BanList));
         }
@@ -226,6 +229,8 @@ namespace SteamBot
         /// <param name="e"></param>
         public void TickTasks(object sender, EventArgs e)
         {
+            Bot.SteamFriends.SetPersonaName("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
+
             if (SpreadsheetSync)
             {
                 SpreadsheetSync = false;
@@ -1091,7 +1096,15 @@ namespace SteamBot
         /// <param name="Mapname">Mapname</param>
         public bool UploadCheck(string Mapname)
         {
-              
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(ServerListUrl);
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            if (response == null || response.StatusCode != HttpStatusCode.OK)
+            {
+                return false;
+            }
+
             if (Mapname.Contains("."))
             {
                 Mapname = (Mapname.Split(new string[] { "." }, System.StringSplitOptions.None)).First();
