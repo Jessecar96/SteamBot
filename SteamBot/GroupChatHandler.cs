@@ -928,7 +928,7 @@ namespace SteamBot
         {
             if (notes == null)
             {
-                notes = "No Notes";
+                notes = "None";
             }
             //Deserialises the current map list
             string response = "Failed to add the map to the list";
