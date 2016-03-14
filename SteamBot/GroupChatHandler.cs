@@ -307,6 +307,7 @@ namespace SteamBot
         /// <param name="callback"></param>
         public override void OnLoginCompleted()
         {
+            Log.Info("~Login Completed~");
             Log.Interface("Use 'exec 0 join' to join a chatroom");
             Log.Interface("RSS disabled By default");
             if (DoOnce == true)
