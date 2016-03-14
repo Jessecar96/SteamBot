@@ -836,14 +836,14 @@ namespace SteamBot
             {
                 // Dictionary<string, Tuple<string, SteamID>> entrydata = JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath)); //TODO can we get rid of this?
 
-                string Maplisting = "";
-                string DownloadListing = "";
-                string NoteListing = "";
+                string Maplisting = "Maps: ";
+                string DownloadListing = "Downloads: ";
+                string NoteListing = "Notes: ";
                 foreach (var item in Maplist)
                 {
                     Maplisting = Maplisting + item.Key + ", ";
                     DownloadListing = DownloadListing + item.Value.Item1 + " , ";
-                    NoteListing = NoteListing + item.Value.Item3;  
+                    NoteListing = item.Value.Item1 + ": " + NoteListing + item.Value.Item3;  
                 }
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, DownloadListing);
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, NoteListing);
