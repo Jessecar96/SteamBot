@@ -844,7 +844,7 @@ namespace SteamBot
                 {
                     Maplisting = Maplisting + item.Key + ", ";
                     DownloadListing = DownloadListing + item.Value.Item1 + " , ";
-                    NoteListing =  NoteListing + item.Key + ": " + item.Value.Item3;  
+                    NoteListing =  NoteListing + item.Key + ": " + item.Value.Item3 + ", ";  
                 }
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, DownloadListing);
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, NoteListing);
