@@ -1,5 +1,4 @@
-﻿
-using SteamKit2;
+﻿using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
 using System.Net;
@@ -12,8 +11,6 @@ using Google.GData.Client;
 using Google.GData.Spreadsheets;
 using SimpleFeedReader;
 using Newtonsoft.Json.Linq;
-
-
 
 namespace SteamBot
 {
@@ -130,18 +127,18 @@ namespace SteamBot
         }
 
 
-        public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist = Maplistfile(MapStoragePath);
+        public static Dictionary<string, Tuple<string, string, string, bool>> Maplist = Maplistfile(MapStoragePath);
 
-        public static Dictionary<string, Tuple<string, SteamID, string, bool>> Maplistfile(string MapStoragePath)
+        public static Dictionary<string, Tuple<string, string, string, bool>> Maplistfile(string MapStoragePath)
         {
             if (File.Exists(MapStoragePath))
 
             {
-                return JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID, string, bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
+                return JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, string, string, bool>>>(System.IO.File.ReadAllText(@MapStoragePath));
             }
             else
             {
-                Dictionary<string, Tuple<string, SteamID, string, bool>> EmptyMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+                Dictionary<string, Tuple<string, string, string, bool>> EmptyMaplist = new Dictionary<string, Tuple<string, string, string, bool>>();
                 System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(EmptyMaplist));
                 return EmptyMaplist;
             }
@@ -260,7 +257,7 @@ namespace SteamBot
                 Steam.Query.ServerInfoResult ServerData = ServerQuery(System.Net.IPAddress.Parse(ServerAddress.Item2), ServerAddress.Item4);
                 if ((ServerData.Map != PreviousData[count]) && ServerData.Players > 2)
                 {
-                    Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, 0, true, null);
+                    Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, "0", true, null);
                     Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item1 + "!");
 
                     string groupMessage = String.Format(
@@ -492,7 +489,7 @@ namespace SteamBot
             }
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["ClearCommands"].Item2))
             {
-                Maplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+                Maplist = new Dictionary<string, Tuple<string, string, string, bool>>();
                 System.IO.File.WriteAllText(@MapStoragePath, JsonConvert.SerializeObject(Maplist));
                 SpreadsheetSync = true;
                 return "Wiped all Maps";
@@ -766,7 +763,7 @@ namespace SteamBot
                 string[] Reason = Message.Split(new string[] { Words[1] }, StringSplitOptions.None);
 
 
-                Tuple<string, SteamID> removed = ImpRemove(Words[1], sender, false, Reason[1]);
+                Tuple<string, SteamID> removed = ImpRemove(Words[1], sender.ToString(), false, Reason[1]);
                 return "Removed map: " + removed.Item1;
             }
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["ImpCommands"].Item2))
@@ -934,7 +931,7 @@ namespace SteamBot
             }
             //Deserialises the current map list
             string response = "Failed to add the map to the list";
-            Dictionary<string, Tuple<string, SteamID, string, bool>> entrydata = Maplist;
+            Dictionary<string, Tuple<string, string, string, bool>> entrydata = Maplist;
             if (Maplist == null)
             {
                 Log.Interface("There was an error, here is the map file before it's wiped:" + System.IO.File.ReadAllText(@MapStoragePath));
@@ -946,7 +943,7 @@ namespace SteamBot
             else
             {
                 //Adds the entry
-                entrydata.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, UploadCheck(map)));
+                entrydata.Add(map, new Tuple<string, string, string, bool>(downloadurl, sender.ToString(), notes, UploadCheck(map)));
                 //Saves the data
                 Maplist = entrydata;
                 response = "Added: " + map;
@@ -974,16 +971,16 @@ namespace SteamBot
             }
             int EntryCount = 0;
 
-            if (admincheck(sender) == true | sender == Maplist[maptochange].Item2)
+            if (admincheck(sender) == true | sender.Equals(Maplist[maptochange].Item2))
             {
 
-                foreach (KeyValuePair<string, Tuple<string, SteamID, string, bool>> entry in Maplist)
+                foreach (KeyValuePair<string, Tuple<string, string, string, bool>> entry in Maplist)
                 {
                     EntryCount = EntryCount + 1;
 
                     if (entry.Key == maptochange)
                     {
-                        UpdateEntryExecute(EntryCount, maptochange, map, downloadurl, notes, sender);
+                        UpdateEntryExecute(EntryCount, maptochange, map, downloadurl, notes, sender.ToString());
                         return "Map has been updated";
                     }
                 }
@@ -994,10 +991,10 @@ namespace SteamBot
 
         }
 
-        public void UpdateEntryExecute(int EntryCount, string maptochange, string map, string downloadurl, string notes, SteamID sender)
+        public void UpdateEntryExecute(int EntryCount, string maptochange, string map, string downloadurl, string notes, string sender)
         {
-            Dictionary<string, Tuple<string, SteamID, string, bool>> NewMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
-            foreach (KeyValuePair<string, Tuple<string, SteamID, string, bool>> OldMaplistEntry in Maplist)
+            Dictionary<string, Tuple<string, string, string, bool>> NewMaplist = new Dictionary<string, Tuple<string, string, string, bool>>();
+            foreach (KeyValuePair<string, Tuple<string, string, string, bool>> OldMaplistEntry in Maplist)
             {
                 if (NewMaplist.Count() + 1 != EntryCount)
                 {
@@ -1005,7 +1002,7 @@ namespace SteamBot
                 }
                 else
                 {
-                    NewMaplist.Add(map, new Tuple<string, SteamID, string, bool>(downloadurl, sender, notes, UploadCheck(map)));
+                    NewMaplist.Add(map, new Tuple<string, string, string, bool>(downloadurl, sender, notes, UploadCheck(map)));
                     NewMaplist.Add(OldMaplistEntry.Key, OldMaplistEntry.Value);
                 }
                 Maplist = NewMaplist;
@@ -1019,22 +1016,23 @@ namespace SteamBot
         /// Removes specified map from the database.
         /// Checks if the user is an admin or the setter
         /// </summary>
-        public Tuple<string, SteamID> ImpRemove(string map, SteamID sender, bool ServerRemove, string DeletionReason)
+        public Tuple<string, SteamID> ImpRemove(string map, string sender, bool ServerRemove, string DeletionReason)
         {
-            Dictionary<string, Tuple<string, SteamID, string, bool>> NewMaplist = new Dictionary<string, Tuple<string, SteamID, string, bool>>();
+            Dictionary<string, Tuple<string, string, string, bool>> NewMaplist = new Dictionary<string, Tuple<string, string, string, bool>>();
             string removed = "The map was not found or you do not have sufficient privileges";
             SteamID userremoved = 0;
+            SteamID SenderSteamID = new SteamID(sender);
             foreach (var item in Maplist)
             {
                 //TODO DEBUG
-                if (item.Key == map && (admincheck(sender) || sender == item.Value.Item2 || ServerRemove))
+                if (item.Key == map && (admincheck(SenderSteamID) || sender.Equals(item.Value.Item2.ToString()) || ServerRemove))
                 {
                     removed = map;
-                    userremoved = item.Value.Item2;
+                    userremoved = new SteamID(item.Value.Item2);
                     SpreadsheetSync = true;
                     if (DeletionReason != null)
                     {
-                        Bot.SteamFriends.SendChatMessage(item.Value.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + item.Key + " was removed from the map list, reason given:" + DeletionReason);
+                        Bot.SteamFriends.SendChatMessage(userremoved, EChatEntryType.ChatMsg, "Hi, your map: " + item.Key + " was removed from the map list, reason given:" + DeletionReason);
                     }
                 }
                 else
