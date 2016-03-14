@@ -1095,14 +1095,14 @@ namespace SteamBot
         /// <param name="Mapname">Mapname</param>
         public bool UploadCheck(string Mapname)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(ServerListUrl);
+           // HttpWebRequest request = (HttpWebRequest)WebRequest.Create(ServerListUrl);
 
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            //HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
-            if (response == null || response.StatusCode != HttpStatusCode.OK)
-            {
-                return false;
-            }
+            //if (response == null || response.StatusCode != HttpStatusCode.OK)
+           // {
+           //     return false;
+           // }
 
             if (Mapname.Contains("."))
             {
