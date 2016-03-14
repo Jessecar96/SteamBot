@@ -1026,7 +1026,7 @@ namespace SteamBot
             foreach (var item in Maplist)
             {
                 //TODO DEBUG
-                if (item.Key == map && (admincheck(SenderSteamID) || sender.Equals(item.Value.Item2.ToString()) || ServerRemove))
+                if (item.Key == map && (admincheck(SenderSteamID) | sender.Equals(item.Value.Item2.ToString()) | ServerRemove))
                 {
                     removed = map;
                     userremoved = new SteamID(item.Value.Item2);
