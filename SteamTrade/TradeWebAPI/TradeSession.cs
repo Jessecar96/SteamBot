@@ -121,7 +121,7 @@ namespace SteamTrade.TradeWebAPI
         }
         
         /// <summary>
-        /// Adds a specified itom by its itemid.  Since each itemid is
+        /// Adds a specified item by its itemid.  Since each itemid is
         /// unique to each item, you'd first have to find the item, or
         /// use AddItemByDefindex instead.
         /// </summary>
