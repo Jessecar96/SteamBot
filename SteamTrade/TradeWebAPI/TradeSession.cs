@@ -87,10 +87,10 @@ namespace SteamTrade.TradeWebAPI
         {
             var data = new NameValueCollection();
 
-            data.Add("sessionid", sessionIdEsc);
-            data.Add("steamid", "" + otherId.ConvertToUInt64());
-            data.Add("appid", "" + appid);
-            data.Add("contextid", "" + contextId);
+            data.Add ("sessionid", sessionIdEsc);
+            data.Add ("steamid", "" + otherId.ConvertToUInt64());
+            data.Add ("appid", "" + appid);
+            data.Add ("contextid", "" + contextId);
 
             try
             {
@@ -134,7 +134,7 @@ namespace SteamTrade.TradeWebAPI
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", "" + appid);
+            data.Add ("appid", "" + appid);
             data.Add ("contextid", "" + contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
@@ -155,8 +155,8 @@ namespace SteamTrade.TradeWebAPI
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", "" + appid);
-            data.Add("contextid", "" + contextid);
+            data.Add ("appid", "" + appid);
+            data.Add ("contextid", "" + contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 
