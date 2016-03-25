@@ -750,14 +750,19 @@ namespace SteamBot
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
             {
+                log.Warn(IsLoggedIn.ToString());
                 if(IsLoggedIn)
                 {
                     IsLoggedIn = false;
                     CloseTrade();
                     Log.Warn("Disconnected from Steam Network!");
+                    
                 }
-
+                Log.Warn("Will attempt reconnect in 15 seconds");
+                Thread.Sleep(15000); //added a delay to attempted reconnection every 15 seconds
+                Log.Warn("Attempting Reconnect");
                 SteamClient.Connect ();
+                Log.Warn("Bot should be reconnecting");
             });
             #endregion
 
@@ -788,7 +793,10 @@ namespace SteamBot
             });
             #endregion
         }
+    
 
+
+      
         string GetMobileAuthCode()
         {
             var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
@@ -899,6 +907,7 @@ namespace SteamBot
 
         void UserWebLogOn()
         {
+            Log.Warn("Authenticating...");
             do
             {
                 IsLoggedIn = SteamWeb.Authenticate(myUniqueId, SteamClient, myUserNonce);
