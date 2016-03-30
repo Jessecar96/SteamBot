@@ -452,8 +452,9 @@ namespace SteamBot
             if (Words[0].StartsWith("!OnlineSheetDownload", StringComparison.OrdinalIgnoreCase))
             {
                 WorksheetEntry Worksheet = new SheetHandler().GetWorksheet(OauthParameters, IntegrationName, SpreadSheetURI);
-                PrintMapList(new SheetHandler().SyncSheetDownload(Worksheet, IntegrationName, OauthParameters));
-
+                string[] MapData = PrintMapList(new SheetHandler().SyncSheetDownload(Worksheet, IntegrationName, OauthParameters));
+                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, MapData[1]);
+                return MapData[0];
             }
 
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["Rejoin"].Item2))
