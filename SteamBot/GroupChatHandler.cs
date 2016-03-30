@@ -83,6 +83,16 @@ namespace SteamBot
 
         public static string InstantRepliesFile = "instantreplies.json";
 
+        public static OAuth2Parameters OauthParameters = new OAuth2Parameters()
+        {
+            ClientSecret = groupchatsettings["CLIENT_SECRET"],
+            ClientId = groupchatsettings["CLIENT_ID"],
+            Scope = groupchatsettings["SCOPE"],
+            RedirectUri = groupchatsettings["REDIRECT_URI"],
+            AccessType = "offline",
+            RefreshToken = groupchatsettings["GoogleAPI"]
+        };
+
 
 
         static Dictionary<string, Tuple<string, List<string>>> ChatCommandsArray = JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, List<string>>>>(System.IO.File.ReadAllText(@"ChatCommands.json"));
@@ -343,26 +353,17 @@ namespace SteamBot
             }
             if (command.StartsWith("!AUTHENTICATE", StringComparison.OrdinalIgnoreCase))
             {
-                OAuth2Parameters parameters = new OAuth2Parameters();
+                string authorizationUrl = OAuthUtil.CreateOAuth2AuthorizationUrl(OauthParameters);
 
-                parameters.ClientId = CLIENT_ID;
-
-                parameters.ClientSecret = CLIENT_SECRET;
-
-                parameters.RedirectUri = REDIRECT_URI;
-
-                parameters.Scope = SCOPE;
-
-                string authorizationUrl = OAuthUtil.CreateOAuth2AuthorizationUrl(parameters);
                 Log.Interface(authorizationUrl);
                 Log.Info(authorizationUrl);
                 Log.Debug(authorizationUrl);
                 Log.Interface("Please visit the URL above to authorize your OAuth "
                     + "request token.  Once that is complete, type in your access code to "
                     + "continue...");
-                parameters.AccessCode = Console.ReadLine();
-                OAuthUtil.GetAccessToken(parameters);
-                string refreshToken = parameters.RefreshToken;
+                OauthParameters.AccessCode = Console.ReadLine();
+                OAuthUtil.GetAccessToken(OauthParameters);
+                string refreshToken = OauthParameters.RefreshToken;
                 Log.Interface("Your refresh token needs to be added to your settings file it is as follows:");
                 Log.Interface(refreshToken);
                 GoogleAPI = refreshToken;
@@ -447,6 +448,13 @@ namespace SteamBot
             FullMessage.Replace(@"\s+", " ");
             string[] Words = FullMessage.Split();
             string Message = FullMessage.Remove(0, ((Words[0].Length) * (Words.Length > 1).GetHashCode()) + (Words.Length > 1).GetHashCode());
+
+            if (Words[0].StartsWith("!OnlineSheetDownload", StringComparison.OrdinalIgnoreCase))
+            {
+                WorksheetEntry Worksheet = new SheetHandler().GetWorksheet(OauthParameters, IntegrationName, SpreadSheetURI);
+                PrintMapList(new SheetHandler().SyncSheetDownload(Worksheet, IntegrationName, OauthParameters));
+
+            }
 
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["Rejoin"].Item2))
                 if (FullMessage.StartsWith("!ReJoin", StringComparison.OrdinalIgnoreCase))
@@ -835,20 +843,10 @@ namespace SteamBot
             }
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["MapCommands"].Item2))
             {
-                // Dictionary<string, Tuple<string, SteamID>> entrydata = JsonConvert.DeserializeObject<Dictionary<string, Tuple<string, SteamID>>>(System.IO.File.ReadAllText(@MapStoragePath)); //TODO can we get rid of this?
-
-                string Maplisting = "Maps: ";
-                string DownloadListing = "Downloads: ";
-                string NoteListing = "Notes: ";
-                foreach (var item in Maplist)
-                {
-                    Maplisting = Maplisting + item.Key + ", ";
-                    DownloadListing = DownloadListing + item.Value.Item1 + " , ";
-                    NoteListing =  NoteListing + item.Key + ": " + item.Value.Item3 + ", ";  
-                }
-                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, DownloadListing);
-                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, NoteListing);
-                return Maplisting;
+                string[] MapData = PrintMapList(Maplist);
+                Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, MapData[1]);
+                return MapData[0];
+                
             }
             foreach (Tuple<string, string, string, Int32> ServerAddress in Servers)
             {
@@ -910,6 +908,25 @@ namespace SteamBot
             }
             return null;
         }
+        
+        /// <summary>
+        /// Inputting a Map List will return a string list of all the maps as the first value in the array, and all the notes+urls as second
+        /// </summary>
+        /// <param name="MapListToExtract"></param>
+        /// <returns></returns>
+        //TODO Return each value seperately
+        public string[] PrintMapList(Dictionary<string, Tuple<string, string, string, bool>> MapListToExtract)
+        {
+            string Maplisting = "";
+            string DownloadListing = "";
+            foreach (var item in Maplist)
+            {
+                Maplisting = Maplisting + item.Key + " , ";
+                DownloadListing = DownloadListing + item.Value.Item1 + " , ";
+            }
+            return new string[] { Maplisting, DownloadListing };
+        }
+
         /// <summary>
         /// Checks if the value is within the array
         /// </summary>
@@ -1184,85 +1201,16 @@ namespace SteamBot
             }
             RSSTimer();
         }
-        /// <summary>
-        /// Updates the online spreadsheet according the maps file
-        /// </summary>
-        /// 
-        public void SheetSync(bool ForceSync)
+
+
+        public void SheetSync(bool Forcesync)
         {
             Bot.SteamFriends.SetPersonaName("[" + Maplist.Count.ToString() + "] " + Bot.DisplayName);
 
-            if ((OnlineSync.StartsWith("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) || ForceSync)
+            if ((OnlineSync.StartsWith("true", StringComparison.OrdinalIgnoreCase) && !SyncRunning) || Forcesync)
             {
-                SyncRunning = true;
-                //Log.Interface ("Beginning Sync");
-                OAuth2Parameters parameters = new OAuth2Parameters();
-                parameters.ClientId = CLIENT_ID;
-                parameters.ClientSecret = CLIENT_SECRET;
-                parameters.RedirectUri = REDIRECT_URI;
-                parameters.Scope = SCOPE;
-                parameters.AccessType = "offline";
-                parameters.RefreshToken = GoogleAPI;
-                OAuthUtil.RefreshAccessToken(parameters);
-                string accessToken = parameters.AccessToken;
-
-                GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory(null, IntegrationName, parameters);
-                SpreadsheetsService service = new SpreadsheetsService(IntegrationName);
-                service.RequestFactory = requestFactory;
-                SpreadsheetQuery query = new SpreadsheetQuery(SpreadSheetURI);
-                SpreadsheetFeed feed = service.Query(query);
-                SpreadsheetEntry spreadsheet = (SpreadsheetEntry)feed.Entries[0];
-                WorksheetFeed wsFeed = spreadsheet.Worksheets;
-                WorksheetEntry worksheet = (WorksheetEntry)wsFeed.Entries[0];
-
-                worksheet.Cols = 5;
-                worksheet.Rows = Convert.ToUInt32(Maplist.Count + 1);
-
-                worksheet.Update();
-
-                CellQuery cellQuery = new CellQuery(worksheet.CellFeedLink);
-                cellQuery.ReturnEmpty = ReturnEmptyCells.yes;
-                CellFeed cellFeed = service.Query(cellQuery);
-                CellFeed batchRequest = new CellFeed(cellQuery.Uri, service);
-
-                int Entries = 1;
-
-                foreach (var item in Maplist)
-                {
-                    Entries = Entries + 1;
-                    foreach (CellEntry cell in cellFeed.Entries)
-                    {
-                        if (cell.Title.Text == "A" + Entries.ToString())
-                        {
-                            cell.InputValue = item.Key;
-                        }
-                        if (cell.Title.Text == "B" + Entries.ToString())
-                        {
-                            cell.InputValue = item.Value.Item1;
-
-                        }
-                        if (cell.Title.Text == "C" + Entries.ToString())
-                        {
-                            cell.InputValue = item.Value.Item2.ToString();
-
-                        }
-                        if (cell.Title.Text == "D" + Entries.ToString())
-                        {
-                            cell.InputValue = item.Value.Item3.ToString();
-
-                        }
-                        if (cell.Title.Text == "E" + Entries.ToString())
-                        {
-                            cell.InputValue = item.Value.Item4.ToString();
-                        }
-                    }
-                }
-
-                cellFeed.Publish();
-                CellFeed batchResponse = (CellFeed)service.Batch(batchRequest, new Uri(cellFeed.Batch));
-                // Log.Interface("Completed Sync");
+                new SheetHandler().UploadSheet(Forcesync, Maplist, OauthParameters, IntegrationName, SpreadSheetURI); //Should this be its own method, I saw you do it for utilities, i'm not sure if its good practice
                 SyncRunning = false;
-
             }
             else if (OnlineSync.StartsWith("true", StringComparison.OrdinalIgnoreCase))
             {
