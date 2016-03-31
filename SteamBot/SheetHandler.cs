@@ -20,11 +20,9 @@ namespace SteamBot
         {
             
             OAuthUtil.RefreshAccessToken(parameters);
+            GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory(null, IntegrationName, parameters);
             SpreadsheetsService service = new SpreadsheetsService(IntegrationName);
             string accessToken = parameters.AccessToken;
-
-            GOAuth2RequestFactory requestFactory = new GOAuth2RequestFactory(null, IntegrationName, parameters);
-
             service.RequestFactory = requestFactory;
             SpreadsheetQuery query = new SpreadsheetQuery(SpreadSheetURI);
             SpreadsheetFeed feed = service.Query(query);
