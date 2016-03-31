@@ -206,7 +206,6 @@ namespace SteamBot
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BackgroundWorkerOnDoWork;
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
-            botThread.RunWorkerAsync();
         }
 
         ~Bot()
