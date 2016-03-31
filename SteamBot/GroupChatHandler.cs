@@ -268,6 +268,7 @@ namespace SteamBot
                 if ((ServerData.Map != PreviousData[count]) && ServerData.Players > 2)
                 {
                     Tuple<string, SteamID> Mapremoval = ImpRemove(ServerData.Map, "0", true, null);
+                    
                     Bot.SteamFriends.SendChatMessage(Mapremoval.Item2, EChatEntryType.ChatMsg, "Hi, your map: " + Mapremoval.Item1 + " is being played on the " + ServerAddress.Item1 + "!");
 
                     string groupMessage = String.Format(
@@ -456,6 +457,11 @@ namespace SteamBot
                 string[] MapData = PrintMapList(new SheetHandler().SyncSheetDownload(Worksheet, IntegrationName, OauthParameters));
                 Bot.SteamFriends.SendChatMessage(sender, EChatEntryType.ChatMsg, MapData[1]);
                 return MapData[0];
+            }
+            if (Words[0].StartsWith("!FriendMe", StringComparison.OrdinalIgnoreCase))
+            {
+                Bot.SteamFriends.AddFriend(sender);
+                return "I have sent the request";
             }
 
             if (DoesMessageStartWith(Words[0], ChatCommandsArray["Rejoin"].Item2))
