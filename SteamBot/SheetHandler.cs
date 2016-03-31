@@ -16,9 +16,9 @@ namespace SteamBot
         /// New Method To get Worksheet
         /// </summary>
         /// <returns></returns>
-        public WorksheetEntry GetWorksheet(OAuth2Parameters parameters, string IntegrationName, string SpreadSheetURI, SpreadsheetsService service)
+        public WorksheetEntry GetWorksheet(OAuth2Parameters parameters, string IntegrationName, string SpreadSheetURI)
         {
-          
+            SpreadsheetsService service = new SpreadsheetsService(IntegrationName);
             OAuthUtil.RefreshAccessToken(parameters);
             string accessToken = parameters.AccessToken;
 
@@ -34,10 +34,12 @@ namespace SteamBot
         }
 
         //public void UploadSheet(bool Forcesync, Dictionary<string, Tuple<string, SteamID, string, bool>> Maplist, String IntegrationName, string CLIENT_ID,string CLIENT_SECRET, string REDIRECT_URI, string SCOPE, string GoogleAPI)
-        public void UploadSheet(bool Forcesync, Dictionary<string, Tuple<string, string, string, bool>> Maplist, OAuth2Parameters parameters, string IntegrationName, SpreadsheetsService service, string SpreadSheetURI)
+        public void UploadSheet(bool Forcesync, Dictionary<string, Tuple<string, string, string, bool>> Maplist, OAuth2Parameters parameters, string IntegrationName, string SpreadSheetURI)
         {
 
-            WorksheetEntry worksheet = GetWorksheet(parameters, IntegrationName, SpreadSheetURI, service);
+            SpreadsheetsService service = new SpreadsheetsService(IntegrationName);
+
+            WorksheetEntry worksheet = GetWorksheet(parameters, IntegrationName, SpreadSheetURI);
             worksheet.Cols = 5;
             worksheet.Rows = Convert.ToUInt32(Maplist.Count + 1);
             worksheet.Update();
@@ -83,9 +85,10 @@ namespace SteamBot
             cellFeed.Publish();
             CellFeed batchResponse = (CellFeed)service.Batch(batchRequest, new Uri(cellFeed.Batch));
         }
-        public Dictionary<string, Tuple<string, string, string, bool>> SyncSheetDownload(WorksheetEntry Worksheet, SpreadsheetsService service, OAuth2Parameters paramaters)
+        public Dictionary<string, Tuple<string, string, string, bool>> SyncSheetDownload(WorksheetEntry Worksheet, string IntegrationName, OAuth2Parameters paramaters)
         {
-            
+            SpreadsheetsService service = new SpreadsheetsService(IntegrationName);
+
             Dictionary<string, Tuple<string, string, string, bool>> OnlineMapList = new Dictionary<string, Tuple<string, string, string, bool>>();
             int Entries = 1;
 
