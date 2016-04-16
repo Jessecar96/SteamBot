@@ -375,6 +375,40 @@ namespace SteamTrade
                 return true;
             }
         }
+        
+        /// <summary>
+        /// Authenticate using an array of cookies from a browser or whatever source, without contacting the server.
+        /// It is recommended that you call <see cref="VerifyCookies"/> after calling this method to ensure that the cookies are valid.
+        /// </summary>
+        /// <param name="cookies">An array of cookies from a browser or whatever source. Must contain sessionid, steamLogin, steamLoginSecure</param>
+        /// <exception cref="ArgumentException">One of the required cookies(steamLogin, steamLoginSecure, sessionid) is missing.</exception>
+        public void Authenticate(System.Collections.Generic.IEnumerable<Cookie> cookies)
+        {
+            var cookieContainer = new CookieContainer();
+            string token = null;
+            string tokenSecure = null;
+            string sessionId = null;
+            foreach (var cookie in cookies)
+            {
+                if (cookie.Name == "sessionid")
+                    sessionId = cookie.Value;
+                else if (cookie.Name == "steamLogin")
+                    token = cookie.Value;
+                else if (cookie.Name == "steamLoginSecure")
+                    tokenSecure = cookie.Value;
+                cookieContainer.Add(cookie);
+            }
+            if (token == null)
+                throw new ArgumentException("Cookie with name \"steamLogin\" is not found.");
+            if (tokenSecure == null)
+                throw new ArgumentException("Cookie with name \"steamLoginSecure\" is not found.");
+            if (sessionId == null)
+                throw new ArgumentException("Cookie with name \"sessionid\" is not found.");
+            Token = token;
+            TokenSecure = tokenSecure;
+            SessionId = sessionId;
+            _cookies = cookieContainer;
+        }
 
         /// <summary>
         /// Helper method to verify our precious cookies.
