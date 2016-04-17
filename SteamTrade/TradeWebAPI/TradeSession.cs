@@ -87,10 +87,10 @@ namespace SteamTrade.TradeWebAPI
         {
             var data = new NameValueCollection();
 
-            data.Add("sessionid", sessionIdEsc);
-            data.Add("steamid", "" + otherId.ConvertToUInt64());
-            data.Add("appid", "" + appid);
-            data.Add("contextid", "" + contextId);
+            data.Add ("sessionid", sessionIdEsc);
+            data.Add ("steamid", "" + otherId.ConvertToUInt64());
+            data.Add ("appid", "" + appid);
+            data.Add ("contextid", "" + contextId);
 
             try
             {
@@ -121,7 +121,7 @@ namespace SteamTrade.TradeWebAPI
         }
         
         /// <summary>
-        /// Adds a specified itom by its itemid.  Since each itemid is
+        /// Adds a specified item by its itemid.  Since each itemid is
         /// unique to each item, you'd first have to find the item, or
         /// use AddItemByDefindex instead.
         /// </summary>
@@ -134,7 +134,7 @@ namespace SteamTrade.TradeWebAPI
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", "" + appid);
+            data.Add ("appid", "" + appid);
             data.Add ("contextid", "" + contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
@@ -155,8 +155,8 @@ namespace SteamTrade.TradeWebAPI
             var data = new NameValueCollection ();
 
             data.Add ("sessionid", sessionIdEsc);
-            data.Add("appid", "" + appid);
-            data.Add("contextid", "" + contextid);
+            data.Add ("appid", "" + appid);
+            data.Add ("contextid", "" + contextid);
             data.Add ("itemid", "" + itemid);
             data.Add ("slot", "" + slot);
 

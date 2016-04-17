@@ -11,7 +11,15 @@ namespace SteamBot
     {
         public TradeOfferUserHandler(Bot bot, SteamID sid) : base(bot, sid) { }
 
-        public override void OnNewTradeOffer(TradeOffer offer)
+        public override void OnTradeOfferUpdated(TradeOffer offer)
+        {
+            if(offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
+            {
+                OnNewTradeOffer(offer);
+            }
+        }
+
+        private void OnNewTradeOffer(TradeOffer offer)
         {
             //receiving a trade offer 
             if (IsAdmin)
@@ -28,10 +36,10 @@ namespace SteamBot
 
                 //do validation logic etc
                 if (DummyValidation(myItems, theirItems))
-                {                    
+                {
                     TradeOfferAcceptResponse acceptResp = offer.Accept();
                     if (acceptResp.Accepted)
-                    {                        
+                    {
                         Bot.AcceptAllMobileTradeConfirmations();
                         Log.Success("Accepted trade offer successfully : Trade ID: " + acceptResp.TradeId);
                     }
@@ -111,8 +119,6 @@ namespace SteamBot
         public override void OnTradeError(string error) { }
 
         public override void OnTradeTimeout() { }
-
-        public override void OnTradeSuccess() { }
 
         public override void OnTradeAwaitingConfirmation(long tradeOfferID) { }
 

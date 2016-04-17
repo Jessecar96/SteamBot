@@ -167,14 +167,11 @@ namespace SteamBot
                 // command interpreter loop.
                 do
                 {
-                    string inputText = Console.ReadLine();
-
-                    if (String.IsNullOrEmpty(inputText))
-                        continue;
-
-                    bmi.CommandInterpreter(inputText);
-
                     Console.Write("botmgr > ");
+                    string inputText = Console.ReadLine();
+                    
+                    if (!String.IsNullOrEmpty(inputText))
+                        bmi.CommandInterpreter(inputText);
 
                 } while (!isclosing);
             }

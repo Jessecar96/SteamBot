@@ -74,7 +74,7 @@ namespace SteamTrade
                     }
                 }
             }
-        }       
+        }
 
         /// <summary>
         /// Custom wrapper for creating a HttpWebRequest, edited for Steam.
@@ -131,14 +131,15 @@ namespace SteamTrade
             {
                 return request.GetResponse() as HttpWebResponse;
             }
-            // Write the data to the body for POST and other methods.
-                byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
-                request.ContentLength = dataBytes.Length;
 
-                using (Stream requestStream = request.GetRequestStream())
-                {
-                    requestStream.Write(dataBytes, 0, dataBytes.Length);
-                }
+            // Write the data to the body for POST and other methods.
+            byte[] dataBytes = Encoding.UTF8.GetBytes(dataString);
+            request.ContentLength = dataBytes.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(dataBytes, 0, dataBytes.Length);
+            }
 
             // Get the response and return it.
             try 
@@ -314,7 +315,7 @@ namespace SteamTrade
         ///<summary>
         /// Authenticate using SteamKit2 and ISteamUserAuth. 
         /// This does the same as SteamWeb.DoLogin(), but without contacting the Steam Website.
-        /// </summary> 
+        /// </summary>
         /// <remarks>Should this one doesnt work anymore, use <see cref="SteamWeb.DoLogin"/></remarks>
         /// <param name="myUniqueId">Id what you get to login.</param>
         /// <param name="client">An instance of a SteamClient.</param>
@@ -373,6 +374,40 @@ namespace SteamTrade
 
                 return true;
             }
+        }
+        
+        /// <summary>
+        /// Authenticate using an array of cookies from a browser or whatever source, without contacting the server.
+        /// It is recommended that you call <see cref="VerifyCookies"/> after calling this method to ensure that the cookies are valid.
+        /// </summary>
+        /// <param name="cookies">An array of cookies from a browser or whatever source. Must contain sessionid, steamLogin, steamLoginSecure</param>
+        /// <exception cref="ArgumentException">One of the required cookies(steamLogin, steamLoginSecure, sessionid) is missing.</exception>
+        public void Authenticate(System.Collections.Generic.IEnumerable<Cookie> cookies)
+        {
+            var cookieContainer = new CookieContainer();
+            string token = null;
+            string tokenSecure = null;
+            string sessionId = null;
+            foreach (var cookie in cookies)
+            {
+                if (cookie.Name == "sessionid")
+                    sessionId = cookie.Value;
+                else if (cookie.Name == "steamLogin")
+                    token = cookie.Value;
+                else if (cookie.Name == "steamLoginSecure")
+                    tokenSecure = cookie.Value;
+                cookieContainer.Add(cookie);
+            }
+            if (token == null)
+                throw new ArgumentException("Cookie with name \"steamLogin\" is not found.");
+            if (tokenSecure == null)
+                throw new ArgumentException("Cookie with name \"steamLoginSecure\" is not found.");
+            if (sessionId == null)
+                throw new ArgumentException("Cookie with name \"sessionid\" is not found.");
+            Token = token;
+            TokenSecure = tokenSecure;
+            SessionId = sessionId;
+            _cookies = cookieContainer;
         }
 
         /// <summary>
