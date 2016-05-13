@@ -871,8 +871,11 @@ namespace SteamBot
             // from when a steam guard code was entered
             Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
             FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("{0}.sentryfile", logOnDetails.Username)));
-
-            if (fi.Exists && fi.Length > 0)
+			FileInfo fiSha = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("sentry_{0}.hash", logOnDetails.Username)));
+						
+		    if(fiSha.Exists && fiSha.Length > 0)
+				logOnDetails.SentryFileHash = File.ReadAllBytes(fiSha.FullName);
+            else if (fi.Exists && fi.Length > 0)
                 logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
             else
                 logOnDetails.SentryFileHash = null;
@@ -967,7 +970,10 @@ namespace SteamBot
 
             Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
 
-            File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
+            FileInfo fiSha = new FileInfo(System.IO.Path.Combine("sentryfiles", String.Format("sentry_{0}.hash", logOnDetails.Username)));
+
+            if(fiSha.Exists) File.WriteAllBytes(System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), hash);
+            else File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
             
             var authResponse = new SteamUser.MachineAuthDetails
             {
