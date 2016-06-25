@@ -137,6 +137,7 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
+        [Obsolete("Use NewTradeOfferResponse CounterOffer(string, SteamID, TradeOffer.TradeStatus, string) instead.")]
         /// <summary>
         /// Creates a new counter offer
         /// </summary>
@@ -174,6 +175,27 @@ namespace SteamTrade.TradeOffer
                 return false;
             }
             return true;
+        }
+
+        public NewTradeOfferResponse CounterOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, string tradeOfferId)
+        {
+            if (String.IsNullOrEmpty(tradeOfferId))
+            {
+                throw new ArgumentNullException("tradeOfferId", "Trade Offer Id must be set for counter offers.");
+            }
+
+            var data = new NameValueCollection();
+            data.Add("sessionid", steamWeb.SessionId);
+            data.Add("serverid", "1");
+            data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
+            data.Add("tradeoffermessage", message);
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("tradeofferid_countered", tradeOfferId);
+            data.Add("trade_offer_create_params", "{}");
+
+            string referer = string.Format("https://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
+
+            return Request(SendUrl, data, referer);
         }
 
         [Obsolete("Use SendTradeOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status) instead.")]
