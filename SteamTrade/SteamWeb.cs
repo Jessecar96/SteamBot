@@ -41,6 +41,11 @@ namespace SteamTrade
         public string TokenSecure { get; private set; }
 
         /// <summary>
+        /// The Accept-Language header when sending all HTTP requests. Default is "en-us, en; q=0.6".
+        /// </summary>
+        public string AcceptLanguageHeader { get; set; } = "en-us, en; q=0.6";
+
+        /// <summary>
         /// CookieContainer to save all cookies during the Login. 
         /// </summary>
         private CookieContainer _cookies = new CookieContainer();
@@ -108,6 +113,7 @@ namespace SteamTrade
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = method;
             request.Accept = "application/json, text/javascript;q=0.9, */*;q=0.5";
+            request.Headers[HttpRequestHeader.AcceptLanguage] = AcceptLanguageHeader;
             request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
             // request.Host is set automatically.
             request.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36";
