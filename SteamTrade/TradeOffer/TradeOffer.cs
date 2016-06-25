@@ -153,7 +153,7 @@ namespace SteamTrade.TradeOffer
             throw new InvalidOperationException("Can't send a trade offer that already exists.");
         }
 
-        [Obsolete("Use NewTradeOfferResponse SendWithToken(string = \"\") instead.]
+        [Obsolete("Use NewTradeOfferResponse SendWithToken(string = \"\") instead.")]
         /// <summary>
         /// Send a new trade offer using a token
         /// </summary>
@@ -173,20 +173,11 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
-        /// <summary>
-        /// Send a new trade offer
-        /// </summary>
-        /// <param name="offerId">The trade offer id if successully created</param>
-        /// <param name="message">Optional message to included with the trade offer</param>
-        /// <returns>If Steam returns an error, <see cref="NewTradeOfferResponse.TradeError"/> will not be empty and <see cref="NewTradeOfferResponse.TradeError"/> contains the error</returns>
-        /// <exception cref="InvalidOperationException">Can't send a trade offer that already exists.</exception>
-        /// <exception cref="JsonException">An error occurred while parsing server's response</exception>
-        /// <exception cref="System.Net.WebException">Network error</exception>
-        public NewTradeOfferResponse Send(string message = "")
+        public NewTradeOfferResponse SendWithToken(string token, string message = "")
         {
             if (TradeOfferId == null)
             {
-                return Session.SendTradeOffer(message, PartnerSteamId, this.Items);
+                return Session.SendTradeOfferWithToken(message, PartnerSteamId, this.Items, token);
             }
             throw new InvalidOperationException("Can't send a trade offer that already exists.");
         }

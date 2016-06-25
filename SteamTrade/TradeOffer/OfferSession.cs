@@ -342,6 +342,12 @@ namespace SteamTrade.TradeOffer
 
         [JsonProperty("strError")]
         public string TradeError { get; set; }
+
+        [JsonProperty("needs_email_confirmation")]
+        public bool NeedsEmailConfirmation { get; set; }
+
+        [JsonProperty("needs_mobile_confirmation")]
+        public bool NeedsMobileConfirmation { get; set; }
     }
 
     public class OfferAccessToken
