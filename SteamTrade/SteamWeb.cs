@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using SteamKit2;
+using System.Threading;
 
 namespace SteamTrade
 {
@@ -41,9 +42,9 @@ namespace SteamTrade
         public string TokenSecure { get; private set; }
 
         /// <summary>
-        /// The Accept-Language header when sending all HTTP requests. Default is "en-us, en; q=0.6".
+        /// The Accept-Language header when sending all HTTP requests. Default value is determined according to the constructor caller thread's culture.
         /// </summary>
-        public string AcceptLanguageHeader { get; set; } = "en-us, en; q=0.6";
+        public string AcceptLanguageHeader { get; set; } = Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName == "en" ? $"{Thread.CurrentThread.CurrentCulture.ToString()},en;q=0.8" : $"{Thread.CurrentThread.CurrentCulture.ToString()},{Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName};q=0.8,en;q=0.6";
 
         /// <summary>
         /// CookieContainer to save all cookies during the Login. 
