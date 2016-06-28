@@ -156,6 +156,7 @@ namespace SteamBot
         /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
         /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
         /// <param name="debug">Debug mode shows more details when logging.</param>
+        /// <param name="process">This parameter indicates if the bot is launched in a seperate process. However, this value, in fact, is simply a marker and is not used anywhere.</param>
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false) : this(config, apiKey, Environment.CurrentDirectory + "\\sentryfiles", handlerCreator, debug, process) { }
 
         /// <summary>
@@ -166,6 +167,7 @@ namespace SteamBot
         /// <param name="sentryFilesDirectoryName">Sentry files and auth files will be saved under this directory.
         /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
         /// <param name="debug">Debug mode shows more details when logging.</param>
+        /// <param name="process">This parameter indicates if the bot is launched in a seperate process. However, this value, in fact, is simply a marker and is not used anywhere.</param>
         public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false, bool process = false) : this(config, apiKey, sentryFilesDirectoryName, Environment.CurrentDirectory + "\\authfiles", handlerCreator, debug, process) { }
 
         /// <summary>
@@ -177,6 +179,7 @@ namespace SteamBot
         /// <param name="authFilesDirectoryName">Auth files will be saved under this directory.</param>
         /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
         /// <param name="debug">Debug mode shows more details when logging.</param>
+        /// <param name="process">This parameter indicates if the bot is launched in a seperate process. However, this value, in fact, is simply a marker and is not used anywhere.</param>
         public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, string authFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
             this.sentryFilesDirectoryName = sentryFilesDirectoryName;
