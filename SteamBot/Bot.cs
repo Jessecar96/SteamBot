@@ -34,6 +34,9 @@ namespace SteamBot
         private readonly UserHandlerCreator createHandler;
         private readonly bool isProccess;
         private readonly BackgroundWorker botThread;
+        private readonly string sentryFilesDirectoryName;
+        private readonly string authFilesDirectoryName;
+        private readonly CallbackManager steamCallbackManager;
         #endregion
 
         #region Private variables
@@ -91,10 +94,6 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
-        /// <summary>
-        /// The instance of the Logger for the bot.
-        /// </summary>
-        public readonly Log Log;
         #endregion
 
         #region Public variables
@@ -117,6 +116,11 @@ namespace SteamBot
         /// </summary>
         public int CurrentGame { get; private set; }
 
+        /// <summary>
+        /// The instance of the Logger for the bot. You may change it while bot is running.
+        /// </summary>
+        public ILog Log { get; set; }
+
         public SteamAuth.SteamGuardAccount SteamGuardAccount;
         #endregion
 
@@ -138,14 +142,53 @@ namespace SteamBot
             }
         }
 
+        public CallbackManager SteamCallbackManager { get; private set; }
+
+        public string SentryFilesDirectoryName => sentryFilesDirectoryName;
+        public string AuthFilesDirectoryName => authFilesDirectoryName;
+
         /// <summary>
         /// Compatibility sanity.
         /// </summary>
         [Obsolete("Refactored to be Log instead of log")]
-        public Log log { get { return Log; } }
+        public ILog log { get { return Log; } }
 
-        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Bot"/>. The directory under which sentry files and auth files will be saved is <see cref="Environment.CurrentDirectory"/>.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
+        /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
+        /// <param name="debug">Debug mode shows more details when logging.</param>
+        /// <param name="process">This parameter indicates if the bot is launched in a seperate process. However, this value, in fact, is simply a marker and is not used anywhere.</param>
+        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false) : this(config, apiKey, Environment.CurrentDirectory + "\\sentryfiles", handlerCreator, debug, process) { }
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Bot"/>. 
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
+        /// <param name="sentryFilesDirectoryName">Sentry files and auth files will be saved under this directory.
+        /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
+        /// <param name="debug">Debug mode shows more details when logging.</param>
+        /// <param name="process">This parameter indicates if the bot is launched in a seperate process. However, this value, in fact, is simply a marker and is not used anywhere.</param>
+        public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false, bool process = false) : this(config, apiKey, sentryFilesDirectoryName, Environment.CurrentDirectory + "\\authfiles", handlerCreator, debug, process) { }
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Bot"/>.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
+        /// <param name="sentryFilesDirectoryName">Sentry files will be saved under this directory.</param>
+        /// <param name="authFilesDirectoryName">Auth files will be saved under this directory.</param>
+        /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
+        /// <param name="debug">Debug mode shows more details when logging.</param>
+        /// <param name="process">This parameter indicates if the bot is launched in a seperate process. However, this value, in fact, is simply a marker and is not used anywhere.</param>
+        public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, string authFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
+            this.sentryFilesDirectoryName = sentryFilesDirectoryName;
+            this.authFilesDirectoryName = authFilesDirectoryName;
             userHandlers = new Dictionary<SteamID, UserHandler>();
             logOnDetails = new SteamUser.LogOnDetails
             {
@@ -175,7 +218,7 @@ namespace SteamBot
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                consoleLogLevel = Log.LogLevel.Info;
+                consoleLogLevel = SteamBot.Log.LogLevel.Info;
             }
 
             try
@@ -185,7 +228,7 @@ namespace SteamBot
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                fileLogLevel = Log.LogLevel.Info;
+                fileLogLevel = SteamBot.Log.LogLevel.Info;
             }
 
             logFile = config.LogFile;
@@ -199,6 +242,8 @@ namespace SteamBot
 
             Log.Debug ("Initializing Steam Bot...");            
             SteamClient = new SteamClient();
+            steamCallbackManager = new CallbackManager(SteamClient);
+            SubscribeSteamCallbacks();
             SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
             SteamUser = SteamClient.GetHandler<SteamUser>();
@@ -462,25 +507,12 @@ namespace SteamBot
             }
         }
 
-        public void SetGamePlaying(int id)
+        private void SubscribeSteamCallbacks()
         {
-            var gamePlaying = new SteamKit2.ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
-            if (id != 0)
-                gamePlaying.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
-                {
-                    game_id = new GameID(id),
-                });
-            SteamClient.Send(gamePlaying);
-            CurrentGame = id;
-        }
-
-        void HandleSteamMessage(ICallbackMsg msg)
-        {
-            Log.Debug(msg.ToString());
             #region Login
-            msg.Handle<SteamClient.ConnectedCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamClient.ConnectedCallback>(callback =>
             {
-                Log.Debug ("Connection Callback: {0}", callback.Result);
+                Log.Debug("Connection Callback: {0}", callback.Result);
 
                 if (callback.Result == EResult.OK)
                 {
@@ -488,13 +520,13 @@ namespace SteamBot
                 }
                 else
                 {
-                    Log.Error ("Failed to connect to Steam Community, trying again...");
-                    SteamClient.Connect ();
+                    Log.Error("Failed to connect to Steam Community, trying again...");
+                    SteamClient.Connect();
                 }
 
             });
 
-            msg.Handle<SteamUser.LoggedOnCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamUser.LoggedOnCallback>(callback =>
             {
                 Log.Debug("Logged On Callback: {0}", callback.Result);
 
@@ -507,7 +539,7 @@ namespace SteamBot
                     Log.Error("Login Error: {0}", callback.Result);
                 }
 
-                if (callback.Result == EResult.AccountLogonDeniedNeedTwoFactorCode)
+                if (callback.Result == EResult.AccountLoginDeniedNeedTwoFactor)
                 {
                     var mobileAuthCode = GetMobileAuthCode();
                     if (string.IsNullOrEmpty(mobileAuthCode))
@@ -528,7 +560,7 @@ namespace SteamBot
                 }
                 else if (callback.Result == EResult.AccountLogonDenied)
                 {
-                    Log.Interface ("This account is SteamGuard enabled. Enter the code via the `auth' command.");
+                    Log.Interface("This account is SteamGuard enabled. Enter the code via the `auth' command.");
 
                     // try to get the steamguard auth code from the event callback
                     var eva = new SteamGuardRequiredEventArgs();
@@ -545,7 +577,7 @@ namespace SteamBot
                 }
             });
 
-            msg.Handle<SteamUser.LoginKeyCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamUser.LoginKeyCallback>(callback =>
             {
                 myUniqueId = callback.UniqueID.ToString();
 
@@ -553,20 +585,20 @@ namespace SteamBot
 
                 if (Trade.CurrentSchema == null)
                 {
-                    Log.Info ("Downloading Schema...");
-                    Trade.CurrentSchema = Schema.FetchSchema (ApiKey, schemaLang);
-                    Log.Success ("Schema Downloaded!");
+                    Log.Info("Downloading Schema...");
+                    Trade.CurrentSchema = Schema.FetchSchema(ApiKey, schemaLang);
+                    Log.Success("Schema Downloaded!");
                 }
 
-                SteamFriends.SetPersonaName (DisplayNamePrefix+DisplayName);
-                SteamFriends.SetPersonaState (EPersonaState.Online);
+                SteamFriends.SetPersonaName(DisplayNamePrefix + DisplayName);
+                SteamFriends.SetPersonaState(EPersonaState.Online);
 
-                Log.Success ("Steam Bot Logged In Completely!");
+                Log.Success("Steam Bot Logged In Completely!");
 
                 GetUserHandler(SteamClient.SteamID).OnLoginCompleted();
             });
 
-            msg.Handle<SteamUser.WebAPIUserNonceCallback>(webCallback =>
+            SteamCallbackManager.Subscribe<SteamUser.WebAPIUserNonceCallback>(webCallback =>
             {
                 Log.Debug("Received new WebAPIUserNonce.");
 
@@ -581,13 +613,13 @@ namespace SteamBot
                 }
             });
 
-            msg.Handle<SteamUser.UpdateMachineAuthCallback>(
+            SteamCallbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(
                 authCallback => OnUpdateMachineAuthCallback(authCallback)
             );
             #endregion
 
             #region Friends
-            msg.Handle<SteamFriends.FriendsListCallback>(callback =>
+            SteamCallbackManager.Subscribe<SteamFriends.FriendsListCallback>(callback =>
             {
                 foreach (SteamFriends.FriendsListCallback.Friend friend in callback.FriendList)
                 {
@@ -626,7 +658,7 @@ namespace SteamBot
                                 }
                                 else
                                 {
-                                    if(friends.Contains(friend.SteamID))
+                                    if (friends.Contains(friend.SteamID))
                                     {
                                         friends.Remove(friend.SteamID);
                                     }
@@ -640,14 +672,14 @@ namespace SteamBot
             });
 
 
-            msg.Handle<SteamFriends.FriendMsgCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamFriends.FriendMsgCallback>(callback =>
             {
                 EChatEntryType type = callback.EntryType;
 
                 if (callback.EntryType == EChatEntryType.ChatMsg)
                 {
-                    Log.Info ("Chat Message from {0}: {1}",
-                                         SteamFriends.GetFriendPersonaName (callback.Sender),
+                    Log.Info("Chat Message from {0}: {1}",
+                                         SteamFriends.GetFriendPersonaName(callback.Sender),
                                          callback.Message
                                          );
                     GetUserHandler(callback.Sender).OnMessageHandler(callback.Message, type);
@@ -656,24 +688,24 @@ namespace SteamBot
             #endregion
 
             #region Group Chat
-            msg.Handle<SteamFriends.ChatMsgCallback>(callback =>
+            SteamCallbackManager.Subscribe<SteamFriends.ChatMsgCallback>(callback =>
             {
                 GetUserHandler(callback.ChatterID).OnChatRoomMessage(callback.ChatRoomID, callback.ChatterID, callback.Message);
             });
             #endregion
 
             #region Trading
-            msg.Handle<SteamTrading.SessionStartCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamTrading.SessionStartCallback>(callback =>
             {
-                bool started = HandleTradeSessionStart (callback.OtherClient);
+                bool started = HandleTradeSessionStart(callback.OtherClient);
 
                 if (!started)
-                    Log.Error ("Could not start the trade session.");
+                    Log.Error("Could not start the trade session.");
                 else
-                    Log.Debug ("SteamTrading.SessionStartCallback handled successfully. Trade Opened.");
+                    Log.Debug("SteamTrading.SessionStartCallback handled successfully. Trade Opened.");
             });
 
-            msg.Handle<SteamTrading.TradeProposedCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamTrading.TradeProposedCallback>(callback =>
             {
                 if (CheckCookies() == false)
                 {
@@ -686,7 +718,7 @@ namespace SteamBot
                     tradeManager.InitializeTrade(SteamUser.SteamID, callback.OtherClient);
                 }
                 catch (WebException we)
-                {                 
+                {
                     SteamFriends.SendChatMessage(callback.OtherClient,
                              EChatEntryType.ChatMsg,
                              "Trade error: " + we.Message);
@@ -714,24 +746,24 @@ namespace SteamBot
                 //    return;
                 //}
 
-                if (CurrentTrade == null && GetUserHandler (callback.OtherClient).OnTradeRequest ())
-                    SteamTrade.RespondToTrade (callback.TradeID, true);
+                if (CurrentTrade == null && GetUserHandler(callback.OtherClient).OnTradeRequest())
+                    SteamTrade.RespondToTrade(callback.TradeID, true);
                 else
-                    SteamTrade.RespondToTrade (callback.TradeID, false);
+                    SteamTrade.RespondToTrade(callback.TradeID, false);
             });
 
-            msg.Handle<SteamTrading.TradeResultCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamTrading.TradeResultCallback>(callback =>
             {
                 if (callback.Response == EEconTradeResponse.Accepted)
                 {
                     Log.Debug("Trade Status: {0}", callback.Response);
-                    Log.Info ("Trade Accepted!");
+                    Log.Info("Trade Accepted!");
                     GetUserHandler(callback.OtherClient).OnTradeRequestReply(true, callback.Response.ToString());
                 }
                 else
                 {
                     Log.Warn("Trade failed: {0}", callback.Response);
-                    CloseTrade ();
+                    CloseTrade();
                     GetUserHandler(callback.OtherClient).OnTradeRequestReply(false, callback.Response.ToString());
                 }
 
@@ -739,16 +771,16 @@ namespace SteamBot
             #endregion
 
             #region Disconnect
-            msg.Handle<SteamUser.LoggedOffCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamUser.LoggedOffCallback>(callback =>
             {
                 IsLoggedIn = false;
                 Log.Warn("Logged off Steam.  Reason: {0}", callback.Result);
                 CancelTradeOfferPollingThread();
             });
 
-            msg.Handle<SteamClient.DisconnectedCallback> (callback =>
+            SteamCallbackManager.Subscribe<SteamClient.DisconnectedCallback>(callback =>
             {
-                if(IsLoggedIn)
+                if (IsLoggedIn)
                 {
                     IsLoggedIn = false;
                     CloseTrade();
@@ -756,12 +788,12 @@ namespace SteamBot
                     CancelTradeOfferPollingThread();
                 }
 
-                SteamClient.Connect ();
+                SteamClient.Connect();
             });
             #endregion
 
             #region Notifications
-            msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
+            SteamCallbackManager.Subscribe<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
             {
                 //various types of comment notifications on profile/activity feed etc
                 //Log.Info("received CommentNotificationCallback");
@@ -772,9 +804,21 @@ namespace SteamBot
             #endregion
         }
 
+        public void SetGamePlaying(int id)
+        {
+            var gamePlaying = new SteamKit2.ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
+            if (id != 0)
+                gamePlaying.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed
+                {
+                    game_id = new GameID(id),
+                });
+            SteamClient.Send(gamePlaying);
+            CurrentGame = id;
+        }
+
         string GetMobileAuthCode()
         {
-            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
+            var authFile = Path.Combine(authFilesDirectoryName, String.Format("{0}.auth", logOnDetails.Username));
             if (File.Exists(authFile))
             {
                 SteamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
@@ -826,8 +870,8 @@ namespace SteamBot
                         SteamGuardAccount = authLinker.LinkedAccount;
                         try
                         {
-                            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
-                            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
+                            var authFile = Path.Combine(authFilesDirectoryName, String.Format("{0}.auth", logOnDetails.Username));
+                            Directory.CreateDirectory(authFilesDirectoryName);
                             File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
                             Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
                             var smsCode = WaitForInput();
@@ -869,8 +913,8 @@ namespace SteamBot
         {
             // get sentry file which has the machine hw info saved 
             // from when a steam guard code was entered
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
-            FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("{0}.sentryfile", logOnDetails.Username)));
+            Directory.CreateDirectory(sentryFilesDirectoryName);
+            FileInfo fi = new FileInfo(System.IO.Path.Combine(sentryFilesDirectoryName, String.Format("{0}.sentryfile", logOnDetails.Username)));
 
             if (fi.Exists && fi.Length > 0)
                 logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
@@ -965,9 +1009,9 @@ namespace SteamBot
         {
             byte[] hash = SHAHash (machineAuth.Data);
 
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
+            Directory.CreateDirectory(sentryFilesDirectoryName);
 
-            File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
+            File.WriteAllBytes (System.IO.Path.Combine(sentryFilesDirectoryName, String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
             
             var authResponse = new SteamUser.MachineAuthDetails
             {
@@ -1208,17 +1252,11 @@ namespace SteamBot
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
         {
-            ICallbackMsg msg;
-
             while (!botThread.CancellationPending)
             {
                 try
                 {
-                    msg = SteamClient.GetCallback(true);
-                    if (msg != null)
-                    {
-                        HandleSteamMessage(msg);
-                    }
+                    SteamCallbackManager.RunCallbacks();
 
                     if(tradeOfferManager != null)
                     {

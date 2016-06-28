@@ -137,6 +137,7 @@ namespace SteamTrade.TradeOffer
             return false;
         }
 
+        [Obsolete("Use NewTradeOfferResponse CounterOffer(string, SteamID, TradeOffer.TradeStatus, string) instead.")]
         /// <summary>
         /// Creates a new counter offer
         /// </summary>
@@ -176,6 +177,28 @@ namespace SteamTrade.TradeOffer
             return true;
         }
 
+        public NewTradeOfferResponse CounterOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, string tradeOfferId)
+        {
+            if (String.IsNullOrEmpty(tradeOfferId))
+            {
+                throw new ArgumentNullException("tradeOfferId", "Trade Offer Id must be set for counter offers.");
+            }
+
+            var data = new NameValueCollection();
+            data.Add("sessionid", steamWeb.SessionId);
+            data.Add("serverid", "1");
+            data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
+            data.Add("tradeoffermessage", message);
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("tradeofferid_countered", tradeOfferId);
+            data.Add("trade_offer_create_params", "{}");
+
+            string referer = string.Format("https://steamcommunity.com/tradeoffer/{0}/", tradeOfferId);
+
+            return Request(SendUrl, data, referer);
+        }
+
+        [Obsolete("Use SendTradeOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status) instead.")]
         /// <summary>
         /// Creates a new trade offer
         /// </summary>
@@ -200,6 +223,32 @@ namespace SteamTrade.TradeOffer
             return Request(SendUrl, data, referer, null, out newTradeOfferId);
         }
 
+        /// <summary>
+        /// Creates a new trade offer.
+        /// </summary>
+        /// <param name="message">A message to include with the trade offer</param>
+        /// <param name="otherSteamId">The SteamID of the partner we are trading with</param>
+        /// <param name="status">The list of items we and they are going to trade</param>
+        /// <returns>If Steam returns an error, <see cref="NewTradeOfferResponse.TradeOfferId"/> will be empty and <see cref="NewTradeOfferResponse.TradeError"/> contains the error</returns>
+        /// <exception cref="JsonException">An error occurred while parsing server's response</exception>
+        /// <exception cref="System.Net.WebException">Network error</exception>
+        public NewTradeOfferResponse SendTradeOffer(string message, SteamID otherSteamId, TradeOffer.TradeStatus status)
+        {
+            var data = new NameValueCollection();
+            data.Add("sessionid", steamWeb.SessionId);
+            data.Add("serverid", "1");
+            data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
+            data.Add("tradeoffermessage", message);
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("trade_offer_create_params", "{}");
+
+            string referer = string.Format("https://steamcommunity.com/tradeoffer/new/?partner={0}",
+                otherSteamId.AccountID);
+
+            return Request(SendUrl, data, referer);
+        }
+
+        [Obsolete("Use SendTradeOfferWithToken(string message, SteamID otherSteamId, TradeOffer.TradeStatus status, string token, out string newTradeOfferId) instead.")]
         /// <summary>
         /// Creates a new trade offer with a token
         /// </summary>
@@ -231,6 +280,40 @@ namespace SteamTrade.TradeOffer
             return Request(SendUrl, data, referer, null, out newTradeOfferId);
         }
 
+        /// <summary>
+        /// Creates a new trade offer with a token
+        /// </summary>
+        /// <param name="message">A message to include with the trade offer</param>
+        /// <param name="otherSteamId">The SteamID of the partner we are trading with</param>
+        /// <param name="status">The list of items we and they are going to trade</param>
+        /// <param name="token">The token of the partner we are trading with</param>
+        /// <param name="newTradeOfferId">The trade offer Id that will be created if successful</param>
+        /// <returns>If Steam returns an error, <see cref="NewTradeOfferResponse.TradeOfferId"/> will be empty and <see cref="NewTradeOfferResponse.TradeError"/> contains the error</returns>
+        /// <exception cref="JsonException">An error occurred while parsing server's response</exception>
+        /// <exception cref="System.Net.WebException">Network error</exception>
+        public NewTradeOfferResponse SendTradeOfferWithToken(string message, SteamID otherSteamId, TradeOffer.TradeStatus status,
+            string token)
+        {
+            if (String.IsNullOrEmpty(token))
+            {
+                throw new ArgumentNullException("token", "Partner trade offer token is missing");
+            }
+            var offerToken = new OfferAccessToken() { TradeOfferAccessToken = token };
+
+            var data = new NameValueCollection();
+            data.Add("sessionid", steamWeb.SessionId);
+            data.Add("serverid", "1");
+            data.Add("partner", otherSteamId.ConvertToUInt64().ToString());
+            data.Add("tradeoffermessage", message);
+            data.Add("json_tradeoffer", JsonConvert.SerializeObject(status, JsonSerializerSettings));
+            data.Add("trade_offer_create_params", JsonConvert.SerializeObject(offerToken, JsonSerializerSettings));
+
+            string referer = string.Format("https://steamcommunity.com/tradeoffer/new/?partner={0}&token={1}",
+                        otherSteamId.AccountID, token);
+            return Request(SendUrl, data, referer);
+        }
+
+        [Obsolete]
         internal bool Request(string url, NameValueCollection data, string referer, string tradeOfferId, out string newTradeOfferId)
         {
             newTradeOfferId = "";
@@ -259,6 +342,19 @@ namespace SteamTrade.TradeOffer
             }
             return false;
         }
+
+        internal NewTradeOfferResponse Request(string url, NameValueCollection data, string referer)
+        {
+            string resp = steamWeb.Fetch(url, "POST", data, false, referer, true);
+            if (!String.IsNullOrEmpty(resp))
+            {
+                return JsonConvert.DeserializeObject<NewTradeOfferResponse>(resp);
+            }
+            else
+            {
+                throw new WebException("The response has no content.");
+            }
+        }
     }
 
     public class NewTradeOfferResponse
@@ -268,6 +364,12 @@ namespace SteamTrade.TradeOffer
 
         [JsonProperty("strError")]
         public string TradeError { get; set; }
+
+        [JsonProperty("needs_email_confirmation")]
+        public bool NeedsEmailConfirmation { get; set; }
+
+        [JsonProperty("needs_mobile_confirmation")]
+        public bool NeedsMobileConfirmation { get; set; }
     }
 
     public class OfferAccessToken
