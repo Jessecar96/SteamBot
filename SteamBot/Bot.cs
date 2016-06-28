@@ -156,7 +156,7 @@ namespace SteamBot
         /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
         /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
         /// <param name="debug">Debug mode shows more details when logging.</param>
-        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false) : this(config, apiKey, Environment.CurrentDirectory + "\\sentryfiles", handlerCreator, debug) { }
+        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false) : this(config, apiKey, Environment.CurrentDirectory + "\\sentryfiles", handlerCreator, debug, process) { }
 
         /// <summary>
         /// Initialize a new instance of <see cref="Bot"/>. 
@@ -166,7 +166,7 @@ namespace SteamBot
         /// <param name="sentryFilesDirectoryName">Sentry files and auth files will be saved under this directory.
         /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
         /// <param name="debug">Debug mode shows more details when logging.</param>
-        public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false) : this(config, apiKey, sentryFilesDirectoryName, Environment.CurrentDirectory + "\\authfiles", handlerCreator, debug) { }
+        public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false, bool process = false) : this(config, apiKey, sentryFilesDirectoryName, Environment.CurrentDirectory + "\\authfiles", handlerCreator, debug, process) { }
 
         /// <summary>
         /// Initialize a new instance of <see cref="Bot"/>.
