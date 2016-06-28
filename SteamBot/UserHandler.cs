@@ -98,7 +98,7 @@ namespace SteamBot
         /// <summary>
         /// Gets the log the bot uses for convenience.
         /// </summary>
-        public Log Log
+        public ILog Log
         {
             get { return Bot.Log; }
         }
