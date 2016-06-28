@@ -17,6 +17,9 @@ namespace SteamTrade
     public class GenericInventory : GenericInventory<ItemDescription>
     {
         public GenericInventory(SteamWeb steamWeb) : base(steamWeb) { }
+
+        [Obsolete("Steamtrade.GenericInventory.ItemDescription has been moved to Steamtrade.ItemDescription. i.e. from nested class to the outside.", true)]
+        public class ItemDescription { }
     }
 
     /// <summary>
