@@ -17,7 +17,7 @@ namespace SteamTrade
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
         private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
         /// <summary>
-        /// Full file name for schema cache file. This value is only used when calling <see cref="FetchSchema"/>. If the time modified of the local copy is later than that of the server, local copy is used without downloading.
+        /// Full file name for schema cache file. This value is only used when calling <see cref="FetchSchema"/>. If the time modified of the local copy is later than that of the server, local copy is used without downloading. Default value is %TEMP%\tf_schema.cache.
         /// </summary>
         public static string CacheFileFullName { get; set; } = Path.GetTempPath() + "\\tf_schema.cache";
 
