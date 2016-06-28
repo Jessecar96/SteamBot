@@ -92,10 +92,6 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
-        /// <summary>
-        /// The instance of the Logger for the bot.
-        /// </summary>
-        public readonly Log Log;
         #endregion
 
         #region Public variables
@@ -119,9 +115,9 @@ namespace SteamBot
         public int CurrentGame { get; private set; }
 
         /// <summary>
-        /// The <see cref="CallbackManager"/> for the current <see cref="SteamClient"/>. See SteamKit documentation for more details.
+        /// The instance of the Logger for the bot. You may change it while bot is running.
         /// </summary>
-        public CallbackManager SteamCallbackManager => this.steamCallbackManager;
+        public ILog Log { get; set; }
 
         public SteamAuth.SteamGuardAccount SteamGuardAccount;
         #endregion
@@ -148,7 +144,7 @@ namespace SteamBot
         /// Compatibility sanity.
         /// </summary>
         [Obsolete("Refactored to be Log instead of log")]
-        public Log log { get { return Log; } }
+        public ILog log { get { return Log; } }
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
@@ -181,7 +177,7 @@ namespace SteamBot
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                consoleLogLevel = Log.LogLevel.Info;
+                consoleLogLevel = SteamBot.Log.LogLevel.Info;
             }
 
             try
@@ -191,7 +187,7 @@ namespace SteamBot
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                fileLogLevel = Log.LogLevel.Info;
+                fileLogLevel = SteamBot.Log.LogLevel.Info;
             }
 
             logFile = config.LogFile;
