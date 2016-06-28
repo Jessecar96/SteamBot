@@ -146,6 +146,8 @@ namespace SteamBot
         [Obsolete("Refactored to be Log instead of log")]
         public ILog log { get { return Log; } }
 
+        public CallbackManager SteamCallbackManager { get; private set; }
+
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
             userHandlers = new Dictionary<SteamID, UserHandler>();

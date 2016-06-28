@@ -109,7 +109,7 @@ namespace SteamBot
                     break;
 
                 case 753:
-                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.GetDescription(inventoryItem.Id);
+                    var tmpDescription = OtherSteamInventory.GetDescription(inventoryItem.Id);
                     SendTradeMessage("Steam Inventory Item Added.");
                     SendTradeMessage("Type: {0}", tmpDescription.Type);
                     SendTradeMessage("Marketable: {0}", (tmpDescription.Marketable ? "Yes" : "No"));
