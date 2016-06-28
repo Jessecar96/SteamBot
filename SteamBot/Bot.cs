@@ -142,6 +142,8 @@ namespace SteamBot
             }
         }
 
+        public CallbackManager SteamCallbackManager { get; private set; }
+
         public string SentryFilesDirectoryName => sentryFilesDirectoryName;
         public string AuthFilesDirectoryName => authFilesDirectoryName;
 
@@ -150,6 +152,7 @@ namespace SteamBot
         /// </summary>
         [Obsolete("Refactored to be Log instead of log")]
         public ILog log { get { return Log; } }
+
 
         /// <summary>
         /// Initialize a new instance of <see cref="Bot"/>. The directory under which sentry files and auth files will be saved is <see cref="Environment.CurrentDirectory"/>.
