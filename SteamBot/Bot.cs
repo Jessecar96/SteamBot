@@ -34,6 +34,8 @@ namespace SteamBot
         private readonly UserHandlerCreator createHandler;
         private readonly bool isProccess;
         private readonly BackgroundWorker botThread;
+        private readonly string sentryFilesDirectoryName;
+        private readonly string authFilesDirectoryName;
         #endregion
 
         #region Private variables
@@ -138,14 +140,47 @@ namespace SteamBot
             }
         }
 
+        public string SentryFilesDirectoryName => sentryFilesDirectoryName;
+        public string AuthFilesDirectoryName => authFilesDirectoryName;
+
         /// <summary>
         /// Compatibility sanity.
         /// </summary>
         [Obsolete("Refactored to be Log instead of log")]
         public Log log { get { return Log; } }
 
-        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
+        /// <summary>
+        /// Initialize a new instance of <see cref="Bot"/>. The directory under which sentry files and auth files will be saved is <see cref="Environment.CurrentDirectory"/>.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
+        /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
+        /// <param name="debug">Debug mode shows more details when logging.</param>
+        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false) : this(config, apiKey, Environment.CurrentDirectory + "\\sentryfiles", handlerCreator, debug) { }
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Bot"/>. 
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
+        /// <param name="sentryFilesDirectoryName">Sentry files and auth files will be saved under this directory.
+        /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
+        /// <param name="debug">Debug mode shows more details when logging.</param>
+        public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false) : this(config, apiKey, sentryFilesDirectoryName, Environment.CurrentDirectory + "\\authfiles", handlerCreator, debug) { }
+
+        /// <summary>
+        /// Initialize a new instance of <see cref="Bot"/>.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="apiKey">If an API Key exists in parameter <paramref name="config"/>, the one in <paramref name="config"/> takes precedence.</param>
+        /// <param name="sentryFilesDirectoryName">Sentry files will be saved under this directory.</param>
+        /// <param name="authFilesDirectoryName">Auth files will be saved under this directory.</param>
+        /// <param name="handlerCreator">A delegate to create <see cref="UserHandler"/>. All user handlers will be created using this.</param>
+        /// <param name="debug">Debug mode shows more details when logging.</param>
+        public Bot(Configuration.BotInfo config, string apiKey, string sentryFilesDirectoryName, string authFilesDirectoryName, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
+            this.sentryFilesDirectoryName = sentryFilesDirectoryName;
+            this.authFilesDirectoryName = authFilesDirectoryName;
             userHandlers = new Dictionary<SteamID, UserHandler>();
             logOnDetails = new SteamUser.LogOnDetails
             {
@@ -774,7 +809,7 @@ namespace SteamBot
 
         string GetMobileAuthCode()
         {
-            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
+            var authFile = Path.Combine(authFilesDirectoryName, String.Format("{0}.auth", logOnDetails.Username));
             if (File.Exists(authFile))
             {
                 SteamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
@@ -826,8 +861,8 @@ namespace SteamBot
                         SteamGuardAccount = authLinker.LinkedAccount;
                         try
                         {
-                            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
-                            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
+                            var authFile = Path.Combine(authFilesDirectoryName, String.Format("{0}.auth", logOnDetails.Username));
+                            Directory.CreateDirectory(authFilesDirectoryName);
                             File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
                             Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
                             var smsCode = WaitForInput();
@@ -869,8 +904,8 @@ namespace SteamBot
         {
             // get sentry file which has the machine hw info saved 
             // from when a steam guard code was entered
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
-            FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("{0}.sentryfile", logOnDetails.Username)));
+            Directory.CreateDirectory(sentryFilesDirectoryName);
+            FileInfo fi = new FileInfo(System.IO.Path.Combine(sentryFilesDirectoryName, String.Format("{0}.sentryfile", logOnDetails.Username)));
 
             if (fi.Exists && fi.Length > 0)
                 logOnDetails.SentryFileHash = SHAHash(File.ReadAllBytes(fi.FullName));
@@ -965,9 +1000,9 @@ namespace SteamBot
         {
             byte[] hash = SHAHash (machineAuth.Data);
 
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
+            Directory.CreateDirectory(sentryFilesDirectoryName);
 
-            File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
+            File.WriteAllBytes (System.IO.Path.Combine(sentryFilesDirectoryName, String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
             
             var authResponse = new SteamUser.MachineAuthDetails
             {
