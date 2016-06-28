@@ -91,10 +91,6 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
-        /// <summary>
-        /// The instance of the Logger for the bot.
-        /// </summary>
-        public readonly Log Log;
         #endregion
 
         #region Public variables
@@ -116,6 +112,11 @@ namespace SteamBot
         /// Default: 0 = No game.
         /// </summary>
         public int CurrentGame { get; private set; }
+
+        /// <summary>
+        /// The instance of the Logger for the bot. You may change it while running.
+        /// </summary>
+        public ILog Log { get; set; }
 
         public SteamAuth.SteamGuardAccount SteamGuardAccount;
         #endregion
@@ -142,7 +143,7 @@ namespace SteamBot
         /// Compatibility sanity.
         /// </summary>
         [Obsolete("Refactored to be Log instead of log")]
-        public Log log { get { return Log; } }
+        public ILog log { get { return Log; } }
 
         public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
         {
@@ -175,7 +176,7 @@ namespace SteamBot
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) ConsoleLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                consoleLogLevel = Log.LogLevel.Info;
+                consoleLogLevel = SteamBot.Log.LogLevel.Info;
             }
 
             try
@@ -185,11 +186,12 @@ namespace SteamBot
             catch (ArgumentException)
             {
                 Console.WriteLine(@"(Console) FileLogLevel invalid or unspecified for bot {0}. Defaulting to ""Info""", DisplayName);
-                fileLogLevel = Log.LogLevel.Info;
+                fileLogLevel = SteamBot.Log.LogLevel.Info;
             }
 
             logFile = config.LogFile;
-            Log = new Log(logFile, DisplayName, consoleLogLevel, fileLogLevel);
+            if (!string.IsNullOrEmpty(logFile))
+                Log = new Log(logFile, DisplayName, consoleLogLevel, fileLogLevel);
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();

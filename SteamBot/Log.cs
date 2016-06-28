@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SteamBot
 {
-    public class Log : IDisposable
+    public class Log : ILog
     {
         public enum LogLevel
         {
