@@ -16,7 +16,10 @@ namespace SteamTrade
     {
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
         private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
-        private const string cachefile = "tf_schema.cache";
+        /// <summary>
+        /// Full file name for schema cache file. This value is only used when calling <see cref="FetchSchema"/>. If the time modified of the local copy is later than that of the server, local copy is used without downloading.
+        /// </summary>
+        public static string CacheFileFullName { get; set; } = Path.GetTempPath() + "\\tf_schema.cache";
 
         /// <summary>
         /// Fetches the Tf2 Item schema.
@@ -67,7 +70,7 @@ namespace SteamTrade
         private static string GetSchemaString(HttpWebResponse response, DateTime schemaLastModified)
         {
             string result;
-            bool mustUpdateCache = !File.Exists(cachefile) || schemaLastModified > File.GetCreationTime(cachefile);
+            bool mustUpdateCache = !File.Exists(CacheFileFullName) || schemaLastModified > File.GetCreationTime(CacheFileFullName);
 
             if (mustUpdateCache)
             {
@@ -75,14 +78,14 @@ namespace SteamTrade
                 {
                     result = reader.ReadToEnd();
 
-                    File.WriteAllText(cachefile, result);
-                    File.SetCreationTime(cachefile, schemaLastModified);
+                    File.WriteAllText(CacheFileFullName, result);
+                    File.SetCreationTime(CacheFileFullName, schemaLastModified);
                 }
             }
             else
             {
                 // read previously cached file.
-                using(TextReader reader = new StreamReader(cachefile))
+                using(TextReader reader = new StreamReader(CacheFileFullName))
                 {
                     result = reader.ReadToEnd();
                 }
