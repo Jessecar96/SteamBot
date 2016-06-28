@@ -152,6 +152,9 @@ namespace SteamBot
             public string ApiKey { get; set; }
             public string DisplayName { get; set; }
             public string ChatResponse { get; set; }
+            /// <summary>
+            /// If this is null or empty, no log file will be written.
+            /// </summary>
             public string LogFile { get; set; }
             public string BotControlClass { get; set; }
             public int MaximumTradeTime { get; set; }
