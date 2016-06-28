@@ -32,8 +32,11 @@ namespace SteamBot
         public Log(string logFile, string botName = "", LogLevel consoleLogLevel = LogLevel.Info, LogLevel fileLogLevel = LogLevel.Info)
         {
             Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "logs"));
-            _FileStream = File.AppendText (Path.Combine("logs",logFile));
-            _FileStream.AutoFlush = true;
+            if (!string.IsNullOrEmpty(logFile))
+            {
+                _FileStream = File.AppendText(Path.Combine("logs", logFile));
+                _FileStream.AutoFlush = true;
+            }
             _botName = botName;
             OutputLevel = consoleLogLevel;
             FileLogLevel = fileLogLevel;
@@ -99,7 +102,7 @@ namespace SteamBot
 
             if(level >= FileLogLevel)
             {
-                _FileStream.WriteLine(formattedString);
+                _FileStream?.WriteLine(formattedString);
             }
             if(level >= OutputLevel)
             {
@@ -180,7 +183,7 @@ namespace SteamBot
             if (disposed)
                 return;
             if (disposing)
-                _FileStream.Dispose();
+                _FileStream?.Dispose();
             disposed = true;
         }
 
