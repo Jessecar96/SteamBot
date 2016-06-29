@@ -1320,7 +1320,7 @@ namespace SteamBot
             {
                 StopBot();
                 if (Log != null)
-                    Log?.Dispose();
+                    Log.Dispose();
             }
         }
     }
