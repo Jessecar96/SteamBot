@@ -1325,6 +1325,7 @@ namespace SteamBot
                     Log.Dispose();
                 if (myInventoryTask != null)
                     myInventoryTask.Dispose();
+                CancelTradeOfferPollingThread();
                 disposed = true;
             }
         }
