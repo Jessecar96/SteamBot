@@ -82,7 +82,7 @@ namespace SteamTrade
         [Obsolete("Use IsLoaded instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public bool isLoaded { get { return IsLoaded; } }
-        public bool IsLoaded { get; private set; } = false;
+        public bool IsLoaded { get; private set; }
 
         private Task _loadTask;
         private Dictionary<string, T> _descriptions = new Dictionary<string, T>();
@@ -101,7 +101,7 @@ namespace SteamTrade
 
             [Obsolete("Use DescriptionId instead.")]
             [EditorBrowsable(EditorBrowsableState.Never)]
-            public string descriptionid => DescriptionId;
+            public string descriptionid { get { return DescriptionId; } }
             /// <summary>
             /// Use this as dictionary key to access <see cref="GenericInventory{T}.Descriptions"/>.
             /// </summary>
