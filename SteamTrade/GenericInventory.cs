@@ -36,7 +36,7 @@ namespace SteamTrade
 
         [Obsolete("Use Items instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public Dictionary<ulong, Item> items => Items;
+        public Dictionary<ulong, Item> items { get { return Items; } }
         public Dictionary<ulong, Item> Items
         {
             get
@@ -50,7 +50,7 @@ namespace SteamTrade
 
         [Obsolete("Use Descriptions instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public Dictionary<string, T> descriptions => Descriptions;
+        public Dictionary<string, T> descriptions { get { return Descriptions; } }
         /// <summary>
         /// More details of all <see cref="Items"/>. Key is <see cref="Item.DescriptionId"/>.
         /// </summary>
@@ -67,7 +67,7 @@ namespace SteamTrade
 
         [Obsolete("Use Errors instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public List<string> errors => Errors;
+        public List<string> errors { get { return Errors; } }
         public List<string> Errors
         {
             get
@@ -81,7 +81,7 @@ namespace SteamTrade
 
         [Obsolete("Use IsLoaded instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool isLoaded => IsLoaded;
+        public bool isLoaded { get { return IsLoaded; } }
         public bool IsLoaded { get; private set; } = false;
 
         private Task _loadTask;
@@ -188,7 +188,7 @@ namespace SteamTrade
                         retry:
                         try
                         {
-                            response = SteamWeb.Fetch($"http://steamcommunity.com/profiles/{steamid.ConvertToUInt64()}/inventory/json/{appid}/{contextId}{(start == 0 ? "" : $"?start={start}")}", "GET", null, true);
+                            response = SteamWeb.Fetch("http://steamcommunity.com/profiles/" + steamid.ConvertToUInt64() + "/inventory/json/" + appid + "/" + contextId + (start == 0 ? "" : "?start=" + start), "GET", null, true);
                         }
                         catch (WebException)
                         {
@@ -271,36 +271,36 @@ namespace SteamTrade
         [Obsolete("Use Name instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public string name => Name;
+        public string name { get { return Name; } }
         [JsonProperty("name")]
         public string Name { get; set; }
         [Obsolete("Use Type instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public string type => Type;
+        public string type { get { return Type; } }
         [JsonProperty("type")]
         public string Type { get; set; }
         [Obsolete("Use Tradable instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public bool tradable => Tradable;
+        public bool tradable { get { return Tradable; } }
         [JsonProperty("tradable")]
         public bool Tradable { get; set; }
         [Obsolete("Use Marketable instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public bool marketable => Marketable;
+        public bool marketable { get { return Marketable; } }
         [JsonProperty("marketable")]
         public bool Marketable { get; set; }
         [Obsolete("Use DescriptionId instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public string url => Url;
+        public string url { get { return Url; } }
         public string Url { get; set; }
         [Obsolete("Use ClassId instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public long classid => ClassId;
+        public long classid { get { return ClassId; } }
         [JsonProperty("classid")]
         public long ClassId { get; set; }
 
@@ -346,7 +346,7 @@ namespace SteamTrade
         [Obsolete("Use AppData instead.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         [JsonIgnore]
-        public Dictionary<string, string> app_data => AppData;
+        public Dictionary<string, string> app_data { get { return AppData; } }
         [JsonIgnore]
         public Dictionary<string, string> AppData { get; set; }
 
