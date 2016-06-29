@@ -1316,11 +1316,16 @@ namespace SteamBot
 
         protected virtual void Dispose(bool disposing)
         {
+            if (disposed)
+                return;
             if (disposing)
             {
                 StopBot();
                 if (Log != null)
                     Log.Dispose();
+                if (myInventoryTask != null)
+                    myInventoryTask.Dispose();
+                disposed = true;
             }
         }
     }
