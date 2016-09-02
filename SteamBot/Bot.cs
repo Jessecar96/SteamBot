@@ -45,8 +45,6 @@ namespace SteamBot
         private bool cookiesAreInvalid = true;
         private List<SteamID> friends;
         private bool disposed = false;
-
-        private ExternalAPI externalAPI;
         #endregion
 
         #region Public readonly variables
@@ -205,8 +203,6 @@ namespace SteamBot
             botThread.DoWork += BackgroundWorkerOnDoWork;
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
             botThread.RunWorkerAsync();
-
-            externalAPI = new ExternalAPI(this);
         }
 
         ~Bot()
