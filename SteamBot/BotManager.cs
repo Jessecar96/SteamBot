@@ -13,17 +13,23 @@ namespace SteamBot
     /// <summary>
     /// A class that manages SteamBot processes.
     /// </summary>
-    public class BotManager
+    public class BotManager : IDisposable
     {
         private readonly List<RunningBot> botProcs;
         private Log mainLog;
         private bool useSeparateProcesses;
+        private bool disposed;
 
         public BotManager()
         {
             useSeparateProcesses = false;
             new List<Bot>();
             botProcs = new List<RunningBot>();
+        }
+
+        ~BotManager()
+        {
+            Dispose(false);
         }
 
         public Configuration ConfigObject { get; private set; }
@@ -93,13 +99,16 @@ namespace SteamBot
         /// </summary>
         public void StopBots()
         {
-            mainLog.Debug("Shutting down all bot processes.");
-            foreach (var botProc in botProcs)
+            if (mainLog != null)
             {
-                botProc.Stop();
-            }
+                mainLog.Debug("Shutting down all bot processes.");
+                foreach (var botProc in botProcs)
+                {
+                    botProc.Stop();
+                }
 
-            mainLog.Dispose();
+                mainLog.Dispose();
+            }
             mainLog = null;
         }
 
@@ -228,6 +237,42 @@ namespace SteamBot
         }
 
         /// <summary>
+        /// Sends the BotManager input to the target Bot
+        /// </summary>
+        /// <param name="index">The target bot's index</param>
+        /// <param name="command">The input to give the bot</param>
+        public void SendInput(int index, string input)
+        {
+            mainLog.Debug(String.Format("Sending input \"{0}\" to Bot at index {1}", input, index));
+            if (index < botProcs.Count)
+            {
+                if (botProcs[index].IsRunning)
+                {
+                    if (botProcs[index].UsingProcesses)
+                    {
+                        //  Write out the exec command to the bot process' stdin
+                        StreamWriter BotStdIn = botProcs[index].BotProcess.StandardInput;
+
+                        BotStdIn.WriteLine("input " + input);
+                        BotStdIn.Flush();
+                    }
+                    else
+                    {
+                        botProcs[index].TheBot.HandleInput(input);
+                    }
+                }
+                else
+                {
+                    mainLog.Warn(String.Format("Bot at index {0} is not running. Use the 'Start' command first", index));
+                }
+            }
+            else
+            {
+                mainLog.Warn(String.Format("Invalid Bot index: {0}", index));
+            }
+        }
+
+        /// <summary>
         /// A method to return an instance of the <c>bot.BotControlClass</c>.
         /// </summary>
         /// <param name="bot">The bot.</param>
@@ -245,15 +290,35 @@ namespace SteamBot
                     controlClass, new object[] { bot, sid });
         }
 
+        private void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+            StopBots();
+            if (disposing)
+            {
+                foreach (IDisposable bot in botProcs)
+                    bot.Dispose();
+            }
+            disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         #region Nested RunningBot class
 
         /// <summary>
         /// Nested class that holds the information about a spawned bot process.
         /// </summary>
-        private class RunningBot
+        private class RunningBot : IDisposable
         {
             private const string BotExecutable = "SteamBot.exe";
             private readonly Configuration config;
+            private bool disposed;
 
             /// <summary>
             /// Creates a new instance of <see cref="RunningBot"/> class.
@@ -271,6 +336,11 @@ namespace SteamBot
                 BotConfigIndex = index;
                 BotConfig = config.Bots[BotConfigIndex];
                 this.config = config;
+            }
+
+            ~RunningBot()
+            {
+                Dispose(false);
             }
 
             public bool UsingProcesses { get; private set; }
@@ -300,6 +370,7 @@ namespace SteamBot
                 {
                     TheBot.StopBot();
                     IsRunning = false;
+                    TheBot.Dispose();
                 }
             }
 
@@ -375,6 +446,22 @@ namespace SteamBot
             //        Console.WriteLine(e.Data);
             //    }
             //}
+
+            private void Dispose(bool disposing)
+            {
+                if (disposed)
+                    return;
+                Stop();
+                if (disposing && TheBot != null)
+                    TheBot.Dispose();
+                disposed = true;
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
         }
 
         #endregion Nested RunningBot class

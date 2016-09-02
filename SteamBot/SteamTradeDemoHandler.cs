@@ -1,6 +1,7 @@
 using SteamKit2;
 using System.Collections.Generic;
 using SteamTrade;
+using SteamTrade.TradeOffer;
 
 namespace SteamBot
 {
@@ -52,13 +53,13 @@ namespace SteamBot
         public override void OnTradeError (string error) 
         {
             SendChatMessage("Oh, there was an error: {0}.", error);
-            Bot.Log.Warn (error);
+            Log.Warn (error);
         }
         
         public override void OnTradeTimeout () 
         {
             SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
-            Bot.Log.Info ("User was kicked because he was AFK.");
+            Log.Info ("User was kicked because he was AFK.");
         }
         
         public override void OnTradeInit() 
@@ -194,10 +195,18 @@ namespace SteamBot
             }
         }
 
-        public override void OnTradeSuccess()
+        public override void OnTradeOfferUpdated(TradeOffer offer)
         {
-            // Trade completed successfully
-            Log.Success("Trade Complete.");
+            if(offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
+            {
+                Log.Success("Trade Complete.");
+            }
+        }
+
+        public override void OnTradeAwaitingConfirmation(long tradeOfferID)
+        {
+            Log.Warn("Trade ended awaiting confirmation");
+            SendChatMessage("Please complete the confirmation to finish the trade");
         }
 
         public override void OnTradeAccept() 

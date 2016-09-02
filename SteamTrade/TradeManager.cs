@@ -266,7 +266,7 @@ namespace SteamTrade
                         if(action)
                             lastOtherActionTime = DateTime.Now;
 
-                        if(trade.OtherUserCancelled || trade.HasTradeCompletedOk || CheckTradeTimeout(trade))
+                        if (trade.HasTradeEnded || CheckTradeTimeout(trade))
                         {
                             IsTradeThreadRunning = false;
                             break;
@@ -289,23 +289,28 @@ namespace SteamTrade
                 finally
                 {
                     DebugPrint("Trade thread shutting down.");
-                    try
+                    try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
                     {
-                        try //Yikes, that's a lot of nested 'try's.  Is there some way to clean this up?
-                        {
-                            if(trade.HasTradeCompletedOk)
-                                trade.FireOnSuccessEvent();
-                        }
-                        finally
+                        if(trade.IsTradeAwaitingConfirmation)
+                            trade.FireOnAwaitingConfirmation();
+                    }
+                    catch(Exception ex)
+                    {
+                        trade.FireOnErrorEvent("Unknown error occurred during OnTradeAwaitingConfirmation: " + ex.ToString());
+                    }
+                    finally
+                    {
+                        try
                         {
                             //Make sure OnClose is always fired after OnSuccess, even if OnSuccess throws an exception
                             //(which it NEVER should, but...)
                             trade.FireOnCloseEvent();
                         }
-                    }
-                    catch(Exception ex)
-                    {
-                        trade.FireOnErrorEvent("Unknown error occurred DURING CLEANUP(!?): " + ex.ToString());
+                        catch (Exception e)
+                        {
+                            DebugError("Error occurred during trade.OnClose()! " + e);
+                            throw;
+                        }
                     }
                 }
             });
@@ -364,6 +369,11 @@ namespace SteamTrade
             // #define DEBUG_TRADE_MANAGER
             // at the first line of this file.
             System.Console.WriteLine (output);
+        }
+
+        private static void DebugError(string output)
+        {
+            System.Console.WriteLine(output);
         }
     }
 }

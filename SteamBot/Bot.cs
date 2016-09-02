@@ -14,6 +14,7 @@ using SteamTrade;
 using SteamKit2.Internal;
 using SteamTrade.TradeOffer;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace SteamBot
 {
@@ -40,11 +41,14 @@ namespace SteamBot
         private TradeManager tradeManager;
         private TradeOfferManager tradeOfferManager;
         private int tradePollingInterval;
+        private int tradeOfferPollingIntervalSecs;
         private string myUserNonce;
         private string myUniqueId;
         private bool cookiesAreInvalid = true;
         private List<SteamID> friends;
         private bool disposed = false;
+        private string consoleInput;
+        private Thread tradeOfferThread;
         #endregion
 
         #region Public readonly variables
@@ -87,6 +91,10 @@ namespace SteamBot
         /// The prefix shown before bot's display name.
         /// </summary>
         public readonly string DisplayNamePrefix;
+        /// <summary>
+        /// The instance of the Logger for the bot.
+        /// </summary>
+        public readonly Log Log;
         #endregion
 
         #region Public variables
@@ -108,10 +116,8 @@ namespace SteamBot
         /// Default: 0 = No game.
         /// </summary>
         public int CurrentGame { get; private set; }
-        /// <summary>
-        /// The instance of the Logger for the bot.
-        /// </summary>
-        public Log Log;
+
+        public SteamAuth.SteamGuardAccount SteamGuardAccount;
         #endregion
 
         public IEnumerable<SteamID> FriendsList
@@ -152,6 +158,7 @@ namespace SteamBot
             MaximumActionGap = config.MaximumActionGap;
             DisplayNamePrefix = config.DisplayNamePrefix;
             tradePollingInterval = config.TradePollingInterval <= 100 ? 800 : config.TradePollingInterval;
+            tradeOfferPollingIntervalSecs = (config.TradeOfferPollingIntervalSecs == 0 ? 30 : config.TradeOfferPollingIntervalSecs);
             schemaLang = config.SchemaLang != null && config.SchemaLang.Length == 2 ? config.SchemaLang.ToLower() : "en";
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
@@ -182,7 +189,7 @@ namespace SteamBot
             }
 
             logFile = config.LogFile;
-            CreateLog();
+            Log = new Log(logFile, DisplayName, consoleLogLevel, fileLogLevel);
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();
@@ -190,7 +197,7 @@ namespace SteamBot
             // Hacking around https
             ServicePointManager.ServerCertificateValidationCallback += SteamWeb.ValidateRemoteCertificate;
 
-            Log.Debug ("Initializing Steam Bot...");
+            Log.Debug ("Initializing Steam Bot...");            
             SteamClient = new SteamClient();
             SteamClient.AddHandler(new SteamNotifications());
             SteamTrade = SteamClient.GetHandler<SteamTrading>();
@@ -202,27 +209,11 @@ namespace SteamBot
             botThread = new BackgroundWorker { WorkerSupportsCancellation = true };
             botThread.DoWork += BackgroundWorkerOnDoWork;
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
-            botThread.RunWorkerAsync();
         }
 
         ~Bot()
         {
-            DisposeBot();
-        }
-
-        private void CreateLog()
-        {
-            if(Log == null)
-                Log = new Log (logFile, DisplayName, consoleLogLevel, fileLogLevel);
-        }
-
-        private void DisposeLog()
-        {
-            if(Log != null)
-            {
-                Log.Dispose();
-                Log = null;
-            }
+            Dispose(false);
         }
 
         private void CreateFriendsListIfNecessary()
@@ -252,9 +243,7 @@ namespace SteamBot
         /// <returns><c>true</c>. See remarks</returns>
         public bool StartBot()
         {
-            CreateLog();
             IsRunning = true;
-
             Log.Info("Connecting...");
             if (!botThread.IsBusy)
                 botThread.RunWorkerAsync();
@@ -273,8 +262,9 @@ namespace SteamBot
             Log.Debug("Trying to shut down bot thread.");
             SteamClient.Disconnect();
             botThread.CancelAsync();
+            while (botThread.IsBusy)
+                Thread.Yield();
             userHandlers.Clear();
-            DisposeLog();
         }
 
         /// <summary>
@@ -328,14 +318,47 @@ namespace SteamBot
         /// <returns></returns>
         public bool TryGetTradeOffer(string offerId, out TradeOffer tradeOffer)
         {
-            return tradeOfferManager.GetOffer(offerId, out tradeOffer);
+            return tradeOfferManager.TryGetOffer(offerId, out tradeOffer);
         }
 
         public void HandleBotCommand(string command)
         {
             try
             {
-                GetUserHandler(SteamClient.SteamID).OnBotCommand(command);
+                if (command == "linkauth")
+                {
+                    LinkMobileAuth();
+                }
+                else if (command == "getauth")
+                {
+                    try
+                    {
+                        Log.Success("Generated Steam Guard code: " + SteamGuardAccount.GenerateSteamGuardCode());
+                    }
+                    catch (NullReferenceException)
+                    {
+                        Log.Error("Unable to generate Steam Guard code.");
+                    }
+                }
+                else if (command == "unlinkauth")
+                {
+                    if (SteamGuardAccount == null)
+                    {
+                        Log.Error("Mobile authenticator is not active on this bot.");
+                    }
+                    else if (SteamGuardAccount.DeactivateAuthenticator())
+                    {
+                        Log.Success("Deactivated authenticator on this account.");
+                    }
+                    else
+                    {
+                        Log.Error("Failed to deactivate authenticator on this account.");
+                    }
+                }
+                else
+                {
+                    GetUserHandler(SteamClient.SteamID).OnBotCommand(command);
+                }
             }
             catch (ObjectDisposedException e)
             {
@@ -349,6 +372,55 @@ namespace SteamBot
             catch (Exception e)
             {
                 Console.WriteLine(string.Format("Exception caught in BotCommand Thread: {0}", e));
+            }
+        }
+
+        protected void SpawnTradeOfferPollingThread()
+        {
+            if (tradeOfferThread == null)
+            {
+                tradeOfferThread = new Thread(TradeOfferPollingFunction);
+                tradeOfferThread.Start();
+            }
+        }
+
+        protected void CancelTradeOfferPollingThread()
+        {
+            tradeOfferThread = null;
+        }
+
+        protected void TradeOfferPollingFunction()
+        {
+            while (tradeOfferThread == Thread.CurrentThread)
+            {
+                try
+                {
+                    tradeOfferManager.EnqueueUpdatedOffers();
+                }
+                catch (Exception e)
+                {
+                    Log.Error("Error while polling trade offers: " + e);
+                }
+
+                Thread.Sleep(tradeOfferPollingIntervalSecs*1000);
+            }
+        }
+
+        public void HandleInput(string input)
+        {
+            consoleInput = input;
+        }
+
+        public string WaitForInput()
+        {
+            consoleInput = null;
+            while (true)
+            {
+                if (consoleInput != null)
+                {
+                    return consoleInput;
+                }
+                Thread.Sleep(5);
             }
         }
 
@@ -435,7 +507,26 @@ namespace SteamBot
                     Log.Error("Login Error: {0}", callback.Result);
                 }
 
-                if (callback.Result == EResult.AccountLogonDenied)
+                if (callback.Result == EResult.AccountLogonDeniedNeedTwoFactorCode)
+                {
+                    var mobileAuthCode = GetMobileAuthCode();
+                    if (string.IsNullOrEmpty(mobileAuthCode))
+                    {
+                        Log.Error("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot.");
+                    }
+                    else
+                    {
+                        logOnDetails.TwoFactorCode = mobileAuthCode;
+                        Log.Success("Generated 2FA code.");
+                    }
+                }
+                else if (callback.Result == EResult.TwoFactorCodeMismatch)
+                {
+                    SteamAuth.TimeAligner.AlignTime();
+                    logOnDetails.TwoFactorCode = SteamGuardAccount.GenerateSteamGuardCode();
+                    Log.Success("Regenerated 2FA code.");
+                }
+                else if (callback.Result == EResult.AccountLogonDenied)
                 {
                     Log.Interface ("This account is SteamGuard enabled. Enter the code via the `auth' command.");
 
@@ -447,8 +538,7 @@ namespace SteamBot
                     else
                         logOnDetails.AuthCode = Console.ReadLine();
                 }
-
-                if (callback.Result == EResult.InvalidLoginAuthCode)
+                else if (callback.Result == EResult.InvalidLoginAuthCode)
                 {
                     Log.Interface("The given SteamGuard code was invalid. Try again using the `auth' command.");
                     logOnDetails.AuthCode = Console.ReadLine();
@@ -525,25 +615,25 @@ namespace SteamBot
                                 RemoveUserHandler(friend.SteamID);
                             }
                             else if (friend.Relationship == EFriendRelationship.RequestRecipient)
-                    {
+                            {
                                 if (GetUserHandler(friend.SteamID).OnFriendAdd())
                                 {
-                        if (!friends.Contains(friend.SteamID))
-                        {
-                            friends.Add(friend.SteamID);
+                                    if (!friends.Contains(friend.SteamID))
+                                    {
+                                        friends.Add(friend.SteamID);
                                     }
-                                    else
-                            {
-                                        Log.Error("Friend was added who was already in friends list: " + friend.SteamID);
+                                    SteamFriends.AddFriend(friend.SteamID);
+                                }
+                                else
+                                {
+                                    if(friends.Contains(friend.SteamID))
+                                    {
+                                        friends.Remove(friend.SteamID);
                                     }
-                                SteamFriends.AddFriend(friend.SteamID);
-                            }
-                        else
-                        {
                                     SteamFriends.RemoveFriend(friend.SteamID);
-                                RemoveUserHandler(friend.SteamID);
+                                    RemoveUserHandler(friend.SteamID);
+                                }
                             }
-                        }
                             break;
                     }
                 }
@@ -653,6 +743,7 @@ namespace SteamBot
             {
                 IsLoggedIn = false;
                 Log.Warn("Logged off Steam.  Reason: {0}", callback.Result);
+                CancelTradeOfferPollingThread();
             });
 
             msg.Handle<SteamClient.DisconnectedCallback> (callback =>
@@ -662,6 +753,7 @@ namespace SteamBot
                     IsLoggedIn = false;
                     CloseTrade();
                     Log.Warn("Disconnected from Steam Network!");
+                    CancelTradeOfferPollingThread();
                 }
 
                 SteamClient.Connect ();
@@ -669,22 +761,6 @@ namespace SteamBot
             #endregion
 
             #region Notifications
-            msg.Handle<SteamBot.SteamNotifications.NotificationCallback>(callback =>
-            {
-                //currently only appears to be of trade offer
-                if (callback.Notifications.Count != 0)
-                {
-                    foreach (var notification in callback.Notifications)
-                    {
-                        Log.Info(notification.UserNotificationType + " notification");
-        }
-                }
-
-                // Get offers only if cookies are valid
-                if (CheckCookies())
-                    tradeOfferManager.GetOffers();
-            });
-
             msg.Handle<SteamBot.SteamNotifications.CommentNotificationCallback>(callback =>
             {
                 //various types of comment notifications on profile/activity feed etc
@@ -694,6 +770,99 @@ namespace SteamBot
                 //Log.Info("New Commments Subscriptions" + callback.CommentNotifications.CountNewCommentsSubscriptions);
             });
             #endregion
+        }
+
+        string GetMobileAuthCode()
+        {
+            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
+            if (File.Exists(authFile))
+            {
+                SteamGuardAccount = Newtonsoft.Json.JsonConvert.DeserializeObject<SteamAuth.SteamGuardAccount>(File.ReadAllText(authFile));
+                return SteamGuardAccount.GenerateSteamGuardCode();
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Link a mobile authenticator to bot account, using SteamTradeOffersBot as the authenticator.
+        /// Called from bot manager console. Usage: "exec [index] linkauth"
+        /// If successful, 2FA will be required upon the next login.
+        /// Use "exec [index] getauth" if you need to get a Steam Guard code for the account.
+        /// To deactivate the authenticator, use "exec [index] unlinkauth".
+        /// </summary>
+        void LinkMobileAuth()
+        {
+            new Thread(() =>
+            {
+                var login = new SteamAuth.UserLogin(logOnDetails.Username, logOnDetails.Password);
+                var loginResult = login.DoLogin();
+                if (loginResult == SteamAuth.LoginResult.NeedEmail)
+                {
+                    while (loginResult == SteamAuth.LoginResult.NeedEmail)
+                    {
+                        Log.Interface("Enter Steam Guard code from email (type \"input [index] [code]\"):");
+                        var emailCode = WaitForInput();
+                        login.EmailCode = emailCode;
+                        loginResult = login.DoLogin();
+                    }
+                }
+                if (loginResult == SteamAuth.LoginResult.LoginOkay)
+                {
+                    Log.Info("Linking mobile authenticator...");
+                    var authLinker = new SteamAuth.AuthenticatorLinker(login.Session);
+                    var addAuthResult = authLinker.AddAuthenticator();
+                    if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                    {
+                        while (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.MustProvidePhoneNumber)
+                        {
+                            Log.Interface("Enter phone number with country code, e.g. +1XXXXXXXXXXX (type \"input [index] [number]\"):");
+                            var phoneNumber = WaitForInput();
+                            authLinker.PhoneNumber = phoneNumber;
+                            addAuthResult = authLinker.AddAuthenticator();
+                        }
+                    }
+                    if (addAuthResult == SteamAuth.AuthenticatorLinker.LinkResult.AwaitingFinalization)
+                    {
+                        SteamGuardAccount = authLinker.LinkedAccount;
+                        try
+                        {
+                            var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
+                            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
+                            File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
+                            Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
+                            var smsCode = WaitForInput();
+                            var authResult = authLinker.FinalizeAddAuthenticator(smsCode);
+                            if (authResult == SteamAuth.AuthenticatorLinker.FinalizeResult.Success)
+                            {
+                                Log.Success("Linked authenticator.");
+                            }
+                            else
+                            {
+                                Log.Error("Error linking authenticator: " + authResult);
+                            }
+                        }
+                        catch (IOException)
+                        {
+                            Log.Error("Failed to save auth file. Aborting authentication.");
+                        }                        
+                    }
+                    else
+                    {
+                        Log.Error("Error adding authenticator: " + addAuthResult);
+                    }
+                }
+                else
+                {
+                    if (loginResult == SteamAuth.LoginResult.Need2FA)
+                    {
+                        Log.Error("Mobile authenticator has already been linked!");
+                    }
+                    else
+                    {
+                        Log.Error("Error performing mobile login: " + loginResult);
+                    }
+                }
+            }).Start();
         }
 
         void UserLogOn()
@@ -732,8 +901,9 @@ namespace SteamBot
             tradeOfferManager = new TradeOfferManager(ApiKey, SteamWeb);
             SubscribeTradeOffer(tradeOfferManager);
             cookiesAreInvalid = false;
+
             // Success, check trade offers which we have received while we were offline
-            tradeOfferManager.GetOffers();
+            SpawnTradeOfferPollingThread();
         }
 
         /// <summary>
@@ -767,7 +937,7 @@ namespace SteamBot
             return true;
         }
 
-        UserHandler GetUserHandler(SteamID sid)
+        public UserHandler GetUserHandler(SteamID sid)
         {
             if (!userHandlers.ContainsKey(sid))
                 userHandlers[sid] = createHandler(this, sid);
@@ -841,20 +1011,17 @@ namespace SteamBot
 
         public void TradeOfferRouter(TradeOffer offer)
         {
-            if (offer.OfferState == TradeOfferState.TradeOfferStateActive)
-            {
-                GetUserHandler(offer.PartnerSteamId).OnNewTradeOffer(offer);
-            }
+            GetUserHandler(offer.PartnerSteamId).OnTradeOfferUpdated(offer);
         }
         public void SubscribeTradeOffer(TradeOfferManager tradeOfferManager)
         {
-            tradeOfferManager.OnNewTradeOffer += TradeOfferRouter;
+            tradeOfferManager.OnTradeOfferUpdated += TradeOfferRouter;
         }
 
         //todo: should unsubscribe eventually...
         public void UnsubscribeTradeOffer(TradeOfferManager tradeOfferManager)
         {
-            tradeOfferManager.OnNewTradeOffer -= TradeOfferRouter;
+            tradeOfferManager.OnTradeOfferUpdated -= TradeOfferRouter;
         }
 
         /// <summary>
@@ -862,7 +1029,7 @@ namespace SteamBot
         /// </summary>
         public void SubscribeTrade (Trade trade, UserHandler handler)
         {
-            trade.OnSuccess += handler.OnTradeSuccess;
+            trade.OnAwaitingConfirmation += handler._OnTradeAwaitingConfirmation;
             trade.OnClose += handler.OnTradeClose;
             trade.OnError += handler.OnTradeError;
             trade.OnStatusError += handler.OnStatusError;
@@ -880,7 +1047,7 @@ namespace SteamBot
         /// </summary>
         public void UnsubscribeTrade (UserHandler handler, Trade trade)
         {
-            trade.OnSuccess -= handler.OnTradeSuccess;
+            trade.OnAwaitingConfirmation -= handler._OnTradeAwaitingConfirmation;
             trade.OnClose -= handler.OnTradeClose;
             trade.OnError -= handler.OnTradeError;
             trade.OnStatusError -= handler.OnStatusError;
@@ -901,9 +1068,121 @@ namespace SteamBot
             var inventory = Inventory.FetchInventory(SteamUser.SteamID, ApiKey, SteamWeb);
             if(inventory.IsPrivate)
             {
-                log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
+                Log.Warn("The bot's backpack is private! If your bot adds any items it will fail! Your bot's backpack should be Public.");
             }
             return inventory;
+        }
+
+        public void AcceptAllMobileTradeConfirmations()
+        {
+            if (SteamGuardAccount == null)
+            {
+                Log.Warn("Bot account does not have 2FA enabled.");
+            }
+            else
+            {
+                SteamGuardAccount.Session.SteamLogin = SteamWeb.Token;
+                SteamGuardAccount.Session.SteamLoginSecure = SteamWeb.TokenSecure;
+                try
+                {
+                    foreach (var confirmation in SteamGuardAccount.FetchConfirmations())
+                    {
+                        if (SteamGuardAccount.AcceptConfirmation(confirmation))
+                        {
+                            Log.Success("Confirmed {0}. (Confirmation ID #{1})", confirmation.ConfirmationDescription, confirmation.ConfirmationID);
+                        }
+                    }
+                }
+                catch (SteamAuth.SteamGuardAccount.WGTokenInvalidException)
+                {
+                    Log.Error("Invalid session when trying to fetch trade confirmations.");
+                }
+            }                        
+        }
+
+        /// <summary>
+        /// Get duration of escrow in days. Call this before sending a trade offer.
+        /// Credit to: https://www.reddit.com/r/SteamBot/comments/3w8j7c/code_getescrowduration_for_c/
+        /// </summary>
+        /// <param name="steamId">Steam ID of user you want to send a trade offer to</param>
+        /// <param name="token">User's trade token. Can be an empty string if user is on bot's friends list.</param>
+        /// <exception cref="NullReferenceException">Thrown when Steam returns an empty response.</exception>
+        /// <exception cref="TradeOfferEscrowDurationParseException">Thrown when the user is unavailable for trade or Steam returns invalid data.</exception>
+        /// <returns>TradeOfferEscrowDuration</returns>
+        public TradeOfferEscrowDuration GetEscrowDuration(SteamID steamId, string token)
+        {
+            var url = "https://steamcommunity.com/tradeoffer/new/";
+
+            var data = new System.Collections.Specialized.NameValueCollection();
+            data.Add("partner", steamId.AccountID.ToString());
+            if (!string.IsNullOrEmpty(token))
+            {
+                data.Add("token", token);
+            }            
+
+            var resp = SteamWeb.Fetch(url, "GET", data, false);
+            if (string.IsNullOrWhiteSpace(resp))
+            {
+                throw new NullReferenceException("Empty response from Steam when trying to retrieve escrow duration.");
+            }
+
+            return ParseEscrowResponse(resp);
+        }
+
+        /// <summary>
+        /// Get duration of escrow in days. Call this after receiving a trade offer.
+        /// </summary>
+        /// <param name="tradeOfferId">The ID of the trade offer</param>
+        /// <exception cref="NullReferenceException">Thrown when Steam returns an empty response.</exception>
+        /// <exception cref="TradeOfferEscrowDurationParseException">Thrown when the user is unavailable for trade or Steam returns invalid data.</exception>
+        /// <returns>TradeOfferEscrowDuration</returns>
+        public TradeOfferEscrowDuration GetEscrowDuration(string tradeOfferId)
+        {
+            var url = "http://steamcommunity.com/tradeoffer/" + tradeOfferId;
+
+            var resp = SteamWeb.Fetch(url, "GET", null, false);
+            if (string.IsNullOrWhiteSpace(resp))
+            {
+                throw new NullReferenceException("Empty response from Steam when trying to retrieve escrow duration.");
+            }
+
+            return ParseEscrowResponse(resp);
+        }
+
+        private TradeOfferEscrowDuration ParseEscrowResponse(string resp)
+        {
+            var myM = Regex.Match(resp, @"g_daysMyEscrow(?:[\s=]+)(?<days>[\d]+);", RegexOptions.IgnoreCase);
+            var theirM = Regex.Match(resp, @"g_daysTheirEscrow(?:[\s=]+)(?<days>[\d]+);", RegexOptions.IgnoreCase);
+            if (!myM.Groups["days"].Success || !theirM.Groups["days"].Success)
+            {
+                var steamErrorM = Regex.Match(resp, @"<div id=""error_msg"">([^>]+)<\/div>", RegexOptions.IgnoreCase);
+                if (steamErrorM.Groups.Count > 1)
+                {
+                    var steamError = Regex.Replace(steamErrorM.Groups[1].Value.Trim(), @"\t|\n|\r", ""); ;
+                    throw new TradeOfferEscrowDurationParseException(steamError);
+                }
+                else
+                {
+                    throw new TradeOfferEscrowDurationParseException(string.Empty);
+                }
+            }
+
+            return new TradeOfferEscrowDuration()
+            {
+                DaysMyEscrow = int.Parse(myM.Groups["days"].Value),
+                DaysTheirEscrow = int.Parse(theirM.Groups["days"].Value)
+            };
+        }
+
+        public class TradeOfferEscrowDuration
+        {
+            public int DaysMyEscrow { get; set; }
+            public int DaysTheirEscrow { get; set; }
+        }
+        public class TradeOfferEscrowDurationParseException : Exception
+        {
+            public TradeOfferEscrowDurationParseException() : base() { }
+            public TradeOfferEscrowDurationParseException(string message) : base(message) { }
         }
 
         #region Background Worker Methods
@@ -925,8 +1204,6 @@ namespace SteamBot
                 StopBot();
                 //StartBot();
             }
-
-            Log.Dispose();
         }
 
         private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs doWorkEventArgs)
@@ -937,8 +1214,18 @@ namespace SteamBot
             {
                 try
                 {
-                    msg = SteamClient.WaitForCallback(true);
-                    HandleSteamMessage(msg);
+                    msg = SteamClient.GetCallback(true);
+                    if (msg != null)
+                    {
+                        HandleSteamMessage(msg);
+                    }
+
+                    if(tradeOfferManager != null)
+                    {
+                        tradeOfferManager.HandleNextPendingTradeOfferUpdate();
+                    }
+
+                    Thread.Sleep(1);
                 }
                 catch (WebException e)
                 {
@@ -947,8 +1234,7 @@ namespace SteamBot
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e.ToString());
-                    Log.Warn("Restarting bot...");
+                    Log.Error("Unhandled exception occurred in bot: " + e);
                 }
             }
         }
@@ -1029,16 +1315,18 @@ namespace SteamBot
 
         public void Dispose()
         {
-            DisposeBot();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        private void DisposeBot()
+        private void Dispose(bool disposing)
         {
             if (disposed)
                 return;
-            disposed = true;
             StopBot();
+            if (disposing)
+                Log.Dispose();
+            disposed = true;
         }
     }
 }
