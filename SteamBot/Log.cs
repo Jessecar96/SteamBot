@@ -24,6 +24,7 @@ namespace SteamBot
         protected StreamWriter _FileStream;
         protected string _botName;
         private bool disposed;
+        private bool jadolbob;
         public LogLevel OutputLevel;
         public LogLevel FileLogLevel;
         public ConsoleColor DefaultConsoleColor = ConsoleColor.White;
