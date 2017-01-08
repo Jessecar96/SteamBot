@@ -13,7 +13,7 @@ namespace SteamBot
 
         public override void OnTradeOfferUpdated(TradeOffer offer)
         {
-            if(offer.OfferState == TradeOfferState.TradeOfferStateAccepted)
+            if(offer.OfferState == TradeOfferState.TradeOfferStateActive && !offer.IsOurOffer)
             {
                 OnNewTradeOffer(offer);
             }
