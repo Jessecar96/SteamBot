@@ -47,8 +47,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
     </Reference>
-    <Reference Include="SteamAuth, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\SteamAuth.1.0.1\lib\net45\SteamAuth.dll</HintPath>
+    <Reference Include="SteamAuth, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SteamAuth.1.1.0\lib\net45\SteamAuth.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="SteamKit2, Version=1.8.1.0, Culture=neutral, PublicKeyToken=ed3ce47ed5aad940, processorArchitecture=MSIL">
