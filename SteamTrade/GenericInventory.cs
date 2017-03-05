@@ -152,7 +152,7 @@ namespace SteamTrade
                     {
                         var data = String.IsNullOrEmpty(moreStart) ? null : new NameValueCollection {{"start", moreStart}};
                         string response = SteamWeb.Fetch(
-                            String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{appid}/{1}", steamid.ConvertToUInt64(), contextId),
+                            String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId),
                             "GET", data);
                         invResponse = JsonConvert.DeserializeObject(response);
 
@@ -230,7 +230,7 @@ namespace SteamTrade
             }//end try
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine(e);
                 _errors.Add("Exception: " + e.Message);
             }
             isLoaded = true;
