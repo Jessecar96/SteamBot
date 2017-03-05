@@ -85,6 +85,7 @@ namespace SteamTrade
             public bool marketable { get; set; }
             public string url { get; set; }
             public long classid { get; set; }
+            public long market_fee_app_id { get; set; }
 
             public Dictionary<string, string> app_data { get; set; }
 
@@ -157,49 +158,57 @@ namespace SteamTrade
                     //rgInventory = Items on Steam Inventory 
                     foreach (var item in invResponse.rgInventory)
                     {
-
                         foreach (var itemId in item)
                         {
-                            string descriptionid = itemId.classid + "_" + itemId.instanceid;
-                            _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
-                            break;
+                            ulong id = (ulong) itemId.id;
+                            if (!_items.ContainsKey(id))
+                            {
+                                string descriptionid = itemId.classid + "_" + itemId.instanceid;
+                                _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
+                                break;
+                            }
                         }
                     }
 
                     // rgDescriptions = Item Schema (sort of)
                     foreach (var description in invResponse.rgDescriptions)
                     {
-                        foreach (var class_instance in description)// classid + '_' + instenceid 
+                        foreach (var class_instance in description) // classid + '_' + instenceid 
                         {
-                            if (class_instance.app_data != null)
+                            string key = "" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0');
+                            if (!_descriptions.ContainsKey(key))
                             {
-                                tmpAppData = new Dictionary<string, string>();
-                                foreach (var value in class_instance.app_data)
+                                if(class_instance.app_data != null)
                                 {
-                                    tmpAppData.Add("" + value.Name, "" + value.Value);
+                                    tmpAppData = new Dictionary<string, string>();
+                                    foreach(var value in class_instance.app_data)
+                                    {
+                                        tmpAppData.Add("" + value.Name, "" + value.Value);
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                tmpAppData = null;
+                                else
+                                {
+                                    tmpAppData = null;
+                                }
+
+                                _descriptions.Add(key,
+                                    new ItemDescription()
+                                    {
+                                        name = class_instance.name,
+                                        type = class_instance.type,
+                                        marketable = (bool)class_instance.marketable,
+                                        tradable = (bool)class_instance.tradable,
+                                        classid = long.Parse((string)class_instance.classid),
+                                        url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
+                                        app_data = tmpAppData,
+                                        market_fee_app_id = class_instance.market_fee_app,
+                                    }
+                                );
+                                break;
                             }
 
-                            _descriptions.Add("" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0'),
-                                new ItemDescription()
-                                {
-                                    name = class_instance.name,
-                                    type = class_instance.type,
-                                    marketable = (bool)class_instance.marketable,
-                                    tradable = (bool)class_instance.tradable,
-                                    classid = long.Parse((string)class_instance.classid),
-                                    url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
-                                    app_data = tmpAppData
-                                }
-                            );
-                            break;
                         }
                     }
-
                 }//end for (contextId)
             }//end try
             catch (Exception e)
