@@ -81,10 +81,10 @@ namespace SteamBot
             contextId.Add(1);
             contextId.Add(6);
 
-            mySteamInventory.load(753, contextId, Bot.SteamClient.SteamID);
-            OtherSteamInventory.load(753, contextId, OtherSID);
+            mySteamInventory.Load(753, contextId, Bot.SteamClient.SteamID);
+            OtherSteamInventory.Load(753, contextId, OtherSID);
 
-            if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
+            if (!mySteamInventory.IsLoaded | !OtherSteamInventory.IsLoaded)
             {
                 SendTradeMessage("Couldn't open an inventory, type 'errors' for more info.");
             }
@@ -109,10 +109,10 @@ namespace SteamBot
                     break;
 
                 case 753:
-                    GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
+                    var tmpDescription = OtherSteamInventory.GetDescription(inventoryItem.Id);
                     SendTradeMessage("Steam Inventory Item Added.");
-                    SendTradeMessage("Type: {0}", tmpDescription.type);
-                    SendTradeMessage("Marketable: {0}", (tmpDescription.marketable ? "Yes" : "No"));
+                    SendTradeMessage("Type: {0}", tmpDescription.Type);
+                    SendTradeMessage("Marketable: {0}", (tmpDescription.Marketable ? "Yes" : "No"));
                     break;
 
                 default:
