@@ -1,15 +1,15 @@
 {
-"Admins":["234567"],
-"ApiKey":"Steam API Key goes here!",
+"Admins":["76561198143907621"],
+"ApiKey":"40413118E91BA48471986FF917E82F55",
 "mainLog": "syslog.log",
 "UseSeparateProcesses": "false",
 "AutoStartAllBots": "true",
 "Bots": [
         {
-            "Username":"BOT USERNAME",
-            "Password":"BOT PASSWORD",
-            "ApiKey":"Bot specific apiKey",
-            "DisplayName":"TestBot",
+            "Username":"freenk18",
+            "Password":"ivanildes21",
+            "ApiKey":"57B7E7BF981D95E8504FCD1FA1B0ABFD",
+            "DisplayName":"Bot ze 1",
             "ChatResponse":"Hi there bro",
             "logFile": "TestBot.log",
             "BotControlClass": "SteamBot.SimpleUserHandler",
