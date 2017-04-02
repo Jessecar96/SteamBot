@@ -96,6 +96,7 @@ namespace SteamTrade.TradeOffer
             TimeUpdated = offer.TimeUpdated;
             Message = offer.Message;
             Items = new TradeStatus(myAssets, theirAssets);
+            Message = offer.Message;
         }
 
         /// <summary>
