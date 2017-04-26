@@ -109,6 +109,9 @@ namespace SteamTrade
 
             [JsonProperty("level")]
             public byte Level { get; set; }
+            
+            [JsonProperty("inventory")]
+            public uint InventoryToken { get; set; }
 
             [JsonProperty("quality")]
             public int Quality { get; set; }
