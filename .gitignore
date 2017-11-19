@@ -29,4 +29,3 @@ packages
 
 # Allow NuGet specific exes and dlls
 !.nuget/Microsoft.Build.dll
-/.vs/SteamBot/v15/Server/sqlite3
