@@ -1035,9 +1035,9 @@ namespace SteamBot
             #region Login
             steamCallbackManager.Subscribe<SteamClient.ConnectedCallback>(callback =>
             {
-                Log.Debug("Connection Callback: {0}", callback.Result);
+                Log.Debug("Connection Callback: {0}", callback.JobID.ProcessID/*Result*/);
 
-                if (callback.Result == EResult.OK)
+                if ((EResult)callback.JobID.Value == EResult.OK)
                 {
                     UserLogOn();
                 }
