@@ -15,6 +15,7 @@ using SteamKit2.Internal;
 using SteamTrade.TradeOffer;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace SteamBot
 {
@@ -534,7 +535,8 @@ namespace SteamBot
                         try
                         {
                             var authFile = Path.Combine("authfiles", String.Format("{0}.auth", logOnDetails.Username));
-                            Directory.CreateDirectory(Path.Combine(System.Windows.Forms.Application.StartupPath, "authfiles"));
+                            Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "authfiles"));
+                            
                             File.WriteAllText(authFile, Newtonsoft.Json.JsonConvert.SerializeObject(SteamGuardAccount));
                             Log.Interface("Enter SMS code (type \"input [index] [code]\"):");
                             var smsCode = WaitForInput();
@@ -576,7 +578,7 @@ namespace SteamBot
         {
             // get sentry file which has the machine hw info saved 
             // from when a steam guard code was entered
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
+            Directory.CreateDirectory(System.IO.Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "sentryfiles"));
             FileInfo fi = new FileInfo(System.IO.Path.Combine("sentryfiles",String.Format("{0}.sentryfile", logOnDetails.Username)));
 
             if (fi.Exists && fi.Length > 0)
@@ -672,7 +674,7 @@ namespace SteamBot
         {
             byte[] hash = SHAHash (machineAuth.Data);
 
-            Directory.CreateDirectory(System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, "sentryfiles"));
+            Directory.CreateDirectory(System.IO.Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "sentryfiles"));
 
             File.WriteAllBytes (System.IO.Path.Combine("sentryfiles", String.Format("{0}.sentryfile", logOnDetails.Username)), machineAuth.Data);
             
