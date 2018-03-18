@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C8129C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SteamTrade.Core", "SteamTrade.Core\SteamTrade.Core.csproj", "{6950E3F5-8B67-4314-9165-DB6F6608985D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NetCore", "NetCore", "{CC9DCF6A-5C1A-4ED5-8962-DE785D7F3F54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleBot.Core", "ExampleBot.Core\ExampleBot.Core.csproj", "{15A785F4-1308-44F6-BF60-A619B01C0B30}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,9 +38,17 @@ Global
 		{6950E3F5-8B67-4314-9165-DB6F6608985D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6950E3F5-8B67-4314-9165-DB6F6608985D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6950E3F5-8B67-4314-9165-DB6F6608985D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15A785F4-1308-44F6-BF60-A619B01C0B30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15A785F4-1308-44F6-BF60-A619B01C0B30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15A785F4-1308-44F6-BF60-A619B01C0B30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15A785F4-1308-44F6-BF60-A619B01C0B30}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6950E3F5-8B67-4314-9165-DB6F6608985D} = {CC9DCF6A-5C1A-4ED5-8962-DE785D7F3F54}
+		{15A785F4-1308-44F6-BF60-A619B01C0B30} = {CC9DCF6A-5C1A-4ED5-8962-DE785D7F3F54}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2A253D10-E959-49C5-AA34-25FD7B6BB5F3}
