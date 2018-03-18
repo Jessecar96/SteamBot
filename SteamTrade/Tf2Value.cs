@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace SteamTrade
 {
@@ -147,7 +148,7 @@ namespace SteamTrade
         /// <exception cref="FormatException">Thrown if string is not a valid number</exception>
         public static TF2Value FromRef(string numRefStr)
         {
-            return FromRef(double.Parse(numRefStr));
+            return FromRef(double.Parse(numRefStr, CultureInfo.InvariantCulture));
         }
         #endregion
 
