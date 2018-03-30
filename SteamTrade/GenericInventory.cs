@@ -208,7 +208,7 @@ namespace SteamTrade
                                             classid = long.Parse((string)class_instance.classid),
                                             url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
                                             app_data = tmpAppData,
-                                            market_fee_app_id = class_instance.market_fee_app,
+                                            market_fee_app_id = (class_instance.market_fee_app != null ? class_instance.market_fee_app : 0),
                                         }
                                     );
                                     break;
