@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SteamAuth</name>
+    </assembly>
+    <members>
+        <member name="T:SteamAuth.AuthenticatorLinker">
+            <summary>
+            Handles the linking process for a new mobile authenticator.
+            </summary>
+        </member>
+        <member name="F:SteamAuth.AuthenticatorLinker.PhoneNumber">
+            <summary>
+            Set to register a new phone number when linking. If a phone number is not set on the account, this must be set. If a phone number is set on the account, this must be null.
+            </summary>
+        </member>
+        <member name="P:SteamAuth.AuthenticatorLinker.DeviceID">
+            <summary>
+            Randomly-generated device ID. Should only be generated once per linker.
+            </summary>
+        </member>
+        <member name="P:SteamAuth.AuthenticatorLinker.LinkedAccount">
+            <summary>
+            After the initial link step, if successful, this will be the SteamGuard data for the account. PLEASE save this somewhere after generating it; it's vital data.
+            </summary>
+        </member>
+        <member name="F:SteamAuth.AuthenticatorLinker.Finalized">
+            <summary>
+            True if the authenticator has been fully finalized.
+            </summary>
+        </member>
+        <member name="F:SteamAuth.Confirmation.ID">
+            <summary>
+            The ID of this confirmation
+            </summary>
+        </member>
+        <member name="F:SteamAuth.Confirmation.Key">
+            <summary>
+            The unique key used to act upon this confirmation.
+            </summary>
+        </member>
+        <member name="F:SteamAuth.Confirmation.IntType">
+            <summary>
+            The value of the data-type HTML attribute returned for this contribution.
+            </summary>
+        </member>
+        <member name="F:SteamAuth.Confirmation.Creator">
+            <summary>
+            Represents either the Trade Offer ID or market transaction ID that caused this confirmation to be created.
+            </summary>
+        </member>
+        <member name="F:SteamAuth.Confirmation.ConfType">
+            <summary>
+            The type of this confirmation.
+            </summary>
+        </member>
+        <member name="P:SteamAuth.SteamGuardAccount.FullyEnrolled">
+            <summary>
+            Set to true if the authenticator has actually been applied to the account.
+            </summary>
+        </member>
+        <member name="M:SteamAuth.SteamGuardAccount.GetConfirmationTradeOfferID(SteamAuth.Confirmation)">
+            <summary>
+            Deprecated. Simply returns conf.Creator.
+            </summary>
+            <param name="conf"></param>
+            <returns>The Creator field of conf</returns>
+        </member>
+        <member name="M:SteamAuth.SteamGuardAccount.RefreshSession">
+            <summary>
+            Refreshes the Steam session. Necessary to perform confirmations if your session has expired or changed.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:SteamAuth.SteamGuardAccount.RefreshSessionAsync">
+            <summary>
+            Refreshes the Steam session. Necessary to perform confirmations if your session has expired or changed.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:SteamAuth.SteamWeb.MobileLoginRequest(System.String,System.String,System.Collections.Specialized.NameValueCollection,System.Net.CookieContainer,System.Collections.Specialized.NameValueCollection)">
+            <summary>
+            Perform a mobile login request
+            </summary>
+            <param name="url">API url</param>
+            <param name="method">GET or POST</param>
+            <param name="data">Name-data pairs</param>
+            <param name="cookies">current cookie container</param>
+            <returns>response body</returns>
+        </member>
+        <member name="M:SteamAuth.SteamWeb.HandleFailedWebRequestResponse(System.Net.HttpWebResponse,System.String)">
+            <summary>
+            Raise exceptions relevant to this HttpWebResponse -- EG, to signal that our oauth token has expired.
+            </summary>
+        </member>
+        <member name="T:SteamAuth.TimeAligner">
+            <summary>
+            Class to help align system time with the Steam server time. Not super advanced; probably not taking some things into account that it should.
+            Necessary to generate up-to-date codes. In general, this will have an error of less than a second, assuming Steam is operational.
+            </summary>
+        </member>
+        <member name="T:SteamAuth.UserLogin">
+            <summary>
+            Handles logging the user into the mobile Steam website. Necessary to generate OAuth token and session cookies.
+            </summary>
+        </member>
+    </members>
+</doc>
