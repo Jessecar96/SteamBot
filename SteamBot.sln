@@ -11,7 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C8129C
 	ProjectSection(SolutionItems) = preProject
 		.nuget\Microsoft.Build.dll = .nuget\Microsoft.Build.dll
 		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
 Global
