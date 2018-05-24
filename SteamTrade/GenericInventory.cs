@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -85,6 +86,7 @@ namespace SteamTrade
             public bool marketable { get; set; }
             public string url { get; set; }
             public long classid { get; set; }
+            public long market_fee_app_id { get; set; }
 
             public Dictionary<string, string> app_data { get; set; }
 
@@ -145,66 +147,90 @@ namespace SteamTrade
             {
                 foreach (long contextId in contextIds)
                 {
-                    string response = SteamWeb.Fetch(string.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId), "GET", null, true);
-                    invResponse = JsonConvert.DeserializeObject(response);
-
-                    if (invResponse.success == false)
+                    string moreStart = null;
+                    do
                     {
-                        _errors.Add("Fail to open backpack: " + invResponse.Error);
-                        continue;
-                    }
+                        var data = String.IsNullOrEmpty(moreStart) ? null : new NameValueCollection {{"start", moreStart}};
+                        string response = SteamWeb.Fetch(
+                            String.Format("http://steamcommunity.com/profiles/{0}/inventory/json/{1}/{2}/", steamid.ConvertToUInt64(), appid, contextId),
+                            "GET", data);
+                        invResponse = JsonConvert.DeserializeObject(response);
 
-                    //rgInventory = Items on Steam Inventory 
-                    foreach (var item in invResponse.rgInventory)
-                    {
-
-                        foreach (var itemId in item)
+                        if (invResponse.success == false)
                         {
-                            string descriptionid = itemId.classid + "_" + itemId.instanceid;
-                            _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
-                            break;
+                            _errors.Add("Fail to open backpack: " + invResponse.Error);
+                            continue;
                         }
-                    }
 
-                    // rgDescriptions = Item Schema (sort of)
-                    foreach (var description in invResponse.rgDescriptions)
-                    {
-                        foreach (var class_instance in description)// classid + '_' + instenceid 
+                        //rgInventory = Items on Steam Inventory 
+                        foreach (var item in invResponse.rgInventory)
                         {
-                            if (class_instance.app_data != null)
+                            foreach (var itemId in item)
                             {
-                                tmpAppData = new Dictionary<string, string>();
-                                foreach (var value in class_instance.app_data)
+                                ulong id = (ulong) itemId.id;
+                                if (!_items.ContainsKey(id))
                                 {
-                                    tmpAppData.Add("" + value.Name, "" + value.Value);
+                                    string descriptionid = itemId.classid + "_" + itemId.instanceid;
+                                    _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
+                                    break;
                                 }
                             }
-                            else
-                            {
-                                tmpAppData = null;
-                            }
-
-                            _descriptions.Add("" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0'),
-                                new ItemDescription()
-                                {
-                                    name = class_instance.name,
-                                    type = class_instance.type,
-                                    marketable = (bool)class_instance.marketable,
-                                    tradable = (bool)class_instance.tradable,
-                                    classid = long.Parse((string)class_instance.classid),
-                                    url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
-                                    app_data = tmpAppData
-                                }
-                            );
-                            break;
                         }
-                    }
 
+                        // rgDescriptions = Item Schema (sort of)
+                        foreach (var description in invResponse.rgDescriptions)
+                        {
+                            foreach (var class_instance in description) // classid + '_' + instenceid 
+                            {
+                                string key = "" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0');
+                                if (!_descriptions.ContainsKey(key))
+                                {
+                                    if(class_instance.app_data != null)
+                                    {
+                                        tmpAppData = new Dictionary<string, string>();
+                                        foreach(var value in class_instance.app_data)
+                                        {
+                                            tmpAppData.Add("" + value.Name, "" + value.Value);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        tmpAppData = null;
+                                    }
+
+                                    _descriptions.Add(key,
+                                        new ItemDescription()
+                                        {
+                                            name = class_instance.name,
+                                            type = class_instance.type,
+                                            marketable = (bool)class_instance.marketable,
+                                            tradable = (bool)class_instance.tradable,
+                                            classid = long.Parse((string)class_instance.classid),
+                                            url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
+                                            app_data = tmpAppData,
+                                            market_fee_app_id = (class_instance.market_fee_app != null ? class_instance.market_fee_app : 0),
+                                        }
+                                    );
+                                    break;
+                                }
+
+                            }
+                        }
+
+                        try
+                        {
+                            moreStart = invResponse.more_start;
+                        }
+                        catch (Exception e)
+                        {
+                            moreStart = null;
+                        }
+                    } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false");
                 }//end for (contextId)
             }//end try
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine(e);
                 _errors.Add("Exception: " + e.Message);
             }
             isLoaded = true;

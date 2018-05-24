@@ -28,3 +28,6 @@ Make sure you
 
 ## Commits ##
 Commits should be in the present tense, and with Title Capitalization.  If needed, a body should be on the next line in normal capitalization.
+
+## C# 6 ##
+It would be better to stick to C# 5 features to be compatible with #1002.
