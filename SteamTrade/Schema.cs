@@ -15,7 +15,7 @@ namespace SteamTrade
     public class Schema
     {
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
-        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
+        private const string SchemaApiUrlBase = "https://api.steampowered.com/IEconItems_440/GetSchemaItems/v1/?key=";
         private const string cachefile = "tf_schema.cache";
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace SteamTrade
         {   
             var url = SchemaApiUrlBase + apiKey;
             if (schemaLang != null)
-                url += "&language=" + schemaLang;
+                url += "&format=json&language=" + schemaLang;
 
             // just let one thread/proc do the initial check/possible update.
             bool wasCreated;
@@ -49,18 +49,38 @@ namespace SteamTrade
                 }
             }
 
-            using(HttpWebResponse response = new SteamWeb().Request(url, "GET"))
+            bool keepUpdating = true;
+            SchemaResult schemaResult = new SchemaResult();
+            string tmpUrl = url;
+
+            do
             {
-                DateTime schemaLastModified = response.LastModified;
+                if(schemaResult.result != null)
+                    tmpUrl = url + "&start=" + schemaResult.result.Next;
 
-                string result = GetSchemaString(response, schemaLastModified);
+                string result = new SteamWeb().Fetch(tmpUrl, "GET");
 
-                // were done here. let others read.
-                mre.Set();
+                if (schemaResult.result == null || schemaResult.result.Items == null)
+                {
+                    schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                }
+                else
+                {
+                    SchemaResult tempResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                    var items = schemaResult.result.Items.Concat(tempResult.result.Items);
+                    schemaResult.result.Items = items.ToArray();
+                    schemaResult.result.Next = tempResult.result.Next;
+                }
 
-                SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
-                return schemaResult.result ?? null;
-            }
+                if (schemaResult.result.Next <= schemaResult.result.Items.Count())
+                    keepUpdating = false;
+            } while (keepUpdating);
+
+            // were done here. let others read.
+            mre.Set();
+            DateTime schemaLastModified = DateTime.Now;
+
+            return schemaResult.result ?? null;
         }
 
         // Gets the schema from the web or from the cached file.
