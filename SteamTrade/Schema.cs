@@ -122,6 +122,9 @@ namespace SteamTrade
 
         [JsonProperty("originNames")]
         public ItemOrigin[] OriginNames { get; set; }
+        
+        [JsonProperty("next")]
+        public int Next { get; set; }
 
         /// <summary>
         /// Find an SchemaItem by it's defindex.
