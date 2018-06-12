@@ -15,8 +15,13 @@ namespace SteamTrade
     public class Schema
     {
         private const string SchemaMutexName = "steam_bot_cache_file_mutex";
-        private const string SchemaApiUrlBase = "http://api.steampowered.com/IEconItems_440/GetSchema/v0001/?key=";
-        private const string cachefile = "tf_schema.cache";
+        private const string SchemaApiUrlBase = "https://api.steampowered.com/IEconItems_440/GetSchemaItems/v1/?key=";
+        private const string SchemaApiItemOriginNamesUrlBase = "https://api.steampowered.com/IEconItems_440/GetSchemaOverview/v1/?key=";
+
+        /// <summary>
+        /// Full file name for schema cache file. This value is only used when calling <see cref="FetchSchema"/>. If the time modified of the local copy is later than that of the server, local copy is used without downloading. Default value is %TEMP%\tf_schema.cache.
+        /// </summary>
+        public static string CacheFileFullName = Path.GetTempPath() + "\\tf_schema.cache";
 
         /// <summary>
         /// Fetches the Tf2 Item schema.
@@ -26,15 +31,16 @@ namespace SteamTrade
         /// <remarks>
         /// The schema will be cached for future use if it is updated.
         /// </remarks>
-        public static Schema FetchSchema (string apiKey, string schemaLang = null)
-        {   
+
+        public static Schema FetchSchema(string apiKey, string schemaLang = null)
+        {
             var url = SchemaApiUrlBase + apiKey;
             if (schemaLang != null)
-                url += "&language=" + schemaLang;
+                url += "&format=json&language=" + schemaLang;
 
             // just let one thread/proc do the initial check/possible update.
             bool wasCreated;
-            var mre = new EventWaitHandle(false, 
+            var mre = new EventWaitHandle(false,
                 EventResetMode.ManualReset, SchemaMutexName, out wasCreated);
 
             // the thread that create the wait handle will be the one to 
@@ -49,25 +55,60 @@ namespace SteamTrade
                 }
             }
 
-            using(HttpWebResponse response = new SteamWeb().Request(url, "GET"))
+            bool keepUpdating = true;
+            SchemaResult schemaResult = new SchemaResult();
+            string tmpUrl = url;
+
+            do
             {
-                DateTime schemaLastModified = response.LastModified;
+                if(schemaResult.result != null)
+                    tmpUrl = url + "&start=" + schemaResult.result.Next;
 
-                string result = GetSchemaString(response, schemaLastModified);
+                string result = new SteamWeb().Fetch(tmpUrl, "GET");
 
-                // were done here. let others read.
-                mre.Set();
+                if (schemaResult.result == null || schemaResult.result.Items == null)
+                {
+                    schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                }
+                else
+                {
+                    SchemaResult tempResult = JsonConvert.DeserializeObject<SchemaResult>(result);
+                    var items = schemaResult.result.Items.Concat(tempResult.result.Items);
+                    schemaResult.result.Items = items.ToArray();
+                    schemaResult.result.Next = tempResult.result.Next;
+                }
 
-                SchemaResult schemaResult = JsonConvert.DeserializeObject<SchemaResult>(result);
-                return schemaResult.result ?? null;
-            }
-        }
+                if (schemaResult.result.Next <= schemaResult.result.Items.Count())
+                    keepUpdating = false;
 
+            } while (keepUpdating);
+
+
+            //Get origin names
+            string itemOriginUrl = SchemaApiItemOriginNamesUrlBase + apiKey;
+
+            if (schemaLang != null)
+                itemOriginUrl += "&format=json&language=" + schemaLang;
+
+            string resp = new SteamWeb().Fetch(itemOriginUrl, "GET");
+
+            var itemOriginResult = JsonConvert.DeserializeObject<SchemaResult>(resp);
+
+            schemaResult.result.OriginNames = itemOriginResult.result.OriginNames;
+
+            // were done here. let others read.
+            mre.Set();
+            DateTime schemaLastModified = DateTime.Now;
+
+            return schemaResult.result ?? null;
+            
+        }       
+                       
         // Gets the schema from the web or from the cached file.
         private static string GetSchemaString(HttpWebResponse response, DateTime schemaLastModified)
         {
             string result;
-            bool mustUpdateCache = !File.Exists(cachefile) || schemaLastModified > File.GetCreationTime(cachefile);
+            bool mustUpdateCache = !File.Exists(CacheFileFullName) || schemaLastModified > File.GetCreationTime(CacheFileFullName);
 
             if (mustUpdateCache)
             {
@@ -75,14 +116,14 @@ namespace SteamTrade
                 {
                     result = reader.ReadToEnd();
 
-                    File.WriteAllText(cachefile, result);
-                    File.SetCreationTime(cachefile, schemaLastModified);
+                    File.WriteAllText(CacheFileFullName, result);
+                    File.SetCreationTime(CacheFileFullName, schemaLastModified);
                 }
             }
             else
             {
                 // read previously cached file.
-                using(TextReader reader = new StreamReader(cachefile))
+                using(TextReader reader = new StreamReader(CacheFileFullName))
                 {
                     result = reader.ReadToEnd();
                 }
@@ -90,6 +131,7 @@ namespace SteamTrade
 
             return result;
         }
+
 
         [JsonProperty("status")]
         public int Status { get; set; }
@@ -102,6 +144,9 @@ namespace SteamTrade
 
         [JsonProperty("originNames")]
         public ItemOrigin[] OriginNames { get; set; }
+
+        [JsonProperty("next")]
+        public int Next { get; set; }
 
         /// <summary>
         /// Find an SchemaItem by it's defindex.
@@ -156,6 +201,9 @@ namespace SteamTrade
 
             [JsonProperty("item_name")]
             public string ItemName { get; set; }
+            
+            [JsonProperty("proper_name")]
+            public bool ProperName { get; set; }
 
             [JsonProperty("craft_material_type")]
             public string CraftMaterialType { get; set; }
@@ -177,7 +225,6 @@ namespace SteamTrade
         {
             public Schema result { get; set; }
         }
-
     }
 }
 
