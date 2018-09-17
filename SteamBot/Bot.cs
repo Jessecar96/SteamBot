@@ -166,19 +166,6 @@ namespace SteamBot
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             isProccess = process;
-            if (useTwoFactorByDefault)
-            {
-                var mobileAuthCode = GetMobileAuthCode();
-                if (string.IsNullOrEmpty(mobileAuthCode))
-                {
-                    Log.Error("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot.");
-                }
-                else
-                {
-                    logOnDetails.TwoFactorCode = mobileAuthCode;
-                    Log.Success("Generated 2FA code.");
-                }
-            }
             try
             {
                 if( config.LogLevel != null )
@@ -206,6 +193,19 @@ namespace SteamBot
 
             logFile = config.LogFile;
             Log = new Log(logFile, DisplayName, consoleLogLevel, fileLogLevel);
+            if (useTwoFactorByDefault)
+            {
+                var mobileAuthCode = GetMobileAuthCode();
+                if (string.IsNullOrEmpty(mobileAuthCode))
+                {
+                    Log.Error("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot.");
+                }
+                else
+                {
+                    logOnDetails.TwoFactorCode = mobileAuthCode;
+                    Log.Success("Generated 2FA code.");
+                }
+            }
             createHandler = handlerCreator;
             BotControlClass = config.BotControlClass;
             SteamWeb = new SteamWeb();
