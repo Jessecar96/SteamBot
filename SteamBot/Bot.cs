@@ -147,7 +147,7 @@ namespace SteamBot
         [Obsolete("Refactored to be Log instead of log")]
         public Log log { get { return Log; } }
 
-        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false)
+        public Bot(Configuration.BotInfo config, string apiKey, UserHandlerCreator handlerCreator, bool debug = false, bool process = false, bool useTwoFactorByDefault = false)
         {
             userHandlers = new Dictionary<SteamID, UserHandler>();
             logOnDetails = new SteamUser.LogOnDetails
@@ -166,6 +166,19 @@ namespace SteamBot
             Admins = config.Admins;
             ApiKey = !String.IsNullOrEmpty(config.ApiKey) ? config.ApiKey : apiKey;
             isProccess = process;
+            if (useTwoFactorByDefault)
+            {
+                var mobileAuthCode = GetMobileAuthCode();
+                if (string.IsNullOrEmpty(mobileAuthCode))
+                {
+                    Log.Error("Failed to generate 2FA code. Make sure you have linked the authenticator via SteamBot.");
+                }
+                else
+                {
+                    logOnDetails.TwoFactorCode = mobileAuthCode;
+                    Log.Success("Generated 2FA code.");
+                }
+            }
             try
             {
                 if( config.LogLevel != null )
