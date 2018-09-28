@@ -216,11 +216,6 @@ namespace SteamBot
             botThread.RunWorkerCompleted += BackgroundWorkerOnRunWorkerCompleted;
         }
 
-        ~Bot()
-        {
-            Dispose(false);
-        }
-
         private void CreateFriendsListIfNecessary()
         {
             if (friends != null)
@@ -1013,21 +1008,27 @@ namespace SteamBot
         }
 
         #endregion
-
+        
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (disposed)
                 return;
-            StopBot();
             if (disposing)
-                Log.Dispose();
-            disposed = true;
+            {
+                StopBot();
+                if (Log != null)
+                    Log.Dispose();
+                if (myInventoryTask != null)
+                    myInventoryTask.Dispose();
+                CancelTradeOfferPollingThread();
+                disposed = true;
+            }
         }
 
         private void SubscribeSteamCallbacks()
