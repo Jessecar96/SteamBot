@@ -73,6 +73,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ILog.cs" />
     <Compile Include="Notifications.cs" />
     <Compile Include="SteamGroups\CMsgInviteUserToGroup.cs" />
     <Compile Include="SteamTradeDemoHandler.cs" />
