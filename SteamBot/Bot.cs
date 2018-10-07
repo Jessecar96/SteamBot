@@ -134,6 +134,10 @@ namespace SteamBot
         {
             get
             {
+                if (myInventoryTask == null)
+                {
+                    GetInventory();
+                }
                 myInventoryTask.Wait();
                 return myInventoryTask.Result;
             }
