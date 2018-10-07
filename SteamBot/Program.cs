@@ -74,7 +74,7 @@ namespace SteamBot
                 return;
             }
 
-            Bot b = new Bot(configObject.Bots[botIndex], configObject.ApiKey, BotManager.UserHandlerCreator, true, true);
+            Bot b = new Bot(configObject.Bots[botIndex], configObject.ApiKey, BotManager.UserHandlerCreator, true, true, true);
             Console.Title = "Bot Manager";
             b.StartBot();
 
