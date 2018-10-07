@@ -26,7 +26,7 @@ namespace SteamTrade.TradeOffer
 
         public OfferResponse GetTradeOffer(string tradeofferid)
         {
-            string options = string.Format("?key={0}&tradeofferid={1}&language={2}", apiKey, tradeofferid, "en_us");
+            string options = string.Format("?key={0}&tradeofferid={1}&language={2}&get_descriptions=1", apiKey, tradeofferid, "en_us");
             string url = String.Format(BaseUrl, "GetTradeOffer", "v1", options);
             try
             {
