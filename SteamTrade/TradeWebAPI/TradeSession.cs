@@ -12,7 +12,7 @@ namespace SteamTrade.TradeWebAPI
     /// </summary>
     public class TradeSession
     {
-        private const string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
+        private const string SteamTradeUrl = "https://steamcommunity.com/trade/{0}/";
 
         private string sessionIdEsc;
         private string baseTradeURL;

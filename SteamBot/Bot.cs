@@ -134,6 +134,10 @@ namespace SteamBot
         {
             get
             {
+                if (myInventoryTask == null)
+                {
+                    GetInventory();
+                }
                 myInventoryTask.Wait();
                 return myInventoryTask.Result;
             }
@@ -809,7 +813,7 @@ namespace SteamBot
                     {
                         if (SteamGuardAccount.AcceptConfirmation(confirmation))
                         {
-                            Log.Success("Confirmed {0}. (Confirmation ID #{1})", confirmation.Description, confirmation.ID);
+                            Log.Success("Confirmed {0}. (Confirmation ID #{1})", confirmation.Key, confirmation.ID);
                         }
                     }
                 }
