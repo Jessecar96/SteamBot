@@ -223,7 +223,7 @@ namespace SteamTrade
                         {
                             moreStart = invResponse.more_start;
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
                             moreStart = null;
                         }
