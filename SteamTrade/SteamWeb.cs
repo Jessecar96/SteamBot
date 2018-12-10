@@ -380,6 +380,7 @@ namespace SteamTrade
                 _cookies.Add(new Cookie("sessionid", SessionId, string.Empty, SteamCommunityDomain));
                 _cookies.Add(new Cookie("steamLogin", Token, string.Empty, SteamCommunityDomain));
                 _cookies.Add(new Cookie("steamLoginSecure", TokenSecure, string.Empty, SteamCommunityDomain));
+                _cookies.Add(new Cookie("Steam_Language", "english", string.Empty, SteamCommunityDomain));
 
                 return true;
             }
