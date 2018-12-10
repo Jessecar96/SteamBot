@@ -26,9 +26,9 @@ namespace SteamTrade
         {
             get
             {
-                if (_loadTask == null)
+                if (LoadTask == null)
                     return null;
-                _loadTask.Wait();
+                LoadTask.Wait();
                 return _items;
             }
         }
@@ -37,9 +37,9 @@ namespace SteamTrade
         {
             get
             {
-                if (_loadTask == null)
+                if (LoadTask == null)
                     return null;
-                _loadTask.Wait();
+                LoadTask.Wait();
                 return _descriptions;
             }
         }
@@ -48,16 +48,16 @@ namespace SteamTrade
         {
             get
             {
-                if (_loadTask == null)
+                if (LoadTask == null)
                     return null;
-                _loadTask.Wait();
+                LoadTask.Wait();
                 return _errors;
             }
         }
 
         public bool isLoaded = false;
 
-        private Task _loadTask;
+        public Task LoadTask { get; private set; }
         private Dictionary<string, ItemDescription> _descriptions = new Dictionary<string, ItemDescription>();
         private Dictionary<ulong, Item> _items = new Dictionary<ulong, Item>();
         private List<string> _errors = new List<string>();
@@ -113,9 +113,9 @@ namespace SteamTrade
         /// </summary>
         public ItemDescription getDescription(ulong id)
         {
-            if (_loadTask == null)
+            if (LoadTask == null)
                 return null;
-            _loadTask.Wait();
+            LoadTask.Wait();
 
             try
             {
@@ -130,7 +130,7 @@ namespace SteamTrade
         public void load(int appid, IEnumerable<long> contextIds, SteamID steamid)
         {
             List<long> contextIdsCopy = contextIds.ToList();
-            _loadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
+            LoadTask = Task.Factory.StartNew(() => loadImplementation(appid, contextIdsCopy, steamid));
         }
 
         public void loadImplementation(int appid, IEnumerable<long> contextIds, SteamID steamid)
@@ -171,7 +171,7 @@ namespace SteamTrade
                                 if (!_items.ContainsKey(id))
                                 {
                                     string descriptionid = itemId.classid + "_" + itemId.instanceid;
-                                    _items.Add((ulong)itemId.id, new Item(appid, contextId, (ulong)itemId.id, descriptionid));
+                                    _items.Add((ulong) itemId.id, new Item(appid, contextId, (ulong) itemId.id, descriptionid));
                                     break;
                                 }
                             }
@@ -185,10 +185,10 @@ namespace SteamTrade
                                 string key = "" + (class_instance.classid ?? '0') + "_" + (class_instance.instanceid ?? '0');
                                 if (!_descriptions.ContainsKey(key))
                                 {
-                                    if(class_instance.app_data != null)
+                                    if (class_instance.app_data != null)
                                     {
                                         tmpAppData = new Dictionary<string, string>();
-                                        foreach(var value in class_instance.app_data)
+                                        foreach (var value in class_instance.app_data)
                                         {
                                             tmpAppData.Add("" + value.Name, "" + value.Value);
                                         }
@@ -203,10 +203,12 @@ namespace SteamTrade
                                         {
                                             name = class_instance.name,
                                             type = class_instance.type,
-                                            marketable = (bool)class_instance.marketable,
-                                            tradable = (bool)class_instance.tradable,
-                                            classid = long.Parse((string)class_instance.classid),
-                                            url = (class_instance.actions != null && class_instance.actions.First["link"] != null ? class_instance.actions.First["link"] : ""),
+                                            marketable = (bool) class_instance.marketable,
+                                            tradable = (bool) class_instance.tradable,
+                                            classid = String.IsNullOrEmpty((string)class_instance.classid) ? -1 : long.Parse((string) class_instance.classid),
+                                            url = (class_instance.actions != null && class_instance.actions.First["link"] != null
+                                                ? class_instance.actions.First["link"]
+                                                : ""),
                                             app_data = tmpAppData,
                                             market_fee_app_id = (class_instance.market_fee_app != null ? class_instance.market_fee_app : 0),
                                         }
@@ -221,11 +223,11 @@ namespace SteamTrade
                         {
                             moreStart = invResponse.more_start;
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
                             moreStart = null;
                         }
-                    } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false");
+                    } while (!String.IsNullOrEmpty(moreStart) && moreStart.ToLower() != "false" && moreStart != "0");
                 }//end for (contextId)
             }//end try
             catch (Exception e)

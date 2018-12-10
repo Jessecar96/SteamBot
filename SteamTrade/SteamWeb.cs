@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Text;
@@ -465,26 +466,9 @@ namespace SteamTrade
                 throw new Exception("The binary key cannot have an odd number of digits");
             }
 
-            byte[] arr = new byte[hex.Length >> 1];
-            int l = hex.Length;
-
-            for (int i = 0; i < (l >> 1); ++i)
-            {
-                arr[i] = (byte)((GetHexVal(hex[i << 1]) << 4) + (GetHexVal(hex[(i << 1) + 1])));
-            }
-
-            return arr;
-        }
-
-        /// <summary>
-        /// Get the Hex value as int out of an char.
-        /// </summary>
-        /// <param name="hex">Input parameter.</param>
-        /// <returns>A Hex Value as int.</returns>
-        private int GetHexVal(char hex)
-        {
-            int val = hex;
-            return val - (val < 58 ? 48 : 55);
+            return Enumerable.Range(0, hex.Length / 2)
+                .Select(x => Convert.ToByte(hex.Substring(x*2, 2), 16))
+                .ToArray();
         }
 
         /// <summary>
